@@ -11,6 +11,11 @@ import {
 import { MiaSettings, QuestionRecord } from "./core/models";
 import { parseQuestionFile } from "./core/question-parser";
 import {
+  isManagedSubjectNote,
+  renderSubjectNote,
+  subjectNoteFileName,
+} from "./core/subject-note";
+import {
   QuestionMetadataInput,
   createQuestionId,
   findCurrentQuestion,
@@ -236,6 +241,7 @@ export default class MiaStudyPlugin extends Plugin {
     if (this.app.vault.getAbstractFileByPath(folderPath)) throw new Error("이미 존재하는 과목입니다.");
     await this.app.vault.createFolder(folderPath);
     await this.app.vault.create(normalizePath(`${folderPath}/문제은행.md`), createSubjectBank(subject));
+    await this.app.vault.create(this.subjectNotePath(subject), renderSubjectNote(subject, []));
     new Notice(`${subject} 과목을 만들었습니다.`);
   }
 
@@ -248,8 +254,24 @@ export default class MiaStudyPlugin extends Plugin {
     const folder = this.app.vault.getAbstractFileByPath(currentPath);
     if (!(folder instanceof TFolder)) throw new Error("기존 과목 폴더를 찾지 못했습니다.");
     if (this.app.vault.getAbstractFileByPath(nextPath)) throw new Error("같은 이름의 과목이 이미 있습니다.");
+    const oldNotePath = this.subjectNotePath(current);
+    const oldNote = this.app.vault.getAbstractFileByPath(oldNotePath);
+    const renameGeneratedNote = oldNote instanceof TFile
+      && isManagedSubjectNote(await this.app.vault.cachedRead(oldNote));
+    const futureNote = this.app.vault.getAbstractFileByPath(normalizePath(`${currentPath}/${subjectNoteFileName(next)}`));
+    if (futureNote && futureNote.path !== oldNotePath) throw new Error("변경할 과목 노트 이름과 같은 파일이 이미 있습니다.");
     await this.app.fileManager.renameFile(folder, nextPath);
+    if (renameGeneratedNote) {
+      const movedNote = this.app.vault.getAbstractFileByPath(normalizePath(`${nextPath}/${subjectNoteFileName(current)}`));
+      if (!(movedNote instanceof TFile)) throw new Error("과목 폴더 변경 후 자동 노트를 찾지 못했습니다.");
+      await this.app.fileManager.renameFile(movedNote, this.subjectNotePath(next));
+    }
     await this.index.rebuild();
+    const bank = this.app.vault.getAbstractFileByPath(normalizePath(`${nextPath}/문제은행.md`));
+    const questions = bank instanceof TFile
+      ? parseQuestionFile(bank.path, await this.app.vault.cachedRead(bank), { subject: next }).questions
+      : [];
+    await this.syncSubjectNote(next, questions);
     new Notice(`${current} 과목을 ${next}(으)로 변경했습니다.`);
   }
 
@@ -261,10 +283,16 @@ export default class MiaStudyPlugin extends Plugin {
     let file = this.app.vault.getAbstractFileByPath(filePath);
     if (!file) file = await this.app.vault.create(filePath, createSubjectBank(subject));
     if (!(file instanceof TFile)) throw new Error("문제은행 경로가 파일이 아닙니다.");
+    await this.assertSubjectNoteWritable(subject);
     const id = createQuestionId();
     await this.saveDraftKeywordMeanings(draft);
-    await this.app.vault.process(file, (content) => appendManagedQuestion(content, draft, id));
+    let updatedContent = "";
+    await this.app.vault.process(file, (content) => {
+      updatedContent = appendManagedQuestion(content, draft, id);
+      return updatedContent;
+    });
     await this.index.refreshFile(file);
+    await this.syncSubjectNote(subject, parseQuestionFile(filePath, updatedContent, { subject }).questions);
     new Notice("질문을 문제은행에 추가했습니다.");
   }
 
@@ -272,14 +300,23 @@ export default class MiaStudyPlugin extends Plugin {
     if (draft.subject !== question.subject) throw new Error("질문 수정 중에는 과목을 변경할 수 없습니다.");
     const file = this.app.vault.getAbstractFileByPath(question.filePath);
     if (!(file instanceof TFile)) throw new Error("문제 파일을 찾지 못했습니다.");
+    await this.assertSubjectNoteWritable(question.subject);
     await this.saveDraftKeywordMeanings(draft);
-    await this.app.vault.process(file, (content) => replaceCurrentManagedQuestion(
-      content,
-      question,
-      (latest) => parseQuestionFile(question.filePath, latest).questions,
-      draft,
-    ));
+    let updatedContent = "";
+    await this.app.vault.process(file, (content) => {
+      updatedContent = replaceCurrentManagedQuestion(
+        content,
+        question,
+        (latest) => parseQuestionFile(question.filePath, latest).questions,
+        draft,
+      );
+      return updatedContent;
+    });
     await this.index.refreshFile(file);
+    await this.syncSubjectNote(
+      question.subject,
+      parseQuestionFile(question.filePath, updatedContent, { subject: question.subject }).questions,
+    );
     new Notice("질문과 학습 정보를 수정했습니다.");
   }
 
@@ -358,6 +395,29 @@ export default class MiaStudyPlugin extends Plugin {
       if (existing instanceof TFile) throw new Error(`${current} 파일 때문에 폴더를 만들 수 없습니다.`);
       if (!existing) await this.app.vault.createFolder(current);
     }
+  }
+
+  private subjectNotePath(subject: string): string {
+    return normalizePath(`${this.managedRoot}/${subject}/${subjectNoteFileName(subject)}`);
+  }
+
+  private async assertSubjectNoteWritable(subject: string): Promise<void> {
+    const existing = this.app.vault.getAbstractFileByPath(this.subjectNotePath(subject));
+    if (existing instanceof TFolder) throw new Error("과목 노트 경로가 폴더와 겹칩니다.");
+    if (existing instanceof TFile && !isManagedSubjectNote(await this.app.vault.cachedRead(existing))) {
+      throw new Error(`${subjectNoteFileName(subject)} 파일이 이미 있으며 자동 생성 노트가 아닙니다.`);
+    }
+  }
+
+  private async syncSubjectNote(subject: string, questions: QuestionRecord[]): Promise<void> {
+    await this.assertSubjectNoteWritable(subject);
+    const folderPath = normalizePath(`${this.managedRoot}/${subject}`);
+    await this.ensureFolder(folderPath);
+    const path = this.subjectNotePath(subject);
+    const content = renderSubjectNote(subject, questions);
+    const existing = this.app.vault.getAbstractFileByPath(path);
+    if (existing instanceof TFile) await this.app.vault.process(existing, () => content);
+    else await this.app.vault.create(path, content);
   }
 
   private keywordContainerName(): string | null {
