@@ -1,0 +1,66 @@
+.mia-view { padding: 20px 24px 48px; overflow: auto; }
+.mia-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 14px; }
+.mia-header > div:first-child { display: flex; align-items: center; gap: 9px; }
+.mia-header h2 { margin: 0; }
+.mia-badge { background: var(--interactive-accent); color: var(--text-on-accent); border-radius: 999px; padding: 2px 8px; font-size: var(--font-ui-smaller); }
+.mia-nav { display: flex; gap: 6px; }
+.mia-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.mia-stat, .mia-primary-card, .mia-study-card, .mia-row, .mia-keyword { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-l); background: var(--background-primary-alt); }
+.mia-stat { padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+.mia-stat strong { font-size: 1.8em; }
+.mia-stat span, .mia-muted, .mia-row small, .mia-keyword span, .mia-progress { color: var(--text-muted); }
+.mia-primary-card { padding: 22px; }
+.mia-primary-card h3 { margin-top: 0; }
+.mia-section-title { margin-top: 28px; }
+.mia-subject-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.mia-subject-card { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-l); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.mia-subject-card > span { color: var(--text-muted); }
+.mia-warning { color: var(--text-warning); }
+.mia-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.mia-toolbar input { width: min(520px, 100%); }
+.mia-filter-toolbar input, .mia-filter-toolbar select { flex: 1 1 150px; min-width: 130px; }
+.mia-filter-toolbar input:first-child { flex-basis: 280px; }
+.mia-result-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; color: var(--text-muted); }
+.mia-inline-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.mia-list { display: grid; gap: 8px; }
+.mia-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; }
+.mia-row-body { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.mia-row-prompt { max-height: 7em; overflow: hidden; }
+.mia-row-prompt > :first-child { margin-top: 0; }
+.mia-row-prompt > :last-child { margin-bottom: 0; }
+.mia-row-actions { display: flex; gap: 5px; flex-shrink: 0; }
+.mia-candidates { margin-top: 22px; }
+.mia-candidate { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--background-modifier-border); }
+.mia-candidate-label { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.mia-candidate-label small { color: var(--text-muted); overflow-wrap: anywhere; }
+.mia-candidate-search { width: min(520px, 100%); margin: 12px 0; }
+.mia-load-more { display: block; margin: 14px auto 0; }
+.mia-keyword-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.mia-keyword { cursor: pointer; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.mia-keyword:hover { border-color: var(--interactive-accent); }
+.mia-progress { margin-bottom: 10px; }
+.mia-undo { float: right; margin-top: -38px; }
+.mia-study-card { max-width: 860px; margin: 0 auto; padding: 24px; }
+.mia-study-card > h2 { margin-top: 0; }
+.mia-markdown { font-size: 1.05em; }
+.mia-answer { padding-top: 8px; }
+.mia-reveal { display: block; margin: 28px auto 0; min-width: 180px; }
+.mia-study-actions { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 28px; }
+.mia-study-actions .mia-reveal { margin: 0; }
+.mia-keyword-section { margin-top: 18px; }
+.mia-keyword-section h3 { margin-bottom: 8px; }
+.mia-keyword-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.mia-ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 24px; }
+.mia-ratings button { display: flex; flex-direction: column; gap: 3px; align-items: center; padding: 10px 5px; }
+.mia-ratings small { color: var(--text-muted); }
+.mia-source { display: block; margin: 12px auto 0; }
+.mia-skip { display: block; margin: 8px auto 0; }
+.mia-related { max-width: 860px; margin: 20px auto 0; display: grid; gap: 6px; }
+.mia-related button { text-align: left; }
+.mia-empty { color: var(--text-muted); text-align: center; padding: 28px; }
+@media (max-width: 640px) {
+  .mia-view { padding: 14px; }
+  .mia-header, .mia-row, .mia-candidate, .mia-result-bar { align-items: stretch; flex-direction: column; }
+  .mia-ratings { grid-template-columns: repeat(2, 1fr); }
+  .mia-row-actions button { flex: 1; }
+}
