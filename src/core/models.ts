@@ -95,10 +95,10 @@ export interface MiaPluginData {
 }
 
 export const DEFAULT_SETTINGS: MiaSettings = {
-  sourceRoots: [],
+  sourceRoots: ["전공면접대비"],
   targetRetention: 0.9,
   maximumIntervalDays: 36500,
-  keywordFolder: "MIA/키워드",
+  keywordFolder: "전공면접대비/MIA/키워드",
 };
 
 export const DEFAULT_PLUGIN_DATA: MiaPluginData = {

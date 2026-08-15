@@ -18,7 +18,7 @@ describe("settings validation", () => {
     expect(settings.maximumIntervalDays).toBe(36500);
     expect(settings).not.toHaveProperty("newCardsPerDay");
     expect(settings).not.toHaveProperty("reviewsPerDay");
-    expect(settings.keywordFolder).toBe("MIA/키워드");
+    expect(settings.keywordFolder).toBe("전공면접대비/MIA/키워드");
   });
 
   it("normalizes duplicate paths and rejects traversal or internal keyword folders", () => {
@@ -27,7 +27,7 @@ describe("settings validation", () => {
       keywordFolder: ".obsidian/plugins",
     });
     expect(settings.sourceRoots).toEqual(["전자기학"]);
-    expect(settings.keywordFolder).toBe("MIA/키워드");
+    expect(settings.keywordFolder).toBe("전공면접대비/MIA/키워드");
   });
 });
 

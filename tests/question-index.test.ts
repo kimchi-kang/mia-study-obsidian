@@ -36,6 +36,14 @@ describe("source root filtering", () => {
     expect(QuestionIndexInternals.inSourceRoots("회로/a.md", ["전자기학"])).toBe(false);
     expect(QuestionIndexInternals.inSourceRoots("anything.md", [])).toBe(true);
   });
+
+  it("uses the first folder below a configured root as the subject", () => {
+    expect(QuestionIndexInternals.subjectForPath("전공면접대비/전자기학/문제은행.md", ["전공면접대비"]))
+      .toBe("전자기학");
+    expect(QuestionIndexInternals.subjectForPath("전공면접대비/직접문제.md", ["전공면접대비"]))
+      .toBe("미분류");
+    expect(QuestionIndexInternals.subjectForPath("전자기학/문제.md", [])).toBeUndefined();
+  });
 });
 
 describe("duplicate IDs", () => {

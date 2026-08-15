@@ -11,6 +11,9 @@
 .mia-stat span, .mia-muted, .mia-row small, .mia-keyword span, .mia-progress { color: var(--text-muted); }
 .mia-primary-card { padding: 22px; }
 .mia-primary-card h3 { margin-top: 0; }
+.mia-manage-actions, .mia-page-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
+.mia-manage-actions button { flex: 1 1 130px; }
+.mia-page-actions { justify-content: flex-end; }
 .mia-section-title { margin-top: 28px; }
 .mia-subject-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
 .mia-subject-card { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-l); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
@@ -63,4 +66,5 @@
   .mia-header, .mia-row, .mia-candidate, .mia-result-bar { align-items: stretch; flex-direction: column; }
   .mia-ratings { grid-template-columns: repeat(2, 1fr); }
   .mia-row-actions button { flex: 1; }
+  .mia-page-actions button { width: 100%; }
 }

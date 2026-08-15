@@ -10,6 +10,17 @@ function inSourceRoots(path: string, roots: string[]): boolean {
   });
 }
 
+function subjectForPath(path: string, roots: string[]): string | undefined {
+  const normalizedPath = path.replaceAll("\\", "/");
+  const matchingRoot = roots
+    .map((root) => root.replaceAll("\\", "/").replace(/^\/+|\/+$/g, ""))
+    .filter((root) => normalizedPath.startsWith(`${root}/`))
+    .sort((left, right) => right.length - left.length)[0];
+  if (!matchingRoot) return undefined;
+  const relativeParts = normalizedPath.slice(matchingRoot.length + 1).split("/").filter(Boolean);
+  return relativeParts.length >= 2 ? relativeParts[0] : "미분류";
+}
+
 type RegisteredQuestion = QuestionRecord & { id: string };
 
 function registeredQuestions(questions: QuestionRecord[]): RegisteredQuestion[] {
@@ -123,7 +134,8 @@ export class QuestionIndex {
 
   private async parse(file: TFile): Promise<ParsedQuestionFile> {
     try {
-      return parseQuestionFile(file.path, await this.app.vault.cachedRead(file));
+      const subject = subjectForPath(file.path, this.getSourceRoots());
+      return parseQuestionFile(file.path, await this.app.vault.cachedRead(file), subject ? { subject } : {});
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       return {
@@ -165,4 +177,4 @@ export class QuestionIndex {
   }
 }
 
-export const QuestionIndexInternals = { inSourceRoots, uniqueRegisteredQuestions };
+export const QuestionIndexInternals = { inSourceRoots, subjectForPath, uniqueRegisteredQuestions };
