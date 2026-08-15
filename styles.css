@@ -62,12 +62,20 @@
 .mia-related button { text-align: left; }
 .mia-empty { color: var(--text-muted); text-align: center; padding: 28px; }
 @media (max-width: 640px) {
-  .mia-view {
-    padding: 14px 14px calc(96px + env(safe-area-inset-bottom, 0px));
-    scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
-  }
+  .mia-view { padding: 14px 14px 28px; }
   .mia-header, .mia-row, .mia-candidate, .mia-result-bar { align-items: stretch; flex-direction: column; }
   .mia-ratings { grid-template-columns: repeat(2, 1fr); }
   .mia-row-actions button { flex: 1; }
   .mia-page-actions button { width: 100%; }
+}
+
+.is-phone.is-floating-nav .mia-view,
+.is-phone.auto-full-screen .mia-view {
+  --mia-navbar-clearance: max(0px, var(--view-bottom-spacing, calc(var(--navbar-height, 80px) + var(--safe-area-inset-bottom, 0px))));
+  box-sizing: border-box;
+  height: calc(100% - var(--mia-navbar-clearance));
+  max-height: calc(100% - var(--mia-navbar-clearance));
+  margin-bottom: var(--mia-navbar-clearance);
+  min-height: 0;
+  scroll-padding-bottom: 28px;
 }
