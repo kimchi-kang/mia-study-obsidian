@@ -129,6 +129,10 @@ export class MiaStudyView extends ItemView {
     this.stat(grid, "오늘 복습", due);
     this.stat(grid, "새 문제", fresh);
     this.stat(grid, "등록 후보", this.plugin.index.candidates.length);
+    const manage = root.createDiv({ cls: "mia-manage-actions" });
+    manage.createEl("button", { text: "과목 추가" }).addEventListener("click", () => this.plugin.openSubjectEditor());
+    manage.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () => void this.plugin.openManagedQuestionEditor());
+    manage.createEl("button", { text: "키워드 추가" }).addEventListener("click", () => this.plugin.openKeywordEditor());
     const action = root.createDiv({ cls: "mia-primary-card" });
     action.createEl("h3", { text: due + fresh > 0 ? "오늘 학습을 시작할까요?" : "오늘 예정된 복습이 없습니다" });
     action.createEl("p", { text: `복습 ${due}개 · 새 문제 ${fresh}개 · 학습 상한 없음` });
@@ -144,6 +148,7 @@ export class MiaStudyView extends ItemView {
     }
 
     const subjects = new Map<string, Array<QuestionRecord & { id: string }>>();
+    for (const subject of this.plugin.listSubjects()) subjects.set(subject, []);
     for (const question of questions) {
       const items = subjects.get(question.subject) ?? [];
       items.push(question);
@@ -163,8 +168,13 @@ export class MiaStudyView extends ItemView {
         const review = subjectActions.createEl("button", { text: "시험" });
         review.disabled = reviewIds.length === 0;
         review.addEventListener("click", () => this.startReview(reviewIds));
-        subjectActions.createEl("button", { text: "암기" }).addEventListener("click", () => {
+        const memorize = subjectActions.createEl("button", { text: "암기" });
+        memorize.disabled = items.length === 0;
+        memorize.addEventListener("click", () => {
           this.startReview(items.map((question) => question.id), "browse");
+        });
+        subjectActions.createEl("button", { text: "이름 수정" }).addEventListener("click", () => {
+          this.plugin.openSubjectEditor(subject);
         });
       }
     }
@@ -177,6 +187,10 @@ export class MiaStudyView extends ItemView {
   }
 
   private renderQuestions(root: HTMLElement): void {
+    const pageActions = root.createDiv({ cls: "mia-page-actions" });
+    pageActions.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () => {
+      void this.plugin.openManagedQuestionEditor();
+    });
     const toolbar = root.createDiv({ cls: "mia-toolbar mia-filter-toolbar" });
     const search = toolbar.createEl("input", { type: "search", placeholder: "질문, 정답, 과목, 키워드 검색" });
     search.value = this.questionText;
@@ -290,14 +304,26 @@ export class MiaStudyView extends ItemView {
     body.createEl("small", { text: `${question.subject} · ${question.questionType} · 핵심 ${question.coreKeywords.map((item) => item.label).join(", ") || "없음"} · 보조 ${question.subKeywords.map((item) => item.label).join(", ") || "없음"}` });
     const actions = row.createDiv({ cls: "mia-row-actions" });
     actions.createEl("button", { text: "학습" }).addEventListener("click", () => this.startReview([question.id]));
-    actions.createEl("button", { text: "편집" }).addEventListener("click", () => this.plugin.editMetadata(question));
+    actions.createEl("button", { text: "편집" }).addEventListener("click", () => void this.plugin.openManagedQuestionEditor(question));
     actions.createEl("button", { text: "원문" }).addEventListener("click", () => this.plugin.openQuestion(question));
   }
 
   private renderKeywords(root: HTMLElement): void {
+    const pageActions = root.createDiv({ cls: "mia-page-actions" });
+    pageActions.createEl("button", { text: "키워드 추가", cls: "mod-cta" }).addEventListener("click", () => {
+      this.plugin.openKeywordEditor();
+    });
     const toolbar = root.createDiv({ cls: "mia-toolbar" });
     const search = toolbar.createEl("input", { type: "search", placeholder: "키워드 검색" });
-    const keywords = new Map<string, { keyword: KeywordReference; questions: Map<string, QuestionRecord & { id: string }> }>();
+    const keywords = new Map<string, {
+      keyword: KeywordReference;
+      questions: Map<string, QuestionRecord & { id: string }>;
+      entry?: ReturnType<MiaStudyPlugin["listKeywordNotes"]>[number];
+    }>();
+    for (const entry of this.plugin.listKeywordNotes()) {
+      const keyword = { target: entry.target, label: entry.name, raw: `[[${entry.target}|${entry.name}]]` };
+      keywords.set(keywordKey(keyword), { keyword, questions: new Map(), entry });
+    }
     for (const question of this.plugin.index.registered) {
       for (const keyword of [...question.coreKeywords, ...question.subKeywords]) {
         const key = keywordKey(keyword);
@@ -320,21 +346,34 @@ export class MiaStudyView extends ItemView {
         card.createEl("span", { text: `${questions.length}문제` });
         const reference = questions[0];
         card.addEventListener("click", () => {
-          if (reference) this.plugin.showKeywordMeaning(item.keyword.target, item.keyword.label, reference.filePath);
+          const sourcePath = reference?.filePath ?? item.entry?.filePath;
+          if (sourcePath) this.plugin.showKeywordMeaning(item.keyword.target, item.keyword.label, sourcePath);
+        });
+        const editEntry = item.entry ?? {
+          name: item.keyword.label,
+          target: item.keyword.target,
+          filePath: `${item.keyword.target}.md`,
+        };
+        const edit = card.createEl("button", { text: "키워드 수정" });
+        edit.addEventListener("click", (event) => {
+          event.stopPropagation();
+          this.plugin.openKeywordEditor(editEntry);
         });
         const review = card.createEl("button", { text: "연결 문제 시험" });
+        review.disabled = questions.length === 0;
         review.addEventListener("click", (event) => {
           event.stopPropagation();
           this.startReview(questions.map((question) => question.id));
         });
         const browse = card.createEl("button", { text: "연결 문제 암기" });
+        browse.disabled = questions.length === 0;
         browse.addEventListener("click", (event) => {
           event.stopPropagation();
           this.startReview(questions.map((question) => question.id), "browse");
         });
       }
       if (!items.length) grid.createEl("p", {
-        text: keywords.size ? "검색 조건에 맞는 키워드가 없습니다." : "문제에 핵심/보조 키워드를 등록하면 여기에 연결망이 나타납니다.",
+        text: keywords.size ? "검색 조건에 맞는 키워드가 없습니다." : "키워드를 추가하거나 질문에 핵심/보조 키워드를 연결하면 여기에 나타납니다.",
         cls: "mia-empty",
       });
     };

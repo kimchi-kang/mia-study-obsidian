@@ -36,6 +36,14 @@ describe("source root filtering", () => {
     expect(QuestionIndexInternals.inSourceRoots("과제/a.md", ["지리학"])).toBe(false);
     expect(QuestionIndexInternals.inSourceRoots("anything.md", [])).toBe(true);
   });
+
+  it("uses the first folder below a configured root as the subject", () => {
+    expect(QuestionIndexInternals.subjectForPath("전공면접대비/지리학/문제은행.md", ["전공면접대비"]))
+      .toBe("지리학");
+    expect(QuestionIndexInternals.subjectForPath("전공면접대비/직접문제.md", ["전공면접대비"]))
+      .toBe("미분류");
+    expect(QuestionIndexInternals.subjectForPath("지리학/문제.md", [])).toBeUndefined();
+  });
 });
 
 describe("duplicate IDs", () => {

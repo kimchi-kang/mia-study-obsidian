@@ -1,7 +1,7 @@
 {
   "id": "mia-study",
   "name": "MIA Study",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "minAppVersion": "1.8.0",
   "description": "Markdown-native question management, keyword connections, and FSRS-6 review inside Obsidian.",
   "author": "kimchi-kang",

@@ -1,5 +1,13 @@
-import { MarkdownView, Notice, Plugin, TFile } from "obsidian";
+import { MarkdownView, Notice, Plugin, TFile, TFolder, normalizePath } from "obsidian";
 import { FsrsService } from "./core/fsrs-service";
+import { createKeywordNote, readKeywordMeaning, updateKeywordMeaning, validateKeywordName } from "./core/keyword-note";
+import { keywordNotePath } from "./core/keyword-path";
+import {
+  appendManagedQuestion,
+  createSubjectBank,
+  replaceCurrentManagedQuestion,
+  validateSubjectName,
+} from "./core/managed-question";
 import { MiaSettings, QuestionRecord } from "./core/models";
 import { parseQuestionFile } from "./core/question-parser";
 import {
@@ -15,6 +23,18 @@ import { QuestionMetadataModal } from "./ui/metadata-modal";
 import { MiaSettingTab } from "./ui/settings-tab";
 import { MIA_VIEW_TYPE, MiaStudyView } from "./ui/study-view";
 import { KeywordMeaningModal } from "./ui/keyword-modal";
+import {
+  KeywordEditorModal,
+  ManagedQuestionDraft,
+  ManagedQuestionModal,
+  SubjectEditorModal,
+} from "./ui/manage-modals";
+
+export interface KeywordNoteEntry {
+  name: string;
+  target: string;
+  filePath: string;
+}
 
 export default class MiaStudyPlugin extends Plugin {
   store!: MiaDataStore;
@@ -31,6 +51,9 @@ export default class MiaStudyPlugin extends Plugin {
     this.registerView(MIA_VIEW_TYPE, (leaf) => new MiaStudyView(leaf, this));
     this.addRibbonIcon("brain-circuit", "MIA Study 열기", () => this.activateView());
     this.addCommand({ id: "open-mia-study", name: "MIA Study 열기", callback: () => this.activateView() });
+    this.addCommand({ id: "add-managed-subject", name: "GUI로 과목 추가", callback: () => this.openSubjectEditor() });
+    this.addCommand({ id: "add-managed-question", name: "GUI로 질문 추가", callback: () => void this.openManagedQuestionEditor() });
+    this.addCommand({ id: "add-managed-keyword", name: "GUI로 키워드 추가", callback: () => this.openKeywordEditor() });
     this.addCommand({
       id: "register-question-at-cursor",
       name: "커서의 문제를 MIA에 등록/편집",
@@ -64,6 +87,7 @@ export default class MiaStudyPlugin extends Plugin {
   async updateSettings(patch: Partial<MiaSettings>): Promise<void> {
     await this.store.updateSettings(patch);
     this.fsrs = new FsrsService(this.store.settings);
+    await this.index.rebuild();
   }
 
   async activateView(questionIds?: string[]): Promise<void> {
@@ -96,6 +120,72 @@ export default class MiaStudyPlugin extends Plugin {
 
   showKeywordMeaning(target: string, label: string, sourcePath: string): void {
     new KeywordMeaningModal(this.app, target, label, sourcePath, this.store.settings.keywordFolder).open();
+  }
+
+  get managedRoot(): string {
+    return this.store.settings.sourceRoots[0] ?? "전공면접대비";
+  }
+
+  listSubjects(): string[] {
+    const root = this.app.vault.getAbstractFileByPath(this.managedRoot);
+    if (!(root instanceof TFolder)) return [];
+    const keywordRelative = this.store.settings.keywordFolder.startsWith(`${this.managedRoot}/`)
+      ? this.store.settings.keywordFolder.slice(this.managedRoot.length + 1).split("/")[0]
+      : null;
+    return root.children
+      .filter((child): child is TFolder => child instanceof TFolder)
+      .map((folder) => folder.name)
+      .filter((name) => name !== keywordRelative)
+      .sort((left, right) => left.localeCompare(right, "ko"));
+  }
+
+  listKeywordNotes(): KeywordNoteEntry[] {
+    const folder = normalizePath(this.store.settings.keywordFolder);
+    return this.app.vault.getMarkdownFiles()
+      .filter((file) => file.path.startsWith(`${folder}/`))
+      .map((file) => ({
+        name: file.basename,
+        target: file.path.replace(/\.md$/i, ""),
+        filePath: file.path,
+      }))
+      .sort((left, right) => left.name.localeCompare(right.name, "ko"));
+  }
+
+  openSubjectEditor(current: string | null = null): void {
+    new SubjectEditorModal(this.app, current, async (name) => {
+      if (current) await this.renameSubject(current, name);
+      else await this.createSubject(name);
+    }).open();
+  }
+
+  async openManagedQuestionEditor(question: QuestionRecord | null = null): Promise<void> {
+    const subjects = [...new Set([...(question ? [question.subject] : []), ...this.listSubjects()])];
+    if (subjects.length === 0) {
+      new Notice("질문을 추가하기 전에 과목을 먼저 만들어 주세요.");
+      this.openSubjectEditor();
+      return;
+    }
+    const meanings = question ? await this.loadKeywordMeanings(question) : new Map<string, string>();
+    new ManagedQuestionModal(
+      this.app,
+      subjects,
+      this.store.settings.keywordFolder,
+      question,
+      meanings,
+      async (draft) => {
+        if (question) await this.updateManagedQuestion(question, draft);
+        else await this.createManagedQuestion(draft);
+      },
+    ).open();
+  }
+
+  openKeywordEditor(entry: KeywordNoteEntry | null = null): void {
+    void (async () => {
+      const meaning = entry ? await this.readKeywordNote(entry.filePath) : "";
+      new KeywordEditorModal(this.app, entry ? { name: entry.name, meaning } : null, (name, value) =>
+        this.saveKeyword(entry, name, value),
+      ).open();
+    })().catch((error) => new Notice(`키워드 열기 실패: ${error instanceof Error ? error.message : String(error)}`));
   }
 
   async openQuestion(question: QuestionRecord): Promise<void> {
@@ -135,5 +225,144 @@ export default class MiaStudyPlugin extends Plugin {
     });
     await this.index.refreshFile(file);
     new Notice(question.id ? "MIA 학습 정보를 저장했습니다." : "문제를 MIA에 등록했습니다.");
+  }
+
+  private async createSubject(value: string): Promise<void> {
+    const subject = validateSubjectName(value);
+    const keywordContainer = this.keywordContainerName();
+    if (subject === keywordContainer) throw new Error("키워드 보관 폴더와 같은 이름은 사용할 수 없습니다.");
+    await this.ensureFolder(this.managedRoot);
+    const folderPath = normalizePath(`${this.managedRoot}/${subject}`);
+    if (this.app.vault.getAbstractFileByPath(folderPath)) throw new Error("이미 존재하는 과목입니다.");
+    await this.app.vault.createFolder(folderPath);
+    await this.app.vault.create(normalizePath(`${folderPath}/문제은행.md`), createSubjectBank(subject));
+    new Notice(`${subject} 과목을 만들었습니다.`);
+  }
+
+  private async renameSubject(current: string, value: string): Promise<void> {
+    const next = validateSubjectName(value);
+    if (next === current) return;
+    if (next === this.keywordContainerName()) throw new Error("키워드 보관 폴더와 같은 이름은 사용할 수 없습니다.");
+    const currentPath = normalizePath(`${this.managedRoot}/${current}`);
+    const nextPath = normalizePath(`${this.managedRoot}/${next}`);
+    const folder = this.app.vault.getAbstractFileByPath(currentPath);
+    if (!(folder instanceof TFolder)) throw new Error("기존 과목 폴더를 찾지 못했습니다.");
+    if (this.app.vault.getAbstractFileByPath(nextPath)) throw new Error("같은 이름의 과목이 이미 있습니다.");
+    await this.app.fileManager.renameFile(folder, nextPath);
+    await this.index.rebuild();
+    new Notice(`${current} 과목을 ${next}(으)로 변경했습니다.`);
+  }
+
+  private async createManagedQuestion(draft: ManagedQuestionDraft): Promise<void> {
+    const subject = validateSubjectName(draft.subject);
+    const folderPath = normalizePath(`${this.managedRoot}/${subject}`);
+    await this.ensureFolder(folderPath);
+    const filePath = normalizePath(`${folderPath}/문제은행.md`);
+    let file = this.app.vault.getAbstractFileByPath(filePath);
+    if (!file) file = await this.app.vault.create(filePath, createSubjectBank(subject));
+    if (!(file instanceof TFile)) throw new Error("문제은행 경로가 파일이 아닙니다.");
+    const id = createQuestionId();
+    await this.saveDraftKeywordMeanings(draft);
+    await this.app.vault.process(file, (content) => appendManagedQuestion(content, draft, id));
+    await this.index.refreshFile(file);
+    new Notice("질문을 문제은행에 추가했습니다.");
+  }
+
+  private async updateManagedQuestion(question: QuestionRecord, draft: ManagedQuestionDraft): Promise<void> {
+    if (draft.subject !== question.subject) throw new Error("질문 수정 중에는 과목을 변경할 수 없습니다.");
+    const file = this.app.vault.getAbstractFileByPath(question.filePath);
+    if (!(file instanceof TFile)) throw new Error("문제 파일을 찾지 못했습니다.");
+    await this.saveDraftKeywordMeanings(draft);
+    await this.app.vault.process(file, (content) => replaceCurrentManagedQuestion(
+      content,
+      question,
+      (latest) => parseQuestionFile(question.filePath, latest).questions,
+      draft,
+    ));
+    await this.index.refreshFile(file);
+    new Notice("질문과 학습 정보를 수정했습니다.");
+  }
+
+  private async saveDraftKeywordMeanings(draft: ManagedQuestionDraft): Promise<void> {
+    for (const item of draft.keywordMeanings) {
+      await this.saveKeywordReferenceMeaning(item.target, item.label, item.meaning);
+    }
+  }
+
+  private async saveKeywordReferenceMeaning(target: string, label: string, meaning: string): Promise<void> {
+    const path = keywordNotePath(target, label, this.store.settings.keywordFolder);
+    const folder = path.split("/").slice(0, -1).join("/");
+    if (folder) await this.ensureFolder(folder);
+    const existing = this.app.vault.getAbstractFileByPath(path);
+    if (existing instanceof TFolder) throw new Error("키워드 노트 경로가 폴더와 겹칩니다.");
+    if (existing instanceof TFile) {
+      await this.app.vault.process(existing, (content) => updateKeywordMeaning(content, label, meaning));
+    } else {
+      await this.app.vault.create(path, createKeywordNote(label, meaning));
+    }
+  }
+
+  private async saveKeywordMeaning(name: string, meaning: string, notify = true): Promise<void> {
+    const safeName = validateKeywordName(name);
+    const path = keywordNotePath(safeName, safeName, this.store.settings.keywordFolder);
+    const folder = path.split("/").slice(0, -1).join("/");
+    if (folder) await this.ensureFolder(folder);
+    const existing = this.app.vault.getAbstractFileByPath(path);
+    if (existing instanceof TFolder) throw new Error("키워드 노트 경로가 폴더와 겹칩니다.");
+    if (existing instanceof TFile) {
+      await this.app.vault.process(existing, (content) => updateKeywordMeaning(content, safeName, meaning));
+    } else {
+      await this.app.vault.create(path, createKeywordNote(safeName, meaning));
+    }
+    if (notify) new Notice(`${safeName} 키워드를 저장했습니다.`);
+  }
+
+  private async saveKeyword(current: KeywordNoteEntry | null, value: string, meaning: string): Promise<void> {
+    const name = validateKeywordName(value);
+    if (!current || current.name === name) {
+      await this.saveKeywordMeaning(name, meaning);
+      return;
+    }
+    const source = this.app.vault.getAbstractFileByPath(current.filePath);
+    if (!(source instanceof TFile)) throw new Error("기존 키워드 노트를 찾지 못했습니다.");
+    const nextPath = keywordNotePath(name, name, this.store.settings.keywordFolder);
+    if (this.app.vault.getAbstractFileByPath(nextPath)) throw new Error("같은 이름의 키워드가 이미 있습니다.");
+    await this.app.fileManager.renameFile(source, nextPath);
+    const renamed = this.app.vault.getAbstractFileByPath(nextPath);
+    if (!(renamed instanceof TFile)) throw new Error("키워드 이름을 바꾼 뒤 노트를 찾지 못했습니다.");
+    await this.app.vault.process(renamed, (content) => updateKeywordMeaning(content, name, meaning));
+    new Notice(`${current.name} 키워드를 ${name}(으)로 변경했습니다.`);
+  }
+
+  private async loadKeywordMeanings(question: QuestionRecord): Promise<Map<string, string>> {
+    const output = new Map<string, string>();
+    for (const keyword of [...question.coreKeywords, ...question.subKeywords]) {
+      const file = this.app.metadataCache.getFirstLinkpathDest(keyword.target, question.filePath);
+      output.set(keyword.target, file ? readKeywordMeaning(await this.app.vault.cachedRead(file)) : "");
+    }
+    return output;
+  }
+
+  private async readKeywordNote(path: string): Promise<string> {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof TFile)) return "";
+    return readKeywordMeaning(await this.app.vault.cachedRead(file));
+  }
+
+  private async ensureFolder(path: string): Promise<void> {
+    const normalized = normalizePath(path);
+    const parts = normalized.split("/").filter(Boolean);
+    for (let index = 1; index <= parts.length; index += 1) {
+      const current = parts.slice(0, index).join("/");
+      const existing = this.app.vault.getAbstractFileByPath(current);
+      if (existing instanceof TFile) throw new Error(`${current} 파일 때문에 폴더를 만들 수 없습니다.`);
+      if (!existing) await this.app.vault.createFolder(current);
+    }
+  }
+
+  private keywordContainerName(): string | null {
+    return this.store.settings.keywordFolder.startsWith(`${this.managedRoot}/`)
+      ? this.store.settings.keywordFolder.slice(this.managedRoot.length + 1).split("/")[0] ?? null
+      : null;
   }
 }
