@@ -1,4 +1,4 @@
-.mia-view { padding: 20px 24px 48px; overflow: auto; }
+.mia-view { padding: 20px 24px 48px; overflow: auto; touch-action: pan-y pinch-zoom; overscroll-behavior-x: contain; }
 .mia-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 14px; }
 .mia-header > div:first-child { display: flex; align-items: center; gap: 9px; }
 .mia-header h2 { margin: 0; }

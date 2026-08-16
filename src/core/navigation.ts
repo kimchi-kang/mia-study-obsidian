@@ -37,7 +37,7 @@ export function isBackSwipe(start: SwipePoint, end: SwipePoint): boolean {
   const horizontal = end.x - start.x;
   const vertical = Math.abs(end.y - start.y);
   const duration = end.at - start.at;
-  return horizontal >= 80 && vertical <= horizontal * 0.6 && duration >= 0 && duration <= 1_200;
+  return horizontal >= 64 && vertical <= horizontal * 0.65 && duration >= 0 && duration <= 1_200;
 }
 
 export class TrackpadBackGesture {

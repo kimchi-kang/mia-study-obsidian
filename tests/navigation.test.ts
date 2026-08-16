@@ -25,6 +25,8 @@ describe("MIA navigation history", () => {
 describe("back gestures", () => {
   it("accepts a deliberate right swipe and rejects vertical or slow motion", () => {
     expect(isBackSwipe({ x: 20, y: 100, at: 0 }, { x: 120, y: 112, at: 500 })).toBe(true);
+    expect(isBackSwipe({ x: 20, y: 100, at: 0 }, { x: 84, y: 120, at: 500 })).toBe(true);
+    expect(isBackSwipe({ x: 20, y: 100, at: 0 }, { x: 83, y: 100, at: 500 })).toBe(false);
     expect(isBackSwipe({ x: 20, y: 100, at: 0 }, { x: 120, y: 180, at: 500 })).toBe(false);
     expect(isBackSwipe({ x: 20, y: 100, at: 0 }, { x: 120, y: 112, at: 1_500 })).toBe(false);
   });

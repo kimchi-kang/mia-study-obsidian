@@ -43,6 +43,9 @@ export class MiaStudyView extends ItemView {
   private readonly routeHistory = new MiaNavigationHistory();
   private readonly trackpadBackGesture = new TrackpadBackGesture();
   private touchStart: SwipePoint | null = null;
+  private pointerStart: SwipePoint | null = null;
+  private pointerId: number | null = null;
+  private lastSwipeBackAt = Number.NEGATIVE_INFINITY;
   private queue: string[] = [];
   private queueIndex = 0;
   private answerVisible = false;
@@ -114,34 +117,54 @@ export class MiaStudyView extends ItemView {
   }
 
   private registerNavigationGestures(): void {
-    this.registerDomEvent(this.contentEl, "touchstart", (event: TouchEvent) => {
-      if (!this.routeHistory.canGoBack || event.touches.length !== 1 || this.isGestureBlocked(event.target)) {
+    const document = this.contentEl.ownerDocument;
+    this.registerDomEvent(document, "touchstart", (event: TouchEvent) => {
+      if (!this.canStartSwipe(event.target) || event.touches.length !== 1) {
         this.touchStart = null;
         return;
       }
       const touch = event.touches.item(0);
       this.touchStart = touch ? { x: touch.clientX, y: touch.clientY, at: event.timeStamp } : null;
-    }, { passive: true });
-    this.registerDomEvent(this.contentEl, "touchend", (event: TouchEvent) => {
+    }, { capture: true, passive: true });
+    this.registerDomEvent(document, "touchend", (event: TouchEvent) => {
       const start = this.touchStart;
       this.touchStart = null;
       const touch = event.changedTouches.item(0);
-      if (!start || !touch || !this.routeHistory.canGoBack) return;
-      if (!isBackSwipe(start, { x: touch.clientX, y: touch.clientY, at: event.timeStamp })) return;
-      event.preventDefault();
-      this.goBack();
-    }, { passive: false });
-    this.registerDomEvent(this.contentEl, "touchcancel", () => { this.touchStart = null; });
+      if (!start || !touch) return;
+      this.finishSwipe(start, { x: touch.clientX, y: touch.clientY, at: event.timeStamp }, event);
+    }, { capture: true, passive: false });
+    this.registerDomEvent(document, "touchcancel", () => { this.touchStart = null; }, { capture: true });
+    this.registerDomEvent(document, "pointerdown", (event: PointerEvent) => {
+      if (event.pointerType !== "touch" || !event.isPrimary || !this.canStartSwipe(event.target)) {
+        this.pointerStart = null;
+        this.pointerId = null;
+        return;
+      }
+      this.pointerId = event.pointerId;
+      this.pointerStart = { x: event.clientX, y: event.clientY, at: event.timeStamp };
+    }, { capture: true, passive: true });
+    this.registerDomEvent(document, "pointerup", (event: PointerEvent) => {
+      const start = this.pointerId === event.pointerId ? this.pointerStart : null;
+      this.pointerStart = null;
+      this.pointerId = null;
+      if (!start) return;
+      this.finishSwipe(start, { x: event.clientX, y: event.clientY, at: event.timeStamp }, event);
+    }, { capture: true, passive: false });
+    this.registerDomEvent(document, "pointercancel", (event: PointerEvent) => {
+      if (this.pointerId !== event.pointerId) return;
+      this.pointerStart = null;
+      this.pointerId = null;
+    }, { capture: true });
     this.registerDomEvent(this.contentEl, "wheel", (event: WheelEvent) => {
       if (!this.routeHistory.canGoBack || this.isGestureBlocked(event.target)) return;
       if (!this.trackpadBackGesture.update(event.deltaX, event.deltaY, event.timeStamp)) return;
       event.preventDefault();
       this.goBack();
     }, { passive: false });
-    this.registerDomEvent(this.contentEl.ownerDocument, "keydown", (event: KeyboardEvent) => {
+    this.registerDomEvent(document, "keydown", (event: KeyboardEvent) => {
       if (!this.routeHistory.canGoBack || this.isGestureBlocked(event.target)) return;
       if (this.app.workspace.getActiveViewOfType(MiaStudyView) !== this) return;
-      if (this.contentEl.ownerDocument.querySelector(".modal-container")) return;
+      if (document.querySelector(".modal-container")) return;
       const shortcut = (event.metaKey && event.key === "[")
         || (event.altKey && event.key === "ArrowLeft")
         || event.key === "Escape";
@@ -149,6 +172,21 @@ export class MiaStudyView extends ItemView {
       event.preventDefault();
       this.goBack();
     }, { capture: true });
+  }
+
+  private canStartSwipe(target: EventTarget | null): boolean {
+    return this.routeHistory.canGoBack
+      && this.app.workspace.getActiveViewOfType(MiaStudyView) === this
+      && target instanceof Node
+      && this.contentEl.contains(target)
+      && !this.isGestureBlocked(target);
+  }
+
+  private finishSwipe(start: SwipePoint, end: SwipePoint, event: Event): void {
+    if (!this.routeHistory.canGoBack || end.at - this.lastSwipeBackAt < 500 || !isBackSwipe(start, end)) return;
+    this.lastSwipeBackAt = end.at;
+    event.preventDefault();
+    this.goBack();
   }
 
   private isGestureBlocked(target: EventTarget | null): boolean {
