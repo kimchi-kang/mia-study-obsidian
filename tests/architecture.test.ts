@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const coreFiles = [
   "follow-up.ts", "fsrs-service.ts", "keyword-note.ts", "keyword-path.ts", "keyword-reference.ts",
-  "managed-question.ts", "mobile-keyboard-metrics.ts", "models.ts", "navigation.ts", "progress.ts",
+  "managed-question.ts", "markdown-structure.ts", "mobile-keyboard-metrics.ts", "models.ts", "navigation.ts", "progress.ts",
   "question-parser.ts", "question-query.ts", "question-writer.ts", "recommendation-engine.ts", "subject-note.ts",
 ];
 const serviceFiles = ["data-store.ts", "question-index.ts"];

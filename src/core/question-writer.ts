@@ -1,4 +1,5 @@
 import { KeywordReference, QuestionRecord, QuestionType } from "./models";
+import { assertSingleLine } from "./markdown-structure";
 
 export interface QuestionMetadataInput {
   questionType: QuestionType;
@@ -10,16 +11,17 @@ export interface QuestionMetadataInput {
 }
 
 function metadataLines(metadata: QuestionMetadataInput): string[] {
-  const line = (label: string, values: string[]) => `> ${label}: ${values.join(", ")}`;
+  const line = (label: string, values: string[]) =>
+    `> ${label}: ${values.map((value) => assertSingleLine(value, label)).join(", ")}`;
   const output = [
     "> [!mia]- 학습 정보",
-    `> 유형: ${metadata.questionType}`,
+    `> 유형: ${assertSingleLine(metadata.questionType, "문제 유형")}`,
     line("핵심", metadata.coreKeywords.map((item) => item.raw)),
     line("보조", metadata.subKeywords.map((item) => item.raw)),
   ];
   if (metadata.followUpLinks?.length) output.push(line("이어보기", metadata.followUpLinks));
-  if (metadata.createdAt) output.push(`> 생성: ${metadata.createdAt}`);
-  if (metadata.updatedAt) output.push(`> 수정: ${metadata.updatedAt}`);
+  if (metadata.createdAt) output.push(`> 생성: ${assertSingleLine(metadata.createdAt, "생성 시각")}`);
+  if (metadata.updatedAt) output.push(`> 수정: ${assertSingleLine(metadata.updatedAt, "수정 시각")}`);
   return output;
 }
 
@@ -44,6 +46,7 @@ export function registerQuestion(
   id = createQuestionId(),
 ): string {
   if (question.id) return updateQuestionMetadata(content, question, metadata);
+  if (!/^mia-q-[A-Za-z0-9-]+$/.test(id)) throw new Error("유효하지 않은 MIA 문제 ID입니다.");
   const newline = content.includes("\r\n") ? "\r\n" : "\n";
   const lines = content.replaceAll("\r\n", "\n").split("\n");
   const insertion = calloutEnd(lines, question.location.questionStartLine);

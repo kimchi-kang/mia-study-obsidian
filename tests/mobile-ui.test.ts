@@ -41,4 +41,14 @@ describe("mobile UI contract", () => {
     expect(styles).toContain("--mia-navbar-clearance");
     expect(styles).toContain("--safe-area-inset-bottom");
   });
+
+  it("keeps dashboard text inside cards at every pane width", () => {
+    expect(styles).toMatch(/\.mia-view\s*\{[\s\S]*?container-type:\s*inline-size/);
+    expect(styles).toMatch(/\.mia-view\s*\{[\s\S]*?overflow-x:\s*hidden/);
+    expect(styles).toMatch(/\.mia-stat\s*\{[^}]*height:\s*auto\s*!important/);
+    expect(styles).toMatch(/\.mia-stat span\s*\{[^}]*overflow-wrap:\s*anywhere/);
+    expect(styles).toContain("@container mia-view (max-width: 1050px)");
+    expect(styles).toContain("@container mia-view (max-width: 600px)");
+    expect(styles).toContain("@container mia-view (max-width: 380px)");
+  });
 });

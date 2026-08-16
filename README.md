@@ -104,3 +104,5 @@ npm run build
 ```bash
 MIA_AUDIT_VAULT="/path/to/vault" npx vitest run tests/vault-audit.test.ts
 ```
+
+더미 문제를 포함한 기능·안전성 검사 항목과 수동 QA 순서는 [`SAFETY-QA.md`](SAFETY-QA.md)에 정리되어 있다.

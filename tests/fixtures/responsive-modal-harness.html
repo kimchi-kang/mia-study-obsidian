@@ -36,6 +36,7 @@
       background: var(--interactive-normal);
     }
     button { min-height: 36px; padding: 6px 14px; }
+    button.mia-stat { height: 36px; }
     button.mod-cta { border-color: var(--interactive-accent); background: var(--interactive-accent); }
     input, textarea, select { width: 100%; min-height: 38px; padding: 8px 10px; }
     textarea { resize: vertical; }
@@ -76,22 +77,34 @@
         <div><h2>MIA Study</h2><span class="mia-badge">12</span></div>
         <nav class="mia-nav">
           <button data-short-label="대시">대시보드</button>
-          <button data-short-label="문제">문제</button>
-          <button data-short-label="키워드">키워드</button>
           <button data-short-label="현황">학습현황</button>
+          <button data-short-label="문제">문제</button>
+          <button data-short-label="취약">취약 문제</button>
+          <button data-short-label="키워드">키워드</button>
         </nav>
       </header>
       <div class="dashboard-copy">
         <div class="mia-stats">
-          <div class="mia-stat"><strong>24</strong><span>전체 문제</span></div>
-          <div class="mia-stat"><strong>7</strong><span>오늘 복습</span></div>
-          <div class="mia-stat"><strong>5</strong><span>새 문제</span></div>
-          <div class="mia-stat"><strong>68%</strong><span>안정 상태</span></div>
+          <button class="mia-stat"><strong>24</strong><span>등록 문제</span></button>
+          <button class="mia-stat"><strong>68%</strong><span>기억 안정 비율</span></button>
+          <button class="mia-stat"><strong>12</strong><span>완전 암기</span></button>
+          <button class="mia-stat"><strong>7</strong><span>오늘 평가</span></button>
+          <button class="mia-stat"><strong>5</strong><span>오늘 복습</span></button>
+          <button class="mia-stat"><strong>3</strong><span>개선 필요</span></button>
         </div>
         <div class="mia-manage-actions">
           <button>과목 추가</button><button class="mod-cta">질문 추가</button><button>키워드 추가</button>
         </div>
-        <article class="mia-primary-card"><h3>오늘 학습을 시작할까요?</h3><p>복습할 문제 7개와 새 문제 5개가 준비되어 있습니다.</p><button class="mod-cta">학습 시작</button></article>
+        <article class="mia-primary-card"><h3>오늘 학습을 시작할까요?</h3><p>복습할 문제 7개와 새 문제 5개가 준비되어 있습니다.</p><div class="mia-inline-actions"><button class="mod-cta">시험 모드 시작</button><button>전체 암기 모드</button></div></article>
+        <h3 class="mia-section-title">과목별 학습</h3>
+        <div class="mia-subject-grid">
+          <article class="mia-subject-card"><strong>공학수학</strong><span>0문제 · 복습 0 · 새 문제 0</span><div class="mia-inline-actions"><button>시험</button><button>암기</button><button>이름 수정</button><button>삭제</button></div></article>
+          <article class="mia-subject-card"><strong>논리회로</strong><span>0문제 · 복습 0 · 새 문제 0</span><div class="mia-inline-actions"><button>시험</button><button>암기</button><button>이름 수정</button><button>삭제</button></div></article>
+          <article class="mia-subject-card"><strong>전자기학</strong><span>1문제 · 복습 0 · 새 문제 1</span><div class="mia-inline-actions"><button>시험</button><button>암기</button><button>이름 수정</button><button>삭제</button></div></article>
+          <article class="mia-subject-card"><strong>전자회로</strong><span>0문제 · 복습 0 · 새 문제 0</span><div class="mia-inline-actions"><button>시험</button><button>암기</button><button>이름 수정</button><button>삭제</button></div></article>
+          <article class="mia-subject-card"><strong>회로이론</strong><span>0문제 · 복습 0 · 새 문제 0</span><div class="mia-inline-actions"><button>시험</button><button>암기</button><button>이름 수정</button><button>삭제</button></div></article>
+          <article class="mia-subject-card"><strong>C언어와 매우 긴 과목 이름 경계값</strong><span>120문제 · 복습 37 · 새 문제 83</span><div class="mia-inline-actions"><button>시험</button><button>암기</button><button>이름 수정</button><button>삭제</button></div></article>
+        </div>
       </div>
     </section>
   </main>
@@ -112,6 +125,7 @@
     const params = new URLSearchParams(location.search);
     const device = params.get("device") || "desktop";
     const size = params.get("size") || "compact";
+    if (params.get("modal") === "0") document.getElementById("modal-container").style.display = "none";
     document.body.classList.toggle("is-phone", device === "phone");
     document.body.classList.toggle("is-tablet", device === "tablet");
     const modal = document.getElementById("modal");

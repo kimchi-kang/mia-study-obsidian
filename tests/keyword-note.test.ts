@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { createKeywordNote, readKeywordMeaning, updateKeywordMeaning, validateKeywordName } from "../src/core/keyword-note";
+import {
+  createKeywordNote,
+  readKeywordMeaning,
+  updateKeywordMeaning,
+  validateKeywordMeaning,
+  validateKeywordName,
+} from "../src/core/keyword-note";
 
 describe("keyword meaning notes", () => {
   it("creates, reads, and updates only the meaning section", () => {
@@ -15,5 +21,11 @@ describe("keyword meaning notes", () => {
     expect(validateKeywordName(" 가우스 법칙 ")).toBe("가우스 법칙");
     expect(() => validateKeywordName("../밖")).toThrow();
     expect(() => validateKeywordName("폴더/키워드")).toThrow();
+  });
+
+  it("rejects headings that could split the managed meaning section", () => {
+    expect(() => validateKeywordMeaning("설명\n\n## 연결\n주입")).toThrow();
+    expect(validateKeywordMeaning("설명\n\n### 세부 내용")).toBe("설명\n\n### 세부 내용");
+    expect(validateKeywordMeaning("```markdown\n## 코드 예시\n```")).toContain("## 코드 예시");
   });
 });
