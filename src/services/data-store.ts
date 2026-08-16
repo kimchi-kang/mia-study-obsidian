@@ -210,15 +210,27 @@ export class MiaDataStore {
   }
 
   async removeReview(questionId: string): Promise<void> {
-    const previous = this.data.reviews[questionId];
-    const quarantined = this.data.quarantinedReviews[questionId];
-    delete this.data.reviews[questionId];
-    delete this.data.quarantinedReviews[questionId];
+    await this.removeReviews([questionId]);
+  }
+
+  async removeReviews(questionIds: readonly string[]): Promise<void> {
+    const ids = [...new Set(questionIds)];
+    if (ids.length === 0) return;
+    const previousReviews = new Map(ids.map((id) => [id, this.data.reviews[id]]));
+    const previousQuarantined = new Map(ids.map((id) => [id, this.data.quarantinedReviews[id]]));
+    for (const id of ids) {
+      delete this.data.reviews[id];
+      delete this.data.quarantinedReviews[id];
+    }
     try {
       await this.persist();
     } catch (error) {
-      if (previous) this.data.reviews[questionId] = previous;
-      if (quarantined !== undefined) this.data.quarantinedReviews[questionId] = quarantined;
+      for (const id of ids) {
+        const review = previousReviews.get(id);
+        const quarantined = previousQuarantined.get(id);
+        if (review) this.data.reviews[id] = review;
+        if (quarantined !== undefined) this.data.quarantinedReviews[id] = quarantined;
+      }
       throw error;
     }
     this.emit();

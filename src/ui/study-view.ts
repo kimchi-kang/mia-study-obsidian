@@ -3,12 +3,13 @@ import { Rating } from "ts-fsrs";
 import type MiaStudyPlugin from "../main";
 import { StudyGrade } from "../core/fsrs-service";
 import { QUESTION_TYPES, KeywordReference, QuestionRecord } from "../core/models";
+import { calculateProgress } from "../core/progress";
 import { QuestionSort, ReviewFilter, queryQuestions } from "../core/question-query";
 import { buildReviewQueue, recommendQuestions } from "../core/recommendation-engine";
 import { errorMessage } from "./error-message";
 
 export const MIA_VIEW_TYPE = "mia-study-view";
-type Route = "dashboard" | "questions" | "keywords" | "study";
+type Route = "dashboard" | "progress" | "questions" | "keywords" | "study";
 type SessionMode = "recall" | "browse";
 
 const GRADE_LABELS: Record<StudyGrade, string> = {
@@ -99,6 +100,7 @@ export class MiaStudyView extends ItemView {
     root.addClass("mia-view");
     this.renderHeader(root);
     if (this.route === "dashboard") this.renderDashboard(root);
+    if (this.route === "progress") this.renderProgress(root);
     if (this.route === "questions") this.renderQuestions(root);
     if (this.route === "keywords") this.renderKeywords(root);
     if (this.route === "study") this.renderStudy(root);
@@ -111,6 +113,7 @@ export class MiaStudyView extends ItemView {
     title.createEl("span", { text: "FSRS-6", cls: "mia-badge" });
     const nav = header.createDiv({ cls: "mia-nav" });
     this.navButton(nav, "대시보드", "dashboard");
+    this.navButton(nav, "학습현황", "progress");
     this.navButton(nav, "문제", "questions");
     this.navButton(nav, "키워드", "keywords");
   }
@@ -176,8 +179,90 @@ export class MiaStudyView extends ItemView {
         subjectActions.createEl("button", { text: "이름 수정" }).addEventListener("click", () => {
           this.plugin.openSubjectEditor(subject);
         });
+        subjectActions.createEl("button", { text: "삭제", cls: "mod-warning" }).addEventListener("click", () => {
+          this.plugin.confirmDeleteSubject(subject);
+        });
       }
     }
+  }
+
+  private renderProgress(root: HTMLElement): void {
+    const questions = this.plugin.index.registered;
+    const progress = calculateProgress(questions, this.plugin.store.reviews, this.plugin.fsrs);
+    root.createEl("h3", { text: "전체 학습현황", cls: "mia-page-title" });
+    const totals = root.createDiv({ cls: "mia-stats" });
+    this.progressStat(totals, "전체 문제", progress.total, "all");
+    this.progressStat(totals, "학습 전", progress.new, "new");
+    this.progressStat(totals, "오늘 복습", progress.due, "due");
+    this.progressStat(totals, "1회 이상 학습", progress.studied, null);
+
+    root.createEl("h3", { text: "최근 평가", cls: "mia-section-title" });
+    const ratings = root.createDiv({ cls: "mia-progress-ratings" });
+    this.progressStat(ratings, "못 암기", progress.again, "again");
+    this.progressStat(ratings, "애매", progress.hard, "hard");
+    this.progressStat(ratings, "암기", progress.good, "good");
+    this.progressStat(ratings, "너무 쉬움", progress.easy, "easy");
+
+    root.createEl("h3", { text: "과목별 현황", cls: "mia-section-title" });
+    const subjectProgress = new Map(progress.bySubject.map((item) => [item.subject, item.counts]));
+    for (const subject of this.plugin.listSubjects()) {
+      if (!subjectProgress.has(subject)) {
+        subjectProgress.set(subject, { total: 0, new: 0, studied: 0, due: 0, again: 0, hard: 0, good: 0, easy: 0 });
+      }
+    }
+    const subjectGrid = root.createDiv({ cls: "mia-progress-subjects" });
+    for (const [subject, counts] of [...subjectProgress].sort(([left], [right]) => left.localeCompare(right, "ko"))) {
+      const card = subjectGrid.createDiv({ cls: "mia-progress-subject" });
+      const heading = card.createDiv({ cls: "mia-progress-subject-heading" });
+      heading.createEl("strong", { text: subject });
+      heading.createEl("span", { text: `${counts.studied}/${counts.total} 학습` });
+      const values = card.createDiv({ cls: "mia-progress-subject-values" });
+      this.progressLink(values, `학습 전 ${counts.new}`, "new", subject);
+      this.progressLink(values, `오늘 복습 ${counts.due}`, "due", subject);
+      this.progressLink(values, `못 암기 ${counts.again}`, "again", subject);
+      this.progressLink(values, `애매 ${counts.hard}`, "hard", subject);
+      this.progressLink(values, `암기 ${counts.good}`, "good", subject);
+      this.progressLink(values, `너무 쉬움 ${counts.easy}`, "easy", subject);
+      const actions = card.createDiv({ cls: "mia-inline-actions" });
+      const subjectQuestions = questions.filter((question) => question.subject === subject);
+      const reviewIds = buildReviewQueue(subjectQuestions, this.plugin.store.reviews, this.plugin.fsrs)
+        .map((question) => question.id);
+      const start = actions.createEl("button", { text: "복습 시작", cls: "mod-cta" });
+      start.disabled = reviewIds.length === 0;
+      start.addEventListener("click", () => this.startReview(reviewIds));
+      actions.createEl("button", { text: "전체 문제" }).addEventListener("click", () => this.showQuestions("all", subject));
+    }
+    if (subjectProgress.size === 0) root.createEl("p", { text: "과목과 질문을 추가하면 학습현황이 표시됩니다.", cls: "mia-empty" });
+  }
+
+  private progressStat(
+    parent: HTMLElement,
+    label: string,
+    value: number,
+    review: ReviewFilter | null,
+  ): void {
+    const card = review
+      ? parent.createEl("button", { cls: "mia-stat mia-progress-stat" })
+      : parent.createDiv({ cls: "mia-stat mia-progress-stat" });
+    card.createEl("strong", { text: String(value) });
+    card.createEl("span", { text: label });
+    if (review) card.addEventListener("click", () => this.showQuestions(review));
+  }
+
+  private progressLink(parent: HTMLElement, label: string, review: ReviewFilter, subject: string): void {
+    const button = parent.createEl("button", { text: label });
+    button.addEventListener("click", () => this.showQuestions(review, subject));
+  }
+
+  private showQuestions(review: ReviewFilter, subject = "all"): void {
+    this.questionText = "";
+    this.questionKeyword = "";
+    this.questionType = "all";
+    this.questionSort = "review";
+    this.questionReview = review;
+    this.questionSubject = subject;
+    this.route = "questions";
+    this.render();
   }
 
   private stat(parent: HTMLElement, label: string, value: number): void {
@@ -196,7 +281,10 @@ export class MiaStudyView extends ItemView {
     search.value = this.questionText;
     const subject = toolbar.createEl("select", { attr: { "aria-label": "과목 필터" } });
     subject.createEl("option", { text: "전체 과목", value: "all" });
-    const subjects = [...new Set(this.plugin.index.registered.map((question) => question.subject))].sort((a, b) => a.localeCompare(b, "ko"));
+    const subjects = [...new Set([
+      ...this.plugin.listSubjects(),
+      ...this.plugin.index.registered.map((question) => question.subject),
+    ])].sort((a, b) => a.localeCompare(b, "ko"));
     subjects.forEach((item) => subject.createEl("option", { text: item, value: item }));
     subject.value = this.questionSubject;
     const type = toolbar.createEl("select", { attr: { "aria-label": "문제 유형 필터" } });
@@ -306,6 +394,9 @@ export class MiaStudyView extends ItemView {
     actions.createEl("button", { text: "학습" }).addEventListener("click", () => this.startReview([question.id]));
     actions.createEl("button", { text: "편집" }).addEventListener("click", () => void this.plugin.openManagedQuestionEditor(question));
     actions.createEl("button", { text: "원문" }).addEventListener("click", () => this.plugin.openQuestion(question));
+    actions.createEl("button", { text: "삭제", cls: "mod-warning" }).addEventListener("click", () => {
+      this.plugin.confirmDeleteQuestion(question);
+    });
   }
 
   private renderKeywords(root: HTMLElement): void {
@@ -370,6 +461,11 @@ export class MiaStudyView extends ItemView {
         browse.addEventListener("click", (event) => {
           event.stopPropagation();
           this.startReview(questions.map((question) => question.id), "browse");
+        });
+        const remove = card.createEl("button", { text: "키워드 삭제", cls: "mod-warning" });
+        remove.addEventListener("click", (event) => {
+          event.stopPropagation();
+          this.plugin.confirmDeleteKeyword(editEntry);
         });
       }
       if (!items.length) grid.createEl("p", {

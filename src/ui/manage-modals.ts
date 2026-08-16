@@ -9,6 +9,37 @@ export interface ManagedQuestionDraft extends ManagedQuestionInput {
   keywordMeanings: Array<{ target: string; label: string; meaning: string }>;
 }
 
+export class ConfirmDeleteModal extends Modal {
+  constructor(
+    app: App,
+    title: string,
+    private readonly description: string,
+    private readonly confirmLabel: string,
+    private readonly onConfirm: () => Promise<void>,
+  ) {
+    super(app);
+    this.setTitle(title);
+  }
+
+  onOpen(): void {
+    this.contentEl.createEl("p", { text: this.description });
+    const actions = new Setting(this.contentEl);
+    actions.addButton((button) => button.setButtonText("취소").onClick(() => this.close()));
+    actions.addButton((button) => button.setButtonText(this.confirmLabel).setWarning().onClick(async () => {
+      button.setDisabled(true);
+      try {
+        await this.onConfirm();
+        this.close();
+      } catch (error) {
+        new Notice(`삭제 실패: ${errorMessage(error)}`);
+        button.setDisabled(false);
+      }
+    }));
+  }
+
+  onClose(): void { this.contentEl.empty(); }
+}
+
 function keywordMeanings(
   keywords: ReturnType<typeof keywordReferencesFromInput>,
   value: string,
@@ -63,7 +94,6 @@ export class ManagedQuestionModal extends Modal {
   private coreMeanings: string;
   private subNames: string;
   private subMeanings: string;
-  private readonly editing: boolean;
 
   constructor(
     app: App,
@@ -75,7 +105,6 @@ export class ManagedQuestionModal extends Modal {
   ) {
     super(app);
     this.subject = existing?.subject ?? subjects[0] ?? "";
-    this.editing = existing !== null;
     this.question = existing?.questionMarkdown ?? "";
     this.answer = existing?.answerMarkdown ?? "";
     this.type = existing?.questionType ?? "정의형";
@@ -90,7 +119,7 @@ export class ManagedQuestionModal extends Modal {
     new Setting(this.contentEl).setName("과목").addDropdown((dropdown) => {
       this.subjects.forEach((subject) => dropdown.addOption(subject, subject));
       dropdown.setValue(this.subject).onChange((value) => { this.subject = value; });
-      dropdown.setDisabled(this.editing || this.subjects.length <= 1);
+      dropdown.setDisabled(this.subjects.length <= 1);
     });
     new Setting(this.contentEl).setName("질문").setDesc("Markdown과 수식을 사용할 수 있습니다.").addTextArea((text) => {
       text.setPlaceholder("면접 질문을 입력하세요.").setValue(this.question).onChange((value) => { this.question = value; });

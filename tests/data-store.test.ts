@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { Rating } from "ts-fsrs";
 import { FsrsService } from "../src/core/fsrs-service";
-import { DataStoreInternals } from "../src/services/data-store";
+import type { Plugin } from "obsidian";
+import { DataStoreInternals, MiaDataStore } from "../src/services/data-store";
 
 describe("settings validation", () => {
   it("clamps invalid values and normalizes roots", () => {
@@ -50,5 +51,25 @@ describe("review data validation", () => {
   it("preserves an existing quarantine while recovering newly valid records", () => {
     const parsed = DataStoreInternals.parseReviews({}, { "mia-q-old": { raw: true } });
     expect(parsed.quarantined).toEqual({ "mia-q-old": { raw: true } });
+  });
+});
+
+describe("review deletion", () => {
+  it("removes several question records in one persisted update", async () => {
+    const writes: unknown[] = [];
+    const plugin = {
+      loadData: async () => ({}),
+      saveData: async (value: unknown) => { writes.push(value); },
+    } as unknown as Plugin;
+    const store = new MiaDataStore(plugin);
+    await store.load();
+    const fsrs = new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500 });
+    const review = fsrs.rate(undefined, Rating.Good, new Date("2026-08-16T00:00:00.000Z"));
+    await store.setReview("one", review);
+    await store.setReview("two", review);
+    const before = writes.length;
+    await store.removeReviews(["one", "two", "one"]);
+    expect(store.reviews).toEqual({});
+    expect(writes).toHaveLength(before + 1);
   });
 });
