@@ -2,6 +2,7 @@
 .mia-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 14px; }
 .mia-header > div:first-child { display: flex; align-items: center; gap: 9px; }
 .mia-header h2 { margin: 0; }
+.mia-back-button { white-space: nowrap; padding-inline: 9px; }
 .mia-badge { background: var(--interactive-accent); color: var(--text-on-accent); border-radius: 999px; padding: 2px 8px; font-size: var(--font-ui-smaller); }
 .mia-nav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .mia-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 20px; }
@@ -80,6 +81,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   .mia-row-actions { flex-wrap: wrap; }
   .mia-row-actions button { flex: 1 1 42%; }
   .mia-nav { justify-content: flex-start; width: 100%; }
+  .mia-back-button { min-height: var(--input-height); }
   .mia-page-actions button { width: 100%; }
 }
 
