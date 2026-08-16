@@ -3,13 +3,19 @@ import { Rating } from "ts-fsrs";
 import type MiaStudyPlugin from "../main";
 import { StudyGrade } from "../core/fsrs-service";
 import { QUESTION_TYPES, KeywordReference, QuestionRecord } from "../core/models";
+import {
+  MiaNavigationHistory,
+  MiaRoute,
+  SwipePoint,
+  TrackpadBackGesture,
+  isBackSwipe,
+} from "../core/navigation";
 import { calculateProgress } from "../core/progress";
 import { QuestionSort, ReviewFilter, queryQuestions } from "../core/question-query";
 import { buildReviewQueue, recommendQuestions } from "../core/recommendation-engine";
 import { errorMessage } from "./error-message";
 
 export const MIA_VIEW_TYPE = "mia-study-view";
-type Route = "dashboard" | "progress" | "questions" | "keywords" | "study";
 type SessionMode = "recall" | "browse";
 
 const GRADE_LABELS: Record<StudyGrade, string> = {
@@ -34,7 +40,9 @@ function keywordKey(keyword: KeywordReference): string {
 }
 
 export class MiaStudyView extends ItemView {
-  private route: Route = "dashboard";
+  private readonly routeHistory = new MiaNavigationHistory();
+  private readonly trackpadBackGesture = new TrackpadBackGesture();
+  private touchStart: SwipePoint | null = null;
   private queue: string[] = [];
   private queueIndex = 0;
   private answerVisible = false;
@@ -64,6 +72,7 @@ export class MiaStudyView extends ItemView {
       this.plugin.index.subscribe(() => this.render()),
       this.plugin.store.subscribe(() => { if (!this.isMutatingReview) this.render(); }),
     ];
+    this.registerNavigationGestures();
     this.render();
   }
 
@@ -73,7 +82,7 @@ export class MiaStudyView extends ItemView {
   }
 
   showDashboard(): void {
-    this.route = "dashboard";
+    this.routeHistory.reset();
     this.render();
   }
 
@@ -87,8 +96,64 @@ export class MiaStudyView extends ItemView {
     this.sessionMode = mode;
     this.answerVisible = mode === "browse";
     this.lastRated = null;
-    this.route = "study";
+    this.routeHistory.navigate("study");
     this.render();
+  }
+
+  private get route(): MiaRoute { return this.routeHistory.current; }
+
+  private navigate(route: MiaRoute): void {
+    this.routeHistory.navigate(route);
+    this.render();
+  }
+
+  private goBack(): void {
+    if (!this.routeHistory.canGoBack) return;
+    this.routeHistory.back();
+    this.render();
+  }
+
+  private registerNavigationGestures(): void {
+    this.registerDomEvent(this.contentEl, "touchstart", (event: TouchEvent) => {
+      if (!this.routeHistory.canGoBack || event.touches.length !== 1 || this.isGestureBlocked(event.target)) {
+        this.touchStart = null;
+        return;
+      }
+      const touch = event.touches.item(0);
+      this.touchStart = touch ? { x: touch.clientX, y: touch.clientY, at: event.timeStamp } : null;
+    }, { passive: true });
+    this.registerDomEvent(this.contentEl, "touchend", (event: TouchEvent) => {
+      const start = this.touchStart;
+      this.touchStart = null;
+      const touch = event.changedTouches.item(0);
+      if (!start || !touch || !this.routeHistory.canGoBack) return;
+      if (!isBackSwipe(start, { x: touch.clientX, y: touch.clientY, at: event.timeStamp })) return;
+      event.preventDefault();
+      this.goBack();
+    }, { passive: false });
+    this.registerDomEvent(this.contentEl, "touchcancel", () => { this.touchStart = null; });
+    this.registerDomEvent(this.contentEl, "wheel", (event: WheelEvent) => {
+      if (!this.routeHistory.canGoBack || this.isGestureBlocked(event.target)) return;
+      if (!this.trackpadBackGesture.update(event.deltaX, event.deltaY, event.timeStamp)) return;
+      event.preventDefault();
+      this.goBack();
+    }, { passive: false });
+    this.registerDomEvent(this.contentEl.ownerDocument, "keydown", (event: KeyboardEvent) => {
+      if (!this.routeHistory.canGoBack || this.isGestureBlocked(event.target)) return;
+      if (this.app.workspace.getActiveViewOfType(MiaStudyView) !== this) return;
+      if (this.contentEl.ownerDocument.querySelector(".modal-container")) return;
+      const shortcut = (event.metaKey && event.key === "[")
+        || (event.altKey && event.key === "ArrowLeft")
+        || event.key === "Escape";
+      if (!shortcut) return;
+      event.preventDefault();
+      this.goBack();
+    }, { capture: true });
+  }
+
+  private isGestureBlocked(target: EventTarget | null): boolean {
+    return target instanceof Element
+      && target.closest("button, input, textarea, select, option, a, [contenteditable='true']") !== null;
   }
 
   private render(): void {
@@ -109,6 +174,11 @@ export class MiaStudyView extends ItemView {
   private renderHeader(root: HTMLElement): void {
     const header = root.createDiv({ cls: "mia-header" });
     const title = header.createDiv();
+    if (this.routeHistory.canGoBack) {
+      const back = title.createEl("button", { text: "← 뒤로", cls: "mia-back-button" });
+      back.setAttr("aria-label", "이전 MIA 화면으로 돌아가기");
+      back.addEventListener("click", () => this.goBack());
+    }
     title.createEl("h2", { text: "MIA Study" });
     title.createEl("span", { text: "FSRS-6", cls: "mia-badge" });
     const nav = header.createDiv({ cls: "mia-nav" });
@@ -118,9 +188,9 @@ export class MiaStudyView extends ItemView {
     this.navButton(nav, "키워드", "keywords");
   }
 
-  private navButton(parent: HTMLElement, label: string, route: Route): void {
+  private navButton(parent: HTMLElement, label: string, route: MiaRoute): void {
     const button = parent.createEl("button", { text: label, cls: this.route === route ? "mod-cta" : "" });
-    button.addEventListener("click", () => { this.route = route; this.render(); });
+    button.addEventListener("click", () => this.navigate(route));
   }
 
   private renderDashboard(root: HTMLElement): void {
@@ -261,8 +331,7 @@ export class MiaStudyView extends ItemView {
     this.questionSort = "review";
     this.questionReview = review;
     this.questionSubject = subject;
-    this.route = "questions";
-    this.render();
+    this.navigate("questions");
   }
 
   private stat(parent: HTMLElement, label: string, value: number): void {
