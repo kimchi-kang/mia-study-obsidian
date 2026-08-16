@@ -3,6 +3,8 @@ import { parseQuestionFile } from "../src/core/question-parser";
 import {
   appendManagedQuestion,
   createSubjectBank,
+  deleteCurrentManagedQuestion,
+  renameSubjectBank,
   replaceCurrentManagedQuestion,
   validateSubjectName,
 } from "../src/core/managed-question";
@@ -67,9 +69,51 @@ describe("managed question documents", () => {
     expect(updated).toContain("> 이어보기: [[다른과목/문제은행#^mia-q-next|후속 질문]]");
   });
 
+  it("deletes exactly one ID while keeping neighboring questions", () => {
+    const path = "전공면접대비/지리학/문제은행.md";
+    const content = appendManagedQuestion(
+      appendManagedQuestion(createSubjectBank("지리학"), first, "mia-q-one"),
+      { ...first, questionMarkdown: "환율 법칙은?" },
+      "mia-q-two",
+    );
+    const original = parseQuestionFile(path, content).questions[0];
+    expect(original).toBeDefined();
+    if (!original) return;
+    const updated = deleteCurrentManagedQuestion(
+      content,
+      original,
+      (latest) => parseQuestionFile(path, latest).questions,
+    );
+    const parsed = parseQuestionFile(path, updated).questions;
+    expect(parsed.map((question) => question.id)).toEqual(["mia-q-two"]);
+    expect(parsed[0]?.questionMarkdown).toBe("환율 법칙은?");
+    expect(updated).not.toContain("레시피 원칙이란 무엇인가?");
+  });
+
+  it("keeps an empty subject bank valid after deleting its last question", () => {
+    const path = "전공면접대비/지리학/문제은행.md";
+    const content = appendManagedQuestion(createSubjectBank("지리학"), first, "mia-q-one");
+    const original = parseQuestionFile(path, content).questions[0];
+    expect(original).toBeDefined();
+    if (!original) return;
+    const updated = deleteCurrentManagedQuestion(
+      content,
+      original,
+      (latest) => parseQuestionFile(path, latest).questions,
+    );
+    expect(updated).toBe("# 지리학 문제은행\n");
+    expect(parseQuestionFile(path, updated).questions).toEqual([]);
+  });
+
   it("validates subject folder names", () => {
     expect(validateSubjectName(" 지리학 ")).toBe("지리학");
     expect(() => validateSubjectName("과제/이론")).toThrow();
     expect(() => validateSubjectName("..")).toThrow();
+  });
+
+  it("renames only the generated subject-bank title", () => {
+    expect(renameSubjectBank("# 과제 문제은행\n\n본문\n", "과제", "요리 기초"))
+      .toBe("# 요리 기초 문제은행\n\n본문\n");
+    expect(renameSubjectBank("# 사용자 제목\n", "과제", "요리 기초")).toBe("# 사용자 제목\n");
   });
 });

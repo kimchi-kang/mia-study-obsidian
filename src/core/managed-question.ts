@@ -62,6 +62,13 @@ export function createSubjectBank(subject: string): string {
   return `# ${subject} 문제은행\n`;
 }
 
+export function renameSubjectBank(content: string, current: string, next: string): string {
+  const newline = newlineFor(content);
+  const lines = content.replaceAll("\r\n", "\n").split("\n");
+  if (lines[0]?.trim() === `# ${current} 문제은행`) lines[0] = `# ${next} 문제은행`;
+  return lines.join(newline);
+}
+
 export function appendManagedQuestion(content: string, input: ManagedQuestionInput, id: string): string {
   const newline = newlineFor(content);
   const base = content.replaceAll("\r\n", "\n").trimEnd();
@@ -82,7 +89,7 @@ export function replaceManagedQuestion(
   return lines.join(newline);
 }
 
-function followUpLinksIn(content: string, question: QuestionRecord): string[] | undefined {
+export function followUpLinksIn(content: string, question: QuestionRecord): string[] | undefined {
   if (question.location.metadataStartLine === null || question.location.metadataEndLine === null) return undefined;
   const lines = content.replaceAll("\r\n", "\n").split("\n");
   for (let index = question.location.metadataStartLine; index < question.location.metadataEndLine; index += 1) {
@@ -90,6 +97,27 @@ function followUpLinksIn(content: string, question: QuestionRecord): string[] | 
     if (match?.[1]) return [match[1]];
   }
   return undefined;
+}
+
+export function deleteManagedQuestion(content: string, question: QuestionRecord): string {
+  if (!question.id) throw new Error("등록되지 않은 문제는 삭제할 수 없습니다.");
+  const newline = newlineFor(content);
+  const lines = content.replaceAll("\r\n", "\n").split("\n");
+  const start = question.location.headingLine;
+  let end = question.location.answerEndLine;
+  while (end < lines.length && lines[end]?.trim() === "") end += 1;
+  lines.splice(start, end - start);
+  return `${lines.join("\n").trimEnd()}\n`.replaceAll("\n", newline);
+}
+
+export function deleteCurrentManagedQuestion(
+  content: string,
+  original: QuestionRecord,
+  parse: (content: string) => QuestionRecord[],
+): string {
+  const current = findCurrentQuestion(parse(content), original);
+  if (!current) throw new Error("원문이 바뀌어 삭제할 문제를 안전하게 찾지 못했습니다. 다시 열어 주세요.");
+  return deleteManagedQuestion(content, current);
 }
 
 export function replaceCurrentManagedQuestion(

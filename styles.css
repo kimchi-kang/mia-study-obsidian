@@ -3,7 +3,7 @@
 .mia-header > div:first-child { display: flex; align-items: center; gap: 9px; }
 .mia-header h2 { margin: 0; }
 .mia-badge { background: var(--interactive-accent); color: var(--text-on-accent); border-radius: 999px; padding: 2px 8px; font-size: var(--font-ui-smaller); }
-.mia-nav { display: flex; gap: 6px; }
+.mia-nav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .mia-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 20px; }
 .mia-stat, .mia-primary-card, .mia-study-card, .mia-row, .mia-keyword { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-l); background: var(--background-primary-alt); }
 .mia-stat { padding: 16px; display: flex; flex-direction: column; gap: 4px; }
@@ -15,6 +15,17 @@
 .mia-manage-actions button { flex: 1 1 130px; }
 .mia-page-actions { justify-content: flex-end; }
 .mia-section-title { margin-top: 28px; }
+.mia-page-title { margin-top: 0; }
+.mia-progress-ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.mia-progress-stat { appearance: none; color: var(--text-normal); text-align: left; }
+button.mia-progress-stat { cursor: pointer; }
+button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
+.mia-progress-subjects { display: grid; gap: 10px; }
+.mia-progress-subject { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-l); padding: 14px; background: var(--background-primary-alt); }
+.mia-progress-subject-heading { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.mia-progress-subject-heading span { color: var(--text-muted); }
+.mia-progress-subject-values { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 10px; }
+.mia-progress-subject-values button { overflow-wrap: anywhere; }
 .mia-subject-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
 .mia-subject-card { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-l); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
 .mia-subject-card > span { color: var(--text-muted); }
@@ -65,7 +76,10 @@
   .mia-view { padding: 14px 14px 28px; }
   .mia-header, .mia-row, .mia-candidate, .mia-result-bar { align-items: stretch; flex-direction: column; }
   .mia-ratings { grid-template-columns: repeat(2, 1fr); }
-  .mia-row-actions button { flex: 1; }
+  .mia-progress-ratings, .mia-progress-subject-values { grid-template-columns: repeat(2, 1fr); }
+  .mia-row-actions { flex-wrap: wrap; }
+  .mia-row-actions button { flex: 1 1 42%; }
+  .mia-nav { justify-content: flex-start; width: 100%; }
   .mia-page-actions button { width: 100%; }
 }
 

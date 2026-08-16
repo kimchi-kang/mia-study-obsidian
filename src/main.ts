@@ -5,10 +5,14 @@ import { keywordNotePath } from "./core/keyword-path";
 import {
   appendManagedQuestion,
   createSubjectBank,
+  deleteCurrentManagedQuestion,
+  followUpLinksIn,
+  renameSubjectBank,
   replaceCurrentManagedQuestion,
   validateSubjectName,
 } from "./core/managed-question";
-import { MiaSettings, QuestionRecord } from "./core/models";
+import { keywordReferenceMatches, removeKeywordReferences, renameKeywordReferences } from "./core/keyword-reference";
+import { KeywordReference, MiaSettings, QuestionRecord } from "./core/models";
 import { parseQuestionFile } from "./core/question-parser";
 import {
   isManagedSubjectNote,
@@ -29,6 +33,7 @@ import { MiaSettingTab } from "./ui/settings-tab";
 import { MIA_VIEW_TYPE, MiaStudyView } from "./ui/study-view";
 import { KeywordMeaningModal } from "./ui/keyword-modal";
 import {
+  ConfirmDeleteModal,
   KeywordEditorModal,
   ManagedQuestionDraft,
   ManagedQuestionModal,
@@ -60,6 +65,11 @@ export default class MiaStudyPlugin extends Plugin {
     this.addCommand({ id: "add-managed-question", name: "GUI로 질문 추가", callback: () => void this.openManagedQuestionEditor() });
     this.addCommand({ id: "add-managed-keyword", name: "GUI로 키워드 추가", callback: () => this.openKeywordEditor() });
     this.addCommand({
+      id: "sync-managed-subject-notes",
+      name: "과목 노트 다시 동기화",
+      callback: () => void this.syncAllSubjectNotes(true),
+    });
+    this.addCommand({
       id: "register-question-at-cursor",
       name: "커서의 문제를 MIA에 등록/편집",
       editorCheckCallback: (checking, editor, view) => {
@@ -82,7 +92,14 @@ export default class MiaStudyPlugin extends Plugin {
       },
     });
     this.addSettingTab(new MiaSettingTab(this.app, this));
-    this.app.workspace.onLayoutReady(() => void this.index.start());
+    this.app.workspace.onLayoutReady(() => {
+      void (async () => {
+        await this.index.start();
+        await this.syncAllSubjectNotes(false);
+      })().catch((error) => {
+        new Notice(`MIA Study 초기 동기화 실패: ${error instanceof Error ? error.message : String(error)}`);
+      });
+    });
   }
 
   onunload(): void {
@@ -163,6 +180,17 @@ export default class MiaStudyPlugin extends Plugin {
     }).open();
   }
 
+  confirmDeleteSubject(subject: string): void {
+    const count = this.index.registered.filter((question) => question.subject === subject).length;
+    new ConfirmDeleteModal(
+      this.app,
+      `${subject} 과목 삭제`,
+      `${subject} 폴더와 질문 ${count}개를 Obsidian 휴지통으로 이동합니다. 해당 질문의 FSRS 복습 기록도 삭제됩니다.`,
+      "과목 삭제",
+      () => this.deleteSubject(subject),
+    ).open();
+  }
+
   async openManagedQuestionEditor(question: QuestionRecord | null = null): Promise<void> {
     const subjects = [...new Set([...(question ? [question.subject] : []), ...this.listSubjects()])];
     if (subjects.length === 0) {
@@ -191,6 +219,27 @@ export default class MiaStudyPlugin extends Plugin {
         this.saveKeyword(entry, name, value),
       ).open();
     })().catch((error) => new Notice(`키워드 열기 실패: ${error instanceof Error ? error.message : String(error)}`));
+  }
+
+  confirmDeleteKeyword(entry: KeywordNoteEntry): void {
+    const linked = this.questionsUsingKeyword([entry.target]);
+    new ConfirmDeleteModal(
+      this.app,
+      `${entry.name} 키워드 삭제`,
+      `키워드 노트를 휴지통으로 이동하고 연결된 질문 ${linked.length}개의 핵심·보조 키워드 목록에서도 제거합니다.`,
+      "키워드 삭제",
+      () => this.deleteKeyword(entry),
+    ).open();
+  }
+
+  confirmDeleteQuestion(question: QuestionRecord & { id: string }): void {
+    new ConfirmDeleteModal(
+      this.app,
+      "질문 삭제",
+      `“${question.heading}”을 문제은행과 ${question.subject} 노트에서 삭제하고 FSRS 복습 기록도 제거합니다.`,
+      "질문 삭제",
+      () => this.deleteManagedQuestion(question),
+    ).open();
   }
 
   async openQuestion(question: QuestionRecord): Promise<void> {
@@ -268,11 +317,28 @@ export default class MiaStudyPlugin extends Plugin {
     }
     await this.index.rebuild();
     const bank = this.app.vault.getAbstractFileByPath(normalizePath(`${nextPath}/문제은행.md`));
+    if (bank instanceof TFile) {
+      await this.app.vault.process(bank, (content) => renameSubjectBank(content, current, next));
+      await this.index.refreshFile(bank);
+    }
     const questions = bank instanceof TFile
       ? parseQuestionFile(bank.path, await this.app.vault.cachedRead(bank), { subject: next }).questions
       : [];
     await this.syncSubjectNote(next, questions);
     new Notice(`${current} 과목을 ${next}(으)로 변경했습니다.`);
+  }
+
+  private async deleteSubject(subject: string): Promise<void> {
+    const folderPath = normalizePath(`${this.managedRoot}/${subject}`);
+    const folder = this.app.vault.getAbstractFileByPath(folderPath);
+    if (!(folder instanceof TFolder)) throw new Error("과목 폴더를 찾지 못했습니다.");
+    const ids = this.index.registered
+      .filter((question) => question.subject === subject)
+      .map((question) => question.id);
+    await this.app.fileManager.trashFile(folder);
+    await this.store.removeReviews(ids);
+    await this.index.rebuild();
+    new Notice(`${subject} 과목을 휴지통으로 이동했습니다.`);
   }
 
   private async createManagedQuestion(draft: ManagedQuestionDraft): Promise<void> {
@@ -297,11 +363,18 @@ export default class MiaStudyPlugin extends Plugin {
   }
 
   private async updateManagedQuestion(question: QuestionRecord, draft: ManagedQuestionDraft): Promise<void> {
-    if (draft.subject !== question.subject) throw new Error("질문 수정 중에는 과목을 변경할 수 없습니다.");
+    if (!question.id) throw new Error("등록되지 않은 질문은 GUI에서 전체 수정할 수 없습니다.");
+    const nextSubject = validateSubjectName(draft.subject);
     const file = this.app.vault.getAbstractFileByPath(question.filePath);
     if (!(file instanceof TFile)) throw new Error("문제 파일을 찾지 못했습니다.");
     await this.assertSubjectNoteWritable(question.subject);
+    await this.assertSubjectNoteWritable(nextSubject);
     await this.saveDraftKeywordMeanings(draft);
+    if (nextSubject !== question.subject) {
+      await this.moveManagedQuestion(question as QuestionRecord & { id: string }, { ...draft, subject: nextSubject });
+      new Notice("질문을 다른 과목으로 옮기고 두 과목 노트를 갱신했습니다.");
+      return;
+    }
     let updatedContent = "";
     await this.app.vault.process(file, (content) => {
       updatedContent = replaceCurrentManagedQuestion(
@@ -318,6 +391,80 @@ export default class MiaStudyPlugin extends Plugin {
       parseQuestionFile(question.filePath, updatedContent, { subject: question.subject }).questions,
     );
     new Notice("질문과 학습 정보를 수정했습니다.");
+  }
+
+  private async moveManagedQuestion(
+    question: QuestionRecord & { id: string },
+    draft: ManagedQuestionDraft,
+  ): Promise<void> {
+    const oldFile = this.app.vault.getAbstractFileByPath(question.filePath);
+    if (!(oldFile instanceof TFile)) throw new Error("기존 문제 파일을 찾지 못했습니다.");
+    const nextFolder = normalizePath(`${this.managedRoot}/${draft.subject}`);
+    await this.ensureFolder(nextFolder);
+    const nextPath = normalizePath(`${nextFolder}/문제은행.md`);
+    let nextFile = this.app.vault.getAbstractFileByPath(nextPath);
+    if (!nextFile) nextFile = await this.app.vault.create(nextPath, createSubjectBank(draft.subject));
+    if (!(nextFile instanceof TFile)) throw new Error("이동할 문제은행 경로가 파일이 아닙니다.");
+
+    let nextContent = "";
+    await this.app.vault.process(nextFile, (content) => {
+      if (parseQuestionFile(nextPath, content).questions.some((item) => item.id === question.id)) {
+        throw new Error("이동할 문제은행에 같은 문제 ID가 이미 있습니다.");
+      }
+      nextContent = appendManagedQuestion(content, draft, question.id);
+      return nextContent;
+    });
+
+    let oldContent = "";
+    try {
+      await this.app.vault.process(oldFile, (content) => {
+        oldContent = deleteCurrentManagedQuestion(
+          content,
+          question,
+          (latest) => parseQuestionFile(question.filePath, latest).questions,
+        );
+        return oldContent;
+      });
+    } catch (error) {
+      await this.app.vault.process(nextFile, (content) => deleteCurrentManagedQuestion(
+        content,
+        { ...question, filePath: nextPath, subject: draft.subject },
+        (latest) => parseQuestionFile(nextPath, latest, { subject: draft.subject }).questions,
+      ));
+      throw error;
+    }
+    await this.index.refreshFile(oldFile);
+    await this.index.refreshFile(nextFile);
+    await this.syncSubjectNote(
+      question.subject,
+      parseQuestionFile(question.filePath, oldContent, { subject: question.subject }).questions,
+    );
+    await this.syncSubjectNote(
+      draft.subject,
+      parseQuestionFile(nextPath, nextContent, { subject: draft.subject }).questions,
+    );
+  }
+
+  private async deleteManagedQuestion(question: QuestionRecord & { id: string }): Promise<void> {
+    const file = this.app.vault.getAbstractFileByPath(question.filePath);
+    if (!(file instanceof TFile)) throw new Error("문제 파일을 찾지 못했습니다.");
+    await this.assertSubjectNoteWritable(question.subject);
+    let updatedContent = "";
+    await this.app.vault.process(file, (content) => {
+      updatedContent = deleteCurrentManagedQuestion(
+        content,
+        question,
+        (latest) => parseQuestionFile(question.filePath, latest).questions,
+      );
+      return updatedContent;
+    });
+    await this.index.refreshFile(file);
+    await this.syncSubjectNote(
+      question.subject,
+      parseQuestionFile(question.filePath, updatedContent, { subject: question.subject }).questions,
+    );
+    await this.store.removeReview(question.id);
+    new Notice("질문을 문제은행과 과목 노트에서 삭제했습니다.");
   }
 
   private async saveDraftKeywordMeanings(draft: ManagedQuestionDraft): Promise<void> {
@@ -368,7 +515,63 @@ export default class MiaStudyPlugin extends Plugin {
     const renamed = this.app.vault.getAbstractFileByPath(nextPath);
     if (!(renamed instanceof TFile)) throw new Error("키워드 이름을 바꾼 뒤 노트를 찾지 못했습니다.");
     await this.app.vault.process(renamed, (content) => updateKeywordMeaning(content, name, meaning));
+    const nextTarget = nextPath.replace(/\.md$/i, "");
+    await this.rewriteKeywordReferences(
+      [current.target, nextTarget],
+      (references) => renameKeywordReferences(references, [current.target, nextTarget], nextTarget, name),
+    );
+    await this.index.rebuild();
     new Notice(`${current.name} 키워드를 ${name}(으)로 변경했습니다.`);
+  }
+
+  private questionsUsingKeyword(targets: readonly string[]): Array<QuestionRecord & { id: string }> {
+    return this.index.registered.filter((question) =>
+      [...question.coreKeywords, ...question.subKeywords]
+        .some((reference) => keywordReferenceMatches(reference, targets)),
+    );
+  }
+
+  private async rewriteKeywordReferences(
+    targets: readonly string[],
+    transform: (references: readonly KeywordReference[]) => KeywordReference[],
+  ): Promise<void> {
+    const byFile = new Map<string, Array<QuestionRecord & { id: string }>>();
+    for (const question of this.questionsUsingKeyword(targets)) {
+      const questions = byFile.get(question.filePath) ?? [];
+      questions.push(question);
+      byFile.set(question.filePath, questions);
+    }
+    for (const [filePath, questions] of byFile) {
+      const file = this.app.vault.getAbstractFileByPath(filePath);
+      if (!(file instanceof TFile)) throw new Error(`${filePath} 문제 파일을 찾지 못했습니다.`);
+      await this.app.vault.process(file, (content) => {
+        let updated = content;
+        for (const original of questions) {
+          const current = findCurrentQuestion(parseQuestionFile(filePath, updated).questions, original);
+          if (!current) throw new Error("키워드가 연결된 문제를 최신 원문에서 찾지 못했습니다.");
+          const followUpLinks = followUpLinksIn(updated, current);
+          updated = updateQuestionMetadata(updated, current, {
+            questionType: current.questionType,
+            coreKeywords: transform(current.coreKeywords),
+            subKeywords: transform(current.subKeywords),
+            ...(followUpLinks ? { followUpLinks } : {}),
+          });
+        }
+        return updated;
+      });
+      await this.index.refreshFile(file);
+    }
+  }
+
+  private async deleteKeyword(entry: KeywordNoteEntry): Promise<void> {
+    await this.rewriteKeywordReferences(
+      [entry.target],
+      (references) => removeKeywordReferences(references, [entry.target]),
+    );
+    const file = this.app.vault.getAbstractFileByPath(entry.filePath);
+    if (file instanceof TFile) await this.app.fileManager.trashFile(file);
+    await this.index.rebuild();
+    new Notice(`${entry.name} 키워드를 삭제하고 연결된 문제를 갱신했습니다.`);
   }
 
   private async loadKeywordMeanings(question: QuestionRecord): Promise<Map<string, string>> {
@@ -418,6 +621,26 @@ export default class MiaStudyPlugin extends Plugin {
     const existing = this.app.vault.getAbstractFileByPath(path);
     if (existing instanceof TFile) await this.app.vault.process(existing, () => content);
     else await this.app.vault.create(path, content);
+  }
+
+  private async syncAllSubjectNotes(notify: boolean): Promise<void> {
+    let count = 0;
+    const failures: string[] = [];
+    for (const subject of this.listSubjects()) {
+      try {
+        const bankPath = normalizePath(`${this.managedRoot}/${subject}/문제은행.md`);
+        const bank = this.app.vault.getAbstractFileByPath(bankPath);
+        const questions = bank instanceof TFile
+          ? parseQuestionFile(bankPath, await this.app.vault.cachedRead(bank), { subject }).questions
+          : [];
+        await this.syncSubjectNote(subject, questions);
+        count += 1;
+      } catch (error) {
+        failures.push(`${subject}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    if (failures.length) new Notice(`과목 노트 ${failures.length}개 동기화 실패: ${failures.join(" / ")}`);
+    if (notify) new Notice(`과목 노트 ${count}개를 문제은행과 다시 동기화했습니다.`);
   }
 
   private keywordContainerName(): string | null {
