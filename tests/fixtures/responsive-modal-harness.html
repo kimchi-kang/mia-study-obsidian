@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MIA responsive modal harness</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --background-primary: #171717;
+      --background-primary-alt: #202020;
+      --background-modifier-border: #3a3a3a;
+      --background-modifier-cover: rgb(0 0 0 / 62%);
+      --text-normal: #e7e7e7;
+      --text-muted: #aaa;
+      --text-on-accent: #fff;
+      --interactive-accent: #7c4dff;
+      --interactive-normal: #343434;
+      --radius-m: 10px;
+      --radius-l: 16px;
+      --font-ui-small: 13px;
+      --font-ui-smaller: 12px;
+      --safe-area-inset-bottom: 0px;
+      --shadow-s: 0 4px 18px rgb(0 0 0 / 25%);
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+      background: var(--background-primary);
+      color: var(--text-normal);
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    button, input, textarea, select { font: inherit; color: inherit; }
+    button, input, textarea, select {
+      border: 1px solid #555;
+      border-radius: 9px;
+      background: var(--interactive-normal);
+    }
+    button { min-height: 36px; padding: 6px 14px; }
+    button.mod-cta { border-color: var(--interactive-accent); background: var(--interactive-accent); }
+    input, textarea, select { width: 100%; min-height: 38px; padding: 8px 10px; }
+    textarea { resize: vertical; }
+    .workspace { height: 100%; overflow: auto; }
+    .modal-container {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--background-modifier-cover);
+    }
+    .modal {
+      position: relative;
+      border: 1px solid var(--background-modifier-border);
+      border-radius: var(--radius-l);
+      background: var(--background-primary-alt);
+      box-shadow: 0 16px 50px rgb(0 0 0 / 45%);
+    }
+    .modal-header { padding: 18px 20px 8px; }
+    .modal-title { font-size: 20px; font-weight: 700; }
+    .modal-content { padding: 8px 20px 20px; }
+    .setting-item { display: flex; align-items: center; gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--background-modifier-border); }
+    .setting-item:last-child { border-bottom: 0; }
+    .setting-item-info { flex: 1 1 42%; min-width: 0; }
+    .setting-item-name { font-weight: 600; }
+    .setting-item-description { margin-top: 4px; color: var(--text-muted); font-size: 12px; line-height: 1.4; }
+    .setting-item-control { display: flex; flex: 1 1 58%; justify-content: flex-end; gap: 8px; }
+    .dashboard-copy { max-width: 1100px; margin: 0 auto; }
+    .keyboard-open { --mia-visible-viewport-height: 100dvh; --mia-viewport-offset-top: 0px; }
+  </style>
+</head>
+<body>
+  <main class="workspace is-floating-nav">
+    <section class="mia-view">
+      <header class="mia-header">
+        <div><h2>MIA Study</h2><span class="mia-badge">12</span></div>
+        <nav class="mia-nav">
+          <button data-short-label="대시">대시보드</button>
+          <button data-short-label="문제">문제</button>
+          <button data-short-label="키워드">키워드</button>
+          <button data-short-label="현황">학습현황</button>
+        </nav>
+      </header>
+      <div class="dashboard-copy">
+        <div class="mia-stats">
+          <div class="mia-stat"><strong>24</strong><span>전체 문제</span></div>
+          <div class="mia-stat"><strong>7</strong><span>오늘 복습</span></div>
+          <div class="mia-stat"><strong>5</strong><span>새 문제</span></div>
+          <div class="mia-stat"><strong>68%</strong><span>안정 상태</span></div>
+        </div>
+        <div class="mia-manage-actions">
+          <button>과목 추가</button><button class="mod-cta">질문 추가</button><button>키워드 추가</button>
+        </div>
+        <article class="mia-primary-card"><h3>오늘 학습을 시작할까요?</h3><p>복습할 문제 7개와 새 문제 5개가 준비되어 있습니다.</p><button class="mod-cta">학습 시작</button></article>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-container mia-keyboard-modal-container" id="modal-container">
+    <section class="modal mia-keyboard-modal mia-editor-modal-compact" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <header class="modal-header"><div class="modal-title" id="modal-title">과목 추가</div></header>
+      <div class="modal-content" id="modal-content">
+        <div class="setting-item">
+          <div class="setting-item-info"><div class="setting-item-name">과목 이름</div></div>
+          <div class="setting-item-control"><input value="C언어" aria-label="과목 이름"></div>
+        </div>
+        <div class="setting-item"><div class="setting-item-info"></div><div class="setting-item-control"><button class="mod-cta">저장</button></div></div>
+      </div>
+    </section>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const device = params.get("device") || "desktop";
+    const size = params.get("size") || "compact";
+    document.body.classList.toggle("is-phone", device === "phone");
+    document.body.classList.toggle("is-tablet", device === "tablet");
+    const modal = document.getElementById("modal");
+    modal.className = `modal mia-keyboard-modal mia-editor-modal-${size}`;
+    if (params.get("keyboard") === "1") document.getElementById("modal-container").classList.add("mia-keyboard-open", "keyboard-open");
+    if (size === "long") {
+      document.getElementById("modal-title").textContent = "질문 추가";
+      document.getElementById("modal-content").innerHTML = Array.from({ length: 8 }, (_, index) => `
+        <div class="setting-item">
+          <div class="setting-item-info"><div class="setting-item-name">${["과목", "새 과목 이름", "질문", "정답", "질문 유형", "핵심 키워드", "핵심 키워드 의미", "보조 키워드"][index]}</div><div class="setting-item-description">질문과 키워드를 관리합니다.</div></div>
+          <div class="setting-item-control">${index === 2 || index === 3 ? "<textarea rows='4'>샘플 입력 내용</textarea>" : "<input value='샘플 입력'>"}</div>
+        </div>`).join("") + `<div class="setting-item"><div class="setting-item-info"></div><div class="setting-item-control"><button class="mod-cta">저장</button></div></div>`;
+    }
+  </script>
+</body>
+</html>

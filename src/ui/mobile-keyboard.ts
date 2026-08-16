@@ -28,7 +28,7 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
     focusTimer = window.setTimeout(() => {
       const active = document.activeElement;
       if (!surface.hasClass("mia-keyboard-open") || !editableTarget(active) || !focusRoot.contains(active)) return;
-      active.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+      active.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
     }, 80);
   };
 
@@ -99,8 +99,9 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
 export abstract class KeyboardAwareModal extends Modal {
   private keyboardBinding: KeyboardViewportBinding | null = null;
 
-  constructor(app: App) {
+  constructor(app: App, size: "compact" | "medium" | "long" = "medium") {
     super(app);
+    this.modalEl.addClass(`mia-editor-modal-${size}`);
   }
 
   open(): void {
