@@ -12,6 +12,10 @@
   - `artifacts/ui-qa/ipadpro11-portrait-question-modal.png`
   - `artifacts/ui-qa/ipadpro11-landscape-question-modal.png`
   - `artifacts/ui-qa/macbookair13-subject-modal.png`
+  - `artifacts/ui-qa/comparison-mac-before-after.jpg`
+  - `artifacts/ui-qa/comparison-ipad-before-after.jpg`
+  - `artifacts/ui-qa/dashboard-overflow-fixed-phone-402x874.jpg`
+  - `artifacts/ui-qa/dashboard-overflow-fixed-narrow-320x700.jpg`
 
 The supplied screenshot is the failing state rather than a target to copy exactly. The requested visual change is to remove the unused full-height modal area while preserving the existing Obsidian/MIA visual language.
 
@@ -45,6 +49,16 @@ The supplied screenshot is the failing state rather than a target to copy exactl
 - The MacBook Air compact modal is centered at 440 × 212.5 CSS pixels inside 1440 × 900, without excess height.
 - No browser console warnings or errors were recorded.
 
+### Iteration 3 — passed: dashboard text containment
+
+- **P1 · Statistic labels escaped their cards on Mac and iPad.** Obsidian's base button height overrode the content needs of the two-line statistic buttons. The cards now force natural height, center both lines, and allow safe wrapping for long or translated labels.
+- **P1 · Window-width media queries missed narrow Obsidian panes.** The dashboard now uses its own inline size as the responsive basis, so split panes and sidebars reflow even when the physical device remains wide.
+- **P2 · Wide rows and long subject names could force horizontal clipping.** Navigation, statistic, action, and subject grids now use shrink-safe columns; direct children have zero minimum width and long labels can wrap.
+- At 997 × 569, the statistic grid reflows to three columns. All six labels remain inside 91px-tall cards and the page has no horizontal overflow.
+- At 1194 × 834, all six statistic cards and subject cards remain within the MIA view. The supplied iPad failing capture and the fixed implementation were reviewed side by side.
+- At 402 × 874 and 320 × 700, navigation, statistics, actions, and subjects collapse without any document-level horizontal overflow.
+- DOM boundary checks reported zero overflowing statistic labels and zero overflowing subject-card descendants at all four checked widths.
+
 ## Fidelity surfaces
 
 - **Fonts and typography:** production typography remains inherited from Obsidian; no font family, weight, line-height, wrapping, or label hierarchy was changed. Text remains legible at all checked sizes.
@@ -58,6 +72,8 @@ The supplied screenshot is the failing state rather than a target to copy exactl
 - Verified the long phone form scrolls to the final save action without scrolling the background page.
 - Verified 44px phone touch targets remain in force.
 - Verified no horizontal overflow at 402px, 834px, 1194px, or 1440px.
+- Verified no horizontal overflow at the additional 320px and 997px dashboard widths.
+- Verified every statistic label stays within its button boundary at 320px, 402px, 997px, and 1194px.
 - Verified the compact modal no longer covers the complete keyboard-visible region.
 - Screenshot evidence cannot prove screen-reader announcements or physical iOS keyboard focus behavior; those remain device-runtime checks.
 
@@ -71,6 +87,7 @@ The combined mobile comparison shows the same keyboard-visible 402 × 539 conten
 - [x] Cap and internally scroll long editors.
 - [x] Preserve mobile touch sizing and full-width save action.
 - [x] Validate iPhone 16 Pro, iPad Pro 11-inch portrait/landscape, and MacBook Air 13-inch viewports.
+- [x] Validate dashboard text containment and pane-aware reflow from 320px through 1194px.
 - [x] Run unit tests and production build.
 
 final result: passed
