@@ -21,9 +21,16 @@ export function renameKeywordReferences(
   nextTarget: string,
   nextLabel: string,
 ): KeywordReference[] {
-  return references.map((reference) => keywordReferenceMatches(reference, targets)
+  const renamed = references.map((reference) => keywordReferenceMatches(reference, targets)
     ? { target: nextTarget, label: nextLabel, raw: `[[${nextTarget}|${nextLabel}]]` }
     : reference);
+  const seen = new Set<string>();
+  return renamed.filter((reference) => {
+    const key = normalizeTarget(reference.target);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export function removeKeywordReferences(

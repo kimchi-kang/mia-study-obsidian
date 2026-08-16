@@ -1,5 +1,6 @@
 import { MarkdownView, Notice, Plugin, TFile, TFolder, normalizePath } from "obsidian";
-import { FsrsService } from "./core/fsrs-service";
+import { FsrsService, StudyGrade } from "./core/fsrs-service";
+import { planFollowUpChanges, questionBlockLink } from "./core/follow-up";
 import { createKeywordNote, readKeywordMeaning, updateKeywordMeaning, validateKeywordName } from "./core/keyword-note";
 import { keywordNotePath } from "./core/keyword-path";
 import {
@@ -32,6 +33,9 @@ import { QuestionMetadataModal } from "./ui/metadata-modal";
 import { MiaSettingTab } from "./ui/settings-tab";
 import { MIA_VIEW_TYPE, MiaStudyView } from "./ui/study-view";
 import { KeywordMeaningModal } from "./ui/keyword-modal";
+import { FollowUpModal } from "./ui/follow-up-modal";
+import { QuestionDetailModal } from "./ui/question-detail-modal";
+import { recommendQuestions } from "./core/recommendation-engine";
 import {
   ConfirmDeleteModal,
   KeywordEditorModal,
@@ -272,10 +276,12 @@ export default class MiaStudyPlugin extends Plugin {
     const file = this.app.vault.getAbstractFileByPath(question.filePath);
     if (!(file instanceof TFile)) throw new Error("문제 파일을 찾지 못했습니다.");
     const id = question.id ?? createQuestionId();
+    const now = new Date().toISOString();
     await this.app.vault.process(file, (content) => {
       const latest = findCurrentQuestion(parseQuestionFile(question.filePath, content).questions, question);
       if (!latest) throw new Error("원문이 바뀌어 문제 위치를 안전하게 찾지 못했습니다. 창을 닫고 다시 등록해 주세요.");
-      return latest.id ? updateQuestionMetadata(content, latest, metadata) : registerQuestion(content, latest, metadata, id);
+      const next = { ...metadata, createdAt: latest.createdAt ?? now, updatedAt: now };
+      return latest.id ? updateQuestionMetadata(content, latest, next) : registerQuestion(content, latest, next, id);
     });
     await this.index.refreshFile(file);
     new Notice(question.id ? "MIA 학습 정보를 저장했습니다." : "문제를 MIA에 등록했습니다.");
@@ -325,6 +331,9 @@ export default class MiaStudyPlugin extends Plugin {
       ? parseQuestionFile(bank.path, await this.app.vault.cachedRead(bank), { subject: next }).questions
       : [];
     await this.syncSubjectNote(next, questions);
+    await this.refreshIncomingFollowUpLinks(this.index.registered
+      .filter((question) => question.subject === next)
+      .map((question) => question.id));
     new Notice(`${current} 과목을 ${next}(으)로 변경했습니다.`);
   }
 
@@ -338,6 +347,7 @@ export default class MiaStudyPlugin extends Plugin {
     await this.app.fileManager.trashFile(folder);
     await this.store.removeReviews(ids);
     await this.index.rebuild();
+    await this.cleanupFollowUpIds(ids);
     new Notice(`${subject} 과목을 휴지통으로 이동했습니다.`);
   }
 
@@ -351,10 +361,11 @@ export default class MiaStudyPlugin extends Plugin {
     if (!(file instanceof TFile)) throw new Error("문제은행 경로가 파일이 아닙니다.");
     await this.assertSubjectNoteWritable(subject);
     const id = createQuestionId();
+    const now = new Date().toISOString();
     await this.saveDraftKeywordMeanings(draft);
     let updatedContent = "";
     await this.app.vault.process(file, (content) => {
-      updatedContent = appendManagedQuestion(content, draft, id);
+      updatedContent = appendManagedQuestion(content, { ...draft, createdAt: now, updatedAt: now }, id);
       return updatedContent;
     });
     await this.index.refreshFile(file);
@@ -381,7 +392,7 @@ export default class MiaStudyPlugin extends Plugin {
         content,
         question,
         (latest) => parseQuestionFile(question.filePath, latest).questions,
-        draft,
+        { ...draft, createdAt: question.createdAt ?? new Date().toISOString(), updatedAt: new Date().toISOString() },
       );
       return updatedContent;
     });
@@ -390,6 +401,7 @@ export default class MiaStudyPlugin extends Plugin {
       question.subject,
       parseQuestionFile(question.filePath, updatedContent, { subject: question.subject }).questions,
     );
+    await this.refreshIncomingFollowUpLinks([question.id]);
     new Notice("질문과 학습 정보를 수정했습니다.");
   }
 
@@ -411,7 +423,15 @@ export default class MiaStudyPlugin extends Plugin {
       if (parseQuestionFile(nextPath, content).questions.some((item) => item.id === question.id)) {
         throw new Error("이동할 문제은행에 같은 문제 ID가 이미 있습니다.");
       }
-      nextContent = appendManagedQuestion(content, draft, question.id);
+      nextContent = appendManagedQuestion(content, {
+        ...draft,
+        followUpLinks: question.followUpIds
+          .map((id) => this.index.questionById(id))
+          .filter((target): target is QuestionRecord & { id: string } => Boolean(target))
+          .map(questionBlockLink),
+        createdAt: question.createdAt ?? new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }, question.id);
       return nextContent;
     });
 
@@ -443,6 +463,7 @@ export default class MiaStudyPlugin extends Plugin {
       draft.subject,
       parseQuestionFile(nextPath, nextContent, { subject: draft.subject }).questions,
     );
+    await this.refreshIncomingFollowUpLinks([question.id]);
   }
 
   private async deleteManagedQuestion(question: QuestionRecord & { id: string }): Promise<void> {
@@ -464,6 +485,7 @@ export default class MiaStudyPlugin extends Plugin {
       parseQuestionFile(question.filePath, updatedContent, { subject: question.subject }).questions,
     );
     await this.store.removeReview(question.id);
+    await this.cleanupFollowUpIds([question.id]);
     new Notice("질문을 문제은행과 과목 노트에서 삭제했습니다.");
   }
 
@@ -510,11 +532,20 @@ export default class MiaStudyPlugin extends Plugin {
     const source = this.app.vault.getAbstractFileByPath(current.filePath);
     if (!(source instanceof TFile)) throw new Error("기존 키워드 노트를 찾지 못했습니다.");
     const nextPath = keywordNotePath(name, name, this.store.settings.keywordFolder);
-    if (this.app.vault.getAbstractFileByPath(nextPath)) throw new Error("같은 이름의 키워드가 이미 있습니다.");
-    await this.app.fileManager.renameFile(source, nextPath);
-    const renamed = this.app.vault.getAbstractFileByPath(nextPath);
-    if (!(renamed instanceof TFile)) throw new Error("키워드 이름을 바꾼 뒤 노트를 찾지 못했습니다.");
-    await this.app.vault.process(renamed, (content) => updateKeywordMeaning(content, name, meaning));
+    const destination = this.app.vault.getAbstractFileByPath(nextPath);
+    if (destination instanceof TFolder) throw new Error("변경할 키워드 경로가 폴더와 겹칩니다.");
+    if (destination instanceof TFile) {
+      const sourceMeaning = readKeywordMeaning(await this.app.vault.cachedRead(source));
+      const destinationMeaning = readKeywordMeaning(await this.app.vault.cachedRead(destination));
+      const mergedMeaning = [...new Set([destinationMeaning, sourceMeaning, meaning].map((item) => item.trim()).filter(Boolean))].join("\n\n");
+      await this.app.vault.process(destination, (content) => updateKeywordMeaning(content, name, mergedMeaning));
+      await this.app.fileManager.trashFile(source);
+    } else {
+      await this.app.fileManager.renameFile(source, nextPath);
+      const renamed = this.app.vault.getAbstractFileByPath(nextPath);
+      if (!(renamed instanceof TFile)) throw new Error("키워드 이름을 바꾼 뒤 노트를 찾지 못했습니다.");
+      await this.app.vault.process(renamed, (content) => updateKeywordMeaning(content, name, meaning));
+    }
     const nextTarget = nextPath.replace(/\.md$/i, "");
     await this.rewriteKeywordReferences(
       [current.target, nextTarget],
@@ -550,11 +581,16 @@ export default class MiaStudyPlugin extends Plugin {
           const current = findCurrentQuestion(parseQuestionFile(filePath, updated).questions, original);
           if (!current) throw new Error("키워드가 연결된 문제를 최신 원문에서 찾지 못했습니다.");
           const followUpLinks = followUpLinksIn(updated, current);
+          const coreKeywords = transform(current.coreKeywords);
+          const subKeywords = transform(current.subKeywords)
+            .filter((reference) => !keywordReferenceMatches(reference, coreKeywords.map((keyword) => keyword.target)));
           updated = updateQuestionMetadata(updated, current, {
             questionType: current.questionType,
-            coreKeywords: transform(current.coreKeywords),
-            subKeywords: transform(current.subKeywords),
+            coreKeywords,
+            subKeywords,
             ...(followUpLinks ? { followUpLinks } : {}),
+            createdAt: current.createdAt ?? new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           });
         }
         return updated;
@@ -581,6 +617,94 @@ export default class MiaStudyPlugin extends Plugin {
       output.set(keyword.target, file ? readKeywordMeaning(await this.app.vault.cachedRead(file)) : "");
     }
     return output;
+  }
+
+  openFollowUpEditor(question: QuestionRecord & { id: string }): void {
+    const current = this.index.questionById(question.id) ?? question;
+    new FollowUpModal(this.app, current, this.index.registered, async (ids, bidirectional) => {
+      const changes = planFollowUpChanges(current, ids, this.index.registered, bidirectional);
+      await this.applyFollowUpChanges(changes);
+      new Notice(`${changes.size}개 질문의 연결을 갱신했습니다.`);
+    }).open();
+  }
+
+  async openQuestionDetail(question: QuestionRecord & { id: string }): Promise<void> {
+    const current = this.index.questionById(question.id) ?? question;
+    const meanings = await this.loadKeywordMeanings(current);
+    const recommendations = recommendQuestions(current, this.index.registered, this.store.reviews, this.fsrs);
+    new QuestionDetailModal(this.app, current, this.store.getReview(current.id), recommendations, meanings, {
+      study: () => { void this.activateView([current.id]); },
+      edit: () => { void this.openManagedQuestionEditor(current); },
+      connections: () => this.openFollowUpEditor(current),
+      remove: () => this.confirmDeleteQuestion(current),
+      openSource: () => { void this.openQuestion(current); },
+      showKeyword: (target, label) => this.showKeywordMeaning(target, label, current.filePath),
+      rate: (grade) => this.rateQuestionDirectly(current.id, grade),
+      resetReview: () => this.store.removeReview(current.id),
+    }).open();
+  }
+
+  private async rateQuestionDirectly(id: string, grade: StudyGrade): Promise<void> {
+    await this.store.setReview(id, this.fsrs.rate(this.store.getReview(id), grade));
+  }
+
+  private async cleanupFollowUpIds(removedIds: readonly string[]): Promise<void> {
+    const removed = new Set(removedIds);
+    const changes = new Map<string, string[]>();
+    for (const question of this.index.registered) {
+      if (removed.has(question.id) || !question.followUpIds.some((id) => removed.has(id))) continue;
+      changes.set(question.id, question.followUpIds.filter((id) => !removed.has(id)));
+    }
+    if (changes.size) await this.applyFollowUpChanges(changes);
+  }
+
+  private async refreshIncomingFollowUpLinks(targetIds: readonly string[]): Promise<void> {
+    const targets = new Set(targetIds);
+    const changes = new Map<string, string[]>();
+    for (const question of this.index.registered) {
+      if (question.followUpIds.some((id) => targets.has(id))) changes.set(question.id, question.followUpIds);
+    }
+    if (changes.size) await this.applyFollowUpChanges(changes);
+  }
+
+  private async applyFollowUpChanges(changes: ReadonlyMap<string, readonly string[]>): Promise<void> {
+    const snapshot = new Map(this.index.registered.map((question) => [question.id, question]));
+    const byFile = new Map<string, string[]>();
+    for (const id of changes.keys()) {
+      const question = snapshot.get(id);
+      if (!question) continue;
+      const ids = byFile.get(question.filePath) ?? [];
+      ids.push(id);
+      byFile.set(question.filePath, ids);
+    }
+    const updatedAt = new Date().toISOString();
+    for (const [filePath, ids] of byFile) {
+      const file = this.app.vault.getAbstractFileByPath(filePath);
+      if (!(file instanceof TFile)) throw new Error(`${filePath} 문제 파일을 찾지 못했습니다.`);
+      await this.app.vault.process(file, (content) => {
+        let updated = content;
+        for (const id of ids) {
+          const original = snapshot.get(id);
+          if (!original) continue;
+          const current = findCurrentQuestion(parseQuestionFile(filePath, updated).questions, original);
+          if (!current) throw new Error(`연결을 수정할 질문을 찾지 못했습니다: ${original.heading}`);
+          const links = (changes.get(id) ?? [])
+            .map((targetId) => snapshot.get(targetId) ?? this.index.questionById(targetId))
+            .filter((target): target is QuestionRecord & { id: string } => Boolean(target))
+            .map(questionBlockLink);
+          updated = updateQuestionMetadata(updated, current, {
+            questionType: current.questionType,
+            coreKeywords: current.coreKeywords,
+            subKeywords: current.subKeywords,
+            followUpLinks: links,
+            createdAt: current.createdAt ?? updatedAt,
+            updatedAt,
+          });
+        }
+        return updated;
+      });
+      await this.index.refreshFile(file);
+    }
   }
 
   private async readKeywordNote(path: string): Promise<string> {

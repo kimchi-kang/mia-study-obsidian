@@ -26,13 +26,6 @@ function keywordSet(question: QuestionRecord, kind: "core" | "sub"): Set<string>
     .filter((keyword) => Boolean(keyword) && !COMMON_KEYWORDS.has(keyword)));
 }
 
-function daysOverdue(review: QuestionReviewState | undefined, now: Date): number {
-  if (!review) return 0;
-  const due = new Date(review.card.due).getTime();
-  if (!Number.isFinite(due) || due >= now.getTime()) return 0;
-  return (now.getTime() - due) / 86_400_000;
-}
-
 export function recommendQuestions(
   base: QuestionRecord,
   questions: QuestionRecord[],
@@ -72,25 +65,24 @@ export function recommendQuestions(
         reasons.push("같은 과목");
       }
       const candidateTypeIndex = QUESTION_TYPES.indexOf(candidate.questionType);
-      if (candidateTypeIndex > baseTypeIndex && candidateTypeIndex <= baseTypeIndex + 2) {
+      if (candidateTypeIndex === baseTypeIndex + 1) {
         score += 1;
         reasons.push(`${candidate.questionType} 흐름`);
       }
 
       const review = candidate.id ? reviews[candidate.id] : undefined;
       if (review?.lastRating === Rating.Again) {
-        score += 2;
+        score += 1;
         reasons.push("최근 못암기");
       } else if (review?.lastRating === Rating.Hard) {
-        score += 1;
+        score += 0.5;
         reasons.push("최근 애매");
       }
       if (fsrsService.isDue(review, now)) {
-        score += 3 + Math.min(7, daysOverdue(review, now));
         reasons.push("복습 기한 경과");
       }
 
-      return { question: candidate, score, reasons };
+      return direct || score >= 5 ? { question: candidate, score, reasons } : null;
     })
     .filter((item): item is QuestionRecommendation => item !== null)
     .sort((left, right) => right.score - left.score || left.question.heading.localeCompare(right.question.heading, "ko"))

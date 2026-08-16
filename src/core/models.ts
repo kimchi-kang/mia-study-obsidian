@@ -32,6 +32,8 @@ export interface QuestionRecord {
   coreKeywords: KeywordReference[];
   subKeywords: KeywordReference[];
   followUpIds: string[];
+  createdAt?: string;
+  updatedAt?: string;
   location: QuestionLocation;
 }
 

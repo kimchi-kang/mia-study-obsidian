@@ -2,8 +2,8 @@ import { Rating } from "ts-fsrs";
 import { FsrsService } from "./fsrs-service";
 import { QuestionRecord, QuestionReviewState, QuestionType } from "./models";
 
-export type ReviewFilter = "all" | "due" | "new" | "again" | "hard" | "good" | "easy";
-export type QuestionSort = "review" | "title" | "subject" | "type";
+export type ReviewFilter = "all" | "due" | "new" | "again" | "hard" | "good" | "easy" | "weak" | "stable" | "today";
+export type QuestionSort = "review" | "title" | "subject" | "type" | "created" | "updated" | "weak" | "ambiguous";
 
 export interface QuestionQuery {
   text: string;
@@ -49,11 +49,37 @@ function matchesReview(
   if (filter === "all") return true;
   if (filter === "due") return fsrsService.isDue(review, now);
   if (filter === "new") return fsrsService.isNew(review);
+  if (filter === "stable") return fsrsService.isStable(review, now);
+  if (filter === "today") {
+    const reviewed = review?.history.at(-1)?.review;
+    if (!reviewed) return false;
+    const date = new Date(reviewed);
+    return date.getFullYear() === now.getFullYear()
+      && date.getMonth() === now.getMonth()
+      && date.getDate() === now.getDate();
+  }
   const rating = review?.lastRating;
+  if (filter === "weak") return rating === Rating.Again || rating === Rating.Hard;
   if (filter === "again") return rating === Rating.Again;
   if (filter === "hard") return rating === Rating.Hard;
   if (filter === "good") return rating === Rating.Good;
   return rating === Rating.Easy;
+}
+
+export function weaknessUrgency(review: QuestionReviewState | undefined, now = new Date()): number {
+  if (!review || (review.lastRating !== Rating.Again && review.lastRating !== Rating.Hard)) return 0;
+  const base = review.lastRating === Rating.Again ? 100 : 60;
+  const due = new Date(review.card.due).getTime();
+  const overdue = Number.isFinite(due) && due < now.getTime()
+    ? Math.min(30, Math.floor((now.getTime() - due) / 86_400_000))
+    : 0;
+  return base + overdue;
+}
+
+function timestamp(question: RegisteredQuestion, key: "createdAt" | "updatedAt"): number {
+  const value = question[key];
+  const time = value ? Date.parse(value) : 0;
+  return Number.isFinite(time) ? time : 0;
 }
 
 function dueTime(question: RegisteredQuestion, reviews: Readonly<Record<string, QuestionReviewState>>): number {
@@ -100,9 +126,23 @@ export function queryQuestions(
     if (query.sort === "type") {
       return left.questionType.localeCompare(right.questionType, "ko") || left.heading.localeCompare(right.heading, "ko");
     }
+    if (query.sort === "created" || query.sort === "updated") {
+      const key = query.sort === "created" ? "createdAt" : "updatedAt";
+      return timestamp(right, key) - timestamp(left, key) || left.heading.localeCompare(right.heading, "ko");
+    }
+    if (query.sort === "weak") {
+      return weaknessUrgency(reviews[right.id], now) - weaknessUrgency(reviews[left.id], now)
+        || dueTime(left, reviews) - dueTime(right, reviews)
+        || left.heading.localeCompare(right.heading, "ko");
+    }
+    if (query.sort === "ambiguous") {
+      const leftHard = reviews[left.id]?.lastRating === Rating.Hard ? 0 : 1;
+      const rightHard = reviews[right.id]?.lastRating === Rating.Hard ? 0 : 1;
+      return leftHard - rightHard || dueTime(left, reviews) - dueTime(right, reviews)
+        || left.heading.localeCompare(right.heading, "ko");
+    }
     const priority = reviewPriority(left, reviews, fsrsService, now) - reviewPriority(right, reviews, fsrsService, now);
     if (priority !== 0) return priority;
     return dueTime(left, reviews) - dueTime(right, reviews) || left.heading.localeCompare(right.heading, "ko");
   });
 }
-
