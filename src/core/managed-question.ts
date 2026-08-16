@@ -8,6 +8,8 @@ export interface ManagedQuestionInput {
   coreKeywords: KeywordReference[];
   subKeywords: KeywordReference[];
   followUpLinks?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 function newlineFor(content: string): string {
@@ -39,6 +41,8 @@ function metadataLines(input: ManagedQuestionInput): string[] {
     `> 보조: ${values(input.subKeywords)}`,
   ];
   if (input.followUpLinks?.length) lines.push(`> 이어보기: ${input.followUpLinks.join(", ")}`);
+  if (input.createdAt) lines.push(`> 생성: ${input.createdAt}`);
+  if (input.updatedAt) lines.push(`> 수정: ${input.updatedAt}`);
   return lines;
 }
 
@@ -99,6 +103,20 @@ export function followUpLinksIn(content: string, question: QuestionRecord): stri
   return undefined;
 }
 
+export function timestampsIn(content: string, question: QuestionRecord): Pick<ManagedQuestionInput, "createdAt" | "updatedAt"> {
+  if (question.location.metadataStartLine === null || question.location.metadataEndLine === null) return {};
+  const lines = content.replaceAll("\r\n", "\n").split("\n");
+  let createdAt: string | undefined;
+  let updatedAt: string | undefined;
+  for (let index = question.location.metadataStartLine; index < question.location.metadataEndLine; index += 1) {
+    const created = lines[index]?.match(/^>\s*생성\s*:\s*(.+?)\s*$/)?.[1];
+    const updated = lines[index]?.match(/^>\s*수정\s*:\s*(.+?)\s*$/)?.[1];
+    if (created) createdAt = created;
+    if (updated) updatedAt = updated;
+  }
+  return { ...(createdAt ? { createdAt } : {}), ...(updatedAt ? { updatedAt } : {}) };
+}
+
 export function deleteManagedQuestion(content: string, question: QuestionRecord): string {
   if (!question.id) throw new Error("등록되지 않은 문제는 삭제할 수 없습니다.");
   const newline = newlineFor(content);
@@ -129,7 +147,14 @@ export function replaceCurrentManagedQuestion(
   const current = findCurrentQuestion(parse(content), original);
   if (!current) throw new Error("원문이 바뀌어 문제 위치를 안전하게 찾지 못했습니다. 다시 열어 주세요.");
   const preserved = input.followUpLinks === undefined ? followUpLinksIn(content, current) : input.followUpLinks;
-  return replaceManagedQuestion(content, current, { ...input, ...(preserved ? { followUpLinks: preserved } : {}) });
+  const timestamps = timestampsIn(content, current);
+  return replaceManagedQuestion(content, current, {
+    ...input,
+    ...timestamps,
+    ...(preserved ? { followUpLinks: preserved } : {}),
+    ...(input.createdAt ? { createdAt: input.createdAt } : {}),
+    ...(input.updatedAt ? { updatedAt: input.updatedAt } : {}),
+  });
 }
 
 export function validateSubjectName(value: string): string {
@@ -141,4 +166,4 @@ export function validateSubjectName(value: string): string {
   return name;
 }
 
-export const ManagedQuestionInternals = { cleanHeading, followUpLinksIn, quoteCallout };
+export const ManagedQuestionInternals = { cleanHeading, followUpLinksIn, timestampsIn, quoteCallout };

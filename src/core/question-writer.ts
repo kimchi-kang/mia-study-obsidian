@@ -5,6 +5,8 @@ export interface QuestionMetadataInput {
   coreKeywords: KeywordReference[];
   subKeywords: KeywordReference[];
   followUpLinks?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 function metadataLines(metadata: QuestionMetadataInput): string[] {
@@ -16,6 +18,8 @@ function metadataLines(metadata: QuestionMetadataInput): string[] {
     line("보조", metadata.subKeywords.map((item) => item.raw)),
   ];
   if (metadata.followUpLinks?.length) output.push(line("이어보기", metadata.followUpLinks));
+  if (metadata.createdAt) output.push(`> 생성: ${metadata.createdAt}`);
+  if (metadata.updatedAt) output.push(`> 수정: ${metadata.updatedAt}`);
   return output;
 }
 

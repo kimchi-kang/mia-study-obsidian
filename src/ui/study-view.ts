@@ -1,22 +1,17 @@
-import { Component, ItemView, MarkdownRenderer, Notice, WorkspaceLeaf } from "obsidian";
+import { Component, ItemView, MarkdownRenderer, Notice, Platform, ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { Rating } from "ts-fsrs";
 import type MiaStudyPlugin from "../main";
 import { StudyGrade } from "../core/fsrs-service";
-import { QUESTION_TYPES, KeywordReference, QuestionRecord } from "../core/models";
-import {
-  MiaNavigationHistory,
-  MiaRoute,
-  SwipePoint,
-  TrackpadBackGesture,
-  isBackSwipe,
-} from "../core/navigation";
+import { QUESTION_TYPES, KeywordReference, QuestionRecord, QuestionReviewState } from "../core/models";
+import { MiaRoute, MiaSessionMode, parseMiaNavigationState } from "../core/navigation";
 import { calculateProgress } from "../core/progress";
-import { QuestionSort, ReviewFilter, queryQuestions } from "../core/question-query";
+import { QuestionSort, ReviewFilter, queryQuestions, weaknessUrgency } from "../core/question-query";
 import { buildReviewQueue, recommendQuestions } from "../core/recommendation-engine";
 import { errorMessage } from "./error-message";
+import { bindKeyboardViewport, KeyboardViewportBinding } from "./mobile-keyboard";
+import { StudyResult, StudyResultModal } from "./study-result-modal";
 
 export const MIA_VIEW_TYPE = "mia-study-view";
-type SessionMode = "recall" | "browse";
 
 const GRADE_LABELS: Record<StudyGrade, string> = {
   [Rating.Again]: "못 암기",
@@ -40,16 +35,11 @@ function keywordKey(keyword: KeywordReference): string {
 }
 
 export class MiaStudyView extends ItemView {
-  private readonly routeHistory = new MiaNavigationHistory();
-  private readonly trackpadBackGesture = new TrackpadBackGesture();
-  private touchStart: SwipePoint | null = null;
-  private pointerStart: SwipePoint | null = null;
-  private pointerId: number | null = null;
-  private lastSwipeBackAt = Number.NEGATIVE_INFINITY;
+  private route: MiaRoute = "dashboard";
   private queue: string[] = [];
   private queueIndex = 0;
   private answerVisible = false;
-  private sessionMode: SessionMode = "recall";
+  private sessionMode: MiaSessionMode = "recall";
   private lastRated: { id: string; queueIndex: number } | null = null;
   private isMutatingReview = false;
   private questionText = "";
@@ -58,12 +48,22 @@ export class MiaStudyView extends ItemView {
   private questionReview: ReviewFilter = "all";
   private questionKeyword = "";
   private questionSort: QuestionSort = "review";
+  private questionPage = 0;
   private candidateLimit = 100;
+  private sessionSeed: string[] = [];
+  private sessionOrigin: MiaRoute = "dashboard";
+  private sessionStartedAt = Date.now();
+  private sessionBaselines = new Map<string, QuestionReviewState | undefined>();
+  private sessionGrades = new Map<string, StudyGrade>();
+  private sessionSkipped = new Set<string>();
+  private resultShown = false;
   private renderComponent: Component | null = null;
+  private keyboardViewport: KeyboardViewportBinding | null = null;
   private unsubscribers: Array<() => void> = [];
 
   constructor(leaf: WorkspaceLeaf, private readonly plugin: MiaStudyPlugin) {
     super(leaf);
+    this.navigation = true;
   }
 
   getViewType(): string { return MIA_VIEW_TYPE; }
@@ -71,127 +71,72 @@ export class MiaStudyView extends ItemView {
   getIcon(): string { return "brain-circuit"; }
 
   async onOpen(): Promise<void> {
+    this.keyboardViewport = bindKeyboardViewport(this.contentEl);
     this.unsubscribers = [
       this.plugin.index.subscribe(() => this.render()),
       this.plugin.store.subscribe(() => { if (!this.isMutatingReview) this.render(); }),
     ];
-    this.registerNavigationGestures();
     this.render();
   }
 
   async onClose(): Promise<void> {
+    this.keyboardViewport?.destroy();
+    this.keyboardViewport = null;
     this.unsubscribers.forEach((unsubscribe) => unsubscribe());
     this.renderComponent?.unload();
   }
 
   showDashboard(): void {
-    this.routeHistory.reset();
-    this.render();
+    this.navigate("dashboard");
   }
 
-  startReview(questionIds?: string[], mode: SessionMode = "recall"): void {
+  startReview(questionIds?: string[], mode: MiaSessionMode = "recall"): void {
     const questions = this.plugin.index.registered;
     const validIds = new Set(questions.map((question) => question.id));
     const requested = questionIds ?? buildReviewQueue(questions, this.plugin.store.reviews, this.plugin.fsrs)
       .map((question) => question.id);
     this.queue = [...new Set(requested.filter((id) => validIds.has(id)))];
+    this.sessionSeed = [...this.queue];
+    if (this.route !== "study") this.sessionOrigin = this.route;
     this.queueIndex = 0;
     this.sessionMode = mode;
     this.answerVisible = mode === "browse";
     this.lastRated = null;
-    this.routeHistory.navigate("study");
-    this.render();
+    this.sessionStartedAt = Date.now();
+    this.sessionBaselines.clear();
+    this.sessionGrades.clear();
+    this.sessionSkipped.clear();
+    this.resultShown = false;
+    this.navigate("study");
   }
 
-  private get route(): MiaRoute { return this.routeHistory.current; }
+  getState(): Record<string, unknown> {
+    return {
+      route: this.route,
+      queue: [...this.queue],
+      queueIndex: this.queueIndex,
+      answerVisible: this.answerVisible,
+      sessionMode: this.sessionMode,
+    };
+  }
+
+  async setState(state: unknown, result: ViewStateResult): Promise<void> {
+    const next = parseMiaNavigationState(state);
+    result.history = next.route !== this.route;
+    this.route = next.route;
+    this.queue = next.queue;
+    this.queueIndex = next.queueIndex;
+    this.answerVisible = next.answerVisible;
+    this.sessionMode = next.sessionMode;
+    this.render();
+  }
 
   private navigate(route: MiaRoute): void {
-    this.routeHistory.navigate(route);
-    this.render();
-  }
-
-  private goBack(): void {
-    if (!this.routeHistory.canGoBack) return;
-    this.routeHistory.back();
-    this.render();
-  }
-
-  private registerNavigationGestures(): void {
-    const document = this.contentEl.ownerDocument;
-    this.registerDomEvent(document, "touchstart", (event: TouchEvent) => {
-      if (!this.canStartSwipe(event.target) || event.touches.length !== 1) {
-        this.touchStart = null;
-        return;
-      }
-      const touch = event.touches.item(0);
-      this.touchStart = touch ? { x: touch.clientX, y: touch.clientY, at: event.timeStamp } : null;
-    }, { capture: true, passive: true });
-    this.registerDomEvent(document, "touchend", (event: TouchEvent) => {
-      const start = this.touchStart;
-      this.touchStart = null;
-      const touch = event.changedTouches.item(0);
-      if (!start || !touch) return;
-      this.finishSwipe(start, { x: touch.clientX, y: touch.clientY, at: event.timeStamp }, event);
-    }, { capture: true, passive: false });
-    this.registerDomEvent(document, "touchcancel", () => { this.touchStart = null; }, { capture: true });
-    this.registerDomEvent(document, "pointerdown", (event: PointerEvent) => {
-      if (event.pointerType !== "touch" || !event.isPrimary || !this.canStartSwipe(event.target)) {
-        this.pointerStart = null;
-        this.pointerId = null;
-        return;
-      }
-      this.pointerId = event.pointerId;
-      this.pointerStart = { x: event.clientX, y: event.clientY, at: event.timeStamp };
-    }, { capture: true, passive: true });
-    this.registerDomEvent(document, "pointerup", (event: PointerEvent) => {
-      const start = this.pointerId === event.pointerId ? this.pointerStart : null;
-      this.pointerStart = null;
-      this.pointerId = null;
-      if (!start) return;
-      this.finishSwipe(start, { x: event.clientX, y: event.clientY, at: event.timeStamp }, event);
-    }, { capture: true, passive: false });
-    this.registerDomEvent(document, "pointercancel", (event: PointerEvent) => {
-      if (this.pointerId !== event.pointerId) return;
-      this.pointerStart = null;
-      this.pointerId = null;
-    }, { capture: true });
-    this.registerDomEvent(this.contentEl, "wheel", (event: WheelEvent) => {
-      if (!this.routeHistory.canGoBack || this.isGestureBlocked(event.target)) return;
-      if (!this.trackpadBackGesture.update(event.deltaX, event.deltaY, event.timeStamp)) return;
-      event.preventDefault();
-      this.goBack();
-    }, { passive: false });
-    this.registerDomEvent(document, "keydown", (event: KeyboardEvent) => {
-      if (!this.routeHistory.canGoBack || this.isGestureBlocked(event.target)) return;
-      if (this.app.workspace.getActiveViewOfType(MiaStudyView) !== this) return;
-      if (document.querySelector(".modal-container")) return;
-      const shortcut = (event.metaKey && event.key === "[")
-        || (event.altKey && event.key === "ArrowLeft")
-        || event.key === "Escape";
-      if (!shortcut) return;
-      event.preventDefault();
-      this.goBack();
-    }, { capture: true });
-  }
-
-  private canStartSwipe(target: EventTarget | null): boolean {
-    return this.routeHistory.canGoBack
-      && this.app.workspace.getActiveViewOfType(MiaStudyView) === this
-      && target instanceof Node
-      && this.contentEl.contains(target)
-      && !this.isGestureBlocked(target);
-  }
-
-  private finishSwipe(start: SwipePoint, end: SwipePoint, event: Event): void {
-    if (!this.routeHistory.canGoBack || end.at - this.lastSwipeBackAt < 500 || !isBackSwipe(start, end)) return;
-    this.lastSwipeBackAt = end.at;
-    event.preventDefault();
-    this.goBack();
-  }
-
-  private isGestureBlocked(target: EventTarget | null): boolean {
-    return target instanceof Element
-      && target.closest("button, input, textarea, select, option, a, [contenteditable='true']") !== null;
+    void this.leaf.setViewState({
+      type: MIA_VIEW_TYPE,
+      active: true,
+      state: { ...this.getState(), route },
+    });
   }
 
   private render(): void {
@@ -200,11 +145,14 @@ export class MiaStudyView extends ItemView {
     this.renderComponent.load();
     const root = this.contentEl;
     root.empty();
+    root.removeClass("mia-route-dashboard", "mia-route-progress", "mia-route-questions", "mia-route-weakness", "mia-route-keywords", "mia-route-study");
     root.addClass("mia-view");
+    root.addClass(`mia-route-${this.route}`);
     this.renderHeader(root);
     if (this.route === "dashboard") this.renderDashboard(root);
     if (this.route === "progress") this.renderProgress(root);
     if (this.route === "questions") this.renderQuestions(root);
+    if (this.route === "weakness") this.renderWeakness(root);
     if (this.route === "keywords") this.renderKeywords(root);
     if (this.route === "study") this.renderStudy(root);
   }
@@ -212,34 +160,47 @@ export class MiaStudyView extends ItemView {
   private renderHeader(root: HTMLElement): void {
     const header = root.createDiv({ cls: "mia-header" });
     const title = header.createDiv();
-    if (this.routeHistory.canGoBack) {
-      const back = title.createEl("button", { text: "← 뒤로", cls: "mia-back-button" });
-      back.setAttr("aria-label", "이전 MIA 화면으로 돌아가기");
-      back.addEventListener("click", () => this.goBack());
-    }
     title.createEl("h2", { text: "MIA Study" });
     title.createEl("span", { text: "FSRS-6", cls: "mia-badge" });
     const nav = header.createDiv({ cls: "mia-nav" });
     this.navButton(nav, "대시보드", "dashboard");
     this.navButton(nav, "학습현황", "progress");
     this.navButton(nav, "문제", "questions");
+    this.navButton(nav, "취약 문제", "weakness");
     this.navButton(nav, "키워드", "keywords");
   }
 
   private navButton(parent: HTMLElement, label: string, route: MiaRoute): void {
     const button = parent.createEl("button", { text: label, cls: this.route === route ? "mod-cta" : "" });
+    const shortLabels: Record<Exclude<MiaRoute, "study">, string> = {
+      dashboard: "홈",
+      progress: "현황",
+      questions: "문제",
+      weakness: "취약",
+      keywords: "키워드",
+    };
+    if (route !== "study") button.dataset.shortLabel = shortLabels[route];
+    button.setAttr("aria-label", label);
     button.addEventListener("click", () => this.navigate(route));
   }
 
   private renderDashboard(root: HTMLElement): void {
     const questions = this.plugin.index.registered;
-    const due = questions.filter((question) => this.plugin.fsrs.isDue(this.plugin.store.getReview(question.id))).length;
-    const fresh = questions.filter((question) => this.plugin.fsrs.isNew(this.plugin.store.getReview(question.id))).length;
+    const progress = calculateProgress(questions, this.plugin.store.reviews, this.plugin.fsrs);
+    const due = progress.due;
+    const fresh = progress.new;
     const grid = root.createDiv({ cls: "mia-stats" });
-    this.stat(grid, "등록 문제", questions.length);
-    this.stat(grid, "오늘 복습", due);
-    this.stat(grid, "새 문제", fresh);
-    this.stat(grid, "등록 후보", this.plugin.index.candidates.length);
+    this.progressStat(grid, "등록 문제", questions.length, "all");
+    const stableRatio = progress.total ? Math.round((progress.stable / progress.total) * 100) : 0;
+    const stable = grid.createEl("button", { cls: "mia-stat mia-progress-stat mia-stability-stat" });
+    stable.style.setProperty("--mia-stable-ratio", `${stableRatio * 3.6}deg`);
+    stable.createEl("strong", { text: `${stableRatio}%` });
+    stable.createEl("span", { text: "기억 안정 비율" });
+    stable.addEventListener("click", () => this.showQuestions("stable"));
+    this.progressStat(grid, "완전 암기", progress.easy, "easy");
+    this.progressStat(grid, "오늘 평가", progress.today, "today");
+    this.progressStat(grid, "오늘 복습", due, "due");
+    this.progressStat(grid, "개선 필요", progress.again + progress.hard, "weak");
     const manage = root.createDiv({ cls: "mia-manage-actions" });
     manage.createEl("button", { text: "과목 추가" }).addEventListener("click", () => this.plugin.openSubjectEditor());
     manage.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () => void this.plugin.openManagedQuestionEditor());
@@ -303,6 +264,8 @@ export class MiaStudyView extends ItemView {
     this.progressStat(totals, "학습 전", progress.new, "new");
     this.progressStat(totals, "오늘 복습", progress.due, "due");
     this.progressStat(totals, "1회 이상 학습", progress.studied, null);
+    this.progressStat(totals, "기억 안정", progress.stable, "stable");
+    this.progressStat(totals, "오늘 평가", progress.today, "today");
 
     root.createEl("h3", { text: "최근 평가", cls: "mia-section-title" });
     const ratings = root.createDiv({ cls: "mia-progress-ratings" });
@@ -315,7 +278,7 @@ export class MiaStudyView extends ItemView {
     const subjectProgress = new Map(progress.bySubject.map((item) => [item.subject, item.counts]));
     for (const subject of this.plugin.listSubjects()) {
       if (!subjectProgress.has(subject)) {
-        subjectProgress.set(subject, { total: 0, new: 0, studied: 0, due: 0, again: 0, hard: 0, good: 0, easy: 0 });
+        subjectProgress.set(subject, { total: 0, new: 0, studied: 0, due: 0, again: 0, hard: 0, good: 0, easy: 0, stable: 0, today: 0 });
       }
     }
     const subjectGrid = root.createDiv({ cls: "mia-progress-subjects" });
@@ -383,7 +346,10 @@ export class MiaStudyView extends ItemView {
     pageActions.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () => {
       void this.plugin.openManagedQuestionEditor();
     });
-    const toolbar = root.createDiv({ cls: "mia-toolbar mia-filter-toolbar" });
+    const filterPanel = root.createEl("details", { cls: "mia-filter-panel" });
+    filterPanel.open = !Platform.isMobile;
+    filterPanel.createEl("summary", { text: "검색·필터·정렬" });
+    const toolbar = filterPanel.createDiv({ cls: "mia-toolbar mia-filter-toolbar" });
     const search = toolbar.createEl("input", { type: "search", placeholder: "질문, 정답, 과목, 키워드 검색" });
     search.value = this.questionText;
     const subject = toolbar.createEl("select", { attr: { "aria-label": "과목 필터" } });
@@ -402,6 +368,7 @@ export class MiaStudyView extends ItemView {
     const reviewOptions: Array<[ReviewFilter, string]> = [
       ["all", "전체 상태"], ["due", "복습 예정"], ["new", "새 문제"],
       ["again", "못 암기"], ["hard", "애매"], ["good", "암기"], ["easy", "너무 쉬움"],
+      ["weak", "취약 문제"], ["stable", "기억 안정"], ["today", "오늘 평가"],
     ];
     reviewOptions.forEach(([value, label]) => review.createEl("option", { text: label, value }));
     review.value = this.questionReview;
@@ -410,18 +377,44 @@ export class MiaStudyView extends ItemView {
     const sort = toolbar.createEl("select", { attr: { "aria-label": "정렬" } });
     const sortOptions: Array<[QuestionSort, string]> = [
       ["review", "복습 우선"], ["title", "문제명"], ["subject", "과목별"], ["type", "유형별"],
+      ["created", "최근 생성"], ["updated", "최근 수정"], ["weak", "못 암기 우선"], ["ambiguous", "애매 우선"],
     ];
     sortOptions.forEach(([value, label]) => sort.createEl("option", { text: label, value }));
     sort.value = this.questionSort;
 
+    const chips = root.createDiv({ cls: "mia-filter-chips" });
     const resultBar = root.createDiv({ cls: "mia-result-bar" });
     const resultCount = resultBar.createSpan();
     const resultActions = resultBar.createDiv({ cls: "mia-inline-actions" });
     const testResults = resultActions.createEl("button", { text: "검색 결과 시험" });
     const browseResults = resultActions.createEl("button", { text: "검색 결과 암기" });
     const list = root.createDiv({ cls: "mia-list" });
+    const pagination = root.createDiv({ cls: "mia-pagination" });
+    const renderChips = () => {
+      chips.empty();
+      const active: Array<[string, () => void]> = [];
+      if (this.questionText) active.push([`검색: ${this.questionText}`, () => { this.questionText = ""; search.value = ""; }]);
+      if (this.questionSubject !== "all") active.push([`과목: ${this.questionSubject}`, () => { this.questionSubject = "all"; subject.value = "all"; }]);
+      if (this.questionType !== "all") active.push([`유형: ${this.questionType}`, () => { this.questionType = "all"; type.value = "all"; }]);
+      if (this.questionReview !== "all") active.push([`상태: ${reviewOptions.find(([value]) => value === this.questionReview)?.[1] ?? this.questionReview}`, () => { this.questionReview = "all"; review.value = "all"; }]);
+      if (this.questionKeyword) active.push([`키워드: ${this.questionKeyword}`, () => { this.questionKeyword = ""; keyword.value = ""; }]);
+      for (const [label, clear] of active) {
+        const chip = chips.createEl("button", { text: `${label} ×` });
+        chip.addEventListener("click", () => { clear(); this.questionPage = 0; renderList(); });
+      }
+      if (active.length > 1) {
+        const reset = chips.createEl("button", { text: "필터 전체 해제", cls: "mod-warning" });
+        reset.addEventListener("click", () => {
+          this.questionText = ""; this.questionSubject = "all"; this.questionType = "all";
+          this.questionReview = "all"; this.questionKeyword = ""; this.questionPage = 0;
+          search.value = ""; subject.value = "all"; type.value = "all"; review.value = "all"; keyword.value = "";
+          renderList();
+        });
+      }
+    };
     const renderList = () => {
       list.empty();
+      pagination.empty();
       const questions = queryQuestions(this.plugin.index.registered, this.plugin.store.reviews, this.plugin.fsrs, {
         text: this.questionText,
         subject: this.questionSubject,
@@ -435,15 +428,34 @@ export class MiaStudyView extends ItemView {
       browseResults.disabled = questions.length === 0;
       testResults.onclick = () => this.startReview(questions.map((question) => question.id));
       browseResults.onclick = () => this.startReview(questions.map((question) => question.id), "browse");
-      for (const question of questions) this.renderQuestionRow(list, question);
+      const pageCount = Math.max(1, Math.ceil(questions.length / 300));
+      this.questionPage = Math.min(this.questionPage, pageCount - 1);
+      const visible = questions.slice(this.questionPage * 300, (this.questionPage + 1) * 300);
+      for (const question of visible) this.renderQuestionRow(list, question);
+      if (pageCount > 1) {
+        const previous = pagination.createEl("button", { text: "이전 300개" });
+        previous.disabled = this.questionPage === 0;
+        previous.addEventListener("click", () => { this.questionPage -= 1; renderList(); root.scrollTo({ top: 0, behavior: "smooth" }); });
+        pagination.createSpan({ text: `${this.questionPage + 1} / ${pageCount}` });
+        const next = pagination.createEl("button", { text: "다음 300개" });
+        next.disabled = this.questionPage >= pageCount - 1;
+        next.addEventListener("click", () => { this.questionPage += 1; renderList(); root.scrollTo({ top: 0, behavior: "smooth" }); });
+      }
       if (!questions.length) list.createEl("p", { text: "등록된 문제가 없습니다.", cls: "mia-empty" });
+      renderChips();
     };
-    search.addEventListener("input", () => { this.questionText = search.value; renderList(); });
-    subject.addEventListener("change", () => { this.questionSubject = subject.value; renderList(); });
-    type.addEventListener("change", () => { this.questionType = type.value as typeof this.questionType; renderList(); });
-    review.addEventListener("change", () => { this.questionReview = review.value as ReviewFilter; renderList(); });
-    keyword.addEventListener("input", () => { this.questionKeyword = keyword.value; renderList(); });
-    sort.addEventListener("change", () => { this.questionSort = sort.value as QuestionSort; renderList(); });
+    let searchComposing = false;
+    let keywordComposing = false;
+    search.addEventListener("compositionstart", () => { searchComposing = true; });
+    search.addEventListener("compositionend", () => { searchComposing = false; this.questionText = search.value; this.questionPage = 0; renderList(); });
+    search.addEventListener("input", () => { if (!searchComposing) { this.questionText = search.value; this.questionPage = 0; renderList(); } });
+    keyword.addEventListener("compositionstart", () => { keywordComposing = true; });
+    keyword.addEventListener("compositionend", () => { keywordComposing = false; this.questionKeyword = keyword.value; this.questionPage = 0; renderList(); });
+    keyword.addEventListener("input", () => { if (!keywordComposing) { this.questionKeyword = keyword.value; this.questionPage = 0; renderList(); } });
+    subject.addEventListener("change", () => { this.questionSubject = subject.value; this.questionPage = 0; renderList(); });
+    type.addEventListener("change", () => { this.questionType = type.value as typeof this.questionType; this.questionPage = 0; renderList(); });
+    review.addEventListener("change", () => { this.questionReview = review.value as ReviewFilter; this.questionPage = 0; renderList(); });
+    sort.addEventListener("change", () => { this.questionSort = sort.value as QuestionSort; this.questionPage = 0; renderList(); });
     renderList();
 
     const diagnostics = this.plugin.index.diagnostics;
@@ -499,11 +511,52 @@ export class MiaStudyView extends ItemView {
     body.createEl("small", { text: `${question.subject} · ${question.questionType} · 핵심 ${question.coreKeywords.map((item) => item.label).join(", ") || "없음"} · 보조 ${question.subKeywords.map((item) => item.label).join(", ") || "없음"}` });
     const actions = row.createDiv({ cls: "mia-row-actions" });
     actions.createEl("button", { text: "학습" }).addEventListener("click", () => this.startReview([question.id]));
+    actions.createEl("button", { text: "상세" }).addEventListener("click", () => void this.plugin.openQuestionDetail(question));
     actions.createEl("button", { text: "편집" }).addEventListener("click", () => void this.plugin.openManagedQuestionEditor(question));
-    actions.createEl("button", { text: "원문" }).addEventListener("click", () => this.plugin.openQuestion(question));
+    actions.createEl("button", { text: "연결" }).addEventListener("click", () => this.plugin.openFollowUpEditor(question));
     actions.createEl("button", { text: "삭제", cls: "mod-warning" }).addEventListener("click", () => {
       this.plugin.confirmDeleteQuestion(question);
     });
+  }
+
+  private renderWeakness(root: HTMLElement): void {
+    root.createEl("h3", { text: "취약 문제", cls: "mia-page-title" });
+    root.createEl("p", { text: "못 암기와 애매 문제를 복습 지연 시간까지 반영한 긴급도 순으로 표시합니다.", cls: "mia-muted" });
+    const toolbar = root.createDiv({ cls: "mia-toolbar" });
+    const search = toolbar.createEl("input", { type: "search", placeholder: "취약 문제 검색" });
+    const start = toolbar.createEl("button", { text: "취약 문제 시험", cls: "mod-cta" });
+    const list = root.createDiv({ cls: "mia-list" });
+    let query = "";
+    let composing = false;
+    const renderList = () => {
+      list.empty();
+      const questions = queryQuestions(this.plugin.index.registered, this.plugin.store.reviews, this.plugin.fsrs, {
+        text: query,
+        subject: "all",
+        questionType: "all",
+        review: "weak",
+        keyword: "",
+        sort: "weak",
+      });
+      start.disabled = questions.length === 0;
+      start.onclick = () => this.startReview(questions.map((question) => question.id));
+      for (const question of questions.slice(0, 300)) {
+        const row = list.createDiv({ cls: "mia-row" });
+        const body = row.createDiv({ cls: "mia-row-body" });
+        body.createEl("strong", { text: question.heading });
+        const review = this.plugin.store.getReview(question.id);
+        body.createEl("small", { text: `${question.subject} · 긴급도 ${weaknessUrgency(review)}점 · ${review?.lastRating === Rating.Again ? "못 암기" : "애매"}` });
+        const actions = row.createDiv({ cls: "mia-row-actions" });
+        actions.createEl("button", { text: "학습" }).addEventListener("click", () => this.startReview([question.id]));
+        actions.createEl("button", { text: "상세" }).addEventListener("click", () => void this.plugin.openQuestionDetail(question));
+      }
+      if (questions.length > 300) list.createEl("p", { text: `${questions.length}개 중 긴급도가 높은 300개만 표시합니다.`, cls: "mia-muted" });
+      if (!questions.length) list.createEl("p", { text: "현재 취약 문제가 없습니다.", cls: "mia-empty" });
+    };
+    search.addEventListener("compositionstart", () => { composing = true; });
+    search.addEventListener("compositionend", () => { composing = false; query = search.value; renderList(); });
+    search.addEventListener("input", () => { if (!composing) { query = search.value; renderList(); } });
+    renderList();
   }
 
   private renderKeywords(root: HTMLElement): void {
@@ -539,9 +592,11 @@ export class MiaStudyView extends ItemView {
         .sort((a, b) => b.questions.size - a.questions.size || a.keyword.label.localeCompare(b.keyword.label, "ko"));
       for (const item of items) {
         const questions = [...item.questions.values()];
+        const coreCount = questions.filter((question) => question.coreKeywords.some((keyword) => keywordKey(keyword) === keywordKey(item.keyword))).length;
+        const subCount = questions.filter((question) => question.subKeywords.some((keyword) => keywordKey(keyword) === keywordKey(item.keyword))).length;
         const card = grid.createDiv({ cls: "mia-keyword" });
         card.createEl("strong", { text: item.keyword.label });
-        card.createEl("span", { text: `${questions.length}문제` });
+        card.createEl("span", { text: `${questions.length}문제 · 핵심 ${coreCount} · 보조 ${subCount}` });
         const reference = questions[0];
         card.addEventListener("click", () => {
           const sourcePath = reference?.filePath ?? item.entry?.filePath;
@@ -569,6 +624,15 @@ export class MiaStudyView extends ItemView {
           event.stopPropagation();
           this.startReview(questions.map((question) => question.id), "browse");
         });
+        if (questions.length) {
+          const details = card.createEl("details", { cls: "mia-keyword-questions" });
+          details.addEventListener("click", (event) => event.stopPropagation());
+          details.createEl("summary", { text: "연결 질문 보기" });
+          for (const question of questions.slice(0, 300)) {
+            const questionButton = details.createEl("button", { text: question.heading });
+            questionButton.addEventListener("click", () => void this.plugin.openQuestionDetail(question));
+          }
+        }
         const remove = card.createEl("button", { text: "키워드 삭제", cls: "mod-warning" });
         remove.addEventListener("click", (event) => {
           event.stopPropagation();
@@ -580,7 +644,10 @@ export class MiaStudyView extends ItemView {
         cls: "mia-empty",
       });
     };
-    search.addEventListener("input", renderGrid);
+    let composing = false;
+    search.addEventListener("compositionstart", () => { composing = true; });
+    search.addEventListener("compositionend", () => { composing = false; renderGrid(); });
+    search.addEventListener("input", () => { if (!composing) renderGrid(); });
     renderGrid();
   }
 
@@ -593,22 +660,48 @@ export class MiaStudyView extends ItemView {
       question = id ? this.plugin.index.questionById(id) : undefined;
     }
     if (!question || !question.id) {
+      const result = this.studyResult();
       const done = root.createDiv({ cls: "mia-primary-card" });
       done.createEl("h3", { text: this.queue.length ? "학습 완료" : "학습할 문제가 없습니다" });
-      done.createEl("p", { text: this.queue.length ? `${this.queue.length}문제를 확인했습니다.` : "문제를 등록하거나 다음 복습 시각에 다시 확인하세요." });
+      done.createEl("p", { text: this.queue.length
+        ? `${this.queue.length}문제 · 못 암기 ${result.again} · 애매 ${result.hard} · 암기 ${result.good} · 너무 쉬움 ${result.easy} · 건너뜀 ${result.skipped}`
+        : "문제를 등록하거나 다음 복습 시각에 다시 확인하세요." });
       if (this.lastRated) {
         done.createEl("button", { text: "직전 평가 취소" }).addEventListener("click", () => void this.undoLastRating());
       }
-      done.createEl("button", { text: "대시보드로" }).addEventListener("click", () => this.showDashboard());
+      if (this.queue.length) {
+        done.createEl("button", { text: "같은 범위 다시 학습", cls: "mod-cta" }).addEventListener("click", () => this.restartSession());
+      }
+      done.createEl("button", { text: "시작 화면으로 돌아가기" }).addEventListener("click", () => this.returnToSessionOrigin());
+      if (this.queue.length && !this.resultShown) {
+        this.resultShown = true;
+        window.setTimeout(() => new StudyResultModal(
+          this.app,
+          result,
+          () => this.restartSession(),
+          () => this.returnToSessionOrigin(),
+        ).open(), 0);
+      }
       return;
     }
-    root.createEl("div", { text: `${this.sessionMode === "recall" ? "시험 모드" : "암기 모드"} · ${this.queueIndex + 1} / ${this.queue.length} · ${question.subject} · ${question.questionType}`, cls: "mia-progress" });
+    const navigation = root.createDiv({ cls: "mia-study-navigation" });
+    const previous = navigation.createEl("button", { text: "← 이전 문제" });
+    previous.disabled = this.queueIndex === 0;
+    previous.addEventListener("click", () => this.moveToQuestion(this.queueIndex - 1));
+    navigation.createEl("div", { text: `${this.sessionMode === "recall" ? "시험 모드" : "암기 모드"} · ${this.queueIndex + 1} / ${this.queue.length} · ${question.subject} · ${question.questionType}`, cls: "mia-progress" });
+    const next = navigation.createEl("button", { text: "다음 문제 →" });
+    next.addEventListener("click", () => {
+      if (!this.sessionGrades.has(question.id)) this.sessionSkipped.add(question.id);
+      this.moveToQuestion(this.queueIndex + 1);
+    });
     if (this.lastRated) {
       const undo = root.createEl("button", { text: "직전 평가 취소", cls: "mia-undo" });
       undo.addEventListener("click", () => void this.undoLastRating());
     }
     const card = root.createDiv({ cls: "mia-study-card" });
     card.createEl("h2", { text: question.heading });
+    const sessionGrade = this.sessionGrades.get(question.id);
+    if (sessionGrade) card.createEl("p", { text: `이번 학습 평가: ${GRADE_LABELS[sessionGrade]} · 다른 평가를 누르면 기존 기록을 대체합니다.`, cls: "mia-session-rating" });
     const prompt = card.createDiv({ cls: "mia-markdown" });
     void MarkdownRenderer.render(this.app, question.questionMarkdown, prompt, question.filePath, this.renderComponent ?? this);
     if (!this.answerVisible) {
@@ -629,8 +722,15 @@ export class MiaStudyView extends ItemView {
       const related = root.createDiv({ cls: "mia-related" });
       related.createEl("h3", { text: "이어볼 문제" });
       for (const item of recommendations) {
-        const button = related.createEl("button", { text: `${item.question.heading} — ${item.reasons.join(" · ")}` });
-        button.addEventListener("click", () => item.question.id && this.startReview([item.question.id]));
+        const button = related.createEl("button", { text: `${item.question.heading} — ${item.reasons.join(" · ")} · 시험에 추가` });
+        button.disabled = !item.question.id || this.queue.includes(item.question.id);
+        button.addEventListener("click", () => {
+          if (!item.question.id || this.queue.includes(item.question.id)) return;
+          this.queue.splice(this.queueIndex + 1, 0, item.question.id);
+          this.sessionSeed = [...this.queue];
+          new Notice("추천 문제를 현재 시험의 다음 순서에 추가했습니다.");
+          this.render();
+        });
       }
     }
   }
@@ -656,6 +756,8 @@ export class MiaStudyView extends ItemView {
   }
 
   private skipQuestion(): void {
+    const id = this.queue[this.queueIndex];
+    if (id && !this.sessionGrades.has(id)) this.sessionSkipped.add(id);
     this.queueIndex += 1;
     this.answerVisible = this.sessionMode === "browse";
     this.render();
@@ -664,7 +766,10 @@ export class MiaStudyView extends ItemView {
   private renderRatings(parent: HTMLElement, question: QuestionRecord & { id: string }): void {
     const ratings = parent.createDiv({ cls: "mia-ratings" });
     const buttons: HTMLButtonElement[] = [];
-    for (const preview of this.plugin.fsrs.preview(this.plugin.store.getReview(question.id))) {
+    const baseline = this.sessionBaselines.has(question.id)
+      ? this.sessionBaselines.get(question.id)
+      : this.plugin.store.getReview(question.id);
+    for (const preview of this.plugin.fsrs.preview(baseline)) {
       const button = ratings.createEl("button");
       buttons.push(button);
       button.createEl("strong", { text: GRADE_LABELS[preview.grade] });
@@ -674,8 +779,14 @@ export class MiaStudyView extends ItemView {
         const ratedIndex = this.queueIndex;
         this.isMutatingReview = true;
         try {
-          const state = this.plugin.fsrs.rate(this.plugin.store.getReview(question.id), preview.grade);
+          if (!this.sessionBaselines.has(question.id)) {
+            this.sessionBaselines.set(question.id, this.plugin.store.getReview(question.id));
+          }
+          const original = this.sessionBaselines.get(question.id);
+          const state = this.plugin.fsrs.rate(original, preview.grade);
           await this.plugin.store.setReview(question.id, state);
+          this.sessionGrades.set(question.id, preview.grade);
+          this.sessionSkipped.delete(question.id);
           this.lastRated = { id: question.id, queueIndex: ratedIndex };
           this.queueIndex = ratedIndex + 1;
           this.answerVisible = this.sessionMode === "browse";
@@ -696,13 +807,16 @@ export class MiaStudyView extends ItemView {
     if (!lastRated) return;
     this.isMutatingReview = true;
     try {
-      const current = this.plugin.store.getReview(lastRated.id);
-      const previous = current ? this.plugin.fsrs.undo(current) : null;
-      if (previous?.history.length) await this.plugin.store.setReview(lastRated.id, previous);
+      const baseline = this.sessionBaselines.get(lastRated.id);
+      if (baseline) await this.plugin.store.setReview(lastRated.id, baseline);
       else await this.plugin.store.removeReview(lastRated.id);
+      this.sessionBaselines.delete(lastRated.id);
+      this.sessionGrades.delete(lastRated.id);
+      this.sessionSkipped.delete(lastRated.id);
       this.queueIndex = lastRated.queueIndex;
       this.answerVisible = true;
       this.lastRated = null;
+      this.resultShown = false;
       this.isMutatingReview = false;
       new Notice("직전 평가를 취소했습니다.");
       this.render();
@@ -710,5 +824,35 @@ export class MiaStudyView extends ItemView {
       this.isMutatingReview = false;
       new Notice(`평가 취소 저장 실패: ${errorMessage(error)}`);
     }
+  }
+
+  private moveToQuestion(index: number): void {
+    this.queueIndex = Math.max(0, Math.min(index, this.queue.length));
+    const id = this.queue[this.queueIndex];
+    this.answerVisible = this.sessionMode === "browse" || Boolean(id && this.sessionGrades.has(id));
+    this.render();
+  }
+
+  private studyResult(): StudyResult {
+    const grades = [...this.sessionGrades.values()];
+    return {
+      total: this.queue.length,
+      again: grades.filter((grade) => grade === Rating.Again).length,
+      hard: grades.filter((grade) => grade === Rating.Hard).length,
+      good: grades.filter((grade) => grade === Rating.Good).length,
+      easy: grades.filter((grade) => grade === Rating.Easy).length,
+      skipped: this.sessionSkipped.size,
+      durationSeconds: Math.max(0, Math.round((Date.now() - this.sessionStartedAt) / 1000)),
+    };
+  }
+
+  private restartSession(): void {
+    const seed = [...this.sessionSeed];
+    const mode = this.sessionMode;
+    this.startReview(seed, mode);
+  }
+
+  private returnToSessionOrigin(): void {
+    this.navigate(this.sessionOrigin === "study" ? "dashboard" : this.sessionOrigin);
   }
 }

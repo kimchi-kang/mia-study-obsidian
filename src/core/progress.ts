@@ -13,6 +13,8 @@ export interface ProgressCounts {
   hard: number;
   good: number;
   easy: number;
+  stable: number;
+  today: number;
 }
 
 export interface StudyProgress extends ProgressCounts {
@@ -20,7 +22,7 @@ export interface StudyProgress extends ProgressCounts {
 }
 
 function emptyCounts(): ProgressCounts {
-  return { total: 0, new: 0, studied: 0, due: 0, again: 0, hard: 0, good: 0, easy: 0 };
+  return { total: 0, new: 0, studied: 0, due: 0, again: 0, hard: 0, good: 0, easy: 0, stable: 0, today: 0 };
 }
 
 function countQuestion(
@@ -37,6 +39,14 @@ function countQuestion(
   if (review?.lastRating === Rating.Hard) counts.hard += 1;
   if (review?.lastRating === Rating.Good) counts.good += 1;
   if (review?.lastRating === Rating.Easy) counts.easy += 1;
+  if (fsrs.isStable(review, now)) counts.stable += 1;
+  const reviewed = review?.history.at(-1)?.review;
+  if (reviewed) {
+    const date = new Date(reviewed);
+    if (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()) {
+      counts.today += 1;
+    }
+  }
 }
 
 export function calculateProgress(

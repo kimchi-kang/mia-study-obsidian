@@ -3,6 +3,7 @@ import { keywordReferencesFromInput } from "../core/keyword-path";
 import { ManagedQuestionInput } from "../core/managed-question";
 import { QUESTION_TYPES, QuestionRecord, QuestionType } from "../core/models";
 import { errorMessage } from "./error-message";
+import { KeyboardAwareModal } from "./mobile-keyboard";
 
 export interface ManagedQuestionDraft extends ManagedQuestionInput {
   subject: string;
@@ -52,7 +53,7 @@ function keywordMeanings(
   }));
 }
 
-export class SubjectEditorModal extends Modal {
+export class SubjectEditorModal extends KeyboardAwareModal {
   private value: string;
 
   constructor(
@@ -85,8 +86,9 @@ export class SubjectEditorModal extends Modal {
   onClose(): void { this.contentEl.empty(); }
 }
 
-export class ManagedQuestionModal extends Modal {
+export class ManagedQuestionModal extends KeyboardAwareModal {
   private subject: string;
+  private newSubject = "";
   private question: string;
   private answer: string;
   private type: QuestionType;
@@ -121,6 +123,9 @@ export class ManagedQuestionModal extends Modal {
       dropdown.setValue(this.subject).onChange((value) => { this.subject = value; });
       dropdown.setDisabled(this.subjects.length <= 1);
     });
+    new Setting(this.contentEl).setName("새 과목 이름").setDesc("입력하면 위에서 선택한 과목 대신 새 과목을 만들고 질문을 저장합니다.").addText((text) => {
+      text.setPlaceholder("새 과목을 바로 추가할 때만 입력").onChange((value) => { this.newSubject = value; });
+    });
     new Setting(this.contentEl).setName("질문").setDesc("Markdown과 수식을 사용할 수 있습니다.").addTextArea((text) => {
       text.setPlaceholder("면접 질문을 입력하세요.").setValue(this.question).onChange((value) => { this.question = value; });
       text.inputEl.rows = 5;
@@ -152,14 +157,15 @@ export class ManagedQuestionModal extends Modal {
       const answer = this.answer.trim();
       const coreKeywords = keywordReferencesFromInput(this.coreNames, this.keywordFolder);
       const subKeywords = keywordReferencesFromInput(this.subNames, this.keywordFolder);
-      if (!this.subject || !question || !answer || coreKeywords.length === 0) {
+      const subject = this.newSubject.trim() || this.subject;
+      if (!subject || !question || !answer || coreKeywords.length === 0) {
         new Notice("과목, 질문, 정답, 핵심 키워드를 모두 입력하세요.");
         return;
       }
       button.setDisabled(true);
       try {
         await this.onSubmit({
-          subject: this.subject,
+          subject,
           questionMarkdown: question,
           answerMarkdown: answer,
           questionType: this.type,
@@ -181,7 +187,7 @@ export class ManagedQuestionModal extends Modal {
   onClose(): void { this.contentEl.empty(); }
 }
 
-export class KeywordEditorModal extends Modal {
+export class KeywordEditorModal extends KeyboardAwareModal {
   private name: string;
   private meaning: string;
 

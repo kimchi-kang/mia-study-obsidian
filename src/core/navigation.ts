@@ -1,62 +1,41 @@
-export type MiaRoute = "dashboard" | "progress" | "questions" | "keywords" | "study";
+export const MIA_ROUTES = ["dashboard", "progress", "questions", "weakness", "keywords", "study"] as const;
+export type MiaRoute = typeof MIA_ROUTES[number];
+export type MiaSessionMode = "recall" | "browse";
 
-export class MiaNavigationHistory {
-  private previous: MiaRoute[] = [];
-
-  constructor(private active: MiaRoute = "dashboard") {}
-
-  get current(): MiaRoute { return this.active; }
-  get canGoBack(): boolean { return this.previous.length > 0; }
-
-  navigate(next: MiaRoute): MiaRoute {
-    if (next === this.active) return this.active;
-    this.previous.push(this.active);
-    this.active = next;
-    return this.active;
-  }
-
-  back(): MiaRoute {
-    this.active = this.previous.pop() ?? "dashboard";
-    return this.active;
-  }
-
-  reset(next: MiaRoute = "dashboard"): MiaRoute {
-    this.previous = [];
-    this.active = next;
-    return this.active;
-  }
+export interface MiaNavigationState {
+  route: MiaRoute;
+  queue: string[];
+  queueIndex: number;
+  answerVisible: boolean;
+  sessionMode: MiaSessionMode;
 }
 
-export interface SwipePoint {
-  x: number;
-  y: number;
-  at: number;
+export const DEFAULT_MIA_NAVIGATION_STATE: MiaNavigationState = {
+  route: "dashboard",
+  queue: [],
+  queueIndex: 0,
+  answerVisible: false,
+  sessionMode: "recall",
+};
+
+export function isMiaRoute(value: unknown): value is MiaRoute {
+  return typeof value === "string" && MIA_ROUTES.some((route) => route === value);
 }
 
-export function isBackSwipe(start: SwipePoint, end: SwipePoint): boolean {
-  const horizontal = end.x - start.x;
-  const vertical = Math.abs(end.y - start.y);
-  const duration = end.at - start.at;
-  return horizontal >= 64 && vertical <= horizontal * 0.65 && duration >= 0 && duration <= 1_200;
-}
-
-export class TrackpadBackGesture {
-  private distance = 0;
-  private lastAt = 0;
-  private cooldownUntil = 0;
-
-  update(deltaX: number, deltaY: number, at: number): boolean {
-    if (at < this.cooldownUntil) return false;
-    if (at - this.lastAt > 240) this.distance = 0;
-    this.lastAt = at;
-    if (Math.abs(deltaX) <= Math.abs(deltaY) * 1.25) {
-      this.distance = 0;
-      return false;
-    }
-    this.distance = Math.max(0, this.distance - deltaX);
-    if (this.distance < 180) return false;
-    this.distance = 0;
-    this.cooldownUntil = at + 650;
-    return true;
-  }
+export function parseMiaNavigationState(value: unknown): MiaNavigationState {
+  if (!value || typeof value !== "object") return { ...DEFAULT_MIA_NAVIGATION_STATE };
+  const state = value as Record<string, unknown>;
+  const queue = Array.isArray(state.queue)
+    ? state.queue.filter((item): item is string => typeof item === "string")
+    : [];
+  const queueIndex = typeof state.queueIndex === "number" && Number.isInteger(state.queueIndex)
+    ? Math.max(0, Math.min(state.queueIndex, Math.max(0, queue.length - 1)))
+    : 0;
+  return {
+    route: isMiaRoute(state.route) ? state.route : "dashboard",
+    queue,
+    queueIndex,
+    answerVisible: state.answerVisible === true,
+    sessionMode: state.sessionMode === "browse" ? "browse" : "recall",
+  };
 }

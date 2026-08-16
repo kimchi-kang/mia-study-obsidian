@@ -26,6 +26,8 @@ interface MetadataBlock {
   coreKeywords: KeywordReference[];
   subKeywords: KeywordReference[];
   followUpIds: string[];
+  createdAt?: string;
+  updatedAt?: string;
   issues: string[];
 }
 
@@ -74,6 +76,8 @@ function parseMetadataBlock(lines: string[], startLine: number): MetadataBlock {
   let coreKeywords: KeywordReference[] = [];
   let subKeywords: KeywordReference[] = [];
   let followUpIds: string[] = [];
+  let createdAt: string | undefined;
+  let updatedAt: string | undefined;
   const issues: string[] = [];
 
   for (let line = startLine + 1; line < endLine; line += 1) {
@@ -92,9 +96,21 @@ function parseMetadataBlock(lines: string[], startLine: number): MetadataBlock {
       followUpIds = parseFollowUpIds(value);
       if (value && followUpIds.length === 0) issues.push("이어보기에서 유효한 MIA 문제 블록 ID를 찾지 못했습니다.");
     }
+    if (key === "생성" && Number.isFinite(Date.parse(value))) createdAt = new Date(value).toISOString();
+    if (key === "수정" && Number.isFinite(Date.parse(value))) updatedAt = new Date(value).toISOString();
   }
 
-  return { startLine, endLine, questionType, coreKeywords, subKeywords, followUpIds, issues };
+  return {
+    startLine,
+    endLine,
+    questionType,
+    coreKeywords,
+    subKeywords,
+    followUpIds,
+    ...(createdAt ? { createdAt } : {}),
+    ...(updatedAt ? { updatedAt } : {}),
+    issues,
+  };
 }
 
 function isAnswerHeading(text: string): boolean {
@@ -241,6 +257,8 @@ export function parseQuestionFile(
       coreKeywords: metadata?.coreKeywords ?? [],
       subKeywords: metadata?.subKeywords ?? [],
       followUpIds: metadata?.followUpIds ?? [],
+      ...(metadata?.createdAt ? { createdAt: metadata.createdAt } : {}),
+      ...(metadata?.updatedAt ? { updatedAt: metadata.updatedAt } : {}),
       location: {
         headingLine: heading.line,
         questionStartLine: questionStart,

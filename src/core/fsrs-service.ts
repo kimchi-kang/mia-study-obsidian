@@ -69,8 +69,10 @@ function deserializeLog(log: SerializedReviewLog): ReviewLog {
 
 export class FsrsService {
   private readonly scheduler;
+  private readonly targetRetention: number;
 
   constructor(settings: Pick<MiaSettings, "targetRetention" | "maximumIntervalDays">) {
+    this.targetRetention = settings.targetRetention;
     this.scheduler = fsrs({
       request_retention: settings.targetRetention,
       maximum_interval: settings.maximumIntervalDays,
@@ -127,6 +129,11 @@ export class FsrsService {
 
   isNew(state: QuestionReviewState | undefined): boolean {
     return !state || state.card.state === State.New;
+  }
+
+  isStable(state: QuestionReviewState | undefined, now = new Date()): boolean {
+    const retrievability = this.retrievability(state, now);
+    return retrievability !== null && retrievability >= this.targetRetention;
   }
 }
 

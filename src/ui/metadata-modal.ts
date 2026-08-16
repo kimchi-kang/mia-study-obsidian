@@ -1,10 +1,12 @@
-import { App, Modal, Notice, Setting } from "obsidian";
+import { App, Notice, Setting } from "obsidian";
 import { QUESTION_TYPES, QuestionRecord, QuestionType } from "../core/models";
 import { keywordReferencesFromInput } from "../core/keyword-path";
 import { QuestionMetadataInput } from "../core/question-writer";
 import { errorMessage } from "./error-message";
+import { KeyboardAwareModal } from "./mobile-keyboard";
+import { MAX_FOLLOW_UPS } from "../core/follow-up";
 
-export class QuestionMetadataModal extends Modal {
+export class QuestionMetadataModal extends KeyboardAwareModal {
   private type: QuestionType;
   private core: string;
   private sub: string;
@@ -48,11 +50,17 @@ export class QuestionMetadataModal extends Modal {
           button.setDisabled(false);
           return;
         }
+        const followUpLinks = this.followUps.split(",").map((item) => item.trim()).filter(Boolean);
+        if (followUpLinks.length > MAX_FOLLOW_UPS) {
+          new Notice(`이어볼 문제는 최대 ${MAX_FOLLOW_UPS}개까지 연결할 수 있습니다.`);
+          button.setDisabled(false);
+          return;
+        }
         await this.onSubmit({
           questionType: this.type,
           coreKeywords,
           subKeywords: keywordReferencesFromInput(this.sub, this.keywordFolder),
-          followUpLinks: this.followUps.split(",").map((item) => item.trim()).filter(Boolean),
+          followUpLinks,
         });
         this.close();
       } catch (error) {
