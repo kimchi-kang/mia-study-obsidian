@@ -2,6 +2,7 @@ import { Component, ItemView, MarkdownRenderer, Notice, Platform, ViewStateResul
 import { Rating } from "ts-fsrs";
 import type MiaStudyPlugin from "../main";
 import { StudyGrade } from "../core/fsrs-service";
+import { planLearningQueue } from "../core/learning-queue";
 import { QUESTION_TYPES, KeywordReference, QuestionRecord, QuestionReviewState } from "../core/models";
 import { MiaRoute, MiaSessionMode, parseMiaNavigationState } from "../core/navigation";
 import { calculateProgress } from "../core/progress";
@@ -40,7 +41,7 @@ export class MiaStudyView extends ItemView {
   private queueIndex = 0;
   private answerVisible = false;
   private sessionMode: MiaSessionMode = "recall";
-  private lastRated: { id: string; queueIndex: number } | null = null;
+  private lastRated: { id: string; queueIndex: number; queueBefore: string[] } | null = null;
   private isMutatingReview = false;
   private questionText = "";
   private questionSubject = "all";
@@ -53,13 +54,15 @@ export class MiaStudyView extends ItemView {
   private sessionSeed: string[] = [];
   private sessionOrigin: MiaRoute = "dashboard";
   private sessionStartedAt = Date.now();
-  private sessionBaselines = new Map<string, QuestionReviewState | undefined>();
+  private sessionBaselines = new Map<number, QuestionReviewState | undefined>();
+  private sessionAttempts = new Map<number, { id: string; grade: StudyGrade }>();
   private sessionGrades = new Map<string, StudyGrade>();
   private sessionSkipped = new Set<string>();
   private resultShown = false;
   private renderComponent: Component | null = null;
   private keyboardViewport: KeyboardViewportBinding | null = null;
   private unsubscribers: Array<() => void> = [];
+  private learningTimer: number | null = null;
 
   constructor(leaf: WorkspaceLeaf, private readonly plugin: MiaStudyPlugin) {
     super(leaf);
@@ -77,9 +80,13 @@ export class MiaStudyView extends ItemView {
       this.plugin.store.subscribe(() => { if (!this.isMutatingReview) this.render(); }),
     ];
     this.render();
+    this.registerInterval(window.setInterval(() => {
+      if (this.route === "dashboard" || this.route === "progress") this.render();
+    }, 30_000));
   }
 
   async onClose(): Promise<void> {
+    if (this.learningTimer !== null) window.clearTimeout(this.learningTimer);
     this.keyboardViewport?.destroy();
     this.keyboardViewport = null;
     this.unsubscribers.forEach((unsubscribe) => unsubscribe());
@@ -104,6 +111,7 @@ export class MiaStudyView extends ItemView {
     this.lastRated = null;
     this.sessionStartedAt = Date.now();
     this.sessionBaselines.clear();
+    this.sessionAttempts.clear();
     this.sessionGrades.clear();
     this.sessionSkipped.clear();
     this.resultShown = false;
@@ -140,6 +148,8 @@ export class MiaStudyView extends ItemView {
   }
 
   private render(): void {
+    if (this.learningTimer !== null) window.clearTimeout(this.learningTimer);
+    this.learningTimer = null;
     this.renderComponent?.unload();
     this.renderComponent = new Component();
     this.renderComponent.load();
@@ -197,7 +207,7 @@ export class MiaStudyView extends ItemView {
     stable.createEl("strong", { text: `${stableRatio}%` });
     stable.createEl("span", { text: "기억 안정 비율" });
     stable.addEventListener("click", () => this.showQuestions("stable"));
-    this.progressStat(grid, "완전 암기", progress.easy, "easy");
+    this.progressStat(grid, "최근 너무 쉬움", progress.easy, "easy");
     this.progressStat(grid, "오늘 평가", progress.today, "today");
     this.progressStat(grid, "오늘 복습", due, "due");
     this.progressStat(grid, "개선 필요", progress.again + progress.hard, "weak");
@@ -210,7 +220,7 @@ export class MiaStudyView extends ItemView {
     action.createEl("p", { text: `복습 ${due}개 · 새 문제 ${fresh}개 · 학습 상한 없음` });
     const actions = action.createDiv({ cls: "mia-inline-actions" });
     const start = actions.createEl("button", { text: "시험 모드 시작", cls: "mod-cta" });
-    start.disabled = questions.length === 0;
+    start.disabled = due + fresh === 0;
     start.addEventListener("click", () => this.startReview());
     const browse = actions.createEl("button", { text: "전체 암기 모드" });
     browse.disabled = questions.length === 0;
@@ -652,6 +662,18 @@ export class MiaStudyView extends ItemView {
   }
 
   private renderStudy(root: HTMLElement): void {
+    if (this.queueIndex >= this.queue.length) {
+      const nextDue = this.refreshLearningQueue();
+      if (this.queueIndex >= this.queue.length && nextDue) {
+        const waiting = root.createDiv({ cls: "mia-primary-card" });
+        waiting.createEl("h3", { text: "다음 복습 대기 중" });
+        waiting.createEl("p", { text: `다음 학습 단계까지 ${formatInterval(nextDue, 0)} · ${nextDue.toLocaleTimeString()}에 자동으로 다시 출제합니다.` });
+        if (this.lastRated) waiting.createEl("button", { text: "직전 평가 취소" }).addEventListener("click", () => void this.undoLastRating());
+        waiting.createEl("button", { text: "시작 화면으로 돌아가기" }).addEventListener("click", () => this.returnToSessionOrigin());
+        this.learningTimer = window.setTimeout(() => this.render(), Math.min(60_000, Math.max(1, nextDue.getTime() - Date.now())));
+        return;
+      }
+    }
     let id = this.queue[this.queueIndex];
     let question = id ? this.plugin.index.questionById(id) : undefined;
     while (!question && this.queueIndex < this.queue.length) {
@@ -664,7 +686,7 @@ export class MiaStudyView extends ItemView {
       const done = root.createDiv({ cls: "mia-primary-card" });
       done.createEl("h3", { text: this.queue.length ? "학습 완료" : "학습할 문제가 없습니다" });
       done.createEl("p", { text: this.queue.length
-        ? `${this.queue.length}문제 · 못 암기 ${result.again} · 애매 ${result.hard} · 암기 ${result.good} · 너무 쉬움 ${result.easy} · 건너뜀 ${result.skipped}`
+        ? `${result.total}문제 · 못 암기 ${result.again} · 애매 ${result.hard} · 암기 ${result.good} · 너무 쉬움 ${result.easy} · 건너뜀 ${result.skipped}`
         : "문제를 등록하거나 다음 복습 시각에 다시 확인하세요." });
       if (this.lastRated) {
         done.createEl("button", { text: "직전 평가 취소" }).addEventListener("click", () => void this.undoLastRating());
@@ -691,7 +713,8 @@ export class MiaStudyView extends ItemView {
     navigation.createEl("div", { text: `${this.sessionMode === "recall" ? "시험 모드" : "암기 모드"} · ${this.queueIndex + 1} / ${this.queue.length} · ${question.subject} · ${question.questionType}`, cls: "mia-progress" });
     const next = navigation.createEl("button", { text: "다음 문제 →" });
     next.addEventListener("click", () => {
-      if (!this.sessionGrades.has(question.id)) this.sessionSkipped.add(question.id);
+      if (this.isMutatingReview) return;
+      this.sessionSkipped.add(question.id);
       this.moveToQuestion(this.queueIndex + 1);
     });
     if (this.lastRated) {
@@ -700,7 +723,7 @@ export class MiaStudyView extends ItemView {
     }
     const card = root.createDiv({ cls: "mia-study-card" });
     card.createEl("h2", { text: question.heading });
-    const sessionGrade = this.sessionGrades.get(question.id);
+    const sessionGrade = this.sessionAttempts.get(this.queueIndex)?.grade;
     if (sessionGrade) card.createEl("p", { text: `이번 학습 평가: ${GRADE_LABELS[sessionGrade]} · 다른 평가를 누르면 기존 기록을 대체합니다.`, cls: "mia-session-rating" });
     const prompt = card.createDiv({ cls: "mia-markdown" });
     void MarkdownRenderer.render(this.app, question.questionMarkdown, prompt, question.filePath, this.renderComponent ?? this);
@@ -727,7 +750,7 @@ export class MiaStudyView extends ItemView {
         button.addEventListener("click", () => {
           if (!item.question.id || this.queue.includes(item.question.id)) return;
           this.queue.splice(this.queueIndex + 1, 0, item.question.id);
-          this.sessionSeed = [...this.queue];
+          this.sessionSeed = [...new Set([...this.sessionSeed, item.question.id])];
           new Notice("추천 문제를 현재 시험의 다음 순서에 추가했습니다.");
           this.render();
         });
@@ -756,41 +779,51 @@ export class MiaStudyView extends ItemView {
   }
 
   private skipQuestion(): void {
+    if (this.isMutatingReview) return;
     const id = this.queue[this.queueIndex];
-    if (id && !this.sessionGrades.has(id)) this.sessionSkipped.add(id);
+    if (id) this.sessionSkipped.add(id);
     this.queueIndex += 1;
     this.answerVisible = this.sessionMode === "browse";
+    this.refreshLearningQueue();
+    this.app.workspace.requestSaveLayout();
     this.render();
   }
 
   private renderRatings(parent: HTMLElement, question: QuestionRecord & { id: string }): void {
     const ratings = parent.createDiv({ cls: "mia-ratings" });
     const buttons: HTMLButtonElement[] = [];
-    const baseline = this.sessionBaselines.has(question.id)
-      ? this.sessionBaselines.get(question.id)
+    const baseline = this.sessionBaselines.has(this.queueIndex)
+      ? this.sessionBaselines.get(this.queueIndex)
       : this.plugin.store.getReview(question.id);
+    const hasLaterAttempt = [...this.sessionAttempts].some(([index, attempt]) => index > this.queueIndex && attempt.id === question.id);
     for (const preview of this.plugin.fsrs.preview(baseline)) {
       const button = ratings.createEl("button");
       buttons.push(button);
+      button.disabled = hasLaterAttempt;
       button.createEl("strong", { text: GRADE_LABELS[preview.grade] });
       button.createEl("small", { text: formatInterval(preview.due, preview.scheduledDays) });
       button.addEventListener("click", async () => {
+        if (this.isMutatingReview || hasLaterAttempt) return;
         buttons.forEach((item) => { item.disabled = true; });
         const ratedIndex = this.queueIndex;
+        const queueBefore = [...this.queue];
         this.isMutatingReview = true;
         try {
-          if (!this.sessionBaselines.has(question.id)) {
-            this.sessionBaselines.set(question.id, this.plugin.store.getReview(question.id));
+          if (!this.sessionBaselines.has(ratedIndex)) {
+            this.sessionBaselines.set(ratedIndex, this.plugin.store.getReview(question.id));
           }
-          const original = this.sessionBaselines.get(question.id);
+          const original = this.sessionBaselines.get(ratedIndex);
           const state = this.plugin.fsrs.rate(original, preview.grade);
           await this.plugin.store.setReview(question.id, state);
           this.sessionGrades.set(question.id, preview.grade);
+          this.sessionAttempts.set(ratedIndex, { id: question.id, grade: preview.grade });
           this.sessionSkipped.delete(question.id);
-          this.lastRated = { id: question.id, queueIndex: ratedIndex };
+          this.lastRated = { id: question.id, queueIndex: ratedIndex, queueBefore };
           this.queueIndex = ratedIndex + 1;
           this.answerVisible = this.sessionMode === "browse";
           this.isMutatingReview = false;
+          this.refreshLearningQueue();
+          this.app.workspace.requestSaveLayout();
           this.render();
         } catch (error) {
           this.isMutatingReview = false;
@@ -799,25 +832,31 @@ export class MiaStudyView extends ItemView {
         }
       });
     }
+    if (hasLaterAttempt) parent.createEl("p", { text: "이 문제는 이후 학습 단계에서 다시 평가했습니다. 최신 평가를 취소한 뒤 수정할 수 있습니다.", cls: "mia-muted" });
     parent.createEl("button", { text: "원문 열기", cls: "mia-source" }).addEventListener("click", () => this.plugin.openQuestion(question));
   }
 
   private async undoLastRating(): Promise<void> {
     const lastRated = this.lastRated;
-    if (!lastRated) return;
+    if (!lastRated || this.isMutatingReview) return;
     this.isMutatingReview = true;
     try {
-      const baseline = this.sessionBaselines.get(lastRated.id);
+      const baseline = this.sessionBaselines.get(lastRated.queueIndex);
       if (baseline) await this.plugin.store.setReview(lastRated.id, baseline);
       else await this.plugin.store.removeReview(lastRated.id);
-      this.sessionBaselines.delete(lastRated.id);
+      this.sessionBaselines.delete(lastRated.queueIndex);
+      this.sessionAttempts.delete(lastRated.queueIndex);
       this.sessionGrades.delete(lastRated.id);
+      const prior = [...this.sessionAttempts].sort(([left], [right]) => left - right).filter(([, attempt]) => attempt.id === lastRated.id).at(-1)?.[1];
+      if (prior) this.sessionGrades.set(lastRated.id, prior.grade);
       this.sessionSkipped.delete(lastRated.id);
       this.queueIndex = lastRated.queueIndex;
+      this.queue = lastRated.queueBefore;
       this.answerVisible = true;
       this.lastRated = null;
       this.resultShown = false;
       this.isMutatingReview = false;
+      this.app.workspace.requestSaveLayout();
       new Notice("직전 평가를 취소했습니다.");
       this.render();
     } catch (error) {
@@ -827,21 +866,32 @@ export class MiaStudyView extends ItemView {
   }
 
   private moveToQuestion(index: number): void {
+    if (this.isMutatingReview) return;
+    const forward = index > this.queueIndex;
     this.queueIndex = Math.max(0, Math.min(index, this.queue.length));
-    const id = this.queue[this.queueIndex];
-    this.answerVisible = this.sessionMode === "browse" || Boolean(id && this.sessionGrades.has(id));
+    this.answerVisible = this.sessionMode === "browse" || this.sessionAttempts.has(this.queueIndex);
+    if (forward) this.refreshLearningQueue();
+    this.app.workspace.requestSaveLayout();
     this.render();
+  }
+
+  private refreshLearningQueue(): Date | null {
+    const scope = [...new Set([...this.sessionSeed, ...this.queue])].filter((id) => this.plugin.index.questionById(id));
+    const plan = planLearningQueue(this.queue, this.queueIndex, scope, this.plugin.store.reviews, this.sessionSkipped);
+    // Revisiting history must not shift the positions of recorded attempts.
+    if (![...this.sessionAttempts.keys()].some((index) => index >= this.queueIndex)) this.queue = plan.queue;
+    return plan.nextDue;
   }
 
   private studyResult(): StudyResult {
     const grades = [...this.sessionGrades.values()];
     return {
-      total: this.queue.length,
+      total: new Set(this.queue).size,
       again: grades.filter((grade) => grade === Rating.Again).length,
       hard: grades.filter((grade) => grade === Rating.Hard).length,
       good: grades.filter((grade) => grade === Rating.Good).length,
       easy: grades.filter((grade) => grade === Rating.Easy).length,
-      skipped: this.sessionSkipped.size,
+      skipped: [...this.sessionSkipped].filter((id) => !this.sessionGrades.has(id)).length,
       durationSeconds: Math.max(0, Math.round((Date.now() - this.sessionStartedAt) / 1000)),
     };
   }
