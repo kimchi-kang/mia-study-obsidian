@@ -1,7 +1,13 @@
 import { MarkdownView, Notice, Plugin, TFile, TFolder, normalizePath } from "obsidian";
 import { FsrsService, StudyGrade } from "./core/fsrs-service";
 import { planFollowUpChanges, questionBlockLink } from "./core/follow-up";
-import { createKeywordNote, readKeywordMeaning, updateKeywordMeaning, validateKeywordName } from "./core/keyword-note";
+import {
+  createKeywordNote,
+  readKeywordMeaning,
+  updateKeywordMeaning,
+  validateKeywordMeaning,
+  validateKeywordName,
+} from "./core/keyword-note";
 import { keywordNotePath } from "./core/keyword-path";
 import {
   appendManagedQuestion,
@@ -10,6 +16,7 @@ import {
   followUpLinksIn,
   renameSubjectBank,
   replaceCurrentManagedQuestion,
+  validateManagedQuestionInput,
   validateSubjectName,
 } from "./core/managed-question";
 import { keywordReferenceMatches, removeKeywordReferences, renameKeywordReferences } from "./core/keyword-reference";
@@ -353,6 +360,7 @@ export default class MiaStudyPlugin extends Plugin {
 
   private async createManagedQuestion(draft: ManagedQuestionDraft): Promise<void> {
     const subject = validateSubjectName(draft.subject);
+    this.validateManagedDraft(draft);
     const folderPath = normalizePath(`${this.managedRoot}/${subject}`);
     await this.ensureFolder(folderPath);
     const filePath = normalizePath(`${folderPath}/문제은행.md`);
@@ -376,6 +384,7 @@ export default class MiaStudyPlugin extends Plugin {
   private async updateManagedQuestion(question: QuestionRecord, draft: ManagedQuestionDraft): Promise<void> {
     if (!question.id) throw new Error("등록되지 않은 질문은 GUI에서 전체 수정할 수 없습니다.");
     const nextSubject = validateSubjectName(draft.subject);
+    this.validateManagedDraft(draft);
     const file = this.app.vault.getAbstractFileByPath(question.filePath);
     if (!(file instanceof TFile)) throw new Error("문제 파일을 찾지 못했습니다.");
     await this.assertSubjectNoteWritable(question.subject);
@@ -495,7 +504,16 @@ export default class MiaStudyPlugin extends Plugin {
     }
   }
 
+  private validateManagedDraft(draft: ManagedQuestionDraft): void {
+    validateManagedQuestionInput(draft);
+    for (const item of draft.keywordMeanings) {
+      validateKeywordMeaning(item.meaning);
+      keywordNotePath(item.target, item.label, this.store.settings.keywordFolder);
+    }
+  }
+
   private async saveKeywordReferenceMeaning(target: string, label: string, meaning: string): Promise<void> {
+    validateKeywordMeaning(meaning);
     const path = keywordNotePath(target, label, this.store.settings.keywordFolder);
     const folder = path.split("/").slice(0, -1).join("/");
     if (folder) await this.ensureFolder(folder);
@@ -510,6 +528,7 @@ export default class MiaStudyPlugin extends Plugin {
 
   private async saveKeywordMeaning(name: string, meaning: string, notify = true): Promise<void> {
     const safeName = validateKeywordName(name);
+    validateKeywordMeaning(meaning);
     const path = keywordNotePath(safeName, safeName, this.store.settings.keywordFolder);
     const folder = path.split("/").slice(0, -1).join("/");
     if (folder) await this.ensureFolder(folder);

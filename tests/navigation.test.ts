@@ -28,6 +28,11 @@ describe("MIA navigation history", () => {
     expect(parseMiaNavigationState({ route: "wrong", queue: ["q-1", 2], queueIndex: 99 })).toEqual({
       ...DEFAULT_MIA_NAVIGATION_STATE,
       queue: ["q-1"],
+      queueIndex: 1,
     });
+  });
+
+  it("preserves the waiting position after the last card when restoring a session", () => {
+    expect(parseMiaNavigationState({ route: "study", queue: ["q-1"], queueIndex: 1 }).queueIndex).toBe(1);
   });
 });

@@ -25,8 +25,30 @@ describe("mobile UI contract", () => {
     expect(styles).toContain(".is-phone .mia-result-modal");
   });
 
+  it("keeps short phone editors content-sized above the keyboard", () => {
+    expect(styles).toMatch(/\.mia-keyboard-modal\s*\{[^}]*height:\s*auto\s*!important/);
+    expect(styles).toMatch(/\.mia-keyboard-modal-container\.mia-keyboard-open\s*\{[^}]*align-items:\s*flex-end/);
+    expect(styles).toContain(".mia-editor-modal-compact");
+    expect(styles).toContain(".mia-editor-modal-long");
+  });
+
+  it("defines a dedicated tablet layout range", () => {
+    expect(styles).toContain("@media (min-width: 641px) and (max-width: 1100px)");
+    expect(styles).toMatch(/@media \(min-width: 641px\) and \(max-width: 1100px\)[\s\S]*?\.mia-keyboard-modal/);
+  });
+
   it("reserves the Obsidian mobile navigation and safe-area space", () => {
     expect(styles).toContain("--mia-navbar-clearance");
     expect(styles).toContain("--safe-area-inset-bottom");
+  });
+
+  it("keeps dashboard text inside cards at every pane width", () => {
+    expect(styles).toMatch(/\.mia-view\s*\{[\s\S]*?container-type:\s*inline-size/);
+    expect(styles).toMatch(/\.mia-view\s*\{[\s\S]*?overflow-x:\s*hidden/);
+    expect(styles).toMatch(/\.mia-stat\s*\{[^}]*height:\s*auto\s*!important/);
+    expect(styles).toMatch(/\.mia-stat span\s*\{[^}]*overflow-wrap:\s*anywhere/);
+    expect(styles).toContain("@container mia-view (max-width: 1050px)");
+    expect(styles).toContain("@container mia-view (max-width: 600px)");
+    expect(styles).toContain("@container mia-view (max-width: 380px)");
   });
 });

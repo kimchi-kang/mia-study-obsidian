@@ -61,7 +61,7 @@ export class SubjectEditorModal extends KeyboardAwareModal {
     current: string | null,
     private readonly onSubmit: (name: string) => Promise<void>,
   ) {
-    super(app);
+    super(app, "compact");
     this.value = current ?? "";
     this.setTitle(current ? "과목 이름 수정" : "과목 추가");
   }
@@ -105,7 +105,7 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
     meanings: ReadonlyMap<string, string>,
     private readonly onSubmit: (draft: ManagedQuestionDraft) => Promise<void>,
   ) {
-    super(app);
+    super(app, "long");
     this.subject = existing?.subject ?? subjects[0] ?? "";
     this.question = existing?.questionMarkdown ?? "";
     this.answer = existing?.answerMarkdown ?? "";
@@ -196,7 +196,7 @@ export class KeywordEditorModal extends KeyboardAwareModal {
     current: { name: string; meaning: string } | null,
     private readonly onSubmit: (name: string, meaning: string) => Promise<void>,
   ) {
-    super(app);
+    super(app, "medium");
     this.name = current?.name ?? "";
     this.meaning = current?.meaning ?? "";
     this.setTitle(current ? "키워드 수정" : "키워드 추가");

@@ -1,5 +1,6 @@
 import { KeywordReference, QuestionRecord, QuestionType } from "./models";
 import { findCurrentQuestion } from "./question-writer";
+import { assertSingleLine, hasHeadingAtOrAbove } from "./markdown-structure";
 
 export interface ManagedQuestionInput {
   questionMarkdown: string;
@@ -10,6 +11,18 @@ export interface ManagedQuestionInput {
   followUpLinks?: string[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+export function validateManagedQuestionInput(input: ManagedQuestionInput): void {
+  if (hasHeadingAtOrAbove(input.answerMarkdown, 3)) {
+    throw new Error("정답에서는 #### 이하의 제목만 사용할 수 있습니다. #~### 제목은 문제 구역을 분리합니다.");
+  }
+  for (const keyword of [...input.coreKeywords, ...input.subKeywords]) {
+    assertSingleLine(keyword.raw, "키워드");
+  }
+  for (const link of input.followUpLinks ?? []) assertSingleLine(link, "이어보기 링크");
+  if (input.createdAt) assertSingleLine(input.createdAt, "생성 시각");
+  if (input.updatedAt) assertSingleLine(input.updatedAt, "수정 시각");
 }
 
 function newlineFor(content: string): string {
@@ -33,20 +46,26 @@ function quoteCallout(markdown: string): string[] {
 }
 
 function metadataLines(input: ManagedQuestionInput): string[] {
-  const values = (items: KeywordReference[]) => items.map((item) => item.raw).join(", ");
+  const values = (items: KeywordReference[]) => items
+    .map((item) => assertSingleLine(item.raw, "키워드"))
+    .join(", ");
   const lines = [
     "> [!mia]- 학습 정보",
     `> 유형: ${input.questionType}`,
     `> 핵심: ${values(input.coreKeywords)}`,
     `> 보조: ${values(input.subKeywords)}`,
   ];
-  if (input.followUpLinks?.length) lines.push(`> 이어보기: ${input.followUpLinks.join(", ")}`);
+  if (input.followUpLinks?.length) {
+    lines.push(`> 이어보기: ${input.followUpLinks.map((item) => assertSingleLine(item, "이어보기 링크")).join(", ")}`);
+  }
   if (input.createdAt) lines.push(`> 생성: ${input.createdAt}`);
   if (input.updatedAt) lines.push(`> 수정: ${input.updatedAt}`);
   return lines;
 }
 
 export function renderManagedQuestion(input: ManagedQuestionInput, id: string): string {
+  validateManagedQuestionInput(input);
+  if (!/^mia-q-[A-Za-z0-9-]+$/.test(id)) throw new Error("유효하지 않은 MIA 문제 ID입니다.");
   return [
     `### ${cleanHeading(input.questionMarkdown)}`,
     "",
@@ -160,7 +179,7 @@ export function replaceCurrentManagedQuestion(
 export function validateSubjectName(value: string): string {
   const name = value.trim();
   if (!name) throw new Error("과목 이름을 입력하세요.");
-  if (name === "." || name === ".." || /[\\/:*?"<>|#\[\]^]/u.test(name)) {
+  if (name === "." || name === ".." || /[\u0000-\u001f\u007f\\/:*?"<>|#\[\]^]/u.test(name)) {
     throw new Error("과목 이름에 경로 또는 링크 특수문자를 사용할 수 없습니다.");
   }
   return name;
