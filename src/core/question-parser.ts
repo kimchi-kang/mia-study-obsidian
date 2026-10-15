@@ -6,6 +6,7 @@ import {
   QuestionType,
   KeywordReference,
 } from "./models";
+import { fencedCodeLines } from "./markdown-structure";
 
 const QUESTION_CALLOUT = /^>\s*\[!question\](?:[+-])?(?:\s+.*)?$/i;
 const MIA_CALLOUT = /^>\s*\[!mia\](?:[+-])?(?:\s+.*)?$/i;
@@ -127,9 +128,10 @@ function inferDeck(filePath: string): string {
   return fileName.replace(/\.md$/i, "");
 }
 
-function collectHeadings(lines: string[]): HeadingLine[] {
+function collectHeadings(lines: string[], fenced: readonly boolean[]): HeadingLine[] {
   const headings: HeadingLine[] = [];
   lines.forEach((line, index) => {
+    if (fenced[index]) return;
     const match = line.match(HEADING);
     if (!match) return;
     headings.push({ level: match[1]?.length ?? 1, text: match[2]?.trim() ?? "", line: index });
@@ -145,16 +147,24 @@ function previousHeading(headings: HeadingLine[], line: number): HeadingLine | n
   return null;
 }
 
-function findSectionEnd(lines: string[], startLine: number, headingLevel: number): number {
+function findSectionEnd(lines: string[], fenced: readonly boolean[], startLine: number, headingLevel: number): number {
   for (let line = startLine + 1; line < lines.length; line += 1) {
+    if (fenced[line]) continue;
     const match = lines[line]?.match(HEADING);
     if (match && (match[1]?.length ?? 7) <= headingLevel) return line;
   }
   return lines.length;
 }
 
-function findAnswerHeading(lines: string[], startLine: number, sectionEnd: number, headingLevel: number): number | null {
+function findAnswerHeading(
+  lines: string[],
+  fenced: readonly boolean[],
+  startLine: number,
+  sectionEnd: number,
+  headingLevel: number,
+): number | null {
   for (let line = startLine + 1; line < sectionEnd; line += 1) {
+    if (fenced[line]) continue;
     const match = lines[line]?.match(HEADING);
     if (!match) continue;
     const level = match[1]?.length ?? 1;
@@ -194,17 +204,19 @@ export function parseQuestionFile(
   overrides: { subject?: string; deck?: string } = {},
 ): ParsedQuestionFile {
   const lines = content.replaceAll("\r\n", "\n").split("\n");
-  const headings = collectHeadings(lines);
+  const fenced = fencedCodeLines(lines);
+  const headings = collectHeadings(lines, fenced);
   const questions: QuestionRecord[] = [];
   const diagnostics: QuestionDiagnostic[] = [];
   const seenIds = new Set<string>();
 
   for (let questionStart = 0; questionStart < lines.length; questionStart += 1) {
+    if (fenced[questionStart]) continue;
     if (!QUESTION_CALLOUT.test(lines[questionStart] ?? "")) continue;
     const heading = previousHeading(headings, questionStart);
     if (!heading) continue;
-    const sectionEnd = findSectionEnd(lines, heading.line, heading.level);
-    const answerHeadingLine = findAnswerHeading(lines, questionStart, sectionEnd, heading.level);
+    const sectionEnd = findSectionEnd(lines, fenced, heading.line, heading.level);
+    const answerHeadingLine = findAnswerHeading(lines, fenced, questionStart, sectionEnd, heading.level);
     if (answerHeadingLine === null) {
       diagnostics.push({
         filePath,
@@ -219,6 +231,7 @@ export function parseQuestionFile(
     let metadata: MetadataBlock | null = null;
     const scanEnd = answerHeadingLine ?? sectionEnd;
     for (let line = questionStart + 1; line < scanEnd; line += 1) {
+      if (fenced[line]) continue;
       const anchor = lines[line]?.trim().match(BLOCK_ID);
       if (anchor?.[1]) {
         id = anchor[1];

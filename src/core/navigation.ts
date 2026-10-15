@@ -29,7 +29,7 @@ export function parseMiaNavigationState(value: unknown): MiaNavigationState {
     ? state.queue.filter((item): item is string => typeof item === "string")
     : [];
   const queueIndex = typeof state.queueIndex === "number" && Number.isInteger(state.queueIndex)
-    ? Math.max(0, Math.min(state.queueIndex, Math.max(0, queue.length - 1)))
+    ? Math.max(0, Math.min(state.queueIndex, queue.length))
     : 0;
   return {
     route: isMiaRoute(state.route) ? state.route : "dashboard",
