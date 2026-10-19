@@ -1,13 +1,14 @@
 {
   "name": "mia-study-obsidian",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc --noEmit && node esbuild.config.mjs production",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "install:local": "node scripts/install-local.mjs"
   },
   "dependencies": {
     "docx": "^9.12.0",

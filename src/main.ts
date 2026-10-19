@@ -1,5 +1,6 @@
 import { MarkdownView, Notice, Platform, Plugin, TFile, TFolder, normalizePath } from "obsidian";
-import { exportSubjectDocx, type ExportImage } from "./core/subject-export";
+import type { ExportImage } from "./core/subject-export";
+import { StartupDiagnostics } from "./services/startup-diagnostics";
 import { downloadsDirectory, openExportFile, revealExportFile, writeExportFile } from "./services/export-file";
 import { SubjectExportModal, type ExportReceipt } from "./ui/subject-export-modal";
 import { FsrsService, StudyGrade } from "./core/fsrs-service";
@@ -68,8 +69,21 @@ export default class MiaStudyPlugin extends Plugin {
   index!: QuestionIndex;
   fsrs!: FsrsService;
   studyUi!: StudyUiStore;
+  private startupDiagnostics: StartupDiagnostics | null = null;
 
   async onload(): Promise<void> {
+    this.startupDiagnostics = new StartupDiagnostics(this.app, this.manifest.version);
+    this.startupDiagnostics.record("starting");
+    try {
+      await this.loadMia();
+      this.startupDiagnostics.record("loaded");
+    } catch (error) {
+      this.startupDiagnostics.record("failed", error);
+      throw error;
+    }
+  }
+
+  private async loadMia(): Promise<void> {
     const recoveryKey = `mia-study:review-recovery:${this.app.vault.getName()}:${this.app.vault.configDir}`;
     this.store = new MiaDataStore(this, {
       read: () => this.app.loadLocalStorage(recoveryKey),
@@ -87,6 +101,9 @@ export default class MiaStudyPlugin extends Plugin {
     this.registerView(MIA_VIEW_TYPE, (leaf) => new MiaStudyView(leaf, this));
     this.addRibbonIcon("brain-circuit", "MIA Study 열기", () => this.activateView());
     this.addCommand({ id: "open-mia-study", name: "MIA Study 열기", callback: () => this.activateView() });
+    this.addCommand({ id: "show-startup-status", name: "시작 상태 확인", callback: () => {
+      new Notice(this.startupDiagnostics?.summary() ?? "시작 기록이 없습니다.", 12000);
+    } });
     this.addCommand({ id: "export-subject-word", name: "과목 질문 답변 Word로 출력", callback: () => this.openSubjectExport() });
     this.addCommand({ id: "add-managed-subject", name: "GUI로 과목 추가", callback: () => this.openSubjectEditor() });
     this.addCommand({ id: "add-managed-question", name: "GUI로 질문 추가", callback: () => void this.openManagedQuestionEditor() });
@@ -135,7 +152,8 @@ export default class MiaStudyPlugin extends Plugin {
   }
 
   onunload(): void {
-    this.index.stop();
+    this.startupDiagnostics?.record("unloaded");
+    this.index?.stop();
   }
 
   async updateSettings(patch: Partial<MiaSettings>): Promise<void> {
@@ -218,6 +236,7 @@ export default class MiaStudyPlugin extends Plugin {
 
   private async exportSubject(subject: string): Promise<ExportReceipt> {
     await this.index.rebuild();
+    const { exportSubjectDocx } = await import("./core/subject-export");
     const result = await exportSubjectDocx(subject, this.index.registered, (target, source) => this.readExportImage(target, source));
     const safeSubject = subject.replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/gu, "_");
     const stamp = new Date().toISOString().replace(/[:.]/gu, "-");
