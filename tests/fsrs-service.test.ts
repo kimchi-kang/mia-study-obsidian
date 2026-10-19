@@ -1,10 +1,59 @@
 import { describe, expect, it } from "vitest";
-import { Rating } from "ts-fsrs";
+import { Rating, State } from "ts-fsrs";
 import { FsrsService } from "../src/core/fsrs-service";
 
 const service = new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500 });
 
 describe("FsrsService", () => {
+  it("spreads long-term intervals across cards while keeping previews reproducible after restart", () => {
+    const now = new Date("2026-10-17T00:00:00Z");
+    const days = new Set<number>();
+    for (let index = 0; index < 40; index += 1) {
+      const id = `mia-q-spread-${index}`;
+      const preview = service.preview(undefined, now, id).find(item => item.grade === Rating.Easy)!;
+      const restored = new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500 });
+      const rated = restored.rate(undefined, Rating.Easy, now, id);
+      expect(rated.card.due).toBe(preview.due.toISOString());
+      expect(rated.card.scheduled_days).toBe(preview.scheduledDays);
+      expect(rated.card.scheduled_days).toBeGreaterThan(0);
+      days.add(preview.scheduledDays);
+      const again = restored.preview(undefined, now, id).find(item => item.grade === Rating.Again)!;
+      expect(again.due.getTime() - now.getTime()).toBe(60_000);
+    }
+    expect(days.size).toBeGreaterThan(1);
+  });
+
+  it("keeps fuzz within the maximum interval and preserves recall-ordered rating intervals", () => {
+    const capped = new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 7 });
+    const start = new Date("2026-10-17T00:00:00Z");
+    for (let index = 0; index < 30; index += 1) {
+      const id = `mia-q-cap-${index}`;
+      const review = capped.rate(undefined, Rating.Easy, start, id);
+      const now = new Date(review.card.due);
+      const previews = capped.preview(review, now, id);
+      expect(previews.every(item => item.scheduledDays <= 7)).toBe(true);
+      expect(previews.map(item => item.due.getTime())).toEqual(previews.map(item => item.due.getTime()).sort((a, b) => a - b));
+      for (const item of previews) {
+        const rated = capped.rate(review, item.grade, now, id);
+        expect(rated.card.due).toBe(item.due.toISOString());
+        expect(capped.undo(rated)?.card).toEqual(review.card);
+      }
+    }
+  });
+
+  it("does not describe learning or a fresh lapse as stable memory", () => {
+    const now = new Date("2026-10-17T00:00:00Z");
+    const learning = service.rate(undefined, Rating.Again, now, "q");
+    expect(service.isStable(learning, now)).toBe(false);
+    const review = service.rate(undefined, Rating.Easy, now, "q");
+    expect(service.isStable(review, now)).toBe(true);
+    const due = new Date(review.card.due);
+    const lapse = service.rate(review, Rating.Again, due, "q");
+    expect(lapse.card.state).toBe(State.Relearning);
+    expect(service.isStable(lapse, due)).toBe(false);
+    expect(service.isStable(review, new Date(due.getTime() + 365 * 86_400_000))).toBe(false);
+  });
+
   it("previews and applies all four FSRS ratings", () => {
     const now = new Date("2026-08-15T00:00:00.000Z");
     const preview = service.preview(undefined, now);

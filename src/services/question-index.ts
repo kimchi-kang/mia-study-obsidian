@@ -42,8 +42,13 @@ function uniqueRegisteredQuestions(questions: QuestionRecord[]): RegisteredQuest
 export class QuestionIndex {
   private readonly byFile = new Map<string, ParsedQuestionFile>();
   private readonly listeners = new Set<() => void>();
+  private initialized = false;
   private eventRefs: EventRef[] = [];
   private refreshTimers = new Map<string, number>();
+  private revision = 0;
+  private rebuildRevision = 0;
+  private lifetime = 0;
+  private readonly pathRevisions = new Map<string, number>();
 
   constructor(
     private readonly app: App,
@@ -51,17 +56,21 @@ export class QuestionIndex {
   ) {}
 
   async start(): Promise<void> {
-    await this.rebuild();
     this.eventRefs.push(this.app.vault.on("create", (file) => this.onCreateOrModify(file)));
     this.eventRefs.push(this.app.vault.on("modify", (file) => this.onCreateOrModify(file)));
     this.eventRefs.push(this.app.vault.on("delete", (file) => this.remove(file.path)));
     this.eventRefs.push(this.app.vault.on("rename", (file, oldPath) => {
-      this.remove(oldPath, false);
-      this.onCreateOrModify(file);
+      this.remove(oldPath);
+      if ("extension" in file) this.onCreateOrModify(file);
+      else for (const child of this.app.vault.getMarkdownFiles()) {
+        if (child.path.startsWith(`${file.path}/`)) this.onCreateOrModify(child);
+      }
     }));
+    await this.rebuild();
   }
 
   stop(): void {
+    this.lifetime += 1;
     this.eventRefs.forEach((eventRef) => this.app.vault.offref(eventRef));
     this.eventRefs = [];
     for (const timer of this.refreshTimers.values()) window.clearTimeout(timer);
@@ -69,11 +78,26 @@ export class QuestionIndex {
   }
 
   async rebuild(): Promise<void> {
-    this.byFile.clear();
+    const rebuildRevision = ++this.rebuildRevision;
+    const revision = ++this.revision;
+    const lifetime = this.lifetime;
     const files = this.app.vault.getMarkdownFiles().filter((file) => inSourceRoots(file.path, this.getSourceRoots()));
+    // Track even unread files so a folder deletion can invalidate their results.
+    for (const file of files) this.pathRevisions.set(file.path, revision);
     const parsed = await Promise.all(files.map(async (file) => this.parse(file)));
-    for (const item of parsed) this.byFile.set(item.filePath, item);
+    if (lifetime !== this.lifetime || rebuildRevision !== this.rebuildRevision) return;
+    for (const path of this.byFile.keys()) {
+      if ((this.pathRevisions.get(path) ?? 0) <= revision) this.byFile.delete(path);
+    }
+    for (const item of parsed) {
+      if ((this.pathRevisions.get(item.filePath) ?? 0) <= revision && inSourceRoots(item.filePath, this.getSourceRoots())) this.byFile.set(item.filePath, item);
+    }
+    this.initialized = true;
     this.emit();
+  }
+
+  get isReady(): boolean {
+    return this.initialized;
   }
 
   get registered(): Array<QuestionRecord & { id: string }> {
@@ -120,11 +144,17 @@ export class QuestionIndex {
   }
 
   async refreshFile(file: TFile): Promise<void> {
-    if (file.extension !== "md" || !inSourceRoots(file.path, this.getSourceRoots())) {
-      this.remove(file.path);
+    const path = file.path;
+    if (file.extension !== "md" || !inSourceRoots(path, this.getSourceRoots())) {
+      this.remove(path);
       return;
     }
-    this.byFile.set(file.path, await this.parse(file));
+    const revision = ++this.revision;
+    const lifetime = this.lifetime;
+    this.pathRevisions.set(path, revision);
+    const parsed = await this.parse(file);
+    if (lifetime !== this.lifetime || this.pathRevisions.get(path) !== revision || file.path !== path || !inSourceRoots(path, this.getSourceRoots())) return;
+    this.byFile.set(path, parsed);
     this.emit();
   }
 
@@ -133,16 +163,17 @@ export class QuestionIndex {
   }
 
   private async parse(file: TFile): Promise<ParsedQuestionFile> {
+    const path = file.path;
     try {
-      const subject = subjectForPath(file.path, this.getSourceRoots());
-      return parseQuestionFile(file.path, await this.app.vault.cachedRead(file), subject ? { subject } : {});
+      const subject = subjectForPath(path, this.getSourceRoots());
+      return parseQuestionFile(path, await this.app.vault.cachedRead(file), subject ? { subject } : {});
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       return {
-        filePath: file.path,
+        filePath: path,
         questions: [],
         diagnostics: [{
-          filePath: file.path,
+          filePath: path,
           line: 0,
           code: "read-error",
           message: `노트를 읽지 못했습니다: ${reason}`,
@@ -163,13 +194,18 @@ export class QuestionIndex {
   }
 
   private remove(path: string, notify = true): void {
-    const timer = this.refreshTimers.get(path);
-    if (timer !== undefined) {
-      window.clearTimeout(timer);
-      this.refreshTimers.delete(path);
+    const revision = ++this.revision;
+    const paths = new Set([path, ...this.pathRevisions.keys(), ...this.byFile.keys(), ...this.refreshTimers.keys()]);
+    let changed = false;
+    for (const candidate of paths) {
+      if (candidate !== path && !candidate.startsWith(`${path}/`)) continue;
+      this.pathRevisions.set(candidate, revision);
+      const timer = this.refreshTimers.get(candidate);
+      if (timer !== undefined) window.clearTimeout(timer);
+      this.refreshTimers.delete(candidate);
+      changed = this.byFile.delete(candidate) || changed;
     }
-    if (!this.byFile.delete(path)) return;
-    if (notify) this.emit();
+    if (notify && changed) this.emit();
   }
 
   private emit(): void {

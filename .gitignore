@@ -3,3 +3,11 @@ node_modules/
 .DS_Store
 coverage/
 artifacts/
+
+# Local vault content and per-user study state
+.obsidian/
+data.json
+ui-state.json
+workspace.json
+workspace-mobile.json
+*.log

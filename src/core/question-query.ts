@@ -143,6 +143,10 @@ export function queryQuestions(
     }
     const priority = reviewPriority(left, reviews, fsrsService, now) - reviewPriority(right, reviews, fsrsService, now);
     if (priority !== 0) return priority;
+    if (fsrsService.isDue(reviews[left.id], now)) {
+      return fsrsService.compareDue(reviews[left.id], reviews[right.id], now)
+        || left.heading.localeCompare(right.heading, "ko");
+    }
     return dueTime(left, reviews) - dueTime(right, reviews) || left.heading.localeCompare(right.heading, "ko");
   });
 }

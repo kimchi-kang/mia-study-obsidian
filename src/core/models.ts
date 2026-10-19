@@ -94,13 +94,15 @@ export interface MiaPluginData {
   settings: MiaSettings;
   reviews: Record<string, QuestionReviewState>;
   quarantinedReviews: Record<string, unknown>;
+  reviewVersions: Record<string, string>;
+  reviewConflicts: Record<string, QuestionReviewState[]>;
 }
 
 export const DEFAULT_SETTINGS: MiaSettings = {
-  sourceRoots: ["전공면접대비"],
+  sourceRoots: ["MIA"],
   targetRetention: 0.9,
   maximumIntervalDays: 36500,
-  keywordFolder: "전공면접대비/MIA/키워드",
+  keywordFolder: "MIA/키워드",
 };
 
 export const DEFAULT_PLUGIN_DATA: MiaPluginData = {
@@ -108,4 +110,6 @@ export const DEFAULT_PLUGIN_DATA: MiaPluginData = {
   settings: DEFAULT_SETTINGS,
   reviews: {},
   quarantinedReviews: {},
+  reviewVersions: {},
+  reviewConflicts: {},
 };

@@ -91,6 +91,7 @@ export function recommendQuestions(
 
 export interface ReviewQueueOptions {
   now?: Date;
+  random?: () => number;
 }
 
 export function buildReviewQueue(
@@ -103,13 +104,19 @@ export function buildReviewQueue(
   const registered = questions.filter((question): question is QuestionRecord & { id: string } => Boolean(question.id));
   const due = registered
     .filter((question) => fsrsService.isDue(reviews[question.id], now))
-    .sort((left, right) => {
-      const leftDue = new Date(reviews[left.id]?.card.due ?? 0).getTime();
-      const rightDue = new Date(reviews[right.id]?.card.due ?? 0).getTime();
-      return leftDue - rightDue;
-    });
+    .sort((left, right) => fsrsService.compareDue(reviews[left.id], reviews[right.id], now)
+      || left.heading.localeCompare(right.heading, "ko"));
   const fresh = registered
     .filter((question) => fsrsService.isNew(reviews[question.id]));
+  if (options.random) {
+    // Shuffle each eligibility group once; future reviews never enter either group.
+    for (const group of [due, fresh]) {
+      for (let index = group.length - 1; index > 0; index -= 1) {
+        const target = Math.floor(options.random() * (index + 1));
+        [group[index], group[target]] = [group[target]!, group[index]!];
+      }
+    }
+  }
   return [...due, ...fresh];
 }
 

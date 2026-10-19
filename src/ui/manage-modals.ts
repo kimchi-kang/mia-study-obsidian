@@ -127,7 +127,7 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
       text.setPlaceholder("새 과목을 바로 추가할 때만 입력").onChange((value) => { this.newSubject = value; });
     });
     new Setting(this.contentEl).setName("질문").setDesc("Markdown과 수식을 사용할 수 있습니다.").addTextArea((text) => {
-      text.setPlaceholder("면접 질문을 입력하세요.").setValue(this.question).onChange((value) => { this.question = value; });
+      text.setPlaceholder("질문을 입력하세요.").setValue(this.question).onChange((value) => { this.question = value; });
       text.inputEl.rows = 5;
     });
     new Setting(this.contentEl).setName("정답").addTextArea((text) => {
