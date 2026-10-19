@@ -1,3 +1,4 @@
+import { mergeReviewData, nextReviewVersion } from "../core/review-sync";
 import type { Plugin } from "obsidian";
 import {
   DEFAULT_PLUGIN_DATA,
@@ -145,28 +146,57 @@ function parseReviews(value: unknown, existingQuarantine: unknown = {}): ParsedR
   return { reviews, quarantined };
 }
 
+function parseData(raw: unknown): MiaPluginData {
+  const record = isRecord(raw) ? raw : {};
+  const parsed = parseReviews(record.reviews, record.quarantinedReviews);
+  const reviewVersions: Record<string, string> = {};
+  if (isRecord(record.reviewVersions)) for (const [id, value] of Object.entries(record.reviewVersions)) {
+    if (typeof value === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z:.+$/.test(value) && Number.isFinite(Date.parse(value.slice(0, 24)))) reviewVersions[id] = value;
+  }
+  const reviewConflicts: Record<string, QuestionReviewState[]> = {};
+  if (isRecord(record.reviewConflicts)) for (const [id, value] of Object.entries(record.reviewConflicts)) {
+    if (!Array.isArray(value)) continue;
+    const states = value.map(parseReview).filter((review): review is QuestionReviewState => review !== null);
+    if (states.length) reviewConflicts[id] = states;
+  }
+  return { version: 1, settings: parseSettings(record.settings), reviews: parsed.reviews, quarantinedReviews: parsed.quarantined, reviewVersions, reviewConflicts };
+}
+
+class ReviewChangedError extends Error {}
+
+export interface ReviewRecovery {
+  read(): unknown;
+  write(data: MiaPluginData): void;
+}
+
 export class MiaDataStore {
   private data: MiaPluginData = structuredClone(DEFAULT_PLUGIN_DATA);
   private saveChain: Promise<void> = Promise.resolve();
   private listeners = new Set<() => void>();
   loadWarnings: string[] = [];
 
-  constructor(private readonly plugin: Plugin) {}
+  constructor(private readonly plugin: Plugin, private readonly recovery?: ReviewRecovery) {}
 
   async load(): Promise<void> {
-    const raw: unknown = await this.plugin.loadData();
-    const record = isRecord(raw) ? raw : {};
-    const parsedReviews = parseReviews(record.reviews, record.quarantinedReviews);
-    const quarantinedCount = Object.keys(parsedReviews.quarantined).length;
-    this.loadWarnings = quarantinedCount
-      ? [`손상되었거나 호환되지 않는 복습 기록 ${quarantinedCount}개를 격리했습니다.`]
-      : [];
-    this.data = {
-      version: 1,
-      settings: parseSettings(record.settings),
-      reviews: parsedReviews.reviews,
-      quarantinedReviews: parsedReviews.quarantined,
-    };
+    const disk = parseData(await this.plugin.loadData());
+    const recovered = this.recovery?.read();
+    this.data = recovered ? mergeReviewData(parseData(recovered), disk) : disk;
+    const quarantinedCount = Object.keys(this.data.quarantinedReviews).length;
+    this.loadWarnings = quarantinedCount ? [`손상되었거나 호환되지 않는 복습 기록 ${quarantinedCount}개를 격리했습니다.`] : [];
+  }
+
+  get conflicts(): Readonly<Record<string, QuestionReviewState[]>> { return this.data.reviewConflicts; }
+
+  synchronize(): Promise<void> {
+    return this.enqueue(async () => {
+      const incoming = parseData(await this.plugin.loadData());
+      const merged = mergeReviewData(this.data, incoming);
+      if (JSON.stringify(merged) !== JSON.stringify(incoming)) await this.plugin.saveData(merged);
+      const changed = JSON.stringify(merged) !== JSON.stringify(this.data);
+      this.data = merged;
+      this.recovery?.write(merged);
+      if (changed) this.emit();
+    });
   }
 
   get settings(): MiaSettings {
@@ -182,58 +212,35 @@ export class MiaDataStore {
   }
 
   async updateSettings(patch: Partial<MiaSettings>): Promise<void> {
-    const previous = this.data.settings;
-    this.data.settings = parseSettings({ ...this.data.settings, ...patch });
-    try {
-      await this.persist();
-    } catch (error) {
-      this.data.settings = previous;
-      throw error;
-    }
-    this.emit();
+    const settings = structuredClone(patch);
+    await this.commit((next) => { next.settings = parseSettings({ ...next.settings, ...settings }); });
   }
 
-  async setReview(questionId: string, state: QuestionReviewState): Promise<void> {
-    const previous = this.data.reviews[questionId];
-    const quarantined = this.data.quarantinedReviews[questionId];
-    this.data.reviews[questionId] = state;
-    delete this.data.quarantinedReviews[questionId];
-    try {
-      await this.persist();
-    } catch (error) {
-      if (previous) this.data.reviews[questionId] = previous;
-      else delete this.data.reviews[questionId];
-      if (quarantined !== undefined) this.data.quarantinedReviews[questionId] = quarantined;
-      throw error;
-    }
-    this.emit();
+  async setReview(questionId: string, state: QuestionReviewState, expected?: { state: QuestionReviewState | undefined }): Promise<void> {
+    const review = structuredClone(state);
+    await this.commit((next) => {
+      if (expected && JSON.stringify(next.reviews[questionId]) !== JSON.stringify(expected.state)) throw new ReviewChangedError("다른 기기에서 이 문제의 평가가 변경되었습니다. 최신 기록을 확인한 뒤 다시 평가하세요.");
+      next.reviews[questionId] = review;
+      next.reviewVersions[questionId] = nextReviewVersion(next.reviewVersions);
+      delete next.quarantinedReviews[questionId];
+    });
   }
 
-  async removeReview(questionId: string): Promise<void> {
-    await this.removeReviews([questionId]);
+  async removeReview(questionId: string, expected?: { state: QuestionReviewState | undefined }): Promise<void> {
+    await this.removeReviews([questionId], expected);
   }
 
-  async removeReviews(questionIds: readonly string[]): Promise<void> {
+  async removeReviews(questionIds: readonly string[], expected?: { state: QuestionReviewState | undefined }): Promise<void> {
     const ids = [...new Set(questionIds)];
-    if (ids.length === 0) return;
-    const previousReviews = new Map(ids.map((id) => [id, this.data.reviews[id]]));
-    const previousQuarantined = new Map(ids.map((id) => [id, this.data.quarantinedReviews[id]]));
-    for (const id of ids) {
-      delete this.data.reviews[id];
-      delete this.data.quarantinedReviews[id];
-    }
-    try {
-      await this.persist();
-    } catch (error) {
+    if (!ids.length) return;
+    await this.commit((next) => {
       for (const id of ids) {
-        const review = previousReviews.get(id);
-        const quarantined = previousQuarantined.get(id);
-        if (review) this.data.reviews[id] = review;
-        if (quarantined !== undefined) this.data.quarantinedReviews[id] = quarantined;
+        if (expected && JSON.stringify(next.reviews[id]) !== JSON.stringify(expected.state)) throw new ReviewChangedError("다른 기기에서 평가가 변경되어 취소하지 않았습니다.");
+        next.reviewVersions[id] = nextReviewVersion(next.reviewVersions);
+        delete next.reviews[id];
+        delete next.quarantinedReviews[id];
       }
-      throw error;
-    }
-    this.emit();
+    });
   }
 
   subscribe(listener: () => void): () => void {
@@ -241,10 +248,26 @@ export class MiaDataStore {
     return () => this.listeners.delete(listener);
   }
 
-  private persist(): Promise<void> {
-    const snapshot = structuredClone(this.data);
-    this.saveChain = this.saveChain.catch(() => undefined).then(() => this.plugin.saveData(snapshot));
-    return this.saveChain;
+  private commit(change: (next: MiaPluginData) => void): Promise<void> {
+    return this.enqueue(async () => {
+      // Re-read immediately before a write; another device may have updated a different question.
+      const next = mergeReviewData(this.data, parseData(await this.plugin.loadData()));
+      try { change(next); }
+      catch (error) {
+        if (error instanceof ReviewChangedError) { this.data = next; this.emit(); }
+        throw error;
+      }
+      await this.plugin.saveData(next);
+      this.data = next;
+      this.recovery?.write(next);
+      this.emit();
+    });
+  }
+
+  private enqueue(work: () => Promise<void>): Promise<void> {
+    const write = this.saveChain.then(work);
+    this.saveChain = write.catch(() => undefined);
+    return write;
   }
 
   private emit(): void {

@@ -18,6 +18,7 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
   let frame = 0;
   let focusTimer = 0;
   let destroyed = false;
+  let dismissButton: HTMLButtonElement | null = null;
   let layoutHeight = Math.max(window.innerHeight, document.documentElement.clientHeight);
   let wideLayout = window.innerWidth > layoutHeight;
 
@@ -55,7 +56,21 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
     surface.style.setProperty("--mia-keyboard-height", `${metrics.keyboardHeight}px`);
     surface.style.setProperty("--mia-keyboard-available-height", `${metrics.availableHeight}px`);
     surface.toggleClass("mia-keyboard-open", metrics.keyboardOpen);
-    if (!metrics.keyboardOpen) layoutHeight = currentLayoutHeight;
+    if (metrics.keyboardOpen && !dismissButton?.isConnected) {
+      dismissButton = document.createElement("button");
+      dismissButton.className = "mia-keyboard-dismiss";
+      dismissButton.type = "button";
+      dismissButton.textContent = "키보드 닫기";
+      dismissButton.setAttribute("aria-label", "입력을 유지하고 키보드 닫기");
+      dismissButton.addEventListener("click", () => {
+        const active = document.activeElement;
+        if (editableTarget(active) && focusRoot.contains(active)) active.blur();
+      });
+      // Keep the field focused until click; otherwise the control can disappear before activation.
+      dismissButton.addEventListener("pointerdown", event => event.preventDefault());
+      focusRoot.append(dismissButton);
+    }
+    if (!metrics.keyboardOpen) { dismissButton?.remove(); dismissButton = null; layoutHeight = currentLayoutHeight; }
     if (metrics.keyboardOpen) scrollFocusedControl();
   };
 
@@ -79,6 +94,8 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
     refresh,
     destroy: () => {
       destroyed = true;
+      dismissButton?.remove();
+      dismissButton = null;
       viewport?.removeEventListener("resize", scheduleRefresh);
       viewport?.removeEventListener("scroll", scheduleRefresh);
       window.removeEventListener("resize", scheduleRefresh);

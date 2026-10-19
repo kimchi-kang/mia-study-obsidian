@@ -82,7 +82,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-progress { margin-bottom: 10px; }
 .mia-undo { float: right; margin-top: -38px; }
 .mia-study-card { max-width: 860px; margin: 0 auto; padding: 24px; }
-.mia-study-card > h2 { margin-top: 0; }
+.mia-study-card .mia-question-section > h2 { margin-top: 0; }
 .mia-markdown { font-size: 1.05em; }
 .mia-answer { padding-top: 8px; }
 .mia-reveal { display: block; margin: 28px auto 0; min-width: 180px; }
@@ -98,6 +98,8 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-skip { display: block; margin: 8px auto 0; }
 .mia-related { max-width: 860px; margin: 20px auto 0; display: grid; gap: 6px; }
 .mia-related button { text-align: left; }
+.mia-related-item { display: flex; align-items: stretch; gap: 6px; flex-wrap: wrap; }
+.mia-related-item .mia-related-open { flex: 1 1 260px; white-space: normal; height: auto; }
 .mia-study-navigation { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; margin-bottom: 12px; }
 .mia-study-navigation .mia-progress { text-align: center; margin: 0; }
 .mia-session-rating { color: var(--interactive-accent); font-weight: 600; }
@@ -274,7 +276,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   .mia-study-navigation button { min-width: 0; }
   .mia-undo { float: none; width: 100%; margin: 0 0 8px; }
   .mia-study-card { width: 100%; box-sizing: border-box; padding: 14px; border-radius: var(--radius-m); }
-  .mia-study-card > h2 { font-size: clamp(1.16em, 5vw, 1.38em); line-height: 1.3; }
+  .mia-study-card .mia-question-section > h2 { font-size: clamp(1.16em, 5vw, 1.38em); line-height: 1.3; }
   .mia-markdown { font-size: 1em; overflow-wrap: anywhere; }
   .mia-study-actions { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); margin-top: 18px; }
   .mia-study-actions button { min-width: 0; }
@@ -436,3 +438,390 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
     padding-bottom: 24px;
   }
 }
+
+/* Focused study workspace; follows Obsidian's light/dark theme tokens. */
+.mia-view {
+  --mia-study-width: 1080px;
+  --mia-again: var(--text-error, #e16b75);
+  --mia-hard: var(--text-warning, #d9a54e);
+  --mia-good: var(--color-green, #6ab88c);
+  --mia-easy: var(--color-blue, #70a7e8);
+  padding: 24px 28px 36px;
+}
+.mia-view button { transition: background-color 120ms, border-color 120ms; }
+.mia-view button:focus-visible, .mia-view summary:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 3px; }
+.mia-header { max-width: var(--mia-study-width); margin: 0 auto 24px; padding-bottom: 18px; }
+.mia-header h2 { font-size: 20px; letter-spacing: -.5px; }
+.mia-header .mia-badge { background: var(--background-modifier-hover); color: var(--text-muted); font-size: 10px; letter-spacing: .5px; padding: 4px 7px; }
+.mia-nav { background: var(--background-primary-alt); padding: 4px; border: 1px solid var(--background-modifier-border); border-radius: 12px; gap: 3px; }
+.mia-nav button { background: transparent; box-shadow: none; border: 0; border-radius: 8px; padding: 8px 12px; color: var(--text-muted); }
+.mia-nav button:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+.mia-nav button.mod-cta { background: var(--interactive-accent); color: var(--text-on-accent); }
+.mia-route-dashboard > :not(.mia-header), .mia-route-progress > :not(.mia-header) { max-width: var(--mia-study-width); margin-left: auto; margin-right: auto; }
+.mia-route-dashboard .mia-primary-card { padding: 26px; border-color: color-mix(in srgb, var(--interactive-accent) 35%, var(--background-modifier-border)); background: color-mix(in srgb, var(--interactive-accent) 5%, var(--background-primary)); }
+.mia-route-dashboard .mia-primary-card h3 { font-size: 22px; letter-spacing: -.4px; }
+.mia-route-dashboard .mia-subject-card { background: var(--background-primary-alt); padding: 18px; border-radius: 14px; }
+.mia-route-dashboard .mia-manage-actions button { flex: 0 1 auto; background: transparent; color: var(--text-muted); box-shadow: none; }
+.mia-study-navigation { max-width: var(--mia-study-width); margin: 0 auto 12px; }
+.mia-study-navigation button { height: auto; min-height: 38px; background: transparent; box-shadow: none; color: var(--text-muted); font-size: 12px; }
+.mia-study-navigation button:hover { background: var(--background-modifier-hover); }
+.mia-study-navigation .mia-progress { font-size: 12px; font-variant-numeric: tabular-nums; }
+.mia-session-meter { max-width: var(--mia-study-width); height: 3px; margin: 0 auto 24px; border-radius: 3px; background: var(--background-modifier-border); overflow: hidden; }
+.mia-session-meter-fill { height: 100%; background: var(--interactive-accent); border-radius: inherit; }
+.mia-study-layout { max-width: var(--mia-study-width); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+.mia-study-card { box-sizing: border-box; width: 100%; max-width: none; margin: 0; padding: 30px 34px; background: var(--background-primary); border-radius: 18px; box-shadow: 0 8px 28px rgb(0 0 0 / .05); }
+.mia-card-context { color: var(--text-muted); font-size: 12px; margin-bottom: 26px; }
+.mia-card-label { color: var(--text-faint); font-size: 11px; font-weight: 600; letter-spacing: .08em; margin-bottom: 10px; }
+.mia-study-card .mia-question-section > h2 { font-size: clamp(21px, 2.2vw, 27px); font-weight: 650; line-height: 1.5; letter-spacing: -.6px; margin: 0 0 20px; overflow-wrap: anywhere; }
+.mia-study-card .mia-markdown { font-size: 16px; line-height: 1.8; overflow-wrap: anywhere; }
+.mia-study-card .mia-markdown > :first-child { margin-top: 0; }
+.mia-study-card .mia-markdown > :last-child { margin-bottom: 0; }
+.mia-study-card .mia-markdown img { max-width: 100%; height: auto; }
+.mia-study-card .mia-markdown pre, .mia-study-card .mia-markdown .math-block { max-width: 100%; overflow-x: auto; }
+.mia-answer-section { border-top: 1px solid var(--background-modifier-border); padding-top: 24px; margin-top: 24px; }
+.mia-answer-section .mia-card-label { color: var(--interactive-accent); }
+.mia-answer-section .mia-answer { padding: 0; }
+.mia-recall-prompt { color: var(--text-muted); font-size: 13px; line-height: 1.6; margin: 32px 0 4px; }
+.mia-study-concepts { border-top: 1px solid var(--background-modifier-border); margin-top: 26px; padding-top: 12px; }
+.mia-study-concepts summary { cursor: pointer; color: var(--text-muted); font-size: 12px; min-height: 36px; align-content: center; }
+.mia-study-concepts .mia-keyword-section { margin-top: 12px; }
+.mia-study-concepts h3 { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.mia-keyword-chips button { border-radius: 20px; box-shadow: none; font-size: 12px; padding: 5px 11px; height: auto; }
+.mia-study-card .mia-source { margin: 12px 0 0; font-size: 12px; color: var(--text-muted); background: transparent; box-shadow: none; padding: 4px 0; }
+.mia-study-layout .mia-related { width: 100%; max-width: none; margin: 0; padding: 20px; background: var(--background-primary-alt); border: 1px solid var(--background-modifier-border); border-radius: 16px; gap: 10px; box-sizing: border-box; }
+.mia-related h3 { font-size: 14px; margin: 0; }
+.mia-related > p { font-size: 11px; line-height: 1.6; margin: 0 0 4px; }
+.mia-related-item { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--background-modifier-border); }
+.mia-related-item:last-child { border: 0; padding-bottom: 0; }
+.mia-related-item .mia-related-open { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; flex-basis: 100%; min-width: 0; padding: 8px 0; background: transparent; box-shadow: none; }
+.mia-related-open strong { font-size: 13px; font-weight: 550; line-height: 1.65; text-align: left; }
+.mia-related-open small { font-size: 10px; line-height: 1.5; color: var(--text-muted); text-align: left; }
+.mia-related-item > button:not(.mia-related-open) { min-height: 28px; height: auto; font-size: 10px; padding: 5px 8px; box-shadow: none; border-radius: 6px; }
+.mia-related-item .mia-related-open:hover strong { color: var(--interactive-accent); text-decoration: underline; text-underline-offset: 3px; }
+.mia-study-dock { box-sizing: border-box; position: sticky; bottom: 0; z-index: 3; max-width: var(--mia-study-width); margin: 24px auto 0; padding: 16px 20px 10px; border: 1px solid var(--background-modifier-border); border-radius: 16px; background: var(--background-primary); box-shadow: 0 -8px 24px rgb(0 0 0 / .06); }
+.mia-study-dock .mia-grade-guidance { margin: 0 0 12px; text-align: center; font-size: 11px; line-height: 1.6; }
+.mia-study-dock .mia-ratings { margin: 0; gap: 10px; }
+.mia-study-dock .mia-ratings button { --mia-rating-color: var(--text-muted); position: relative; border: 1px solid color-mix(in srgb, var(--mia-rating-color) 34%, var(--background-modifier-border)); border-top: 3px solid var(--mia-rating-color); background: color-mix(in srgb, var(--mia-rating-color) 7%, var(--background-primary)); border-radius: 10px; box-shadow: none; min-height: 66px; padding: 11px 24px; height: auto; }
+.mia-study-dock .mia-ratings button:hover:not(:disabled) { background: color-mix(in srgb, var(--mia-rating-color) 17%, var(--background-primary)); }
+.mia-study-dock button[data-grade="1"] { --mia-rating-color: var(--mia-again); }
+.mia-study-dock button[data-grade="2"] { --mia-rating-color: var(--mia-hard); }
+.mia-study-dock button[data-grade="3"] { --mia-rating-color: var(--mia-good); }
+.mia-study-dock button[data-grade="4"] { --mia-rating-color: var(--mia-easy); }
+.mia-study-dock .mia-ratings strong { font-size: 13px; font-weight: 600; }
+.mia-study-dock .mia-ratings small { color: var(--mia-rating-color); font-size: 11px; }
+.mia-grade-key { position: absolute; top: 9px; right: 10px; font-size: 10px; color: var(--text-faint); background: transparent; box-shadow: none; border: 0; padding: 0; }
+.mia-shortcut-hint { font-size: 10px; color: var(--text-faint); text-align: center; margin: 10px 0 0; }
+.mia-dock-utility { display: flex; gap: 12px; align-items: center; justify-content: center; margin-top: 9px; }
+.mia-dock-utility .mia-shortcut-hint { margin: 0; }
+.mia-dock-utility .mia-skip { margin: 0; min-height: 28px; height: auto; background: transparent; box-shadow: none; padding: 3px 8px; color: var(--text-muted); font-size: 11px; }
+.mia-study-dock .mia-study-actions { margin: 0; }
+.mia-study-dock .mia-reveal { min-width: min(300px, 70%); min-height: 48px; border-radius: 10px; font-weight: 600; }
+.mia-route-study .mia-undo { float: none; display: block; max-width: var(--mia-study-width); margin: -12px auto 12px; color: var(--text-muted); font-size: 11px; background: transparent; box-shadow: none; }
+
+@container mia-view (min-width: 1000px) {
+  .mia-study-layout:has(.mia-related) { grid-template-columns: minmax(0, 1fr) 270px; }
+}
+@container mia-view (max-width: 600px) {
+  .mia-study-navigation { grid-template-columns: 1fr 1fr; gap: 4px; }
+  .mia-study-navigation .mia-progress { grid-column: 1 / -1; grid-row: 1; font-size: 10px; }
+  .mia-session-meter { margin-bottom: 14px; }
+  .mia-study-card { padding: 20px 18px; border-radius: 14px; }
+  .mia-study-card .mia-question-section > h2 { font-size: 21px; }
+  .mia-card-context { margin-bottom: 20px; }
+  .mia-study-layout { gap: 14px; }
+  .mia-study-layout .mia-related { padding: 16px; }
+  .mia-study-dock { padding: 12px 10px 8px; margin-top: 14px; border-radius: 14px; }
+  .mia-study-dock .mia-ratings { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+  .mia-study-dock .mia-ratings button { min-height: 64px; padding: 10px 2px; }
+  .mia-study-dock .mia-ratings strong { font-size: 11px; }
+  .mia-study-dock .mia-ratings small { font-size: 10px; }
+  .mia-grade-key, .mia-shortcut-hint { display: none; }
+  .mia-study-dock .mia-grade-guidance { font-size: 10px; margin-bottom: 9px; }
+  .mia-study-dock .mia-study-actions { display: grid; grid-template-columns: 2fr 1fr; }
+  .mia-study-dock .mia-reveal { min-width: 0; width: 100%; }
+  .mia-nav button { padding: 9px 6px; }
+}
+@media (max-width: 640px) {
+  .mia-view { padding: 12px 10px calc(20px + var(--safe-area-inset-bottom, 0px)); }
+  .mia-study-dock { bottom: 0; padding-bottom: max(10px, var(--safe-area-inset-bottom, 0px)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mia-view button { transition: none; }
+}
+
+/* Keep the answer area scrollable above the controls rather than behind them. */
+.mia-route-study:has(.mia-study-layout) { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: hidden; }
+.mia-route-study .mia-header, .mia-route-study .mia-study-navigation, .mia-route-study .mia-session-meter { width: 100%; box-sizing: border-box; flex-shrink: 0; }
+.mia-route-study .mia-study-layout { width: 100%; flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; align-content: start; padding: 2px 2px 12px; box-sizing: border-box; scroll-padding-block: 16px; }
+.mia-route-study .mia-study-dock { position: relative; width: 100%; flex: 0 0 auto; margin-top: 16px; }
+.mia-study-card .mia-markdown hr { margin-block: 18px; }
+@container mia-view (max-width: 600px) {
+  .mia-route-study .mia-header { margin-bottom: 12px; padding-bottom: 10px; }
+  .mia-route-study .mia-study-dock { margin-top: 10px; }
+  .mia-study-dock .mia-dock-utility { margin-top: 5px; }
+}
+@container mia-view (max-width: 600px) {
+  .mia-route-study .mia-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; }
+  .mia-route-study .mia-nav button { min-width: 0; padding-inline: 4px; }
+}
+
+/* Device input: native scrolling outside the swipe card, reachable controls below. */
+.mia-view { touch-action: auto; }
+.mia-study-card { position: relative; touch-action: pan-y pinch-zoom; transform: translateX(var(--mia-swipe-x, 0px)); }
+.mia-study-card::after { content: attr(data-swipe-label); position: absolute; right: 16px; top: 14px; padding: 5px 9px; background: var(--interactive-accent); color: var(--text-on-accent); font-size: 11px; border-radius: 20px; opacity: var(--mia-swipe-progress, 0); pointer-events: none; }
+.mia-study-card pre, .mia-study-card table, .mia-study-card .math-block { display: block; max-width: 100%; overflow-x: auto; touch-action: pan-x pan-y pinch-zoom; }
+.mia-thumb-navigation { display: grid; grid-template-columns: minmax(72px, 1fr) minmax(0, auto) minmax(72px, 1fr); align-items: center; gap: 8px; margin-top: 10px; }
+.mia-thumb-navigation > button { min-height: 36px; padding: 6px 12px; height: auto; box-shadow: none; border: 0; background: transparent; color: var(--text-muted); border-radius: 9px; font-size: 12px; }
+.mia-thumb-navigation > button:hover:not(:disabled) { background: var(--background-modifier-hover); color: var(--text-normal); }
+.mia-thumb-navigation .mia-thumb-previous { justify-self: start; }
+.mia-thumb-navigation .mia-thumb-next { justify-self: end; }
+.mia-thumb-navigation .mia-dock-undo { color: var(--interactive-accent); }
+.mia-study-dock .mia-study-actions { display: flex; justify-content: center; }
+.mia-study-dock .mia-reveal { width: min(440px, 100%); }
+.mia-touch-hint { display: none; font-size: 10px; color: var(--text-muted); text-align: center; margin: 4px 0 0; }
+.mia-controls-modal { width: min(520px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); }
+.mia-controls-modal .modal-content { overflow-y: auto; line-height: 1.75; }
+.mia-controls-modal h3 { font-size: 15px; margin: 20px 0 6px; }
+.mia-controls-modal p { font-size: 13px; color: var(--text-muted); }
+.mia-controls-modal button { min-height: 44px; width: 100%; margin-top: 12px; }
+.mia-view[data-device="phone"] .mia-thumb-navigation > button,
+.mia-view[data-device="tablet"] .mia-thumb-navigation > button { min-height: 44px; min-width: 64px; }
+.mia-view[data-device="phone"] .mia-study-dock .mia-ratings button,
+.mia-view[data-device="tablet"] .mia-study-dock .mia-ratings button { min-height: 64px; }
+.mia-view[data-device="phone"] .mia-study-dock,
+.mia-view[data-device="tablet"] .mia-study-dock { padding-bottom: max(10px, var(--safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px)); }
+.mia-view[data-device="phone"] .mia-touch-hint,
+.mia-view[data-device="tablet"] .mia-touch-hint { display: block; }
+.mia-view[data-device="phone"] .mia-shortcut-hint,
+.mia-view[data-device="tablet"] .mia-shortcut-hint { display: none; }
+.mia-view[data-device="phone"] .mia-study-navigation > button { display: none; }
+.mia-view[data-device="phone"] .mia-study-navigation { display: block; }
+.mia-view[data-device="phone"] .mia-card-context { margin-bottom: 14px; }
+.mia-view[data-device="phone"] .mia-study-dock .mia-grade-guidance { font-size: 11px; }
+@media (pointer: coarse) {
+  .mia-view button, .mia-view summary { min-height: 44px; }
+  .mia-thumb-navigation > button { min-height: 44px; }
+  .mia-touch-hint { display: block; }
+  .mia-study-dock .mia-shortcut-hint { display: none; }
+}
+@container mia-view (min-width: 820px) {
+  .mia-view[data-device="tablet"] .mia-study-layout:has(.mia-related) { grid-template-columns: minmax(0, 1fr) 230px; }
+}
+@container mia-view (max-width: 600px) {
+  .mia-thumb-navigation { grid-template-columns: 1fr minmax(0, auto) 1fr; gap: 4px; }
+  .mia-thumb-navigation > button { min-height: 44px; padding: 7px 6px; font-size: 11px; }
+  .mia-study-dock .mia-reveal { width: 100%; }
+}
+@media (max-height: 520px) and (pointer: coarse) {
+  .mia-route-study .mia-header > div:first-child { display: flex; }
+  .mia-route-study .mia-header { margin-bottom: 6px; padding-bottom: 6px; }
+  .mia-route-study .mia-session-meter { margin-bottom: 6px; }
+  .mia-study-dock { padding-top: 8px; }
+  .mia-study-dock .mia-grade-guidance, .mia-touch-hint { display: none !important; }
+  .mia-study-dock .mia-ratings button { min-height: 48px !important; padding-block: 5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mia-study-card { transform: none; }
+}
+
+/* A clear way back in, and reading preferences that stay on this device. */
+.mia-resume-card { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 18px; padding: 20px 22px; margin-bottom: 18px; border: 1px solid color-mix(in srgb, var(--interactive-accent) 40%, var(--background-modifier-border)); border-radius: 16px; background: color-mix(in srgb, var(--interactive-accent) 6%, var(--background-primary)); }
+.mia-resume-card .mia-card-label { grid-column: 1; margin: 0 0 6px; }
+.mia-resume-card h3 { grid-column: 1; font-size: 17px; line-height: 1.5; margin: 0; overflow-wrap: anywhere; }
+.mia-resume-card p { grid-column: 1; color: var(--text-muted); font-size: 12px; margin: 7px 0 0; }
+.mia-resume-card > button { grid-column: 2; grid-row: 1 / 5; align-self: center; min-height: 44px; padding: 10px 22px; }
+.mia-appearance-button { height: auto; min-height: 32px; padding: 5px 8px; box-shadow: none; font-size: 11px; color: var(--text-muted); background: transparent; }
+.mia-view[data-reading-size="small"] { --mia-reading-body: 14px; --mia-reading-title: 21px; }
+.mia-view[data-reading-size="medium"] { --mia-reading-body: 16px; --mia-reading-title: 25px; }
+.mia-view[data-reading-size="large"] { --mia-reading-body: 20px; --mia-reading-title: 30px; }
+.mia-view .mia-study-card .mia-markdown { font-size: var(--mia-reading-body); }
+.mia-view .mia-study-card .mia-question-section > h2 { font-size: var(--mia-reading-title); }
+.mia-view[data-density="compact"] .mia-study-concepts,
+.mia-view[data-density="compact"] .mia-study-layout .mia-related,
+.mia-view[data-density="compact"] .mia-study-card > .mia-source { display: none; }
+.mia-view[data-density="compact"] .mia-study-layout { grid-template-columns: minmax(0, 1fr); }
+.mia-preview-modal { width: min(600px, calc(100vw - 28px)); max-height: min(80dvh, 760px); display: flex; flex-direction: column; }
+.mia-preview-modal .modal-content { min-height: 0; overflow-y: auto; line-height: 1.75; }
+.mia-preview-modal h3 { font-size: 21px; line-height: 1.5; margin-top: 10px; }
+.mia-preview-modal h4 { color: var(--interactive-accent); font-size: 12px; margin: 20px 0 10px; }
+.mia-preview-modal .mia-markdown img { max-width: 100%; height: auto; }
+.mia-preview-actions { position: sticky; bottom: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: var(--background-primary); padding-top: 14px; margin-top: 18px; }
+.mia-preview-actions > button { min-height: 44px; }
+.mia-appearance-modal { width: min(480px, calc(100vw - 28px)); max-height: calc(100dvh - 28px); }
+.mia-appearance-modal .modal-content { overflow-y: auto; }
+.mia-appearance-modal > .modal-content > p { font-size: 12px; color: var(--text-muted); }
+.mia-appearance-modal select { min-height: 44px; }
+.mia-appearance-modal .modal-content > button { width: 100%; min-height: 44px; margin-top: 16px; }
+@container mia-view (max-width: 600px) {
+  .mia-resume-card { padding: 16px; grid-template-columns: 1fr; }
+  .mia-resume-card > button { grid-column: 1; grid-row: auto; margin-top: 14px; width: 100%; }
+  .mia-header > div:first-child { flex-wrap: wrap; }
+}
+.is-phone .mia-preview-modal { width: calc(100vw - 16px); max-height: calc(100dvh - 32px); }
+.is-phone .mia-appearance-modal .setting-item { display: block; }
+.is-phone .mia-appearance-modal .setting-item-control { margin-top: 8px; justify-content: stretch; }
+.is-phone .mia-appearance-modal select { width: 100%; }
+.mia-preview-modal[data-reading-size="small"] { --mia-preview-body: 14px; --mia-preview-title: 21px; }
+.mia-preview-modal[data-reading-size="medium"] { --mia-preview-body: 16px; --mia-preview-title: 25px; }
+.mia-preview-modal[data-reading-size="large"] { --mia-preview-body: 20px; --mia-preview-title: 30px; }
+.mia-preview-modal .mia-markdown { font-size: var(--mia-preview-body); }
+.mia-preview-modal h3 { font-size: var(--mia-preview-title); }
+.mia-resume-card small { grid-column: 1; margin-top: 5px; font-size: 10px; }
+.mia-focus-exit { display: none; min-height: 36px; padding: 5px 8px; height: auto; box-shadow: none; background: transparent; color: var(--text-muted); font-size: 11px; }
+.mia-route-study[data-focus="true"] .mia-header .mia-nav { display: none; }
+.mia-route-study[data-focus="true"] .mia-header { margin-bottom: 8px; padding-bottom: 8px; }
+.mia-route-study[data-focus="true"] .mia-focus-exit { display: inline-flex; align-items: center; }
+.mia-hint-button { height: auto; min-height: 40px; color: var(--interactive-accent); background: transparent; box-shadow: none; padding: 6px 0; }
+.mia-view[data-swipe-enabled="false"] .mia-touch-hint { display: none; }
+@container mia-view (min-width: 900px) {
+  .mia-view[data-answer-layout="split"] .mia-study-layout { grid-template-columns: minmax(0, 1fr); }
+  .mia-view[data-answer-layout="split"] .mia-study-card:has(.mia-answer-section) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px; }
+  .mia-view[data-answer-layout="split"] .mia-study-card .mia-card-context { grid-column: 1 / -1; }
+  .mia-view[data-answer-layout="split"] .mia-answer-section { min-width: 0; border-top: 0; border-left: 1px solid var(--background-modifier-border); margin: 0; padding: 0 0 0 28px; }
+  .mia-view[data-answer-layout="split"] .mia-study-concepts,
+  .mia-view[data-answer-layout="split"] .mia-study-card > .mia-source { grid-column: 1 / -1; }
+}
+@media (max-height: 520px) and (pointer: coarse) {
+  .mia-route-study[data-focus="true"] .mia-header > div:first-child { display: flex; }
+  .mia-route-study[data-focus="true"] .mia-badge { display: none; }
+}
+.mia-appearance-modal { display: flex; flex-direction: column; }
+.mia-appearance-modal .modal-content { min-height: 0; }
+
+/* The app title is also a keyboard- and touch-accessible home control. */
+.mia-header h2 .mia-home-button {
+  display: inline-flex;
+  align-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  box-shadow: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: start;
+  white-space: normal;
+  cursor: pointer;
+}
+.mia-header h2 .mia-home-button:hover { color: var(--interactive-accent); background: transparent; }
+.mia-header h2 .mia-home-button:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 3px; }
+
+/* Text controls retain breathing room even in narrow panes. */
+:is(.mia-view, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) button:not(.modal-close-button) {
+  box-sizing: border-box;
+  padding-inline: 14px;
+  line-height: 1.35;
+}
+.mia-view .mia-nav button { padding-inline: 10px; }
+.mia-view .mia-ratings button { padding-inline: 24px; }
+@container mia-view (max-width: 600px) {
+  .mia-view .mia-ratings { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .mia-view .mia-ratings button { padding-inline: 16px; }
+  .mia-view .mia-ratings strong { font-size: 13px; }
+  .mia-view .mia-ratings small { font-size: 11px; }
+}
+
+/* Follow the actual pane, including iOS cutouts, rotation and split-screen windows. */
+.mia-view {
+  --mia-edge-top: max(0px, calc(max(var(--safe-area-inset-top, 0px), env(safe-area-inset-top, 0px)) - var(--mia-pane-top, 0px)));
+  --mia-edge-left: max(0px, calc(max(var(--safe-area-inset-left, 0px), env(safe-area-inset-left, 0px)) - var(--mia-pane-left, 0px)));
+  --mia-edge-right: max(0px, calc(max(var(--safe-area-inset-right, 0px), env(safe-area-inset-right, 0px)) - var(--mia-pane-right-gap, 0px)));
+  --mia-edge-bottom: max(0px, calc(max(var(--safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px)) - var(--mia-pane-bottom-gap, 0px)));
+  --mia-pane-gutter: clamp(10px, calc(var(--mia-pane-width, 400px) * .025), 28px);
+  padding-inline: var(--mia-pane-gutter);
+}
+.mia-view:is([data-device="phone"], [data-device="tablet"]) {
+  padding-top: calc(12px + var(--mia-edge-top));
+  padding-left: calc(var(--mia-pane-gutter) + var(--mia-edge-left));
+  padding-right: calc(var(--mia-pane-gutter) + var(--mia-edge-right));
+  padding-bottom: calc(12px + var(--mia-edge-bottom));
+}
+.mia-header > div:first-child { flex-wrap: wrap; }
+.mia-view .mia-appearance-button, .mia-view .mia-focus-exit { min-height: 44px; flex-shrink: 0; }
+.mia-view .mia-header .mia-appearance-button { margin-inline-start: auto; }
+/* The root owns the bottom inset; do not add it again inside the dock. */
+.mia-view:is([data-device="phone"], [data-device="tablet"]) .mia-study-dock { padding-bottom: 10px; }
+.mia-view .mia-study-card .mia-question-section > h2 { font-size: clamp(calc(var(--mia-reading-title) * .88), calc(var(--mia-reading-title) * .8 + 1cqi), var(--mia-reading-title)); }
+.mia-view[data-viewport-height="compact"] .mia-session-meter,
+.mia-view[data-viewport-height="short"] .mia-session-meter { margin-bottom: 8px; }
+.mia-view:is([data-viewport-height="compact"], [data-viewport-height="short"]) .mia-grade-guidance,
+.mia-view:is([data-viewport-height="compact"], [data-viewport-height="short"]) .mia-touch-hint { display: none; }
+.mia-view:is([data-viewport-height="compact"], [data-viewport-height="short"]) .mia-study-card { padding: 16px; }
+.mia-view:is([data-viewport-height="compact"], [data-viewport-height="short"]) .mia-card-context { margin-bottom: 12px; }
+/* Very short panes scroll as a whole instead of collapsing the question to zero. */
+.mia-view.mia-route-study[data-viewport-height="minimal"] { overflow-y: auto; }
+.mia-view[data-viewport-height="minimal"] .mia-study-layout { flex: 0 0 auto; min-height: 160px; overflow: visible; }
+.mia-view[data-viewport-height="short"] .mia-study-dock { margin-top: 8px; }
+
+/* Settings and previews are separate overlays, so they need their own safe area. */
+.is-mobile .modal-container:not(.mia-keyboard-open):has(> :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-keyboard-modal)) {
+  --mia-modal-top: max(var(--safe-area-inset-top, 0px), env(safe-area-inset-top, 0px));
+  --mia-modal-bottom: max(var(--safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px));
+  --mia-modal-left: max(var(--safe-area-inset-left, 0px), env(safe-area-inset-left, 0px));
+  --mia-modal-right: max(var(--safe-area-inset-right, 0px), env(safe-area-inset-right, 0px));
+  box-sizing: border-box;
+  padding: calc(12px + var(--mia-modal-top)) calc(12px + var(--mia-modal-right)) calc(12px + var(--mia-modal-bottom)) calc(12px + var(--mia-modal-left));
+}
+.is-mobile .modal-container:not(.mia-keyboard-open) > :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-keyboard-modal) {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-width: 100%;
+  max-height: calc(100dvh - var(--mia-modal-top) - var(--mia-modal-bottom) - 24px) !important;
+  margin: 0;
+}
+.is-mobile :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal) .modal-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+
+.mia-view[data-viewport-height="short"] .mia-header { margin-bottom: 6px; padding-bottom: 6px; }
+.mia-view[data-viewport-height="short"] .mia-header .mia-nav,
+.mia-view[data-viewport-height="short"] .mia-header .mia-badge { display: none; }
+.mia-view[data-viewport-height="short"] .mia-study-layout { min-height: 80px; }
+.mia-view[data-viewport-height="short"] .mia-ratings button { min-height: 48px !important; padding-block: 5px; }
+
+/* Visible recovery after a touch rating; the permanent undo control remains below. */
+.mia-undo-feedback { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 8px; padding: 6px 10px; border: 1px solid var(--interactive-accent); border-radius: 10px; }
+.mia-undo-feedback > span { font-size: 12px; color: var(--text-muted); }
+.mia-undo-feedback .mia-quick-undo { min-height: 44px; height: auto; color: var(--interactive-accent); }
+.mia-sync-warning { padding: 14px; margin-bottom: 16px; border: 1px solid var(--text-warning); border-radius: 12px; }
+.mia-sync-warning p { margin-top: 0; }
+.mia-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+:is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-result-modal, .mia-detail-modal, .mia-keyboard-modal) button:not(.modal-close-button) { min-height: 44px; height: auto; white-space: normal; }
+.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal) .checkbox-container { min-width: 44px; min-height: 44px; }
+.is-mobile .mia-view .mia-source, .is-mobile .mia-view .mia-keyword-chips button { min-height: 44px; }
+@media (prefers-reduced-motion: reduce) {
+  .mia-view *, .mia-view *::before, .mia-view *::after { scroll-behavior: auto !important; transition: none !important; }
+}
+
+/* The same keyboard viewport handling applies to a full-width iPad, not only phones. */
+.is-mobile .mia-keyboard-modal-container.mia-keyboard-open {
+  --mia-keyboard-safe-top: max(0px, calc(max(var(--safe-area-inset-top, 0px), env(safe-area-inset-top, 0px)) - var(--mia-viewport-offset-top, 0px)));
+  box-sizing: border-box;
+  top: var(--mia-viewport-offset-top, 0px) !important;
+  bottom: auto !important;
+  height: var(--mia-visible-viewport-height, 100dvh) !important;
+  max-height: var(--mia-visible-viewport-height, 100dvh) !important;
+  align-items: flex-end;
+  padding: calc(8px + var(--mia-keyboard-safe-top)) 8px 8px;
+}
+.is-mobile .mia-keyboard-modal-container.mia-keyboard-open .mia-keyboard-modal {
+  max-height: calc(var(--mia-visible-viewport-height, 100dvh) - var(--mia-keyboard-safe-top) - 16px) !important;
+}
+.is-mobile .mia-view.mia-keyboard-open {
+  box-sizing: border-box;
+  height: var(--mia-keyboard-available-height, 100%) !important;
+  max-height: var(--mia-keyboard-available-height, 100%) !important;
+  margin-bottom: 0;
+  padding-bottom: 16px;
+  scroll-padding-bottom: 72px;
+}
+.mia-keyboard-dismiss { position: sticky; bottom: 0; z-index: 6; display: block; min-height: 44px; height: auto; width: max-content; max-width: 100%; margin: 8px auto 0; padding: 8px 16px; box-shadow: var(--shadow-s); background: var(--background-primary); color: var(--interactive-accent); }
+.mia-view:is([data-device="phone"], [data-device="tablet"]) :is(button, input, select) { min-height: 44px; }
+.mia-view .mia-dock-undo { color: var(--interactive-accent); border: 1px solid var(--background-modifier-border); }
+/* Keep the permanent undo button when a toast would squeeze out the question. */
+.mia-view[data-viewport-height="short"] .mia-undo-feedback { display: none; }
+.mia-view .mia-dock-undo { min-height: 44px; }

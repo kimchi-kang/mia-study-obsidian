@@ -16,6 +16,7 @@ export class StudyResultModal extends Modal {
     private readonly result: StudyResult,
     private readonly onRestart: () => void,
     private readonly onReturn: () => void,
+    private readonly onUndo?: () => void,
   ) {
     super(app);
     this.setTitle("학습 완료");
@@ -23,6 +24,7 @@ export class StudyResultModal extends Modal {
 
   onOpen(): void {
     this.modalEl.addClass("mia-result-modal");
+    if (this.onUndo) this.contentEl.createEl("button", { text: "직전 평가 취소", cls: "mia-result-undo" }).addEventListener("click", () => { this.close(); this.onUndo?.(); });
     const grid = this.contentEl.createDiv({ cls: "mia-stats" });
     const values: Array<[string, number | string]> = [
       ["전체", this.result.total], ["못 암기", this.result.again], ["애매", this.result.hard],

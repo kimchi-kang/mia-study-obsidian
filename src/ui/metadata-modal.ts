@@ -17,12 +17,13 @@ export class QuestionMetadataModal extends KeyboardAwareModal {
     private readonly question: QuestionRecord,
     private readonly keywordFolder: string,
     private readonly onSubmit: (metadata: QuestionMetadataInput) => Promise<void>,
+    resolveQuestion: (id: string) => QuestionRecord | undefined,
   ) {
     super(app);
     this.type = question.questionType;
     this.core = question.coreKeywords.map((item) => item.raw).join(", ");
     this.sub = question.subKeywords.map((item) => item.raw).join(", ");
-    this.followUps = question.followUpIds.map((id) => `[[${question.filePath}#^${id}]]`).join(", ");
+    this.followUps = question.followUpIds.map((id) => `[[${resolveQuestion(id)?.filePath ?? question.filePath}#^${id}]]`).join(", ");
   }
 
   onOpen(): void {

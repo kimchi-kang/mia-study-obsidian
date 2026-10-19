@@ -1,5 +1,8 @@
 import { MarkdownView, Notice, Plugin, TFile, TFolder, normalizePath } from "obsidian";
 import { FsrsService, StudyGrade } from "./core/fsrs-service";
+import { StudyUiStore } from "./services/study-ui-store";
+import { QuestionPreviewModal } from "./ui/question-preview-modal";
+import { errorMessage } from "./ui/error-message";
 import { planFollowUpChanges, questionBlockLink } from "./core/follow-up";
 import {
   createKeywordNote,
@@ -61,12 +64,21 @@ export default class MiaStudyPlugin extends Plugin {
   store!: MiaDataStore;
   index!: QuestionIndex;
   fsrs!: FsrsService;
+  studyUi!: StudyUiStore;
 
   async onload(): Promise<void> {
-    this.store = new MiaDataStore(this);
+    const recoveryKey = `mia-study:review-recovery:${this.app.vault.getName()}:${this.app.vault.configDir}`;
+    this.store = new MiaDataStore(this, {
+      read: () => this.app.loadLocalStorage(recoveryKey),
+      write: (data) => this.app.saveLocalStorage(recoveryKey, data),
+    });
     await this.store.load();
+    this.studyUi = new StudyUiStore(this.app, normalizePath(`${this.app.vault.configDir}/plugins/${this.manifest.id}/ui-state.json`));
+    try { await this.studyUi.load(); }
+    catch (error) { new Notice(`이어하기 정보 불러오기 실패: ${errorMessage(error)}`); }
     for (const warning of this.store.loadWarnings) new Notice(`MIA Study: ${warning}`);
     this.fsrs = new FsrsService(this.store.settings);
+    this.register(this.store.subscribe(() => { this.fsrs = new FsrsService(this.store.settings); }));
     this.index = new QuestionIndex(this.app, () => this.store.settings.sourceRoots);
 
     this.registerView(MIA_VIEW_TYPE, (leaf) => new MiaStudyView(leaf, this));
@@ -113,6 +125,11 @@ export default class MiaStudyPlugin extends Plugin {
     });
   }
 
+  async onExternalSettingsChange(): Promise<void> {
+    try { await this.store.synchronize(); }
+    catch (error) { new Notice(`기기 간 복습 기록 확인 실패: ${errorMessage(error)}`); }
+  }
+
   onunload(): void {
     this.index.stop();
   }
@@ -148,6 +165,7 @@ export default class MiaStudyPlugin extends Plugin {
       question,
       this.store.settings.keywordFolder,
       (metadata) => this.writeMetadata(question, metadata),
+      (id) => this.index.questionById(id),
     ).open();
   }
 
@@ -156,7 +174,7 @@ export default class MiaStudyPlugin extends Plugin {
   }
 
   get managedRoot(): string {
-    return this.store.settings.sourceRoots[0] ?? "전공면접대비";
+    return this.store.settings.sourceRoots[0] ?? "MIA";
   }
 
   listSubjects(): string[] {
@@ -647,6 +665,11 @@ export default class MiaStudyPlugin extends Plugin {
     }).open();
   }
 
+  openQuestionPreview(question: QuestionRecord & { id: string }, restore: () => void): void {
+    const current = this.index.questionById(question.id) ?? question;
+    new QuestionPreviewModal(this.app, current, () => void this.openQuestionDetail(current), restore, this.studyUi.appearance).open();
+  }
+
   async openQuestionDetail(question: QuestionRecord & { id: string }): Promise<void> {
     const current = this.index.questionById(question.id) ?? question;
     const meanings = await this.loadKeywordMeanings(current);
@@ -664,7 +687,7 @@ export default class MiaStudyPlugin extends Plugin {
   }
 
   private async rateQuestionDirectly(id: string, grade: StudyGrade): Promise<void> {
-    await this.store.setReview(id, this.fsrs.rate(this.store.getReview(id), grade));
+    await this.store.setReview(id, this.fsrs.rate(this.store.getReview(id), grade, new Date(), id));
   }
 
   private async cleanupFollowUpIds(removedIds: readonly string[]): Promise<void> {

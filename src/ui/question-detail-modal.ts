@@ -4,6 +4,7 @@ import { StudyGrade } from "../core/fsrs-service";
 import { QuestionRecord, QuestionReviewState } from "../core/models";
 import { QuestionRecommendation } from "../core/recommendation-engine";
 import { errorMessage } from "./error-message";
+import { GRADE_GUIDANCE, GRADE_HINTS } from "./study-grades";
 
 type RegisteredQuestion = QuestionRecord & { id: string };
 
@@ -27,6 +28,9 @@ export interface QuestionDetailActions {
 
 export class QuestionDetailModal extends Modal {
   private renderer: Component | null = null;
+  private saving = false;
+  private mutationButtons: HTMLButtonElement[] = [];
+  private renderRevision = 0;
 
   constructor(
     app: App,
@@ -41,6 +45,9 @@ export class QuestionDetailModal extends Modal {
   }
 
   async onOpen(): Promise<void> {
+    const revision = ++this.renderRevision;
+    this.contentEl.empty();
+    this.mutationButtons = [];
     this.modalEl.addClass("mia-detail-modal");
     this.renderer = new Component();
     this.renderer.load();
@@ -53,27 +60,33 @@ export class QuestionDetailModal extends Modal {
     this.contentEl.createEl("h3", { text: "질문" });
     const prompt = this.contentEl.createDiv({ cls: "mia-markdown" });
     await MarkdownRenderer.render(this.app, this.question.questionMarkdown, prompt, this.question.filePath, this.renderer);
+    if (revision !== this.renderRevision) return;
     this.contentEl.createEl("h3", { text: "정답" });
     const answer = this.contentEl.createDiv({ cls: "mia-markdown mia-answer" });
     await MarkdownRenderer.render(this.app, this.question.answerMarkdown, answer, this.question.filePath, this.renderer);
+    if (revision !== this.renderRevision) return;
 
     this.renderKeywords("핵심 키워드", this.question.coreKeywords);
     this.renderKeywords("보조 키워드", this.question.subKeywords);
 
     this.contentEl.createEl("h3", { text: "현재 상태 변경" });
+    this.contentEl.createEl("p", { text: GRADE_GUIDANCE, cls: "mia-muted" });
     const ratings = this.contentEl.createDiv({ cls: "mia-ratings" });
     for (const grade of [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as StudyGrade[]) {
       const button = ratings.createEl("button", { text: RATING_LABELS[grade] ?? String(grade) });
-      button.addEventListener("click", () => void this.perform(button, () => this.actions.rate(grade), "상태를 변경했습니다."));
+      this.mutationButtons.push(button);
+      button.setAttribute("title", GRADE_HINTS[grade]);
+      button.addEventListener("click", () => void this.perform(() => this.actions.rate(grade), "상태를 변경했습니다."));
     }
     const reset = this.contentEl.createEl("button", { text: "학습 전으로 초기화", cls: "mia-source" });
     reset.disabled = !this.review;
-    reset.addEventListener("click", () => void this.perform(reset, this.actions.resetReview, "복습 기록을 초기화했습니다."));
+    this.mutationButtons.push(reset);
+    reset.addEventListener("click", () => void this.perform(this.actions.resetReview, "복습 기록을 초기화했습니다."));
 
     this.contentEl.createEl("h3", { text: `복습 기록 ${this.review?.history.length ?? 0}회` });
     const history = this.contentEl.createDiv({ cls: "mia-history" });
     for (const entry of [...(this.review?.history ?? [])].reverse()) {
-      history.createDiv({ text: `${new Date(entry.review).toLocaleString("ko-KR")} · ${RATING_LABELS[entry.rating] ?? entry.rating} · 다음 ${new Date(entry.due).toLocaleString("ko-KR")}` });
+      history.createDiv({ text: `${new Date(entry.review).toLocaleString("ko-KR")} · ${RATING_LABELS[entry.rating] ?? entry.rating} · 당시 예정 ${new Date(entry.due).toLocaleString("ko-KR")}` });
     }
     if (!this.review?.history.length) history.createEl("p", { text: "아직 복습 기록이 없습니다.", cls: "mia-muted" });
 
@@ -106,23 +119,31 @@ export class QuestionDetailModal extends Modal {
 
   private actionButton(parent: HTMLElement, label: string, action: () => void, cls?: string): void {
     const button = parent.createEl("button", { text: label, ...(cls ? { cls } : {}) });
-    button.addEventListener("click", () => { this.close(); action(); });
+    this.mutationButtons.push(button);
+    button.addEventListener("click", () => { if (!this.saving) { this.close(); action(); } });
   }
 
-  private async perform(button: HTMLButtonElement, action: () => Promise<void>, success: string): Promise<void> {
-    button.disabled = true;
+  private async perform(action: () => Promise<void>, success: string): Promise<void> {
+    if (this.saving) return;
+    this.saving = true;
+    const disabled = this.mutationButtons.map((item) => item.disabled);
+    this.mutationButtons.forEach((item) => { item.disabled = true; });
     try {
       await action();
       new Notice(success);
       this.close();
     } catch (error) {
       new Notice(`변경 실패: ${errorMessage(error)}`);
-      button.disabled = false;
+      this.mutationButtons.forEach((item, index) => { item.disabled = disabled[index] ?? false; });
+    } finally {
+      this.saving = false;
     }
   }
 
   onClose(): void {
+    this.renderRevision += 1;
     this.renderer?.unload();
+    this.renderer = null;
     this.modalEl.removeClass("mia-detail-modal");
     this.contentEl.empty();
   }
