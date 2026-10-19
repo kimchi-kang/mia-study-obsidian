@@ -2,19 +2,20 @@ import { App, Modal, Notice } from "obsidian";
 import { errorMessage } from "./error-message";
 
 export interface ExportSubjectOption { name: string; count: number }
-export interface ExportReceipt { path: string; count: number; warnings: string[] }
+export interface ExportReceipt { path: string; count: number; warnings: string[]; openFile?: () => Promise<void>; revealFile?: () => void }
 
 export class SubjectExportModal extends Modal {
   private busy = false;
   private closed = false;
   constructor(app: App, private readonly subjects: readonly ExportSubjectOption[],
-    private readonly exportSubject: (subject: string) => Promise<ExportReceipt>) {
+    private readonly exportSubject: (subject: string) => Promise<ExportReceipt>,
+    private readonly destination = "보관함의 MIA 출력 폴더") {
     super(app);
     this.setTitle("어떤 과목을 출력할까요?");
   }
   onOpen(): void {
     this.closed = false;
-    this.contentEl.createEl("p", { text: "과목을 누르면 질문과 답변만 담은 Word(.docx) 정리본을 만듭니다. 저장 위치: 보관함의 MIA 출력 폴더" });
+    this.contentEl.createEl("p", { text: `과목을 누르면 질문과 답변만 담은 Word(.docx) 정리본을 만듭니다. 저장 위치: ${this.destination}` });
     this.contentEl.createEl("p", { text: "수식은 원문 표기로 저장합니다. 이미지 누락 등 확인할 항목은 완료 후 안내합니다.", cls: "mia-muted" });
     if (!this.subjects.length) this.contentEl.createEl("p", { text: "등록된 질문이 없습니다. 먼저 과목과 질문을 추가해 주세요." });
     const list = this.contentEl.createDiv({ cls: "mia-export-subjects" });
@@ -36,7 +37,11 @@ export class SubjectExportModal extends Modal {
           status.createEl("p", { text: `${result.count}문제 저장 완료: ${result.path}` });
           for (const warning of result.warnings) status.createEl("p", { text: warning, cls: "mia-muted" });
           status.createEl("button", { text: "파일 열기", attr: { type: "button" } }).addEventListener("click", () => {
-            void this.app.workspace.openLinkText(result.path, "", false).catch((error: unknown) => new Notice(`파일 열기 실패: ${errorMessage(error)}`));
+            void (result.openFile ? result.openFile() : this.app.workspace.openLinkText(result.path, "", false)).catch((error: unknown) => new Notice(`파일 열기 실패: ${errorMessage(error)}`));
+          });
+          if (result.revealFile) status.createEl("button", { text: "저장 폴더에서 보기", attr: { type: "button" } }).addEventListener("click", () => {
+            try { result.revealFile?.(); }
+            catch (error) { new Notice(`저장 폴더 열기 실패: ${errorMessage(error)}`); }
           });
         } catch (error) {
           new Notice(`Word 출력 실패: ${errorMessage(error)}`);
