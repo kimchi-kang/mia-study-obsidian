@@ -181,3 +181,19 @@ describe("subject export chooser", () => {
     expect(modal.contentEl.find("등록된 질문이 없습니다. 먼저 과목과 질문을 추가해 주세요.")).toBeDefined();
   });
 });
+
+
+it("opens desktop exports through the system and offers the saved folder", async () => {
+  const { SubjectExportModal } = await import("../src/ui/subject-export-modal");
+  const openFile = vi.fn().mockResolvedValue(undefined), revealFile = vi.fn();
+  const openLinkText = vi.fn();
+  const save = vi.fn().mockResolvedValue({ path: "/example/Downloads/수학.docx", count: 2, warnings: [], openFile, revealFile });
+  const modal = new SubjectExportModal({ workspace: { openLinkText } }, [{ name: "수학", count: 2 }], save, "다운로드 폴더");
+  modal.onOpen();
+  expect(modal.contentEl.children.some(child => child.text.includes("저장 위치: 다운로드 폴더"))).toBe(true);
+  await modal.contentEl.find("수학 · 2문제").handlers.get("click")();
+  modal.contentEl.find("파일 열기").click();
+  modal.contentEl.find("저장 폴더에서 보기").click();
+  expect(openFile).toHaveBeenCalledOnce(); expect(revealFile).toHaveBeenCalledOnce();
+  expect(openLinkText).not.toHaveBeenCalled();
+});

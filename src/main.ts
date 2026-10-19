@@ -1,5 +1,6 @@
-import { MarkdownView, Notice, Plugin, TFile, TFolder, normalizePath } from "obsidian";
+import { MarkdownView, Notice, Platform, Plugin, TFile, TFolder, normalizePath } from "obsidian";
 import { exportSubjectDocx, type ExportImage } from "./core/subject-export";
+import { downloadsDirectory, openExportFile, revealExportFile, writeExportFile } from "./services/export-file";
 import { SubjectExportModal, type ExportReceipt } from "./ui/subject-export-modal";
 import { FsrsService, StudyGrade } from "./core/fsrs-service";
 import { StudyUiStore } from "./services/study-ui-store";
@@ -211,17 +212,24 @@ export default class MiaStudyPlugin extends Plugin {
     for (const question of this.index.registered) counts.set(question.subject, (counts.get(question.subject) ?? 0) + 1);
     const subjects = [...counts].sort(([a], [b]) => a.localeCompare(b, "ko"))
       .map(([name, count]) => ({ name, count }));
-    new SubjectExportModal(this.app, subjects, (subject) => this.exportSubject(subject)).open();
+    new SubjectExportModal(this.app, subjects, (subject) => this.exportSubject(subject),
+      Platform.isDesktopApp ? "다운로드 폴더" : "보관함의 MIA 출력 폴더").open();
   }
 
   private async exportSubject(subject: string): Promise<ExportReceipt> {
     await this.index.rebuild();
     const result = await exportSubjectDocx(subject, this.index.registered, (target, source) => this.readExportImage(target, source));
-    const folder = "MIA 출력";
-    await this.ensureFolder(folder);
     const safeSubject = subject.replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/gu, "_");
     const stamp = new Date().toISOString().replace(/[:.]/gu, "-");
-    const stem = `${folder}/${safeSubject} 질문 답변 ${stamp}`;
+    const filename = `${safeSubject} 질문 답변 ${stamp}.docx`;
+    if (Platform.isDesktopApp) {
+      const path = await writeExportFile(downloadsDirectory(), filename, result.data);
+      return { path, count: result.count, warnings: result.warnings,
+        openFile: () => openExportFile(path), revealFile: () => revealExportFile(path) };
+    }
+    const folder = "MIA 출력";
+    await this.ensureFolder(folder);
+    const stem = `${folder}/${filename.slice(0, -5)}`;
     let path = `${stem}.docx`;
     for (let suffix = 2; this.app.vault.getAbstractFileByPath(path); suffix++) path = `${stem} ${suffix}.docx`;
     await this.app.vault.createBinary(path, result.data);
