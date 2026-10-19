@@ -825,3 +825,8 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 /* Keep the permanent undo button when a toast would squeeze out the question. */
 .mia-view[data-viewport-height="short"] .mia-undo-feedback { display: none; }
 .mia-view .mia-dock-undo { min-height: 44px; }
+
+/* Subject Word export chooser */
+.mia-export-subjects { display: flex; flex-direction: column; gap: 10px; margin-block: 16px; }
+.mia-export-subjects button { min-height: 44px; height: auto; padding: 12px 16px; text-align: start; white-space: normal; overflow-wrap: anywhere; }
+.mia-export-status { overflow-wrap: anywhere; }

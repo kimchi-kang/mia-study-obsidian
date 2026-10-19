@@ -504,6 +504,7 @@ export class MiaStudyView extends ItemView {
     manage.createEl("button", { text: "과목 추가" }).addEventListener("click", () => this.plugin.openSubjectEditor());
     manage.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () => void this.plugin.openManagedQuestionEditor());
     manage.createEl("button", { text: "키워드 추가" }).addEventListener("click", () => this.plugin.openKeywordEditor());
+    manage.createEl("button", { text: "출력" }).addEventListener("click", () => this.plugin.openSubjectExport());
     const action = root.createDiv({ cls: "mia-primary-card" });
     action.createEl("h3", { text: due + fresh > 0 ? "오늘 학습을 시작할까요?" : "오늘 예정된 복습이 없습니다" });
     action.createEl("p", { text: `복습 ${due}개 · 새 문제 ${fresh}개 · 복습 우선 · 각 그룹 무작위` });

@@ -135,3 +135,49 @@ it("allows undo directly from the final-question completion dialog", async () =>
   modal.onOpen();modal.contentEl.find('직전 평가 취소').click();
   expect(modal.close).toHaveBeenCalledOnce();expect(undo).toHaveBeenCalledOnce();
 });
+
+
+describe("subject export chooser", () => {
+  it("exports the clicked subject once while busy and shows the saved file", async () => {
+    const { SubjectExportModal } = await import("../src/ui/subject-export-modal");
+    let finish;
+    const save = vi.fn(() => new Promise(resolve => { finish = resolve; }));
+    const modal = new SubjectExportModal({}, [{ name: "수학", count: 2 }, { name: "역사", count: 1 }], save);
+    modal.onOpen();
+    const math = modal.contentEl.find("수학 · 2문제");
+    const history = modal.contentEl.find("역사 · 1문제");
+    const pending = math.handlers.get("click")();
+    history.click();
+    expect(save).toHaveBeenCalledExactlyOnceWith("수학");
+    expect(history.disabled).toBe(true);
+    finish({ path: "MIA 출력/수학.docx", count: 2, warnings: [] });
+    await pending;
+    expect(modal.contentEl.find("2문제 저장 완료: MIA 출력/수학.docx")).toBeDefined();
+    expect(modal.contentEl.find("파일 열기")).toBeDefined();
+    expect(history.disabled).toBe(false);
+  });
+  it("recovers from export failure and does not rebuild a dismissed dialog", async () => {
+    const { SubjectExportModal } = await import("../src/ui/subject-export-modal");
+    const save = vi.fn().mockRejectedValueOnce(Error("disk full"));
+    const modal = new SubjectExportModal({}, [{ name: "수학", count: 2 }, { name: "빈 과목", count: 0 }], save);
+    modal.onOpen();
+    const button = modal.contentEl.find("수학 · 2문제");
+    await button.handlers.get("click")();
+    expect(button.disabled).toBe(false);
+    expect(modal.contentEl.find("빈 과목 · 0문제").disabled).toBe(true);
+    expect(modal.contentEl.find("저장하지 못했습니다. 다시 시도해 주세요.")).toBeDefined();
+    let finish;
+    save.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const pending = button.handlers.get("click")();
+    modal.onClose();
+    finish({ path: "MIA 출력/수학.docx", count: 2, warnings: [] });
+    await pending;
+    expect(modal.contentEl.children).toHaveLength(0);
+  });
+  it("explains how to start when there are no registered questions", async () => {
+    const { SubjectExportModal } = await import("../src/ui/subject-export-modal");
+    const modal = new SubjectExportModal({}, [], vi.fn());
+    modal.onOpen();
+    expect(modal.contentEl.find("등록된 질문이 없습니다. 먼저 과목과 질문을 추가해 주세요.")).toBeDefined();
+  });
+});

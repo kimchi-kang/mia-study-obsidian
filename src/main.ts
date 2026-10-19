@@ -1,4 +1,6 @@
 import { MarkdownView, Notice, Plugin, TFile, TFolder, normalizePath } from "obsidian";
+import { exportSubjectDocx, type ExportImage } from "./core/subject-export";
+import { SubjectExportModal, type ExportReceipt } from "./ui/subject-export-modal";
 import { FsrsService, StudyGrade } from "./core/fsrs-service";
 import { StudyUiStore } from "./services/study-ui-store";
 import { QuestionPreviewModal } from "./ui/question-preview-modal";
@@ -84,6 +86,7 @@ export default class MiaStudyPlugin extends Plugin {
     this.registerView(MIA_VIEW_TYPE, (leaf) => new MiaStudyView(leaf, this));
     this.addRibbonIcon("brain-circuit", "MIA Study 열기", () => this.activateView());
     this.addCommand({ id: "open-mia-study", name: "MIA Study 열기", callback: () => this.activateView() });
+    this.addCommand({ id: "export-subject-word", name: "과목 질문 답변 Word로 출력", callback: () => this.openSubjectExport() });
     this.addCommand({ id: "add-managed-subject", name: "GUI로 과목 추가", callback: () => this.openSubjectEditor() });
     this.addCommand({ id: "add-managed-question", name: "GUI로 질문 추가", callback: () => void this.openManagedQuestionEditor() });
     this.addCommand({ id: "add-managed-keyword", name: "GUI로 키워드 추가", callback: () => this.openKeywordEditor() });
@@ -200,6 +203,52 @@ export default class MiaStudyPlugin extends Plugin {
         filePath: file.path,
       }))
       .sort((left, right) => left.name.localeCompare(right.name, "ko"));
+  }
+
+  openSubjectExport(): void {
+    const counts = new Map<string, number>();
+    for (const subject of this.listSubjects()) counts.set(subject, 0);
+    for (const question of this.index.registered) counts.set(question.subject, (counts.get(question.subject) ?? 0) + 1);
+    const subjects = [...counts].sort(([a], [b]) => a.localeCompare(b, "ko"))
+      .map(([name, count]) => ({ name, count }));
+    new SubjectExportModal(this.app, subjects, (subject) => this.exportSubject(subject)).open();
+  }
+
+  private async exportSubject(subject: string): Promise<ExportReceipt> {
+    await this.index.rebuild();
+    const result = await exportSubjectDocx(subject, this.index.registered, (target, source) => this.readExportImage(target, source));
+    const folder = "MIA 출력";
+    await this.ensureFolder(folder);
+    const safeSubject = subject.replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/gu, "_");
+    const stamp = new Date().toISOString().replace(/[:.]/gu, "-");
+    const stem = `${folder}/${safeSubject} 질문 답변 ${stamp}`;
+    let path = `${stem}.docx`;
+    for (let suffix = 2; this.app.vault.getAbstractFileByPath(path); suffix++) path = `${stem} ${suffix}.docx`;
+    await this.app.vault.createBinary(path, result.data);
+    return { path, count: result.count, warnings: result.warnings };
+  }
+
+  private async readExportImage(target: string, source: string): Promise<ExportImage | null> {
+    // Resolve vault attachments only; exporting never fetches remote resources.
+    if (/^[a-z][a-z0-9+.-]*:/iu.test(target) || target.startsWith("//")) return null;
+    let decoded: string;
+    try { decoded = decodeURIComponent(target); } catch { return null; }
+    const file = this.app.metadataCache.getFirstLinkpathDest(decoded, source);
+    if (!(file instanceof TFile)) return null;
+    const extension = file.extension.toLowerCase();
+    const type = extension === "jpeg" ? "jpg" : extension;
+    if (type !== "png" && type !== "jpg" && type !== "gif" && type !== "bmp") return null;
+    const data = await this.app.vault.readBinary(file);
+    const blob = new Blob([data]);
+    const url = URL.createObjectURL(blob);
+    try {
+      const image = new Image();
+      await new Promise<void>((resolve, reject) => {
+        image.onload = () => resolve(); image.onerror = () => reject(new Error(`이미지를 읽을 수 없습니다: ${file.path}`)); image.src = url;
+      });
+      if (!image.naturalWidth || !image.naturalHeight) throw new Error(`이미지 크기를 읽을 수 없습니다: ${file.path}`);
+      return { data, type, width: image.naturalWidth, height: image.naturalHeight };
+    } finally { URL.revokeObjectURL(url); }
   }
 
   openSubjectEditor(current: string | null = null): void {

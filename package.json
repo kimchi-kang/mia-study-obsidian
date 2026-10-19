@@ -1,6 +1,6 @@
 {
   "name": "mia-study-obsidian",
-  "version": "0.9.5",
+  "version": "0.10.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,11 +10,14 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "docx": "^9.12.0",
+    "markdown-it": "^15.0.3",
     "ts-fsrs": "^5.4.1"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "esbuild": "^0.28.2",
+    "jszip": "^3.10.2",
     "obsidian": "^1.13.1",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
