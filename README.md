@@ -13,6 +13,43 @@ Obsidian 안에서 과목·질문·키워드를 폼으로 관리하면서 FSRS-6
 
 데스크톱과 모바일을 모두 지원한다.
 
+## PC·폰 동기화: Obsidian Sync 구독 없이 사용하기
+
+[Obsidian Sync](https://obsidian.md/sync)는 유료 선택 서비스다. [Obsidian 공식 안내](https://obsidian.md/help/sync-notes)처럼 외부 클라우드나 동기화 도구로 보관함을 공유하는 방법도 사용할 수 있다. MIA의 문제는 Markdown 파일이므로, 같은 보관함을 동기화하면 PC에서 입력한 문제를 폰에서도 열고 학습할 수 있다. 보관함은 각 기기의 로컬 폴더에 두며, 클라우드·NAS는 기기 사이에서 파일을 전달하는 역할을 한다.
+
+무료 저장 공간이나 이미 보유한 NAS를 활용하면 Obsidian Sync 구독료 없이 구성할 수 있다. 클라우드 용량·서버 운영·외부 도구의 유료 기능 비용은 별도로 확인한다. MIA 자체가 클라우드 연결이나 파일 전송 기능을 제공하는 것은 아니다.
+
+### 기기에 맞는 방법 선택
+
+| 사용 환경 | 동기화 방법 |
+| --- | --- |
+| Mac + iPhone·iPad | iCloud Drive의 Obsidian 보관함을 함께 사용한다. |
+| Windows·Mac + Android | 클라우드 폴더와 Android용 폴더 동기화 앱을 연결하거나, 아래 동기화 플러그인 방식을 사용한다. |
+| PC + iPhone·Android + 사설 클라우드·NAS | 각 기기의 Obsidian에 [Remotely Save](https://github.com/remotely-save/remotely-save)를 설치하고, NAS·Nextcloud 등의 WebDAV 저장 공간을 같은 동기화 대상으로 지정한다. |
+
+iPhone·iPad에서는 Google Drive·OneDrive의 폴더를 데스크톱처럼 바로 보관함으로 여는 방식이 공식 지원되지 않는다. iCloud 또는 모바일을 지원하는 동기화 플러그인을 사용한다. Windows용 iCloud는 파일 중복·손상 문제가 있을 수 있어 Apple 기기 간 iCloud 사용과 구분해야 한다.
+
+### 사설 클라우드·NAS로 연결하는 예시
+
+1. NAS·Nextcloud 등에 기기들이 접근할 수 있는 WebDAV 저장 공간을 준비한다.
+2. PC와 폰의 Obsidian에 같은 이름의 로컬 보관함을 만들고, 각 기기에 같은 최신 버전의 MIA Study와 Remotely Save를 설치·활성화한다.
+3. Remotely Save에서 WebDAV를 선택하고, 같은 서버 주소·계정·원격 보관함 경로를 연결한다. 암호화를 사용한다면 기기마다 같은 암호를 설정한다.
+4. PC에서 MIA로 문제를 입력하고 동기화를 끝낸 뒤, 폰에서 동기화해 문제를 내려받고 MIA를 연다. 이미 자료가 있는 보관함은 먼저 백업하고, 첫 동기화 방향을 확인한다.
+
+문제·첨부 파일과 학습 상태의 동기화 대상을 함께 확인한다.
+
+| 함께 사용할 정보 | 동기화할 파일 |
+| --- | --- |
+| 문제·답안·키워드 노트 | 기본 `MIA/` 폴더와 이미지 등 첨부 파일. 저장 위치를 변경했다면 해당 폴더도 포함한다. |
+| 복습 기록·MIA 설정 | `.obsidian/plugins/mia-study/data.json` |
+| 마지막 학습의 이어하기 위치 | `.obsidian/plugins/mia-study/ui-state.json` |
+
+Remotely Save는 기본적으로 `.obsidian` 설정 폴더를 동기화하지 않는다. 복습 기록과 이어하기도 공유하려면 설정 폴더 동기화 옵션을 확인하고, 위 두 파일이 실제로 전송되는지 확인한다. 해당 옵션은 Remotely Save에서 실험 기능으로 안내하므로, 문제 노트가 보인다는 이유만으로 학습 상태도 전달됐다고 가정하지 않는다. 글자 크기·답안 배치 같은 MIA 보기 설정은 기기별 로컬 설정으로 유지된다.
+
+같은 보관함에는 동기화 방식을 하나만 사용한다. 한 기기에서 학습을 마치고 동기화 완료를 확인한 다음 다른 기기에서 최신 내용을 받으면 충돌을 줄일 수 있다. Remotely Save의 자동 동기화는 Obsidian이 실행 중일 때 동작하므로, 특히 폰에서는 앱을 닫기 전에 전송이 끝났는지 확인한다. 개인 문제와 학습 기록은 자신의 비공개 저장 공간에 보관한다.
+
+이 안내는 동기화 구성 예시이며, 모든 NAS·모바일·동기화 도구 조합을 MIA 실기기로 검증한 것은 아니다. 연결·설정 폴더 동기화·충돌 처리의 세부 사항은 [Remotely Save 문서](https://github.com/remotely-save/remotely-save#readme)와 [Obsidian 동기화 안내](https://obsidian.md/help/sync-notes)를 확인한다.
+
 ## 사용
 
 1. Obsidian을 다시 로드한 뒤 리본의 뇌 아이콘을 누르거나 명령 팔레트에서 `MIA Study 열기`를 실행한다.
