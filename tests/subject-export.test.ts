@@ -1,0 +1,74 @@
+import { describe, expect, it } from "vitest";
+import JSZip from "jszip";
+import { cleanExportMarkdown, exportSubjectDocx } from "../src/core/subject-export";
+import { renderManagedQuestion } from "../src/core/managed-question";
+import { parseQuestionFile } from "../src/core/question-parser";
+
+function question(subject: string, id: string, prompt: string, answer: string) {
+  return parseQuestionFile(`MIA/${subject}/문제은행.md`, renderManagedQuestion({
+    questionMarkdown: prompt, answerMarkdown: answer, questionType: "정의형", coreKeywords: [], subKeywords: [],
+  }, id), { subject }).questions;
+}
+
+async function documentXml(data: ArrayBuffer) {
+  const zip = await JSZip.loadAsync(data);
+  const file = zip.file("word/document.xml");
+  if (!file) throw new Error("No Word document");
+  return { zip, xml: await file.async("string") };
+}
+
+describe("subject Word export", () => {
+  it("exports only the selected subject's questions and answers without managed metadata or source links", async () => {
+    const questions = [
+      ...question("수학", "mia-q-one", "사과 **두 개**에 세 개를 더하면?", "5개다.\n\n---\n원문: [[비공개 원본|출처]]"),
+      ...question("역사", "mia-q-other", "다른 과목의 질문", "다른 과목의 답변"),
+      ...question("수학", "mia-q-two", "덧셈이란?", "수량을 합하는 연산이다."),
+    ];
+    const originals = JSON.stringify(questions);
+    const result = await exportSubjectDocx("수학", questions);
+    const { xml } = await documentXml(result.data);
+    expect(result.count).toBe(2);
+    expect(result.warnings).toEqual([]);
+    for (const text of ["수학 질문 답변 정리", "질문 1", "질문 2", "5개다.", "수량을 합하는 연산이다."]) expect(xml).toContain(text);
+    for (const text of ["mia-q-", "학습 정보", "비공개 원본", "원문:", "다른 과목", "[!question]", "**두 개**"]) expect(xml).not.toContain(text);
+    expect(xml).toContain("<w:b/>");
+    expect(JSON.stringify(questions)).toBe(originals);
+  });
+
+  it("retains tables, lists, code and literal formulas and resolves vault images using the source file", async () => {
+    const answer = "- 첫째\n- 둘째\n\n| 이름 | 값 |\n| --- | --- |\n| 합 | 5 |\n\n```text\n^mia-q-keep-in-code\n원문: [[keep-in-code]]\n```\n\n수식 $a_1 + b_2 = c$ 와 \\(x \\times y\\)\n\n![[그림.png|예제 그림]]";
+    const questions = question("수학", "mia-q-one", "예제 질문", answer);
+    const image = Uint8Array.from(Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aE1sAAAAASUVORK5CYII=", "base64")).buffer;
+    const targets: string[] = [];
+    const result = await exportSubjectDocx("수학", questions, async (target, source) => {
+      targets.push(`${source}:${target}`);
+      return { data: image, type: "png", width: 1, height: 1 };
+    });
+    const { xml, zip } = await documentXml(result.data);
+    expect(xml).toContain("<w:tbl>");
+    expect(xml).toContain("첫째"); expect(xml).toContain("둘째");
+    expect(xml).toContain("^mia-q-keep-in-code");
+    expect(xml).toContain("원문: [[keep-in-code]]");
+    expect(xml).toContain("$a_1 + b_2 = c$");
+    expect(xml).toContain("\\(x \\times y\\)");
+    expect(result.warnings).toHaveLength(1);
+    expect(targets).toEqual(["MIA/수학/문제은행.md:그림.png"]);
+    expect(Object.keys(zip.files).some((path) => path.startsWith("word/media/") && path.endsWith(".png"))).toBe(true);
+  });
+
+  it("reports unsupported or missing images instead of silently losing content", async () => {
+    const result = await exportSubjectDocx("수학", question("수학", "mia-q-one", "그림을 보시오", "![[missing.svg|회로 그림]]"));
+    const { xml } = await documentXml(result.data);
+    expect(xml).toContain("[이미지: 회로 그림]");
+    expect(result.warnings).toEqual(["첨부 이미지를 넣지 못했습니다: missing.svg"]);
+  });
+
+  it("does not export an empty subject", async () => {
+    await expect(exportSubjectDocx("수학", [])).rejects.toThrow("출력할 질문이 없습니다.");
+  });
+
+  it("removes standalone management lines but preserves similar answer text", () => {
+    const source = "> [!mia]- 학습 정보\n> 유형: 정의형\n\n설명에서 원문:이라는 표현을 사용한다.\n\n**원문:** [[출처]]\n^mia-q-test";
+    expect(cleanExportMarkdown(source)).toBe("설명에서 원문:이라는 표현을 사용한다.");
+  });
+});
