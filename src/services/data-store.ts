@@ -244,8 +244,14 @@ export class MiaDataStore {
     return this.enqueue(async () => {
       const incoming = parseData(await this.plugin.loadData());
       const merged = mergeReviewData(this.data, incoming);
-      if (JSON.stringify(merged) !== JSON.stringify(incoming)) await this.persist(merged);
-      const changed = JSON.stringify(merged) !== JSON.stringify(this.data);
+      let mergedText = JSON.stringify(merged);
+      if (mergedText !== JSON.stringify(incoming)) {
+        // Release the large snapshot across I/O and compare the post-write value.
+        mergedText = "";
+        await this.persist(merged);
+        mergedText = JSON.stringify(merged);
+      }
+      const changed = mergedText !== JSON.stringify(this.data);
       this.data = merged;
       this.writeRecovery(merged);
       if (changed) this.emit();
