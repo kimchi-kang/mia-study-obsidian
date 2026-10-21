@@ -6,7 +6,7 @@ export class ReviewConflictModal extends Modal {
   onOpen(): void {
     this.setTitle("기기 간 평가 차이");
     this.modalEl.addClass("mia-preview-modal");
-    this.contentEl.createEl("p", { text: "문제별로 마지막 수정 기록을 적용했습니다. 서로 다른 평가 이력은 아래에 별도로 보관하며, 자동으로 섞지 않습니다. 기기의 시계가 다르면 마지막 수정 판단에 영향을 줄 수 있습니다." });
+    this.contentEl.createEl("p", { text: "문제별로 마지막 수정 기록을 적용했습니다. 서로 다른 평가 이력은 아래에 별도로 보관하며, 자동으로 섞지 않습니다. 취소·초기화 뒤 늦게 도착한 이력도 보관되며 현재 평가로 되살리지 않습니다. 기기의 시계가 다르면 마지막 수정 판단에 영향을 줄 수 있습니다." });
     for (const [id, reviews] of Object.entries(this.conflicts)) {
       this.contentEl.createEl("h3", { text: this.titleFor(id) });
       for (const review of reviews) {

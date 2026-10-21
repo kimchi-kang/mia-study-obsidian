@@ -61,7 +61,9 @@ describe("real filesystem process termination and fresh-process recovery", () =>
     const receipt = await stopAt(directory, stage, action);
     const bytesBefore = await Promise.all([read(directory, "data.json"), read(directory, "recovery.json")]);
     const inspected = await run("inspect", directory);
-    expect(inspected.loaded).toBe(true); expect(inspected.conflicts).toEqual({});
+    expect(inspected.loaded).toBe(true);
+    // The older recovery copy remains inspectable when the reset reached only the primary.
+    expect(inspected.conflicts).toEqual(action === "reset" && stage === "after-primary" ? { q: [initial.reviews.q] } : {});
     const primaryComplete = ["after-primary", "recovery-partial", "after-recovery", "after-ack"].includes(stage);
     const intended = JSON.parse(await read(directory, "intended-reviews.json"));
     expect(inspected.reviews).toEqual(primaryComplete ? intended : initial.reviews);
