@@ -43,7 +43,14 @@ export class QuestionIndex {
   private readonly byFile = new Map<string, ParsedQuestionFile>();
   private readonly listeners = new Set<() => void>();
   private initialized = false;
+  private cachedSnapshot: {
+    registered: RegisteredQuestion[];
+    byId: Map<string, RegisteredQuestion>;
+    candidates: QuestionRecord[];
+    diagnostics: QuestionDiagnostic[];
+  } | undefined;
   private eventRefs: EventRef[] = [];
+  private startPromise: Promise<void> | undefined;
   private refreshTimers = new Map<string, number>();
   private revision = 0;
   private rebuildRevision = 0;
@@ -55,7 +62,9 @@ export class QuestionIndex {
     private readonly getSourceRoots: () => string[],
   ) {}
 
-  async start(): Promise<void> {
+  start(): Promise<void> {
+    if (this.startPromise) return this.startPromise;
+    const lifetime = this.lifetime;
     this.eventRefs.push(this.app.vault.on("create", (file) => this.onCreateOrModify(file)));
     this.eventRefs.push(this.app.vault.on("modify", (file) => this.onCreateOrModify(file)));
     this.eventRefs.push(this.app.vault.on("delete", (file) => this.remove(file.path)));
@@ -66,11 +75,16 @@ export class QuestionIndex {
         if (child.path.startsWith(`${file.path}/`)) this.onCreateOrModify(child);
       }
     }));
-    await this.rebuild();
+    this.startPromise = this.rebuild().catch((error: unknown) => {
+      if (this.lifetime === lifetime) this.stop();
+      throw error;
+    });
+    return this.startPromise;
   }
 
   stop(): void {
     this.lifetime += 1;
+    this.startPromise = undefined;
     this.eventRefs.forEach((eventRef) => this.app.vault.offref(eventRef));
     this.eventRefs = [];
     for (const timer of this.refreshTimers.values()) window.clearTimeout(timer);
@@ -101,37 +115,19 @@ export class QuestionIndex {
   }
 
   get registered(): Array<QuestionRecord & { id: string }> {
-    return uniqueRegisteredQuestions(this.allQuestions);
+    return this.snapshot.registered.slice();
   }
 
   get candidates(): QuestionRecord[] {
-    return this.allQuestions.filter((question) => question.id === null);
+    return this.snapshot.candidates.slice();
   }
 
   get diagnostics(): QuestionDiagnostic[] {
-    const diagnostics = [...this.byFile.values()].flatMap((file) => file.diagnostics);
-    const locations = new Map<string, QuestionRecord[]>();
-    for (const question of registeredQuestions(this.allQuestions)) {
-      const list = locations.get(question.id) ?? [];
-      list.push(question);
-      locations.set(question.id, list);
-    }
-    for (const [id, questions] of locations) {
-      if (questions.length < 2) continue;
-      for (const question of questions) {
-        diagnostics.push({
-          filePath: question.filePath,
-          line: question.location.anchorLine ?? question.location.questionStartLine,
-          code: "duplicate-id",
-          message: `여러 파일에서 중복된 문제 ID: ${id}`,
-        });
-      }
-    }
-    return diagnostics;
+    return this.snapshot.diagnostics.slice();
   }
 
-  questionById(id: string): (QuestionRecord & { id: string }) | undefined {
-    return this.registered.find((question) => question.id === id);
+  questionById(id: string): RegisteredQuestion | undefined {
+    return this.snapshot.byId.get(id);
   }
 
   questionsInFile(path: string): QuestionRecord[] {
@@ -158,8 +154,31 @@ export class QuestionIndex {
     this.emit();
   }
 
-  private get allQuestions(): QuestionRecord[] {
-    return [...this.byFile.values()].flatMap((file) => file.questions);
+  private get snapshot(): NonNullable<QuestionIndex["cachedSnapshot"]> {
+    if (this.cachedSnapshot) return this.cachedSnapshot;
+    const all = [...this.byFile.values()].flatMap(file => file.questions);
+    const registered = uniqueRegisteredQuestions(all);
+    const diagnostics = [...this.byFile.values()].flatMap(file => file.diagnostics);
+    const locations = new Map<string, RegisteredQuestion[]>();
+    for (const question of registeredQuestions(all)) {
+      const list = locations.get(question.id) ?? [];
+      list.push(question);
+      locations.set(question.id, list);
+    }
+    for (const [id, questions] of locations) {
+      if (questions.length < 2) continue;
+      for (const question of questions) diagnostics.push({
+        filePath: question.filePath,
+        line: question.location.anchorLine ?? question.location.questionStartLine,
+        code: "duplicate-id",
+        message: `여러 파일에서 중복된 문제 ID: ${id}`,
+      });
+    }
+    this.cachedSnapshot = {
+      registered, byId: new Map(registered.map(question => [question.id, question])),
+      candidates: all.filter(question => question.id === null), diagnostics,
+    };
+    return this.cachedSnapshot;
   }
 
   private async parse(file: TFile): Promise<ParsedQuestionFile> {
@@ -205,10 +224,12 @@ export class QuestionIndex {
       this.refreshTimers.delete(candidate);
       changed = this.byFile.delete(candidate) || changed;
     }
+    if (changed) this.cachedSnapshot = undefined;
     if (notify && changed) this.emit();
   }
 
   private emit(): void {
+    this.cachedSnapshot = undefined;
     for (const listener of this.listeners) listener();
   }
 }

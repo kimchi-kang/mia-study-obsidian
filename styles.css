@@ -53,7 +53,21 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-filter-toolbar input, .mia-filter-toolbar select { flex: 1 1 150px; min-width: 130px; }
 .mia-filter-toolbar input:first-child { flex-basis: 280px; }
 .mia-filter-panel { margin: 0 0 12px; }
-.mia-filter-panel > summary { display: none; }
+.mia-filter-panel > summary {
+  display: none;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+}
+.mia-filter-panel > summary::-webkit-details-marker { display: none; }
+.mia-filter-panel > summary::after { content: "펼치기"; color: var(--text-muted); font-size: var(--font-ui-smaller); font-weight: 400; }
+.mia-filter-panel[open] > summary::after { content: "접기"; }
+.is-mobile .mia-filter-panel { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); background: var(--background-primary-alt); }
+.is-mobile .mia-filter-panel > summary { display: flex; }
 .mia-result-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; color: var(--text-muted); }
 .mia-filter-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
 .mia-filter-chips button { border-radius: 999px; font-size: var(--font-ui-smaller); }
@@ -103,7 +117,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-study-navigation { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; margin-bottom: 12px; }
 .mia-study-navigation .mia-progress { text-align: center; margin: 0; }
 .mia-session-rating { color: var(--interactive-accent); font-weight: 600; }
-.mia-followup-list { max-height: min(52vh, 520px); overflow-y: auto; display: grid; gap: 4px; padding: 6px 0; }
+.mia-followup-list { grid-auto-rows: max-content; align-content: start; max-height: min(52vh, 520px); overflow-y: auto; display: grid; gap: 4px; padding: 6px 0; }
 .mia-followup-option { display: flex; align-items: flex-start; gap: 10px; padding: 9px; border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); cursor: pointer; }
 .mia-followup-option > span { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
 .mia-followup-option small { color: var(--text-muted); }
@@ -129,6 +143,17 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 }
 .mia-keyboard-modal.mia-editor-modal-compact { width: min(440px, calc(100vw - 48px)); }
 .mia-keyboard-modal.mia-editor-modal-long { width: min(760px, calc(100vw - 48px)); }
+/* Long-form editors need the writing area, not the host setting control's compact width. */
+.mia-editor-modal-long .setting-item { display: block; }
+.mia-editor-modal-long .setting-item-info { margin: 0 0 8px; }
+.mia-editor-modal-long .setting-item-control { width: 100%; min-width: 0; margin: 0; justify-content: stretch; }
+.mia-editor-modal-long .setting-item-control > :is(input, textarea, select, .dropdown) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.mia-editor-modal-long textarea { resize: vertical; }
 .mia-keyboard-modal .modal-header { flex: 0 0 auto; }
 .mia-keyboard-modal .modal-content {
   flex: 0 1 auto;
@@ -230,19 +255,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   .mia-progress-ratings, .mia-progress-subject-values { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 
   .mia-filter-panel { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); background: var(--background-primary-alt); }
-  .mia-filter-panel > summary {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 12px;
-    cursor: pointer;
-    font-weight: 600;
-    list-style: none;
-  }
-  .mia-filter-panel > summary::-webkit-details-marker { display: none; }
-  .mia-filter-panel > summary::after { content: "펼치기"; color: var(--text-muted); font-size: var(--font-ui-smaller); font-weight: 400; }
-  .mia-filter-panel[open] > summary::after { content: "접기"; }
+  .mia-filter-panel > summary { display: flex; }
   .mia-filter-toolbar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 0 9px 9px; margin: 0; }
   .mia-filter-toolbar input, .mia-filter-toolbar select { width: 100%; min-width: 0; }
   .mia-filter-toolbar input { grid-column: 1 / -1; }
@@ -313,13 +326,13 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   .mia-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
   .mia-stat { min-height: 76px; padding: 10px 11px; }
   .mia-stat strong { font-size: 1.4em; }
-  .mia-manage-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .mia-manage-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
   .mia-primary-card > .mia-inline-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .mia-subject-grid { grid-template-columns: 1fr; }
   .mia-subject-card > .mia-inline-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-@container mia-view (max-width: 380px) {
+@container mia-view (max-width: 280px) {
   .mia-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .mia-stats, .mia-manage-actions, .mia-primary-card > .mia-inline-actions { grid-template-columns: 1fr; }
 }
@@ -372,8 +385,8 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .is-phone .mia-result-modal .modal-close-button { width: 44px; height: 44px; }
 .is-phone .mia-followup-list { max-height: 42dvh; }
 .is-phone .mia-followup-option { min-height: 48px; padding: 10px; }
-.is-phone .mia-detail-actions,
-.is-phone .mia-result-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.is-phone .mia-detail-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.is-phone .mia-result-actions { display: grid; grid-template-columns: 1fr; }
 .is-phone .mia-result-modal .mia-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 .is-phone.is-floating-nav .mia-view,
@@ -716,7 +729,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   padding-inline: 14px;
   line-height: 1.35;
 }
-.mia-view .mia-nav button { padding-inline: 10px; }
+.mia-view .mia-nav button { padding-inline: clamp(4px, 1.5cqi, 10px); }
 .mia-view .mia-ratings button { padding-inline: 24px; }
 @container mia-view (max-width: 600px) {
   .mia-view .mia-ratings { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -778,7 +791,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .is-mobile :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal) .modal-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 
 .mia-view[data-viewport-height="short"] .mia-header { margin-bottom: 6px; padding-bottom: 6px; }
-.mia-view[data-viewport-height="short"] .mia-header .mia-nav,
+.mia-view.mia-route-study[data-viewport-height="short"] .mia-header .mia-nav,
 .mia-view[data-viewport-height="short"] .mia-header .mia-badge { display: none; }
 .mia-view[data-viewport-height="short"] .mia-study-layout { min-height: 80px; }
 .mia-view[data-viewport-height="short"] .mia-ratings button { min-height: 48px !important; padding-block: 5px; }
@@ -791,7 +804,11 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-sync-warning p { margin-top: 0; }
 .mia-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-result-modal, .mia-detail-modal, .mia-keyboard-modal) button:not(.modal-close-button) { min-height: 44px; height: auto; white-space: normal; }
-.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal) .checkbox-container { min-width: 44px; min-height: 44px; }
+/* Enlarge only the hit area; native toggle dimensions keep the thumb centered. */
+.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal) .setting-item-control { min-height: 44px; }
+.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal) .checkbox-container::before {
+  inset: min(0px, calc((var(--toggle-thumb-height) + var(--toggle-border-width) * 2 - 44px) / 2)) min(0px, calc((var(--toggle-width) - 44px) / 2));
+}
 .is-mobile .mia-view .mia-source, .is-mobile .mia-view .mia-keyword-chips button { min-height: 44px; }
 @media (prefers-reduced-motion: reduce) {
   .mia-view *, .mia-view *::before, .mia-view *::after { scroll-behavior: auto !important; transition: none !important; }
@@ -830,3 +847,35 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-export-subjects { display: flex; flex-direction: column; gap: 10px; margin-block: 16px; }
 .mia-export-subjects button { min-height: 44px; height: auto; padding: 12px 16px; text-align: start; white-space: normal; overflow-wrap: anywhere; }
 .mia-export-status { overflow-wrap: anywhere; }
+
+/* Preserve readable rows and consistent counters under Obsidian's native control styles. */
+.mia-stat:not(button) { align-items: center; text-align: center; }
+.mia-followup-option { height: auto; }
+.mia-followup-option > input[type="checkbox"] {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  margin: 2px 0 0;
+}
+.mia-followup-option > span { overflow-wrap: anywhere; }
+.is-phone .mia-keyboard-settings .setting-item-control > textarea {
+  width: 100%;
+  max-width: 100%;
+  min-height: 92px;
+}
+
+.mia-view.mia-route-study[data-viewport-height="short"] .mia-focus-exit { display: inline-flex; align-items: center; }
+
+/* Keep action labels readable without changing the title or compact nav labels. */
+:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) button:not(.modal-close-button, .mia-home-button, .mia-nav button) {
+  font-size: max(13px, var(--font-ui-small));
+}
+:is(.mia-keyboard-settings, .mia-keyboard-modal, .mia-appearance-modal) select { font-size: max(13px, var(--font-ui-small)); }
+.is-mobile :is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) button:not(.modal-close-button, .mia-home-button, .mia-nav button) {
+  font-size: max(14px, var(--font-ui-small));
+}
+.mia-view .mia-nav button::after { font-size: max(13px, var(--font-ui-small)); }
+.mia-view .mia-study-dock .mia-ratings strong { font-size: max(14px, var(--font-ui-small)); }
+.mia-view .mia-study-dock .mia-ratings small { font-size: max(12px, var(--font-ui-smaller)); }

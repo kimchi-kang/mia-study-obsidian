@@ -1,4 +1,5 @@
 import { hasHeadingAtOrAbove } from "./markdown-structure";
+import { validateNoteName } from "./note-name";
 
 export function validateKeywordMeaning(value: string): string {
   const meaning = value.trim();
@@ -13,12 +14,7 @@ export function createKeywordNote(name: string, meaning: string): string {
 }
 
 export function validateKeywordName(value: string): string {
-  const name = value.trim();
-  if (!name) throw new Error("키워드 이름을 입력하세요.");
-  if (name === "." || name === ".." || /[\u0000-\u001f\u007f\\/:*?"<>|#\[\]^]/u.test(name)) {
-    throw new Error("키워드 이름에 경로 또는 링크 특수문자를 사용할 수 없습니다.");
-  }
-  return name;
+  return validateNoteName(value, "키워드");
 }
 
 export function readKeywordMeaning(content: string): string {
@@ -53,4 +49,20 @@ export function updateKeywordMeaning(content: string, name: string, meaning: str
   }
   lines.splice(start + 1, end - start - 1, "", safeMeaning, "");
   return lines.join(newline);
+}
+
+/** Automatic merging can discard unrecognized source sections when trashing the source. */
+export function assertMergeableKeywordNote(content: string): void {
+  const lines = content.replaceAll("\r\n", "\n").split("\n");
+  const title = lines.findIndex(line => line.trim());
+  if (title >= 0 && /^#\s+/.test(lines[title] ?? "")) lines[title] = "";
+  const start = lines.findIndex(line => /^##\s+의미\s*$/.test(line.trim()));
+  if (start >= 0) {
+    let end = start + 1;
+    while (end < lines.length && !/^#{1,2}\s+/.test(lines[end]?.trim() ?? "")) end += 1;
+    lines.splice(start, end - start);
+  }
+  if (lines.some(line => line.trim() && !/^##\s+연결\s*$/.test(line.trim()))) {
+    throw new Error("기존 키워드에 추가 사용자 내용이 있어 자동 병합을 중단했습니다. 원문을 보존한 뒤 수동으로 병합하세요.");
+  }
 }

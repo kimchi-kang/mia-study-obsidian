@@ -36,3 +36,9 @@ describe("MIA navigation history", () => {
     expect(parseMiaNavigationState({ route: "study", queue: ["q-1"], queueIndex: 1 }).queueIndex).toBe(1);
   });
 });
+
+it("preserves review checkpoints in workspace state and refuses malformed guards", () => {
+  const snapshot = {route:"study",queue:["q"],queueIndex:0,reviewCheckpoint:{id:"q",version:null}};
+  expect(parseMiaNavigationState(snapshot).reviewCheckpoint).toEqual(snapshot.reviewCheckpoint);
+  expect(parseMiaNavigationState({...snapshot,reviewCheckpoint:{id:"q",version:42}}).route).toBe("dashboard");
+});

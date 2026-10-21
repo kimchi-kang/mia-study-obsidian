@@ -1,6 +1,6 @@
 import type { App } from "obsidian";
 import { SwipeSensitivity } from "../core/study-swipe";
-import { MiaSessionMode } from "../core/navigation";
+import { MiaSessionMode, ReviewCheckpoint, parseReviewCheckpoint } from "../core/navigation";
 
 export interface StudyAppearance {
   size: "small" | "medium" | "large";
@@ -21,6 +21,7 @@ export interface StudyResume {
   scrollTop?: number;
   pageScrollTop?: number;
   conceptsOpen?: boolean;
+  reviewCheckpoint?: ReviewCheckpoint;
 }
 
 export function parseStudyResume(value: unknown): StudyResume | null {
@@ -30,9 +31,12 @@ export function parseStudyResume(value: unknown): StudyResume | null {
   if (typeof raw.queueIndex !== "number" || !Number.isInteger(raw.queueIndex) || raw.queueIndex < 0 || raw.queueIndex > raw.queue.length) return null;
   if (raw.sessionMode !== "recall" && raw.sessionMode !== "browse") return null;
   if (typeof raw.updatedAt !== "string" || !Number.isFinite(Date.parse(raw.updatedAt))) return null;
+  const checkpoint = raw.reviewCheckpoint === undefined ? undefined : parseReviewCheckpoint(raw.reviewCheckpoint);
+  if (checkpoint === null) return null;
   const seed = Array.isArray(raw.seed) && raw.seed.every((id) => typeof id === "string" && id.length > 0) ? raw.seed : raw.queue;
   const skipped = Array.isArray(raw.skipped) ? raw.skipped.filter((id): id is string => typeof id === "string") : [];
   return { queue: [...raw.queue], seed: [...seed], skipped, queueIndex: raw.queueIndex, answerVisible: raw.answerVisible === true, sessionMode: raw.sessionMode, updatedAt: raw.updatedAt,
+    ...(checkpoint ? { reviewCheckpoint: checkpoint } : {}),
     ...(typeof raw.scrollTop === "number" && Number.isFinite(raw.scrollTop) && raw.scrollTop >= 0 ? { scrollTop: raw.scrollTop } : {}),
     ...(typeof raw.pageScrollTop === "number" && Number.isFinite(raw.pageScrollTop) && raw.pageScrollTop >= 0 ? { pageScrollTop: raw.pageScrollTop } : {}),
     ...(typeof raw.conceptsOpen === "boolean" ? { conceptsOpen: raw.conceptsOpen } : {}),
@@ -51,6 +55,22 @@ export function parseStudyAppearance(value: unknown): StudyAppearance {
   };
 }
 
+// Keep in-flight ordering across plugin module reloads in the same Obsidian App.
+const RESUME_WRITES = Symbol.for("mia-study:resume-writes:v1");
+interface ResumeWrites { pending: Promise<void>; checkpointRevision: number }
+interface ResumeWriteHost { [RESUME_WRITES]?: Map<string, ResumeWrites> }
+function resumeWrites(app: App, path: string): ResumeWrites {
+  const host: App & ResumeWriteHost = app;
+  let paths = host[RESUME_WRITES];
+  if (!paths) {
+    paths = new Map();
+    Object.defineProperty(host, RESUME_WRITES, { value: paths });
+  }
+  let writes = paths.get(path);
+  if (!writes) { writes = { pending: Promise.resolve(), checkpointRevision: 0 }; paths.set(path, writes); }
+  return writes;
+}
+
 /** Resume travels with the vault; reading preferences remain local to each device. */
 export class StudyUiStore {
   private currentResume: StudyResume | null = null;
@@ -62,8 +82,10 @@ export class StudyUiStore {
   private readonly resumeKey: string;
   private writes: Promise<void> = Promise.resolve();
   private readonly preferenceKey: string;
+  private readonly sharedWrites: ResumeWrites;
 
   constructor(private readonly app: App, private readonly path: string) {
+    this.sharedWrites = resumeWrites(app, path);
     this.preferenceKey = `mia-study:appearance:${path}`;
     this.resumeKey = `mia-study:resume-checkpoint:${path}`;
     this.currentAppearance = parseStudyAppearance(app.loadLocalStorage(this.preferenceKey));
@@ -71,6 +93,7 @@ export class StudyUiStore {
   get resume(): StudyResume | null { return this.currentResume ? structuredClone(this.currentResume) : null; }
   get appearance(): StudyAppearance { return { ...this.currentAppearance }; }
   get hasResumeFile(): boolean { return this.filePresent; }
+  get resumeRevision(): number { return this.sharedWrites.checkpointRevision; }
 
   async load(): Promise<void> {
     const revision = this.revision;
@@ -101,8 +124,9 @@ export class StudyUiStore {
     // Synchronous device checkpoint survives suspension before an asynchronous cloud write finishes.
     try { this.app.saveLocalStorage(this.resumeKey, checkpoint); }
     catch (error) { this.currentResume = this.committedResume; return Promise.reject(error); }
+    const checkpointRevision = ++this.sharedWrites.checkpointRevision;
     const payload = JSON.stringify(checkpoint, null, 2);
-    const write = this.writes.then(async () => {
+    const write = this.sharedWrites.pending.then(async () => {
       const adapter = this.app.vault.adapter;
       if (await adapter.exists(this.path)) {
         const raw: unknown = JSON.parse(await adapter.read(this.path));
@@ -122,10 +146,13 @@ export class StudyUiStore {
     });
     // Keep later saves usable; each caller still receives its own write failure.
     this.writes = write.catch(() => {});
+    this.sharedWrites.pending = this.writes;
     return write.catch((error: unknown) => {
       if (revision === this.revision) {
         this.currentResume = this.committedResume;
-        this.app.saveLocalStorage(this.resumeKey, { version: 1, resume: this.committedResume, updatedAt: this.committedUpdatedAt });
+        if (checkpointRevision === this.sharedWrites.checkpointRevision) {
+          this.app.saveLocalStorage(this.resumeKey, { version: 1, resume: this.committedResume, updatedAt: this.committedUpdatedAt });
+        }
       }
       throw error;
     });

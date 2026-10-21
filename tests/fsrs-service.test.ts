@@ -36,7 +36,7 @@ describe("FsrsService", () => {
       for (const item of previews) {
         const rated = capped.rate(review, item.grade, now, id);
         expect(rated.card.due).toBe(item.due.toISOString());
-        expect(capped.undo(rated)?.card).toEqual(review.card);
+        expect(review.history).toHaveLength(1);
       }
     }
   });
@@ -66,16 +66,13 @@ describe("FsrsService", () => {
     expect(new Date(reviewed.card.due).getTime()).toBeGreaterThan(now.getTime());
   });
 
-  it("round-trips dates through JSON and can undo the last rating", () => {
+  it("round-trips dates through JSON without changing the next prediction or grade", () => {
     const now = new Date("2026-08-15T00:00:00.000Z");
     const reviewed = service.rate(undefined, Rating.Hard, now);
     const fromJson = JSON.parse(JSON.stringify(reviewed));
-    const undone = service.undo(fromJson);
-
-    expect(undone).not.toBeNull();
-    expect(undone?.history).toHaveLength(0);
-    expect(undone?.card.reps).toBe(0);
-    expect(undone?.lastRating).toBeNull();
+    const next = new Date(reviewed.card.due);
+    expect(service.preview(fromJson, next)).toEqual(service.preview(reviewed, next));
+    expect(service.rate(fromJson, Rating.Good, next)).toEqual(service.rate(reviewed, Rating.Good, next));
   });
 
   it("does not count new cards as due reviews", () => {
@@ -100,7 +97,8 @@ describe("FsrsService", () => {
   it("survives repeated restarts through months of reviews and relearning", () => {
     let state = service.rate(undefined, Rating.Easy, new Date("2026-10-15T00:00:00Z"));
     for (let index = 0; index < 40; index += 1) {
-      const prior = JSON.parse(JSON.stringify(state));
+      const saved = JSON.stringify(state);
+      const prior = JSON.parse(saved);
       const at = new Date(prior.card.due);
       const restored = new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500 });
       expect(restored.isDue(prior, new Date(at.getTime() - 1))).toBe(false);
@@ -110,9 +108,7 @@ describe("FsrsService", () => {
       expect(state.history).toHaveLength(prior.history.length + 1);
       expect(state.card.reps).toBe(prior.card.reps + 1);
       expect(new Date(state.card.due).getTime()).toBeGreaterThan(at.getTime());
-      const undone = restored.undo(state)!;
-      expect(undone.card).toEqual(prior.card);
-      expect(undone.history).toEqual(prior.history);
+      expect(JSON.stringify(prior)).toBe(saved);
     }
   });
 });

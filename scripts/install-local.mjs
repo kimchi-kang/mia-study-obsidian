@@ -1,5 +1,5 @@
-import { readFile, writeFile, mkdir, rename, unlink } from "node:fs/promises";
-import { resolve, join, isAbsolute } from "node:path";
+import { readFile, writeFile, mkdir, rename, unlink, realpath, stat } from "node:fs/promises";
+import { join, isAbsolute, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 
@@ -11,10 +11,23 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const manifest = JSON.parse(await readFile(join(root, "manifest.json"), "utf8"));
 const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
 if (manifest.id !== "mia-study" || manifest.version !== pkg.version || manifest.isDesktopOnly !== false) throw new Error("Inconsistent plugin manifest");
-const folder = resolve(args[1], ".obsidian/plugins/mia-study");
 const files = await Promise.all(["main.js", "styles.css", "manifest.json"].map(async (name) => ({ name, data: await readFile(join(root, name)) })));
 if (files.some((file) => !file.data.length)) throw new Error("Empty plugin file");
-await mkdir(folder, { recursive: true });
+const vault = await realpath(args[1]);
+if (!(await stat(vault)).isDirectory()) throw new Error("Vault path must be an existing directory");
+let folder = vault;
+for (const part of [".obsidian", "plugins", "mia-study"]) {
+  const next = join(folder, part);
+  try { await mkdir(next); }
+  catch (error) { if (error.code !== "EEXIST") throw error; }
+  const resolved = await realpath(next);
+  const inside = relative(vault, resolved);
+  if (inside === ".." || inside.startsWith(`..${sep}`) || isAbsolute(inside)) {
+    throw new Error("Plugin configuration path resolves outside the selected vault");
+  }
+  if (!(await stat(resolved)).isDirectory()) throw new Error("Plugin configuration path is not a directory");
+  folder = resolved;
+}
 // Replace complete files, with the version manifest last. Never toggle the shared activation list.
 for (const { name, data } of files) {
   const temporary = join(folder, `.${name}.${randomUUID()}.tmp`);

@@ -60,16 +60,6 @@ function serializeLog(log: ReviewLog): SerializedReviewLog {
   };
 }
 
-function deserializeLog(log: SerializedReviewLog): ReviewLog {
-  return {
-    ...log,
-    rating: log.rating as Rating,
-    state: log.state as State,
-    due: new Date(log.due),
-    review: new Date(log.review),
-  };
-}
-
 export class FsrsService {
   private readonly scheduler;
   private readonly targetRetention: number;
@@ -108,18 +98,6 @@ export class FsrsService {
       card: serializeCard(this.capInterval(result.card, now)),
       history: [...current.history, serializeLog(result.log)],
       lastRating: grade,
-    };
-  }
-
-  undo(state: QuestionReviewState): QuestionReviewState | null {
-    const lastLog = state.history.at(-1);
-    if (!lastLog) return null;
-    const card = this.scheduler.rollback(deserializeCard(state.card), deserializeLog(lastLog));
-    const history = state.history.slice(0, -1);
-    return {
-      card: serializeCard(card),
-      history,
-      lastRating: history.at(-1)?.rating ?? null,
     };
   }
 
@@ -168,4 +146,4 @@ export class FsrsService {
   }
 }
 
-export const FsrsSerialization = { serializeCard, deserializeCard, serializeLog, deserializeLog };
+export const FsrsSerialization = { serializeCard, deserializeCard, serializeLog };

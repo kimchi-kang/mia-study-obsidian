@@ -148,6 +148,8 @@ async function blocks(markdown: string, context: RenderContext): Promise<Array<P
   return output;
 }
 
+const EXPORT_SLICE_MS = 16;
+
 export async function exportSubjectDocx(
   subject: string, questions: readonly QuestionRecord[], readImage?: ExportImageReader,
 ): Promise<SubjectExportResult> {
@@ -156,13 +158,20 @@ export async function exportSubjectDocx(
   if (!selected.length) throw new Error("출력할 질문이 없습니다.");
   const warnings = new Set<string>();
   const children: Array<Paragraph | Table> = [new Paragraph({ text: `${subject} 질문 답변 정리`, heading: HeadingLevel.TITLE })];
+  let sliceStartedAt = performance.now();
   for (const [index, question] of selected.entries()) {
+    // Awaiting already-resolved rendering promises does not let input/timers run.
+    if (index === 0 || performance.now() - sliceStartedAt >= EXPORT_SLICE_MS) {
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      sliceStartedAt = performance.now();
+    }
     const context: RenderContext = { sourcePath: question.filePath, warnings, ...(readImage ? { readImage } : {}) };
     children.push(new Paragraph({ text: `질문 ${index + 1}`, heading: HeadingLevel.HEADING_2, keepNext: true, spacing: { before: 300, after: 100 } }));
     children.push(...await blocks(question.questionMarkdown, context));
     children.push(new Paragraph({ children: [new TextRun({ text: "답변", bold: true })], keepNext: true, spacing: { before: 80, after: 100 } }));
     children.push(...await blocks(question.answerMarkdown, context));
   }
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
   const doc = new Document({
     creator: "MIA Study", title: `${subject} 질문 답변 정리`,
     styles: { default: {

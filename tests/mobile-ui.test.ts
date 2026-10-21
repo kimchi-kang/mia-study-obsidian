@@ -49,6 +49,6 @@ describe("mobile UI contract", () => {
     expect(styles).toMatch(/\.mia-stat span\s*\{[^}]*overflow-wrap:\s*anywhere/);
     expect(styles).toContain("@container mia-view (max-width: 1050px)");
     expect(styles).toContain("@container mia-view (max-width: 600px)");
-    expect(styles).toContain("@container mia-view (max-width: 380px)");
+    expect(styles).toContain("@container mia-view (max-width: 280px)");
   });
 });
