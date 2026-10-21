@@ -53,3 +53,21 @@ describe('large export responsiveness and isolation',()=>{
   expect(bx).toContain('ANSWER_beta_256_END');expect(bx).not.toContain('PROMPT_alpha_');
  });
 });
+
+
+it.each(['paragraphs','inline','table'])('services queued input inside one %s question with many resolved image reads',async format=>{
+ const questions=bank('single',1),count=96;
+ const items=Array.from({length:count},(_,i)=>`IMAGE_${i}_END ![[missing-${i}.png]]`);
+ questions[0].answerMarkdown=format==='table'?'| 내용 |\n| --- |\n'+items.map(x=>`| ${x} |`).join('\n'):items.join(format==='inline'?' ':'\n\n');
+ const before=JSON.stringify(questions);let reads=0,whenInputRan,queued;
+ const result=await exportSubjectDocx('single',questions,async()=>{
+  reads++;
+  if(reads===1)queued=new Promise(resolve=>setTimeout(()=>{whenInputRan=reads;resolve();},0));
+  const started=performance.now();while(performance.now()-started<2){}
+  return null;
+ });
+ await queued;expect(whenInputRan).toBeGreaterThan(0);expect(whenInputRan).toBeLessThan(count);
+ expect(reads).toBe(count);expect(JSON.stringify(questions)).toBe(before);
+ const output=await xml(result);let last=-1;
+ for(let i=0;i<count;i++){const marker=`IMAGE_${i}_END`;expect(output.split(marker)).toHaveLength(2);expect(output.indexOf(marker)).toBeGreaterThan(last);last=output.indexOf(marker);}
+});
