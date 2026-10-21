@@ -73,6 +73,10 @@ function merge(local: MiaPluginData, incoming: MiaPluginData, consume: boolean):
 }
 
 export function nextReviewVersion(versions: Record<string, string>): string {
-  const latest = Math.max(0, ...Object.values(versions).map(value => Date.parse(value.slice(0, 24))).filter(Number.isFinite));
+  let latest = 0;
+  for (const value of Object.values(versions)) {
+    const timestamp = Date.parse(value.slice(0, 24));
+    if (Number.isFinite(timestamp) && timestamp > latest) latest = timestamp;
+  }
   return `${new Date(Math.max(Date.now(), latest + 1)).toISOString()}:${crypto.randomUUID()}`;
 }
