@@ -59,12 +59,19 @@ function parser() {
   return md;
 }
 
-interface RenderContext { sourcePath: string; warnings: Set<string>; readImage?: ExportImageReader }
+interface RenderContext {
+  sourcePath: string;
+  warnings: Set<string>;
+  readImage?: ExportImageReader;
+  pauseIfNeeded(): Promise<void> | undefined;
+}
 
 async function inline(tokens: readonly Token[], context: RenderContext): Promise<ParagraphChild[]> {
   const runs: ParagraphChild[] = [];
   let bold = 0, italics = 0, strike = 0;
   for (const token of tokens) {
+    const pause = context.pauseIfNeeded();
+    if (pause) await pause;
     if (token.type === "strong_open") { bold++; continue; }
     if (token.type === "strong_close") { bold--; continue; }
     if (token.type === "em_open") { italics++; continue; }
@@ -97,6 +104,8 @@ async function table(tokens: readonly Token[], context: RenderContext): Promise<
   const rows: TableRow[] = [];
   let cells: TableCell[] = [], children: ParagraphChild[] = [], header = false;
   for (const token of tokens) {
+    const pause = context.pauseIfNeeded();
+    if (pause) await pause;
     if (token.type === "tr_open") cells = [];
     if (token.type === "th_open" || token.type === "td_open") { children = []; header = token.type === "th_open"; }
     if (token.type === "inline") children.push(...await inline(token.children ?? [], context));
@@ -114,6 +123,8 @@ async function blocks(markdown: string, context: RenderContext): Promise<Array<P
   const lists: Array<{ ordered: boolean; next: number; marker: boolean }> = [];
   let heading = false;
   for (let index = 0; index < tokens.length; index++) {
+    const pause = context.pauseIfNeeded();
+    if (pause) await pause;
     const token = tokens[index];
     if (!token) continue;
     if (token.type === "table_open") {
@@ -139,10 +150,14 @@ async function blocks(markdown: string, context: RenderContext): Promise<Array<P
     }
     if (token.type === "fence" || token.type === "code_block") {
       const lines = token.content.trimEnd().split("\n");
-      for (const [lineIndex, line] of lines.entries()) output.push(new Paragraph({
-        children: [new TextRun({ text: line, font: "Consolas", size: 19 })], spacing: { after: 0 },
-        keepNext: lineIndex < lines.length - 1, keepLines: true,
-      }));
+      for (const [lineIndex, line] of lines.entries()) {
+        const pause = context.pauseIfNeeded();
+        if (pause) await pause;
+        output.push(new Paragraph({
+          children: [new TextRun({ text: line, font: "Consolas", size: 19 })], spacing: { after: 0 },
+          keepNext: lineIndex < lines.length - 1, keepLines: true,
+        }));
+      }
     }
   }
   return output;
@@ -159,13 +174,20 @@ export async function exportSubjectDocx(
   const warnings = new Set<string>();
   const children: Array<Paragraph | Table> = [new Paragraph({ text: `${subject} 질문 답변 정리`, heading: HeadingLevel.TITLE })];
   let sliceStartedAt = performance.now();
+  const pauseIfNeeded = (): Promise<void> | undefined => {
+    if (performance.now() - sliceStartedAt < EXPORT_SLICE_MS) return;
+    return new Promise<void>((resolve) => setTimeout(() => {
+      sliceStartedAt = performance.now();
+      resolve();
+    }, 0));
+  };
   for (const [index, question] of selected.entries()) {
     // Awaiting already-resolved rendering promises does not let input/timers run.
     if (index === 0 || performance.now() - sliceStartedAt >= EXPORT_SLICE_MS) {
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
       sliceStartedAt = performance.now();
     }
-    const context: RenderContext = { sourcePath: question.filePath, warnings, ...(readImage ? { readImage } : {}) };
+    const context: RenderContext = { sourcePath: question.filePath, warnings, pauseIfNeeded, ...(readImage ? { readImage } : {}) };
     children.push(new Paragraph({ text: `질문 ${index + 1}`, heading: HeadingLevel.HEADING_2, keepNext: true, spacing: { before: 300, after: 100 } }));
     children.push(...await blocks(question.questionMarkdown, context));
     children.push(new Paragraph({ children: [new TextRun({ text: "답변", bold: true })], keepNext: true, spacing: { before: 80, after: 100 } }));
