@@ -38,4 +38,11 @@ for (const { name, data } of files) {
     await unlink(temporary).catch((error) => { if (error.code !== "ENOENT") throw error; });
   }
 }
+// Overlapping installers can replace a complete file after our rename.
+// Verify the whole requested set before acknowledging this installation.
+for (const { name, data } of files) {
+  if (!(await readFile(join(folder, name))).equals(data)) {
+    throw new Error("설치 파일 검증에 실패했습니다. 다른 설치 또는 동기화를 멈추고, Obsidian을 닫은 상태에서 같은 빌드로 다시 설치하세요.");
+  }
+}
 console.log(`Installed MIA ${manifest.version}. Activation settings and user data were not changed. Restart Obsidian to load the updated files.`);
