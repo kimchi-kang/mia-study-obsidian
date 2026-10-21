@@ -1,5 +1,5 @@
 import {mkdtemp,mkdir,readFile,writeFile,rm,readdir,symlink,realpath,lstat}from 'node:fs/promises';
-import {spawnSync}from 'node:child_process';
+import {spawn,spawnSync}from 'node:child_process';
 import {tmpdir}from 'node:os';
 import {join,dirname}from 'node:path';
 import {fileURLToPath}from 'node:url';
@@ -83,4 +83,20 @@ it.each(assets)('preserves data and repairs installation after SIGKILL following
  // A rerun repairs the deployable set; it must not delete unrelated or possibly shared temp files.
  const unrelated=join(plugin,'.other.tmp');await writeFile(unrelated,'keep');
  expect(install(current,vault).status).toBe(0);await installed(current,plugin);await unchanged(data);expect(await readFile(unrelated,'utf8')).toBe('keep');
+});
+
+
+it.each(assets.flatMap(asset=>[['old','new',asset],['new','old',asset]]))('detects overlapping %s then %s installs paused after %s, and repairs on rerun',async(firstLabel,secondLabel,asset)=>{
+ const{root,vault,plugin}=await setup(),first=await pack(root,firstLabel),second=await pack(root,secondLabel),data=await preserved(vault,plugin);
+ expect(install(first,vault).status).toBe(0);
+ const marker=join(root,'overlap-ready'),release=join(root,'overlap-release'),hook=join(root,'overlap-hook.mjs');
+ await writeFile(hook,`import fs from 'node:fs/promises';import{basename,dirname}from'node:path';import{syncBuiltinESMExports}from'node:module';const rename=fs.rename;let paused=false;fs.rename=async(a,b,...rest)=>{const result=await rename(a,b,...rest);if(!paused&&basename(b)===${JSON.stringify(asset)}&&await fs.realpath(dirname(b))===${JSON.stringify(await realpath(plugin))}){paused=true;await fs.writeFile(${JSON.stringify(marker)},'ready');for(;;){try{await fs.access(${JSON.stringify(release)});break;}catch{await new Promise(r=>setTimeout(r,10));}}}return result;};syncBuiltinESMExports();`);
+ const child=spawn(process.execPath,['--import',hook,join(first,'scripts/install-local.mjs'),'--vault',vault],{stdio:['ignore','pipe','pipe']});let stderr='';child.stderr.on('data',b=>stderr+=b);const completed=new Promise((resolve,reject)=>{child.on('error',reject);child.on('close',(code,signal)=>resolve({code,signal}));});
+ try{
+  const deadline=Date.now()+5000;for(;;){try{await readFile(marker);break;}catch{if(Date.now()>deadline)throw Error('Installer did not reach overlap checkpoint');await new Promise(r=>setTimeout(r,10));}}
+  expect(install(second,vault).status).toBe(0);await installed(second,plugin);await unchanged(data);
+  await writeFile(release,'continue');const result=await completed;await unchanged(data);const observed={};for(const name of assets){const value=await readFile(join(plugin,name));observed[name]=value.equals(await readFile(join(first,name)))?'first':value.equals(await readFile(join(second,name)))?'second':'other';}expect(result.code,JSON.stringify({firstLabel,secondLabel,asset,observed})).not.toBe(0);expect(stderr).toContain('검증');
+  for(const name of assets){const value=await readFile(join(plugin,name));expect(value.equals(await readFile(join(first,name)))||value.equals(await readFile(join(second,name)))).toBe(true);}
+  expect(install(first,vault).status).toBe(0);await installed(first,plugin);await unchanged(data);
+ }finally{if(child.exitCode===null&&child.signalCode===null){child.kill('SIGKILL');await completed;}}
 });

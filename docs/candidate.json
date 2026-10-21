@@ -2,11 +2,12 @@
   "version": "0.10.2",
   "date": "2026-10-21",
   "status": "candidate",
-  "qualification": "Incomplete: reported iPhone interaction problem remains open",
+  "qualification": "Virtual mobile functional checks passed in tested scope; other release QA remains",
   "files": {
     "main.js": "fbba1d9f53b570d9129717b344ba626f7a96680c9006f0cc1660f08e9d7c3c6e",
     "styles.css": "fe675fc931ea63c7bdc73e6257075455888c27a3a54b5f8767e23bb332a8c67a",
     "manifest.json": "724ed877d855ca1d6464aa24673c590188727d3131c31166a70a136b0f787f98"
   },
-  "revision": "2026-10-21-sync"
+  "revision": "2026-10-21-sync",
+  "mobileValidation": "WebKit virtual mobile + Chromium touch control; real devices not qualified"
 }
