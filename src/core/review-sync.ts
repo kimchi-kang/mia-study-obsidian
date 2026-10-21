@@ -59,6 +59,12 @@ function merge(local: MiaPluginData, incoming: MiaPluginData, consume: boolean):
       const rightPrefix = equalLength ? leftPrefix : isPrefix(right, left);
       if ((!leftPrefix && !rightPrefix) || (equalLength && leftPrefix)) alternatives.push(localWins ? right : left);
     }
+    // A tombstone cannot tell an undone grade from an unseen offline branch.
+    // Keep the delivered state for inspection without making it active again.
+    if (!state && revision) {
+      const delivered = localWins ? right : left;
+      if (delivered) alternatives.push(delivered);
+    }
     const unique = new Map(alternatives.map(review => [JSON.stringify(review), review]));
     if (unique.size) next.reviewConflicts[id] = [...unique.keys()].sort().map(key => structuredClone(unique.get(key)!));
   }
