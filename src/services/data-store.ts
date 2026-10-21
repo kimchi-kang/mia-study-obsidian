@@ -294,9 +294,14 @@ export class MiaDataStore {
     const ids = [...new Set(questionIds)];
     if (!ids.length) return;
     await this.commit((next) => {
+      if (expected) {
+        for (const id of ids) {
+          if (JSON.stringify(next.reviews[id]) !== JSON.stringify(expected.state)) throw new ReviewChangedError("다른 기기에서 평가가 변경되어 취소하지 않았습니다.");
+        }
+      }
+      const revision = nextReviewVersion(next.reviewVersions);
       for (const id of ids) {
-        if (expected && JSON.stringify(next.reviews[id]) !== JSON.stringify(expected.state)) throw new ReviewChangedError("다른 기기에서 평가가 변경되어 취소하지 않았습니다.");
-        next.reviewVersions[id] = nextReviewVersion(next.reviewVersions);
+        next.reviewVersions[id] = revision;
         delete next.reviews[id];
         delete next.quarantinedReviews[id];
       }
