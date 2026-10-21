@@ -100,3 +100,11 @@ it.each(assets.flatMap(asset=>[['old','new',asset],['new','old',asset]]))('detec
   expect(install(first,vault).status).toBe(0);await installed(first,plugin);await unchanged(data);
  }finally{if(child.exitCode===null&&child.signalCode===null){child.kill('SIGKILL');await completed;}}
 });
+
+it.each(['read-error','changed-content'])('rejects %s at install verification and preserves study files through a clean retry',async fault=>{
+ const{root,vault,plugin}=await setup(),pkg=await pack(root),data=await preserved(vault,plugin);expect(install(pkg,vault).status).toBe(0);
+ const hook=join(root,'verify-hook.mjs'),target=await realpath(plugin);
+ await writeFile(hook,`import fs from 'node:fs/promises';import{dirname,basename}from'node:path';import{syncBuiltinESMExports}from'node:module';const rename=fs.rename,read=fs.readFile,write=fs.writeFile;let verifying=false;fs.rename=async(a,b,...rest)=>{const result=await rename(a,b,...rest);if(basename(b)==='manifest.json'&&await fs.realpath(dirname(b))===${JSON.stringify(target)}){verifying=true;if(${JSON.stringify(fault)}==='changed-content')await write(${JSON.stringify(join(target,'main.js'))},'QA externally replaced asset');}return result;};fs.readFile=async(path,...rest)=>{if(verifying&&${JSON.stringify(fault)}==='read-error'&&path===${JSON.stringify(join(target,'main.js'))}){const error=Error('QA_VERIFY_READ');error.code='EIO';throw error;}return read(path,...rest);};syncBuiltinESMExports();`);
+ const result=install(pkg,vault,['--import',hook]);expect(result.status).not.toBe(0);expect(result.stdout).not.toContain('Installed MIA');expect(result.stderr).toContain(fault==='read-error'?'QA_VERIFY_READ':'검증');await unchanged(data);
+ expect(install(pkg,vault).status).toBe(0);await installed(pkg,plugin);await unchanged(data);
+});

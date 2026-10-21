@@ -804,10 +804,40 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-sync-warning p { margin-top: 0; }
 .mia-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-result-modal, .mia-detail-modal, .mia-keyboard-modal) button:not(.modal-close-button) { min-height: 44px; height: auto; white-space: normal; }
-/* Enlarge only the hit area; native toggle dimensions keep the thumb centered. */
-.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal) .setting-item-control { min-height: 44px; }
-.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal) .checkbox-container::before {
+/* Keep mobile switches compact and stable; expand their invisible hit area. */
+.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal, .mia-keyboard-settings) .checkbox-container {
+  --toggle-width: 44px;
+  --toggle-thumb-width: 22px;
+  --toggle-thumb-height: 22px;
+  --toggle-border-width: 2px;
+  --toggle-radius: 26px;
+  --toggle-thumb-radius: 50%;
+  --toggle-s-width: 44px;
+  --toggle-s-thumb-width: 22px;
+  --toggle-s-thumb-height: 22px;
+  --toggle-s-border-width: 2px;
+}
+.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal, .mia-keyboard-settings) .setting-item.mod-toggle {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal, .mia-keyboard-settings) .setting-item.mod-toggle .setting-item-info { flex: 1; min-width: 0; }
+.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal, .mia-keyboard-settings) .setting-item-control { min-height: 44px; }
+.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal, .mia-keyboard-settings) .setting-item.mod-toggle .setting-item-control {
+  flex: 0 0 44px;
+  min-width: 44px;
+  margin-top: 0;
+  justify-content: center;
+}
+.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal, .mia-keyboard-settings) .checkbox-container::before {
   inset: min(0px, calc((var(--toggle-thumb-height) + var(--toggle-border-width) * 2 - 44px) / 2)) min(0px, calc((var(--toggle-width) - 44px) / 2));
+}
+.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal, .mia-keyboard-settings) .checkbox-container:active::after {
+  width: var(--toggle-thumb-width);
+  height: var(--toggle-thumb-height);
+  margin-top: var(--toggle-border-width);
+  left: 0;
 }
 .is-mobile .mia-view .mia-source, .is-mobile .mia-view .mia-keyword-chips button { min-height: 44px; }
 @media (prefers-reduced-motion: reduce) {
