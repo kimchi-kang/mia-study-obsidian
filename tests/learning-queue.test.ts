@@ -36,15 +36,16 @@ describe("Anki-style learning steps within a session", () => {
     expect(review.history).toHaveLength(2);
     const waiting = planLearningQueue(["a", "a"], 2, ["a"], { a: review }, none, new Date(review.card.last_review!));
     expect(waiting.nextDue).toEqual(new Date(review.card.due));
+    const baseline = structuredClone(review);
     review = fsrs.rate(review, Rating.Good, waiting.nextDue!);
     expect(review.card.state).toBe(State.Review);
     expect(review.card.reps).toBe(3);
     expect(review.history).toHaveLength(3);
     expect(planLearningQueue(["a", "a", "a"], 3, ["a"], { a: review }, none, new Date(review.card.last_review!)))
       .toEqual({ queue: ["a", "a", "a"], nextDue: null });
-    const undone = fsrs.undo(review)!;
-    expect(undone.card.state).toBe(State.Learning);
-    expect(undone.history).toHaveLength(2);
+    const restored = planLearningQueue(["a", "a"], 2, ["a"], { a: baseline }, none, waiting.nextDue!);
+    expect(restored.queue).toEqual(["a", "a", "a"]);
+    expect(baseline.history).toHaveLength(2);
   });
 
   it("reschedules a lapse in a graduated card as relearning", () => {

@@ -41,7 +41,7 @@ export class StudyResultModal extends Modal {
       this.close();
       this.onRestart();
     });
-    actions.createEl("button", { text: "시작 화면으로 돌아가기" }).addEventListener("click", () => {
+    actions.createEl("button", { text: "학습 전 화면으로" }).addEventListener("click", () => {
       this.close();
       this.onReturn();
     });

@@ -1,5 +1,5 @@
-import { mergeReviewData, nextReviewVersion } from "../core/review-sync";
-import type { Plugin } from "obsidian";
+import { mergeIntoOwnedIncoming, mergeReviewData, nextReviewVersion } from "../core/review-sync";
+import type { PluginDataStorage } from "./verified-plugin-storage";
 import {
   DEFAULT_PLUGIN_DATA,
   DEFAULT_SETTINGS,
@@ -138,25 +138,48 @@ function parseReviews(value: unknown, existingQuarantine: unknown = {}): ParsedR
     const review = parseReview(rawReview);
     if (review) {
       reviews[id] = review;
-      delete quarantined[id];
     } else {
+      if (Object.hasOwn(quarantined, id) && JSON.stringify(quarantined[id]) !== JSON.stringify(rawReview)) {
+        throw new InvalidReviewDataError("같은 문제의 격리 원본이 서로 달라 저장을 중단했습니다. 원본들을 백업한 뒤 확인하세요.");
+      }
       quarantined[id] = rawReview;
     }
   }
   return { reviews, quarantined };
 }
 
+class InvalidReviewDataError extends Error {}
+class UnsupportedReviewDataVersionError extends InvalidReviewDataError {}
+
 function parseData(raw: unknown): MiaPluginData {
-  const record = isRecord(raw) ? raw : {};
+  if (raw === null || raw === undefined) return structuredClone(DEFAULT_PLUGIN_DATA);
+  if (!isRecord(raw)) throw new InvalidReviewDataError("복습 기록의 저장 형식이 손상되었습니다. 원본을 덮어쓰지 않았습니다.");
+  const record = raw;
+  if (record.version !== undefined && record.version !== 1) {
+    throw new UnsupportedReviewDataVersionError("이 버전에서 지원하지 않는 복습 기록입니다. 모든 기기의 플러그인 버전을 확인하세요.");
+  }
+  for (const field of ["settings", "reviews", "quarantinedReviews", "reviewVersions", "reviewConflicts"]) {
+    if (record[field] !== undefined && !isRecord(record[field])) {
+      throw new InvalidReviewDataError("복습 기록의 저장 형식이 손상되었습니다. 원본을 덮어쓰지 않았습니다.");
+    }
+  }
   const parsed = parseReviews(record.reviews, record.quarantinedReviews);
   const reviewVersions: Record<string, string> = {};
   if (isRecord(record.reviewVersions)) for (const [id, value] of Object.entries(record.reviewVersions)) {
-    if (typeof value === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z:.+$/.test(value) && Number.isFinite(Date.parse(value.slice(0, 24)))) reviewVersions[id] = value;
+    if (typeof value !== "string" || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z:.+$/.test(value) || !Number.isFinite(Date.parse(value.slice(0, 24)))) {
+      throw new InvalidReviewDataError("복습 기록의 수정 번호가 손상되어 저장을 중단했습니다.");
+    }
+    reviewVersions[id] = value;
   }
   const reviewConflicts: Record<string, QuestionReviewState[]> = {};
   if (isRecord(record.reviewConflicts)) for (const [id, value] of Object.entries(record.reviewConflicts)) {
-    if (!Array.isArray(value)) continue;
-    const states = value.map(parseReview).filter((review): review is QuestionReviewState => review !== null);
+    if (!Array.isArray(value)) throw new InvalidReviewDataError("보관된 평가 이력이 손상되어 저장을 중단했습니다.");
+    const states: QuestionReviewState[] = [];
+    for (const entry of value) {
+      const state = parseReview(entry);
+      if (!state) throw new InvalidReviewDataError("보관된 평가 이력이 손상되어 저장을 중단했습니다.");
+      states.push(state);
+    }
     if (states.length) reviewConflicts[id] = states;
   }
   return { version: 1, settings: parseSettings(record.settings), reviews: parsed.reviews, quarantinedReviews: parsed.quarantined, reviewVersions, reviewConflicts };
@@ -167,22 +190,52 @@ class ReviewChangedError extends Error {}
 export interface ReviewRecovery {
   read(): unknown;
   write(data: MiaPluginData): void;
+  onWarning?(message: string): void;
 }
 
 export class MiaDataStore {
   private data: MiaPluginData = structuredClone(DEFAULT_PLUGIN_DATA);
   private saveChain: Promise<void> = Promise.resolve();
   private listeners = new Set<() => void>();
+  private recoveryWriteFailed = false;
+  private recoveryReadFailed = false;
   loadWarnings: string[] = [];
 
-  constructor(private readonly plugin: Plugin, private readonly recovery?: ReviewRecovery) {}
+  constructor(private readonly plugin: PluginDataStorage, private readonly recovery?: ReviewRecovery) {}
 
   async load(): Promise<void> {
-    const disk = parseData(await this.plugin.loadData());
-    const recovered = this.recovery?.read();
-    this.data = recovered ? mergeReviewData(parseData(recovered), disk) : disk;
+    this.loadWarnings = [];
+    this.recoveryReadFailed = false;
+    let disk: MiaPluginData | undefined;
+    let diskMissing = false;
+    let diskError: unknown;
+    try {
+      const raw = await this.plugin.loadData();
+      diskMissing = raw === null || raw === undefined;
+      disk = parseData(raw);
+    } catch (error) {
+      if (error instanceof UnsupportedReviewDataVersionError) throw error;
+      diskError = error;
+    }
+    let recovered: MiaPluginData | undefined;
+    try {
+      const raw = this.recovery?.read();
+      if (raw !== null && raw !== undefined) recovered = parseData(raw);
+    }
+    catch {
+      this.recoveryReadFailed = true;
+      this.loadWarnings.push("기기 내 복구 사본을 읽지 못했습니다. 복구 원본을 보존하기 위해 이번 실행에서는 사본을 갱신하지 않습니다. 저장소 상태를 확인한 뒤 다시 시작하세요.");
+    }
+    if (!disk) {
+      if (!recovered) throw diskError;
+      this.data = recovered;
+      this.loadWarnings.push("보관함의 복습 기록을 읽지 못해 기기 내 복구 사본을 불러왔습니다. 원본 오류가 해결되기 전에는 평가를 저장할 수 없습니다.");
+    } else {
+      // Both states were freshly parsed above and are owned by this load.
+      this.data = recovered ? (diskMissing ? recovered : mergeIntoOwnedIncoming(recovered, disk)) : disk;
+    }
     const quarantinedCount = Object.keys(this.data.quarantinedReviews).length;
-    this.loadWarnings = quarantinedCount ? [`손상되었거나 호환되지 않는 복습 기록 ${quarantinedCount}개를 격리했습니다.`] : [];
+    if (quarantinedCount) this.loadWarnings.push(`손상되었거나 호환되지 않는 복습 기록 ${quarantinedCount}개를 격리했습니다.`);
   }
 
   get conflicts(): Readonly<Record<string, QuestionReviewState[]>> { return this.data.reviewConflicts; }
@@ -191,10 +244,10 @@ export class MiaDataStore {
     return this.enqueue(async () => {
       const incoming = parseData(await this.plugin.loadData());
       const merged = mergeReviewData(this.data, incoming);
-      if (JSON.stringify(merged) !== JSON.stringify(incoming)) await this.plugin.saveData(merged);
+      if (JSON.stringify(merged) !== JSON.stringify(incoming)) await this.persist(merged);
       const changed = JSON.stringify(merged) !== JSON.stringify(this.data);
       this.data = merged;
-      this.recovery?.write(merged);
+      this.writeRecovery(merged);
       if (changed) this.emit();
     });
   }
@@ -211,6 +264,8 @@ export class MiaDataStore {
     return this.data.reviews[questionId];
   }
 
+  getReviewVersion(questionId: string): string | null { return this.data.reviewVersions[questionId] ?? null; }
+
   async updateSettings(patch: Partial<MiaSettings>): Promise<void> {
     const settings = structuredClone(patch);
     await this.commit((next) => { next.settings = parseSettings({ ...next.settings, ...settings }); });
@@ -222,7 +277,6 @@ export class MiaDataStore {
       if (expected && JSON.stringify(next.reviews[questionId]) !== JSON.stringify(expected.state)) throw new ReviewChangedError("다른 기기에서 이 문제의 평가가 변경되었습니다. 최신 기록을 확인한 뒤 다시 평가하세요.");
       next.reviews[questionId] = review;
       next.reviewVersions[questionId] = nextReviewVersion(next.reviewVersions);
-      delete next.quarantinedReviews[questionId];
     });
   }
 
@@ -251,17 +305,40 @@ export class MiaDataStore {
   private commit(change: (next: MiaPluginData) => void): Promise<void> {
     return this.enqueue(async () => {
       // Re-read immediately before a write; another device may have updated a different question.
-      const next = mergeReviewData(this.data, parseData(await this.plugin.loadData()));
+      const next = mergeIntoOwnedIncoming(this.data, parseData(await this.plugin.loadData()));
       try { change(next); }
       catch (error) {
         if (error instanceof ReviewChangedError) { this.data = next; this.emit(); }
         throw error;
       }
-      await this.plugin.saveData(next);
+      await this.persist(next);
       this.data = next;
-      this.recovery?.write(next);
+      this.writeRecovery(next);
       this.emit();
     });
+  }
+
+  private async persist(data: MiaPluginData): Promise<void> {
+    try { await this.plugin.saveData(data); }
+    catch (error) {
+      // A rejected write may already have reached disk; confirm before reporting failure.
+      let persisted: MiaPluginData;
+      try { persisted = parseData(await this.plugin.loadData()); }
+      catch { throw error; }
+      if (JSON.stringify(persisted) !== JSON.stringify(data)) throw error;
+    }
+  }
+
+  private writeRecovery(data: MiaPluginData): void {
+    if (!this.recovery || this.recoveryReadFailed) return;
+    try {
+      this.recovery.write(data);
+      this.recoveryWriteFailed = false;
+    } catch {
+      const alreadyWarned = this.recoveryWriteFailed;
+      this.recoveryWriteFailed = true;
+      if (!alreadyWarned) this.recovery.onWarning?.("현재 기록은 반영되었지만 기기 내 복구 사본을 저장하지 못했습니다. 저장 공간과 로컬 저장소 상태를 확인하세요.");
+    }
   }
 
   private enqueue(work: () => Promise<void>): Promise<void> {

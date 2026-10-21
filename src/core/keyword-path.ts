@@ -1,5 +1,6 @@
 import { KeywordReference } from "./models";
 import { assertSingleLine } from "./markdown-structure";
+import { assertPortablePathSegment } from "./note-name";
 
 function normalizeFolder(folder: string): string {
   return folder.replaceAll("\\", "/").replace(/^\/+|\/+$/g, "").trim();
@@ -37,5 +38,6 @@ export function keywordNotePath(target: string, label: string, keywordFolder: st
   if (segments.some((segment) => !segment || segment === "." || segment === "..") || segments[0]?.toLocaleLowerCase("en") === ".obsidian") {
     throw new Error("키워드 노트 경로는 보관함 내부의 일반 폴더여야 합니다.");
   }
+  for (const segment of segments) assertPortablePathSegment(segment, "키워드 노트 경로");
   return path;
 }

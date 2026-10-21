@@ -63,6 +63,23 @@ describe("subject Word export", () => {
     expect(result.warnings).toEqual(["첨부 이미지를 넣지 못했습니다: missing.svg"]);
   });
 
+  it("does not create external Word relationships or expose note paths through document metadata", async () => {
+    const questions = question("수학", "mia-q-private-sentinel", "[사이트](https://example.invalid/private) <script>secret()</script>", "![원격](https://example.invalid/tracker.png) ![[로컬 없음.svg]]");
+    const result = await exportSubjectDocx("수학", questions);
+    const { zip, xml } = await documentXml(result.data);
+    const textFiles = Object.values(zip.files).filter(file => !file.dir && /\.(?:xml|rels)$/u.test(file.name));
+    const parts = await Promise.all(textFiles.map(file => file.async("string")));
+    const packageText = parts.join("\n");
+    expect(packageText).not.toContain('TargetMode="External"');
+    expect(packageText).not.toContain("https://example.invalid");
+    expect(packageText).not.toContain(questions[0]?.filePath);
+    expect(packageText).not.toContain("mia-q-private-sentinel");
+    expect(xml).toContain("&lt;script&gt;secret()&lt;/script&gt;");
+    expect(xml).not.toContain("<script>");
+    expect(await zip.file("docProps/core.xml")?.async("string")).toContain("MIA Study");
+    expect(result.warnings).toHaveLength(2);
+  });
+
   it("does not export an empty subject", async () => {
     await expect(exportSubjectDocx("수학", [])).rejects.toThrow("출력할 질문이 없습니다.");
   });

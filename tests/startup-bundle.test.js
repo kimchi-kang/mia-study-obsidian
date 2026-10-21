@@ -27,6 +27,14 @@ function mobilePlugin(loadError) {
 }
 
 describe("production mobile startup bundle", () => {
+  it("ships the complete third-party notice text inside the installable bundle", () => {
+    const notices = readFileSync(new URL("../THIRD-PARTY-NOTICES.txt", import.meta.url), "utf8").trimEnd();
+    const bundle = readFileSync(new URL("../main.js", import.meta.url), "utf8");
+    expect(bundle.startsWith(`/*! MIA third-party notices\n${notices}\n*/\n`)).toBe(true);
+    for (const notice of ["docx 9.12.0", "sax 1.2.4", "readable-stream 3.6.2", "pako 1.0.11 — zlib source notices", "String.fromCodePoint 0.1.0", "BSD-3-Clause", "Copyright Fedor Indutny, 2014."]) {
+      expect(notices).toContain(notice);
+    }
+  });
   it("loads and registers MIA on mobile without Buffer, Node or Electron modules", async () => {
     const run = mobilePlugin(); await run.plugin.onload();
     expect(run.imports.every((name) => name === "obsidian")).toBe(true);

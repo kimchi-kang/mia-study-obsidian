@@ -89,3 +89,49 @@ it("recovers the device checkpoint if the app stops before the asynchronous posi
   expect(restarted.resume).toEqual(newer);
   finish();await write;
 });
+
+const flushResumeWrites = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
+describe("reload and multiple-instance resume ordering", () => {
+  it("does not let an older instance's delayed write replace a completed newer session", async () => {
+    const ui = device(); await ui.store.saveResume(saved);
+    let finish;
+    ui.adapter.write.mockImplementationOnce((path, content) => new Promise(resolve => { finish = () => { ui.files.set(path, content); resolve(); }; }));
+    const older = ui.store.saveResume({ ...saved, queueIndex: 0 }); await flushResumeWrites();
+    vi.resetModules();
+    const { StudyUiStore: ReloadedStore } = await import("../src/services/study-ui-store");
+    expect(ReloadedStore).not.toBe(StudyUiStore);
+    const restarted = new ReloadedStore(ui.app, "plugin/ui-state.json"); await restarted.load();
+    const newer = { ...saved, queueIndex: 2, updatedAt: "2026-10-19T00:00:00Z" };
+    const latest = restarted.saveResume(newer); await flushResumeWrites();
+    finish(); await Promise.all([older, latest]);
+    const fresh = new StudyUiStore(ui.app, "plugin/ui-state.json"); await fresh.load();
+    expect(JSON.parse(ui.files.get("plugin/ui-state.json")).resume).toEqual(newer);
+    expect(fresh.resume).toEqual(newer);
+  });
+  it("does not roll back another instance's newer synchronous checkpoint when an old write fails", async () => {
+    const ui = device(); await ui.store.saveResume(saved);
+    let fail, finish;
+    ui.adapter.write.mockImplementationOnce(() => new Promise((_resolve, reject) => { fail = () => reject(Error("disk full")); }))
+      .mockImplementationOnce((path, content) => new Promise(resolve => { finish = () => { ui.files.set(path, content); resolve(); }; }));
+    const old = ui.store.saveResume({ ...saved, queueIndex: 0 }).catch(error => error); await flushResumeWrites();
+    const restarted = new StudyUiStore(ui.app, "plugin/ui-state.json"); await restarted.load();
+    const newer = { ...saved, queueIndex: 2, updatedAt: "2026-10-19T00:00:00Z" };
+    const pending = restarted.saveResume(newer); await flushResumeWrites(); fail(); await old; await flushResumeWrites();
+    const checkpoint = ui.local.get("mia-study:resume-checkpoint:plugin/ui-state.json");
+    // Finish the write before asserting, so a failing regression does not leave hanging work.
+    finish(); await pending;
+    expect(checkpoint.resume).toEqual(newer);
+  });
+  it("does not serialize writes to independent resume paths", async () => {
+    const ui = device(); let finish;
+    ui.adapter.write.mockImplementationOnce((path, content) => new Promise(resolve => { finish = () => { ui.files.set(path, content); resolve(); }; }));
+    const blocked = ui.store.saveResume(saved); await flushResumeWrites();
+    const other = new StudyUiStore(ui.app, "other/ui-state.json"); await other.saveResume(saved);
+    expect(JSON.parse(ui.files.get("other/ui-state.json")).resume).toEqual(saved);
+    finish(); await blocked;
+  });
+});
+
+it.each([null, {id:"one"}, {id:"one",version:42}, {id:"",version:null}])("refuses a malformed review checkpoint instead of silently removing its replay guard: %j", reviewCheckpoint => {
+  expect(parseStudyResume({...saved,reviewCheckpoint})).toBeNull();
+});

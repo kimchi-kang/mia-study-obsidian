@@ -1,6 +1,7 @@
 import { KeywordReference, QuestionRecord, QuestionType } from "./models";
-import { findCurrentQuestion } from "./question-writer";
+import { assertQuestionUnchanged, findCurrentQuestion, questionMetadataLines } from "./question-writer";
 import { assertSingleLine, hasHeadingAtOrAbove } from "./markdown-structure";
+import { validateNoteName } from "./note-name";
 
 export interface ManagedQuestionInput {
   questionMarkdown: string;
@@ -45,24 +46,6 @@ function quoteCallout(markdown: string): string[] {
   return markdown.replaceAll("\r\n", "\n").trim().split("\n").map((line) => line ? `> ${line}` : ">");
 }
 
-function metadataLines(input: ManagedQuestionInput): string[] {
-  const values = (items: KeywordReference[]) => items
-    .map((item) => assertSingleLine(item.raw, "키워드"))
-    .join(", ");
-  const lines = [
-    "> [!mia]- 학습 정보",
-    `> 유형: ${input.questionType}`,
-    `> 핵심: ${values(input.coreKeywords)}`,
-    `> 보조: ${values(input.subKeywords)}`,
-  ];
-  if (input.followUpLinks?.length) {
-    lines.push(`> 이어보기: ${input.followUpLinks.map((item) => assertSingleLine(item, "이어보기 링크")).join(", ")}`);
-  }
-  if (input.createdAt) lines.push(`> 생성: ${input.createdAt}`);
-  if (input.updatedAt) lines.push(`> 수정: ${input.updatedAt}`);
-  return lines;
-}
-
 export function renderManagedQuestion(input: ManagedQuestionInput, id: string): string {
   validateManagedQuestionInput(input);
   if (!/^mia-q-[A-Za-z0-9-]+$/.test(id)) throw new Error("유효하지 않은 MIA 문제 ID입니다.");
@@ -73,7 +56,7 @@ export function renderManagedQuestion(input: ManagedQuestionInput, id: string): 
     ...quoteCallout(input.questionMarkdown),
     `^${id}`,
     "",
-    ...metadataLines(input),
+    ...questionMetadataLines(input),
     "",
     "#### 정답",
     "",
@@ -104,11 +87,35 @@ export function replaceManagedQuestion(
   input: ManagedQuestionInput,
 ): string {
   if (!original.id) throw new Error("등록되지 않은 문제는 전체 편집할 수 없습니다.");
+  validateManagedQuestionInput(input);
   const newline = newlineFor(content);
   const lines = content.replaceAll("\r\n", "\n").split("\n");
-  const start = original.location.headingLine;
-  const end = original.location.answerEndLine;
-  lines.splice(start, end - start, ...renderManagedQuestion(input, original.id).split("\n"));
+  const location = original.location;
+  if (location.answerHeadingLine === null) throw new Error("정답 구역을 찾지 못해 안전하게 편집할 수 없습니다. 원문을 확인하세요.");
+  const edits: Array<{ start: number; end: number; replacement: string[] }> = [];
+  if (input.questionMarkdown !== original.questionMarkdown) {
+    let end = location.questionStartLine + 1;
+    while (end < lines.length && /^>/.test(lines[end] ?? "")) end += 1;
+    const quoted = lines.slice(location.questionStartLine + 1, end).map(line => line.replace(/^>\s?/, "")).join("\n").trim();
+    if (quoted !== original.questionMarkdown) throw new Error("질문 구역에 별도 사용자 내용이 있어 자동 편집을 중단했습니다. 원문을 확인하세요.");
+    edits.push({ start: location.questionStartLine + 1, end, replacement: quoteCallout(input.questionMarkdown) });
+    edits.push({ start: location.headingLine, end: location.headingLine + 1, replacement: [`${"#".repeat(original.headingLevel)} ${cleanHeading(input.questionMarkdown)}`] });
+  }
+  if (input.answerMarkdown !== original.answerMarkdown) {
+    let start = location.answerHeadingLine + 1;
+    let end = location.answerEndLine;
+    while (start < end && !lines[start]?.trim()) start += 1;
+    while (end > start && !lines[end - 1]?.trim()) end -= 1;
+    edits.push({ start, end, replacement: input.answerMarkdown.trim().split(/\r?\n/) });
+  }
+  if (location.metadataStartLine !== null && location.metadataEndLine !== null) {
+    edits.push({ start: location.metadataStartLine, end: location.metadataEndLine,
+      replacement: questionMetadataLines(input, lines.slice(location.metadataStartLine, location.metadataEndLine)) });
+  } else {
+    if (location.anchorLine === null) throw new Error("문제 ID 위치를 찾지 못해 편집을 중단했습니다.");
+    edits.push({ start: location.anchorLine + 1, end: location.anchorLine + 1, replacement: ["", ...questionMetadataLines(input)] });
+  }
+  for (const edit of edits.sort((a,b) => b.start - a.start)) lines.splice(edit.start, edit.end - edit.start, ...edit.replacement);
   return lines.join(newline);
 }
 
@@ -154,6 +161,7 @@ export function deleteCurrentManagedQuestion(
 ): string {
   const current = findCurrentQuestion(parse(content), original);
   if (!current) throw new Error("원문이 바뀌어 삭제할 문제를 안전하게 찾지 못했습니다. 다시 열어 주세요.");
+  assertQuestionUnchanged(original, current);
   return deleteManagedQuestion(content, current);
 }
 
@@ -165,6 +173,7 @@ export function replaceCurrentManagedQuestion(
 ): string {
   const current = findCurrentQuestion(parse(content), original);
   if (!current) throw new Error("원문이 바뀌어 문제 위치를 안전하게 찾지 못했습니다. 다시 열어 주세요.");
+  assertQuestionUnchanged(original, current);
   const preserved = input.followUpLinks === undefined ? followUpLinksIn(content, current) : input.followUpLinks;
   const timestamps = timestampsIn(content, current);
   return replaceManagedQuestion(content, current, {
@@ -177,12 +186,7 @@ export function replaceCurrentManagedQuestion(
 }
 
 export function validateSubjectName(value: string): string {
-  const name = value.trim();
-  if (!name) throw new Error("과목 이름을 입력하세요.");
-  if (name === "." || name === ".." || /[\u0000-\u001f\u007f\\/:*?"<>|#\[\]^]/u.test(name)) {
-    throw new Error("과목 이름에 경로 또는 링크 특수문자를 사용할 수 없습니다.");
-  }
-  return name;
+  return validateNoteName(value, "과목");
 }
 
 export const ManagedQuestionInternals = { cleanHeading, followUpLinksIn, timestampsIn, quoteCallout };

@@ -7,15 +7,19 @@ import { QuestionIndex } from "../src/services/question-index";
 vi.mock("obsidian", () => {
   class Element {
     children = []; handlers = new Map(); text = ""; disabled = false;
-    style = { setProperty() {} }; dataset = {};
-    constructor(options = {}) { this.text = options.text ?? ""; }
-    createEl(tag, options = {}) { const child = new Element(options); child.tag = tag; this.children.push(child); return child; }
+    style = { setProperty() {} }; dataset = {}; attrs = {};
+    constructor(options = {}) { this.text = options.text ?? ""; this.cls=options.cls??""; }
+    createEl(tag, options = {}) { const child = new Element(options); child.tag = tag; child.parent=this; this.children.push(child); return child; }
     createDiv(options) { return this.createEl("div", options); }
     createSpan(options) { return this.createEl("span", options); }
     empty() { this.children = []; }
     setText(text) { this.text = text; }
-    addClass() {} removeClass() {} setAttr() {} focus() {}
-    querySelector() { return null; }
+    addClass() {} removeClass() {} setAttr(name,value) { this.attrs[name]=value; } focus() {}
+    querySelector(selector) {
+      if(selector!==".mia-save-status")return null;
+      const visit=element=>{for(const child of element.children){if(child.cls.split(" ").includes("mia-save-status"))return child;const found=visit(child);if(found)return found;}return null;};return visit(this);
+    }
+    remove(){if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this);}
     addEventListener(name, handler) { this.handlers.set(name, handler); }
     get content() { return [this.text, ...this.children.map(child => child.content)].join(" "); }
     find(text, exact = false) { return this.children.flatMap(child => [child, child.find(text, exact)]).find(child => child && child.tag === "button" && (exact ? child.content.trim() === text : child.content.trim().startsWith(text))); }
@@ -48,6 +52,7 @@ function setup({ failSave = false, start = true, linked = false } = {}) {
     index: { diagnostics: [], candidates: [], isReady: true, registered: questions, questionById: id => questions.find(item => item.id === id) },
     store: {
       reviews, getReview: id => reviews[id],
+      getReviewVersion: id => reviews[id] ? JSON.stringify(reviews[id]) : null,
       setReview: async (id, state) => { if (failSave) throw Error("disk full"); reviews[id] = state; },
       removeReview: async id => { delete reviews[id]; },
     },
@@ -518,7 +523,7 @@ describe("study view scheduling integration", () => {
     await ui.view.setState(restored, {});
     expect(ui.content()).toContain("문제를 불러오는 중");
     expect(ui.content()).not.toContain("학습 완료");
-    expect(ui.view.getState()).toEqual(restored);
+    expect(ui.view.getState()).toEqual({ ...restored, reviewCheckpoint: { id: "q", version: null } });
     ui.plugin.index = loaded;
     await ui.view.setState(ui.view.getState(), {});
     expect(ui.content()).toContain("1 / 1");
@@ -606,4 +611,201 @@ describe("return and quick recovery", () => {
     await ui.button("직전 평가 취소").click();
     expect(ui.view.getState().queueIndex).toBe(0); expect(ui.reviews.q).toBeUndefined();
   });
+});
+
+// Real storage and synchronization; only the host persistence boundary is replaced.
+async function persistentSession(){
+  const ui=setup({start:false});let disk=null;
+  const native={loadData:async()=>structuredClone(disk),saveData:async value=>{disk=structuredClone(value);}};
+  const store=new MiaDataStore(native);await store.load();ui.plugin.store=store;
+  const remote=new MiaDataStore(native);await remote.load();
+  ui.view.startReview(["q"],"browse");
+  return {...ui,store,remote,native,disk:()=>structuredClone(disk)};
+}
+
+describe("session synchronization boundaries",()=>{
+  it("rejects a displayed grade after a synchronized review changed without rendering again",async()=>{
+    const ui=await persistentSession();
+    const remoteState=ui.plugin.fsrs.rate(undefined,Rating.Easy,new Date(),"q");
+    await ui.remote.setReview("q",remoteState);await ui.store.synchronize();
+    await ui.button("암기").click();
+    expect(ui.store.getReview("q")).toEqual(remoteState);expect(ui.disk().reviews.q).toEqual(remoteState);
+    expect(ui.view.getState().queueIndex).toBe(0);expect(ui.view.sessionBaselines.size).toBe(0);
+  });
+  it.each([false,true])("rejects replacing this session's grade after an external grade, with re-render %s",async rerender=>{
+    const ui=await persistentSession();await ui.button("너무 쉬움").click();
+    await ui.view.setState({...ui.view.getState(),queueIndex:0,answerVisible:true},{});
+    const other=ui.plugin.fsrs.rate(ui.remote.getReview("q")??ui.store.getReview("q"),Rating.Good,new Date(),"q");
+    await ui.remote.setReview("q",other);await ui.store.synchronize();if(rerender)ui.view.render();
+    await ui.button("암기").click();
+    expect(ui.disk().reviews.q).toEqual(other);expect(ui.view.getState().queueIndex).toBe(0);
+  });
+  it("refreshes the baseline after a failed first save and an intervening remote grade",async()=>{
+    const ui=await persistentSession();const save=ui.native.saveData;
+    ui.native.saveData=async()=>{throw Error("disk full");};await ui.button("암기").click();
+    ui.native.saveData=save;
+    const other=ui.plugin.fsrs.rate(undefined,Rating.Hard,new Date(),"q");await ui.remote.setReview("q",other);await ui.store.synchronize();ui.view.render();
+    await ui.button("너무 쉬움").click();
+    expect(ui.store.getReview("q").history).toHaveLength(2);expect(ui.store.getReview("q").history[0]).toEqual(other.history[0]);
+  });
+  it("retains an external grade when undoing this session's outdated grade",async()=>{
+    const ui=await persistentSession();await ui.button("너무 쉬움").click();
+    const other=ui.plugin.fsrs.rate(ui.store.getReview("q"),Rating.Good,new Date(),"q");
+    await ui.remote.setReview("q",other);await ui.store.synchronize();
+    await ui.button("직전 평가 취소").click();
+    expect(ui.disk().reviews.q).toEqual(other);expect(ui.view.lastRated).not.toBeNull();
+  });
+  it("uses the click time and current settings after a long answer-reading pause",async()=>{
+    const ui=await persistentSession();const button=ui.button("너무 쉬움");
+    vi.setSystemTime(new Date(Date.now()+2*86400000));
+    ui.plugin.fsrs=new FsrsService({targetRetention:.99,maximumIntervalDays:1});
+    const expected=ui.plugin.fsrs.rate(undefined,Rating.Easy,new Date(),"q");await button.click();
+    expect(ui.store.getReview("q")).toEqual(expected);
+    expect(ui.store.getReview("q").card.last_review).toBe(new Date().toISOString());
+  });
+});
+
+describe("late input and clock changes",()=>{
+  it("ignores a queued click from the previous question after navigating",async()=>{
+    const ui=await persistentSession();
+    ui.plugin.index.registered.push({...ui.plugin.index.registered[0],id:"other",heading:"다음 질문"});
+    ui.view.startReview(["q","other"],"browse");const stale=ui.button("너무 쉬움");
+    await ui.button("다음 문제 →").click();await stale.handlers.get("click")();
+    expect(ui.store.getReview("q")).toBeUndefined();expect(ui.store.getReview("other")).toBeUndefined();
+    expect(ui.view.getState().queueIndex).toBe(1);
+  });
+  it("keeps the screen usable when the device clock goes behind the latest review",async()=>{
+    const ui=await persistentSession();await ui.button("너무 쉬움").click();
+    const original=structuredClone(ui.store.getReview("q"));vi.setSystemTime(new Date(Date.now()-86400000));
+    await expect(ui.view.setState({...ui.view.getState(),queueIndex:0,answerVisible:true},{})).resolves.toBeUndefined();
+    await ui.button("암기").click();
+    expect(ui.store.getReview("q")).toEqual(original);expect(ui.view.getState().queueIndex).toBe(0);
+    expect(ui.button("암기").disabled).toBe(false);
+  });
+});
+
+describe("exact baseline undo for mature reviews",()=>{
+ it.each([-86400000,0,3*86400000])("restores the exact original due and history when rated %s ms relative to due",async offset=>{
+  const ui=await persistentSession();const original=ui.plugin.fsrs.rate(undefined,Rating.Easy,new Date("2026-09-01T00:00:00Z"),"q");
+  await ui.store.setReview("q",original);vi.setSystemTime(new Date(Date.parse(original.card.due)+offset));
+  await ui.view.setState({route:"study",queue:["q"],queueIndex:0,answerVisible:true,sessionMode:"browse"},{});
+  await ui.button("못 암기").click();expect(ui.store.getReview("q").history).toHaveLength(2);
+  await ui.button("직전 평가 취소").click();await vi.waitFor(()=>expect(ui.view.isMutatingReview).toBe(false));
+  expect(ui.store.getReview("q")).toEqual(original);expect(ui.disk().reviews.q).toEqual(original);
+ });
+});
+
+
+describe("pending save feedback and closed view lifetime",()=>{
+ function pendingSave(ui){let finish;ui.plugin.store.setReview=vi.fn((id,state)=>new Promise(resolve=>{finish=()=>{ui.reviews[id]=state;resolve();};}));return()=>finish();}
+ it("announces saving immediately and retains it across a render while accepting one grade",async()=>{
+  const ui=setup();await ui.button("정답 보기").click();const finish=pendingSave(ui),button=ui.button("암기"),pending=button.click();
+  expect(ui.content()).toContain("평가 저장 중");expect(ui.view.contentEl.attrs['aria-busy']).toBe('true');ui.view.render();
+  expect(ui.content()).toContain("평가 저장 중");expect(ui.button("암기").disabled).toBe(true);
+  await button.handlers.get("click")();expect(ui.plugin.store.setReview).toHaveBeenCalledOnce();finish();await pending;
+  expect(ui.view.contentEl.attrs['aria-busy']).toBe('false');expect(ui.content()).not.toContain("평가 저장 중");
+ });
+ it("does not create a feedback timer or focus the closed view after a successful save",async()=>{
+  const ui=setup();await ui.button("정답 보기").click();const finish=pendingSave(ui),pending=ui.button("암기").click();
+  await ui.view.onClose();const focus=vi.spyOn(ui.view.contentEl,'focus'),timers=vi.getTimerCount();finish();await pending;
+  expect(ui.reviews.q.history).toHaveLength(1);expect(vi.getTimerCount()).toBe(timers);expect(focus).not.toHaveBeenCalled();
+ });
+ it("retains an unchanged resume at the advanced position after closing during saving",async()=>{
+  const ui=setup();await ui.button("정답 보기").click();const finish=pendingSave(ui),pending=ui.button("암기").click();
+  await ui.view.onClose();finish();await pending;await ui.plugin.studyUi.load();
+  expect(ui.plugin.studyUi.resume.queueIndex).toBe(1);expect(ui.reviews.q.history).toHaveLength(1);
+ });
+ it("does not overwrite a newer session started by another view while saving",async()=>{
+  const ui=setup();await ui.button("정답 보기").click();const finish=pendingSave(ui),pending=ui.button("너무 쉬움").click();await ui.view.onClose();
+  const newer={queue:['other'],seed:['other'],skipped:[],queueIndex:0,answerVisible:false,sessionMode:'recall',updatedAt:new Date().toISOString()};await ui.plugin.studyUi.saveResume(newer);
+  finish();await pending;await ui.plugin.studyUi.load();expect(ui.plugin.studyUi.resume).toEqual(newer);expect(ui.reviews.q.history).toHaveLength(1);
+ });
+ it("clears reading/learning/feedback timers and unloads its component only once",async()=>{
+  const ui=setup();await ui.button("정답 보기").click();await ui.button("못 암기").click();ui.view.scheduleReadingSave();
+  const component=ui.view.renderComponent,unload=vi.spyOn(component,'unload'),unsubscribe=vi.fn();ui.view.unsubscribers=[unsubscribe];
+  await ui.view.onClose();await ui.view.onClose();expect(vi.getTimerCount()).toBe(0);expect(unload).toHaveBeenCalledOnce();expect(unsubscribe).toHaveBeenCalledOnce();expect(ui.view.renderComponent).toBeNull();
+ });
+ it("does not focus a closed view after a pending undo completes",async()=>{
+  const ui=setup();await ui.button("정답 보기").click();await ui.button("너무 쉬움").click();let finish;
+  ui.plugin.store.removeReview=()=>new Promise(resolve=>{finish=()=>{delete ui.reviews.q;resolve();};});
+  const undo=ui.view.undoLastRating();expect(ui.content()).toContain("평가 취소 중");await ui.view.onClose();const focus=vi.spyOn(ui.view.contentEl,'focus');finish();await undo;
+  expect(ui.reviews.q).toBeUndefined();expect(focus).not.toHaveBeenCalled();expect(vi.getTimerCount()).toBe(0);
+ });
+});
+
+
+describe("save feedback recovery and return cancellation",()=>{
+ it("clears the status and restores input after a rejected save",async()=>{
+  const ui=setup({failSave:true});await ui.button("정답 보기").click();const pending=ui.button("암기").click();
+  expect(ui.view.contentEl.querySelector('.mia-save-status').attrs.role).toBe('status');await pending;
+  expect(ui.view.contentEl.attrs['aria-busy']).toBe('false');expect(ui.view.contentEl.querySelector('.mia-save-status')).toBeNull();expect(ui.button("암기").disabled).toBe(false);expect(ui.reviews.q).toBeUndefined();
+ });
+ it("does not start another resume read after closing during return synchronization",async()=>{
+  const ui=setup();let finish;ui.plugin.store.synchronize=()=>new Promise(resolve=>{finish=resolve;});const load=vi.spyOn(ui.plugin.studyUi,'load');
+  const refresh=ui.view.refreshAfterReturn();await ui.view.onClose();finish();await refresh;expect(load).not.toHaveBeenCalled();expect(ui.view.refreshingAfterReturn).toBe(false);
+ });
+});
+
+it.each(["grade", "undo"])("does not replace a reloaded instance's session after an old pending %s finishes", async action => {
+  const ui = setup(); await ui.button("정답 보기").click();
+  if (action === "undo") { await ui.button("너무 쉬움").click(); await ui.plugin.studyUi.load(); }
+  let finish;
+  if (action === "grade") ui.plugin.store.setReview = vi.fn((id, state) => new Promise(resolve => { finish = () => { ui.reviews[id] = state; resolve(); }; }));
+  else ui.plugin.store.removeReview = vi.fn(id => new Promise(resolve => { finish = () => { delete ui.reviews[id]; resolve(); }; }));
+  const pending = action === "grade" ? ui.button("암기").click() : ui.view.undoLastRating();
+  await ui.view.onClose();
+  const restarted = new StudyUiStore(ui.studyApp, "ui-state.json");
+  const newer = { queue: ["other"], seed: ["other"], skipped: [], queueIndex: 0, answerVisible: false, sessionMode: "recall", updatedAt: new Date().toISOString() };
+  await restarted.saveResume(newer); finish(); await pending; await ui.plugin.studyUi.load();
+  expect(JSON.parse(ui.files.get("ui-state.json")).resume).toEqual(newer);
+  expect(action === "grade" ? ui.reviews.q.history.length : ui.reviews.q).toBe(action === "grade" ? 1 : undefined);
+});
+
+it.each(["resume", "workspace"])("does not replay a committed rating from an older %s position", async source => {
+  const first = await persistentSession(); await first.plugin.studyUi.load();
+  const workspace = first.view.getState(), resume = first.plugin.studyUi.resume;
+  // Primary commit succeeds; the process stops before the next UI checkpoint.
+  const accepted = first.plugin.fsrs.rate(undefined, Rating.Good, new Date(), "q");
+  await first.store.setReview("q", accepted);
+  const restored = setup({ start: false }); restored.plugin.store = new MiaDataStore(first.native); await restored.plugin.store.load();
+  // A different App and store reproduce a fresh process, with the old synced UI snapshot.
+  const disk = new Map([["ui-state.json", JSON.stringify({ version: 1, resume })]]);
+  const app = { loadLocalStorage: () => null, saveLocalStorage() {}, vault: { adapter: { exists: async p => disk.has(p), read: async p => disk.get(p), write: async (p,v) => { disk.set(p,v); } } } };
+  restored.plugin.studyUi = new StudyUiStore(app, "ui-state.json");
+  if (source === "resume") await restored.view.resumeStudy();
+  else await restored.view.setState(workspace, {});
+  expect(restored.view.getState().queueIndex).toBe(1);
+  expect(restored.button("암기")).toBeUndefined();
+  expect(restored.content()).toContain("다음 복습 대기 중");
+  expect(restored.plugin.store.getReview("q")).toEqual(accepted);
+});
+
+it.each(["unchanged", "reset"])("keeps an uncommitted or reset question available on resume: %s", async action => {
+  const first = await persistentSession();
+  if (action === "reset") await first.store.setReview("q", first.plugin.fsrs.rate(undefined, Rating.Good, new Date(), "q"));
+  // Use an old UI snapshot while the authoritative review is reset or unchanged.
+  first.view.saveStudyPosition(); await first.plugin.studyUi.load(); const snapshot = first.plugin.studyUi.resume;
+  if (action === "reset") await first.store.removeReview("q");
+  const restored = setup({ start: false }); restored.plugin.store = new MiaDataStore(first.native); await restored.plugin.store.load();
+  await restored.plugin.studyUi.saveResume(snapshot); await restored.view.resumeStudy();
+  expect(restored.view.getState().queueIndex).toBe(0);
+  expect(restored.button("암기")).toBeDefined();
+});
+it("keeps explicit history navigation available in an existing session", async () => {
+  const ui = await persistentSession(); const before = ui.view.getState();
+  await ui.button("암기").click(); await ui.view.setState(before, {});
+  expect(ui.view.getState().queueIndex).toBe(0); expect(ui.button("암기")).toBeDefined();
+});
+
+
+it("keeps the pre-commit version in a workspace snapshot while the rating promise is pending", async () => {
+  const ui = await persistentSession(); const original = ui.store.setReview.bind(ui.store);
+  let release, committed;
+  const commitReached = new Promise(resolve => { committed = resolve; });
+  ui.store.setReview = async (...args) => { await original(...args); committed(); await new Promise(resolve => { release = resolve; }); };
+  const pending = ui.button("암기").click(); await commitReached;
+  expect(ui.store.getReview("q").history).toHaveLength(1);
+  const snapshot = ui.view.getState();
+  release(); await pending;
+  expect(snapshot.queueIndex).toBe(0); expect(snapshot.reviewCheckpoint).toEqual({ id: "q", version: null });
 });
