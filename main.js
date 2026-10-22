@@ -1925,6 +1925,33 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+/*! MIA Study own code
+MIT License
+
+Copyright (c) 2026 kimchi-kang
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Algorithm: FSRS-6 via ts-fsrs (Open Spaced Repetition).
+FSRS is also supported by Anki: https://docs.ankiweb.net/manual/deck-options#fsrs
+Implementation: https://github.com/open-spaced-repetition/ts-fsrs
+*/
 "use strict";var Ss=Object.defineProperty;var Wf=Object.getOwnPropertyDescriptor;var zf=Object.getOwnPropertyNames;var qf=Object.prototype.hasOwnProperty;var Me=(e,t,r)=>()=>{if(r)throw r[0];try{return e&&(t=e(e=0)),t}catch(n){throw r=[n],n}};var qn=(e,t)=>{for(var r in t)Ss(e,r,{get:t[r],enumerable:!0})},Kf=(e,t,r,n)=>{if(t&&typeof t=="object"||typeof t=="function")for(let i of zf(t))!qf.call(e,i)&&i!==r&&Ss(e,i,{get:()=>t[i],enumerable:!(n=Wf(t,i))||n.enumerable});return e};var Gf=e=>Kf(Ss({},"__esModule",{value:!0}),e);function Xr(e){let t=Array.from({length:e.length},()=>!1),r=null;return e.forEach((n,i)=>{let s=n.match(yp);if(!r){if(!s?.[1])return;r={marker:s[1][0],length:s[1].length},t[i]=!0;return}t[i]=!0;let a=n.match(/^ {0,3}(`{3,}|~{3,})\s*$/)?.[1];a?.[0]===r.marker&&a.length>=r.length&&(r=null)}),t}function qe(e,t){if(/[\u0000-\u001f\u007f]/u.test(e))throw new Error(`${t}\uC5D0\uB294 \uC904\uBC14\uAFC8\uC774\uB098 \uC81C\uC5B4 \uBB38\uC790\uB97C \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.`);return e}function ri(e,t){let r=e.replaceAll(`\r
 `,`
 `).split(`
