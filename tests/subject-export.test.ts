@@ -107,3 +107,25 @@ it("marks only each table's header row for repetition across pages", async () =>
   }
   expect(JSON.stringify(questions)).toBe(before);
 });
+
+it("keeps Korean numeric path order, heading order and stable ties without changing the input", async () => {
+  const entry = (path: string, line: number, marker: string) => question("수학", `mia-q-${marker.toLowerCase().replaceAll("_", "-")}`, marker, "정답")
+    .map((record) => ({ ...record, filePath: `MIA/수학/${path}.md`, location: { ...record.location, headingLine: line } }));
+  const questions = [
+    ...entry("가10", 1, "ORDER_TEN_END"),
+    ...entry("나1", 1, "ORDER_NA_END"),
+    ...entry("가2", 9, "ORDER_LATE_END"),
+    ...entry("가2", 3, "ORDER_EARLY_END"),
+    ...entry("가2", 3, "ORDER_TIE_END"),
+    ...question("역사", "mia-q-excluded", "EXCLUDED_ORDER_END", "다른 과목"),
+  ];
+  const before = JSON.stringify(questions);
+  const result = await exportSubjectDocx("수학", questions);
+  const { xml } = await documentXml(result.data);
+  expect(xml.match(/ORDER_[A-Z]+_END/gu)).toEqual([
+    "ORDER_EARLY_END", "ORDER_TIE_END", "ORDER_LATE_END", "ORDER_TEN_END", "ORDER_NA_END",
+  ]);
+  expect(xml).not.toContain("EXCLUDED_ORDER_END");
+  expect(result.count).toBe(5);
+  expect(JSON.stringify(questions)).toBe(before);
+});

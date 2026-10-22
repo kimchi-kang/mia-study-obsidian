@@ -168,8 +168,9 @@ const EXPORT_SLICE_MS = 16;
 export async function exportSubjectDocx(
   subject: string, questions: readonly QuestionRecord[], readImage?: ExportImageReader,
 ): Promise<SubjectExportResult> {
+  const comparePaths = new Intl.Collator("ko", { numeric: true }).compare;
   const selected = questions.filter((question) => question.subject === subject).sort((a, b) =>
-    a.filePath.localeCompare(b.filePath, "ko", { numeric: true }) || a.location.headingLine - b.location.headingLine);
+    comparePaths(a.filePath, b.filePath) || a.location.headingLine - b.location.headingLine);
   if (!selected.length) throw new Error("출력할 질문이 없습니다.");
   const warnings = new Set<string>();
   const children: Array<Paragraph | Table> = [new Paragraph({ text: `${subject} 질문 답변 정리`, heading: HeadingLevel.TITLE })];
