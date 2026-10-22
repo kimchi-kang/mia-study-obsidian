@@ -27,6 +27,14 @@ function mobilePlugin(loadError) {
 }
 
 describe("production mobile startup bundle", () => {
+  it("preserves the own-code MIT license in the three-file installation", () => {
+    const license = readFileSync(new URL("../LICENSE", import.meta.url), "utf8").trimEnd();
+    const bundle = readFileSync(new URL("../main.js", import.meta.url), "utf8");
+    expect(license).toContain("MIT License");
+    expect(license).toContain("Copyright (c) 2026 kimchi-kang");
+    expect(bundle).toContain(`/*! MIA Study own code\n${license}\n`);
+    expect(JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).license).toBe("MIT");
+  });
   it("ships the complete third-party notice text inside the installable bundle", () => {
     const notices = readFileSync(new URL("../THIRD-PARTY-NOTICES.txt", import.meta.url), "utf8").trimEnd();
     const bundle = readFileSync(new URL("../main.js", import.meta.url), "utf8");

@@ -22,5 +22,6 @@
     "obsidian": "^1.13.1",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
-  }
+  },
+  "license": "MIT"
 }

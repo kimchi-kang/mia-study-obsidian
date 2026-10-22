@@ -4,13 +4,17 @@
   "status": "candidate",
   "qualification": "Virtual mobile functional checks passed in tested scope; other release QA remains",
   "files": {
-    "main.js": "9a8980de3f016d98c63f823b6a0efec1915a0c1867690d3643daa79a72a5ee4d",
+    "main.js": "ff2397f74d86cfe95da501918c1563d18861f9e4678a38b267975ac4d2a6f626",
     "styles.css": "c5d02c902fe952bd1ae546ad60141fe4f513f244bcc2e60c3ba9a7565ec1d7ae",
-    "manifest.json": "724ed877d855ca1d6464aa24673c590188727d3131c31166a70a136b0f787f98"
+    "manifest.json": "724ed877d855ca1d6464aa24673c590188727d3131c31166a70a136b0f787f98",
+    "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
+    "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
   },
-  "revision": "2026-10-22-export-path-collator",
+  "revision": "2026-10-22-mit-fsrs-attribution",
   "mobileValidation": "WebKit virtual mobile + Chromium touch control; real devices not qualified",
   "excludedValidation": [
     "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified"
-  ]
+  ],
+  "license": "MIT",
+  "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki"
 }

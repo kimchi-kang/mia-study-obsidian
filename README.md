@@ -29,7 +29,7 @@ npm test
 npm run install:local -- --vault "/absolute/path/to/vault"
 ```
 
-`THIRD-PARTY-NOTICES.txt`의 외부 코드 저작권·라이선스 고지는 빌드 때 `main.js` 주석에 포함되므로 세 배포 파일만 설치해도 함께 전달된다. 의존성이나 사전 번들 라이브러리를 변경할 때는 내부 코드의 릴리스 출처와 고지문도 다시 확인한다. 이 고지문은 플러그인 자체 코드의 라이선스를 지정하지 않는다.
+`THIRD-PARTY-NOTICES.txt`의 외부 코드 저작권·라이선스 고지는 빌드 때 `main.js` 주석에 포함되므로 세 배포 파일만 설치해도 함께 전달된다. 의존성이나 사전 번들 라이브러리를 변경할 때는 내부 코드의 릴리스 출처와 고지문도 다시 확인한다. 플러그인 자체 코드는 [MIT 라이선스](LICENSE)이며, MIT 전문도 `main.js`에 포함된다. 외부 코드에는 각 원저작자의 고지가 별도로 적용된다.
 
 이 설치 명령은 완성된 `main.js`·`styles.css`·`manifest.json`을 임시 파일로 쓴 뒤 교체한다. `.obsidian/community-plugins.json`의 활성화 목록과 `data.json`·`ui-state.json`은 수정하지 않는다. 설치 후 Obsidian을 다시 시작해 새 파일을 불러온다. 여러 기기가 설정 폴더를 공유할 때 업데이트 목적으로 MIA 스위치를 껐다 켜면, 꺼진 상태까지 동기화될 수 있으므로 해당 방식은 피한다.
 
@@ -298,3 +298,9 @@ MIA_AUDIT_VAULT="/path/to/vault" npx vitest run tests/vault-audit.test.ts
 - 폰뿐 아니라 넓은 패드에서도 키보드 높이에 맞추며 ‘키보드 닫기’로 입력을 유지한다. 검색·평가·힌트에 접근성 이름과 상태를 제공하고 모바일 조작 영역은 44px 이상 확보한다.
 
 기기 내 복구 사본은 각 기기의 Obsidian 로컬 저장소에 남는다. 모든 기기에서 같은 최신 플러그인을 사용해야 수정 번호와 취소 표시가 유지된다. 파일 기반 iCloud 동기화의 전송 시점·충돌 파일 생성까지 통제하거나 동시 쓰기의 원자성을 보장하지는 않는다. 실제 iOS 키보드·앱 강제 종료·VoiceOver·기기 간 iCloud 전송 검증은 실기기가 필요하다.
+
+## 라이선스와 복습 알고리즘 출처
+
+MIA Study 자체 코드는 [MIT](LICENSE)로 배포한다. 외부 코드의 저작권·라이선스는 [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)에 보존한다.
+
+복습 일정은 **Anki에서도 지원하는 FSRS 계열의 FSRS-6 알고리즘**을 사용한다. 실제 구현은 Open Spaced Repetition의 [ts-fsrs 5.4.1](https://github.com/open-spaced-repetition/ts-fsrs)(MIT)이다. [Anki의 FSRS 안내](https://docs.ankiweb.net/manual/deck-options#fsrs)와 [FSRS-6 알고리즘 설명](https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm#fsrs-6)을 참고할 수 있다. 이는 Anki 소스 코드를 복사했다는 의미나 Anki와 일정이 완전히 같다는 보장이 아니다. 개인별 FSRS 가중치 최적화는 포함하지 않는다.
