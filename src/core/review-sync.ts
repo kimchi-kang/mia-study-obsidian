@@ -1,6 +1,33 @@
 import { MiaPluginData, QuestionReviewState } from "./models";
 
 const same = (left: unknown, right: unknown): boolean => JSON.stringify(left) === JSON.stringify(right);
+// Prove equality cheaply for parsed scalar records; differing shapes keep the JSON path.
+function sameScalarRecord<T extends object>(left: T, right: T): boolean {
+  if (Object.getPrototypeOf(left) !== Object.prototype || Object.getPrototypeOf(right) !== Object.prototype) return false;
+  const leftKeys = Object.keys(left) as (keyof T)[], rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) return false;
+  for (let index = 0; index < leftKeys.length; index++) {
+    const key = leftKeys[index]!;
+    if (key !== rightKeys[index]) return false;
+    const a = left[key], b = right[key], type = typeof a;
+    if (a !== b || !(a === null || type === "undefined" || type === "string" || type === "number" || type === "boolean")) return false;
+  }
+  return true;
+}
+
+function sameReview(left: QuestionReviewState, right: QuestionReviewState): boolean {
+  const leftKeys = Object.keys(left), rightKeys = Object.keys(right);
+  if (Object.getPrototypeOf(left) !== Object.prototype || Object.getPrototypeOf(right) !== Object.prototype) return false;
+  if (leftKeys.length !== 3 || leftKeys.some((key, index) => key !== rightKeys[index] || !["card", "history", "lastRating"].includes(key))) return false;
+  if (rightKeys.length !== 3 || left.lastRating !== right.lastRating
+    || left.history.length !== right.history.length || !sameScalarRecord(left.card, right.card)) return false;
+  for (let index = 0; index < left.history.length; index++) {
+    const a = left.history[index], b = right.history[index];
+    if (!a || !b || !sameScalarRecord(a, b)) return false;
+  }
+  return true;
+}
+
 function version(data: MiaPluginData, id: string): string {
   return data.reviewVersions[id] ?? `${data.reviews[id]?.card.last_review ?? "1970-01-01T00:00:00.000Z"}:`;
 }
@@ -42,8 +69,9 @@ function merge(local: MiaPluginData, incoming: MiaPluginData, consume: boolean):
   const ids = new Set([...Object.keys(local.reviews), ...Object.keys(incoming.reviews), ...Object.keys(local.reviewVersions), ...Object.keys(incoming.reviewVersions), ...Object.keys(local.reviewConflicts), ...Object.keys(incoming.reviewConflicts)]);
   for (const id of ids) {
     const left = local.reviews[id], right = incoming.reviews[id];
-    const leftKey = left ? JSON.stringify(left) : "";
-    const rightKey = right ? JSON.stringify(right) : "";
+    const equal = left && right && sameReview(left, right);
+    const leftKey = left && !equal ? JSON.stringify(left) : "";
+    const rightKey = right && !equal ? JSON.stringify(right) : "";
     const localWins = prefersLocal(local, incoming, id, leftKey, rightKey);
     const winner = localWins ? local : incoming;
     const state = winner.reviews[id];
