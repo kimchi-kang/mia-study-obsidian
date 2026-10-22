@@ -89,3 +89,21 @@ describe("subject Word export", () => {
     expect(cleanExportMarkdown(source)).toBe("설명에서 원문:이라는 표현을 사용한다.");
   });
 });
+
+
+it("marks only each table's header row for repetition across pages", async () => {
+  const table = "| 단계 | 검사값 |\n| --- | --- |\n| 첫째 | 1 |\n| 둘째 | 2 |";
+  const questions = question("표", "mia-q-tables", table, table);
+  const before = JSON.stringify(questions);
+  const result = await exportSubjectDocx("표", questions);
+  const { xml } = await documentXml(result.data);
+  const tables = xml.match(/<w:tbl>[\s\S]*?<\/w:tbl>/gu) ?? [];
+  expect(tables).toHaveLength(2);
+  for (const entry of tables) {
+    const rows = entry.match(/<w:tr[ >][\s\S]*?<\/w:tr>/gu) ?? [];
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toContain("<w:tblHeader/>");
+    for (const body of rows.slice(1)) expect(body).not.toContain("w:tblHeader");
+  }
+  expect(JSON.stringify(questions)).toBe(before);
+});

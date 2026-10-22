@@ -4,10 +4,10 @@
   "status": "candidate",
   "qualification": "Virtual mobile functional checks passed in tested scope; other release QA remains",
   "files": {
-    "main.js": "8ee39938971f17e74c670a5f83aae4324fb5793a54c6e250e7fcc4d2a600166b",
+    "main.js": "19b102090358b0ad1b56020719378d2866f9ec22403c662da9e216a963d9e2b8",
     "styles.css": "c5d02c902fe952bd1ae546ad60141fe4f513f244bcc2e60c3ba9a7565ec1d7ae",
     "manifest.json": "724ed877d855ca1d6464aa24673c590188727d3131c31166a70a136b0f787f98"
   },
-  "revision": "2026-10-22-long-question-export",
+  "revision": "2026-10-22-word-table-header",
   "mobileValidation": "WebKit virtual mobile + Chromium touch control; real devices not qualified"
 }

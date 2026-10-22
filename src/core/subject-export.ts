@@ -102,17 +102,17 @@ async function inline(tokens: readonly Token[], context: RenderContext): Promise
 
 async function table(tokens: readonly Token[], context: RenderContext): Promise<Table> {
   const rows: TableRow[] = [];
-  let cells: TableCell[] = [], children: ParagraphChild[] = [], header = false;
+  let cells: TableCell[] = [], children: ParagraphChild[] = [], header = false, headerRow = false;
   for (const token of tokens) {
     const pause = context.pauseIfNeeded();
     if (pause) await pause;
-    if (token.type === "tr_open") cells = [];
-    if (token.type === "th_open" || token.type === "td_open") { children = []; header = token.type === "th_open"; }
+    if (token.type === "tr_open") { cells = []; headerRow = false; }
+    if (token.type === "th_open" || token.type === "td_open") { children = []; header = token.type === "th_open"; if (header) headerRow = true; }
     if (token.type === "inline") children.push(...await inline(token.children ?? [], context));
     if (token.type === "th_close" || token.type === "td_close") cells.push(new TableCell({
       children: [new Paragraph({ children })], ...(header ? { shading: { fill: "F1F1F1" } } : {}),
     }));
-    if (token.type === "tr_close") rows.push(new TableRow({ children: cells }));
+    if (token.type === "tr_close") rows.push(new TableRow({ children: cells, ...(headerRow ? { tableHeader: true } : {}) }));
   }
   return new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } });
 }
