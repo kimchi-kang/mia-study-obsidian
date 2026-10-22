@@ -9,5 +9,8 @@
     "manifest.json": "724ed877d855ca1d6464aa24673c590188727d3131c31166a70a136b0f787f98"
   },
   "revision": "2026-10-22-word-table-header",
-  "mobileValidation": "WebKit virtual mobile + Chromium touch control; real devices not qualified"
+  "mobileValidation": "WebKit virtual mobile + Chromium touch control; real devices not qualified",
+  "excludedValidation": [
+    "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified"
+  ]
 }
