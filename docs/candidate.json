@@ -2,22 +2,22 @@
   "version": "0.10.2",
   "date": "2026-10-23",
   "status": "candidate",
-  "qualification": "Virtual mobile and tested macOS native1.8.7/1.14.5 core flows passed; other release QA remains",
+  "qualification": "Current candidate:924 automated tests, four native startup/API processes on1.8.7/1.14.5, virtual new-feature checks; native UI endurance and other release QA remain",
   "files": {
-    "main.js": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1",
-    "styles.css": "c5d02c902fe952bd1ae546ad60141fe4f513f244bcc2e60c3ba9a7565ec1d7ae",
+    "main.js": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
+    "styles.css": "b3e8cbc5956039bcd7dfbe6ddc66960fdb340761b379477004a54e2570bcbf43",
     "manifest.json": "724ed877d855ca1d6464aa24673c590188727d3131c31166a70a136b0f787f98",
     "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
     "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
   },
-  "revision": "2026-10-23-equal-review-merge",
+  "revision": "2026-10-23-new-study-features-picker-layout",
   "mobileValidation": "WebKit virtual mobile + Chromium touch control; real devices not qualified",
   "excludedValidation": [
     "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified"
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "2026-10-23-native-save-boundary-kill",
+  "verificationRevision": "2026-10-23-new-features-native-and-virtual-ui",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -27,7 +27,8 @@
     "freshProcesses": 6,
     "fixtureQuestionsPerApp": 3,
     "scope": "Exact candidate startup, native API persistence/recovery, actual resume/reveal/Good-rating UI and fresh-process restoration; current desktop dark settings/appearance observed",
-    "limits": "Historical three-question core-flow checks; additional native1000/history100 diagnostic below. Not all OS/device/version combinations, endurance, phone memory or actual cloud validation"
+    "limits": "Historical three-question core-flow checks; additional native1000/history100 diagnostic below. Not all OS/device/version combinations, endurance, phone memory or actual cloud validation",
+    "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
   },
   "nativeLoadValidation": {
     "app": "1.14.5",
@@ -49,7 +50,8 @@
     "saveMedianMs": 381.9,
     "maxTimerLagMs": 169.7,
     "integrity": "100005 histories; ungraded records preserved; primary/recovery equal; fresh-process exact reviews and resume restored",
-    "limits": "Five diagnostic clicks; RAF opportunity not OS paint proof. Renderer snapshots not leak/endurance/phone-RAM certification. Synchronous full-history costs remain."
+    "limits": "Five diagnostic clicks; RAF opportunity not OS paint proof. Renderer snapshots not leak/endurance/phone-RAM certification. Synchronous full-history costs remain.",
+    "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
   },
   "nativeLifecycleValidation": {
     "app": "1.14.5",
@@ -71,7 +73,8 @@
       "indexListeners": 1
     },
     "integrity": "Exact reviews/resume and primary/question source bytes preserved each cycle; fresh-process native DOM and exact records restored",
-    "limits": "Manager API, not20 physical settings clicks. About49.5seconds, not one-hour endurance. Renderer snapshots not full leak/phone memory certification. CUA capture failed, no new visual qualification."
+    "limits": "Manager API, not20 physical settings clicks. About49.5seconds, not one-hour endurance. Renderer snapshots not full leak/phone memory certification. CUA capture failed, no new visual qualification.",
+    "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
   },
   "nativeStorageEnduranceValidation": {
     "app": "1.14.5",
@@ -83,7 +86,8 @@
     "sampleCount": 120,
     "maxSampleGapSeconds": 37.3,
     "integrity": "Whole review/source preservation, expected-state grade+undo, primary/recovery equality, sync, index refresh, resume persistence and fresh-process exact review/resume values passed",
-    "limits": "Native candidate API/store/FSRS/index/resume, not physical UI soak. Renderer snapshots include host+observer, no forced GC or complete leak certificate. Process-tree summed RSS double-counts shared pages and collection started after soak began. UI1hour/100modals NOT_STARTED; not a new UI visual or OS lifecycle certification."
+    "limits": "Native candidate API/store/FSRS/index/resume, not physical UI soak. Renderer snapshots include host+observer, no forced GC or complete leak certificate. Process-tree summed RSS double-counts shared pages and collection started after soak began. UI1hour/100modals NOT_STARTED; not a new UI visual or OS lifecycle certification.",
+    "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
   },
   "nativeInterruptionValidation": {
     "app": "1.14.5",
@@ -97,6 +101,40 @@
     "freshProcesses": 6,
     "result": "PASS: old state before write, exact new state after native write and commit; source/settings/quarantine/conflicts preserved",
     "recovery": "Latest primary restored even when local recovery remained older; explicit synchronize brought primary and recovery equal",
-    "limits": "Controlled native API boundaries and owned root SIGKILL only; not physical UI, arbitrary in-flight write, power loss, OS sleep/resume or other OS qualification"
+    "limits": "Controlled native API boundaries and owned root SIGKILL only; not physical UI, arbitrary in-flight write, power loss, OS sleep/resume or other OS qualification",
+    "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
+  },
+  "archiveSha256": "da8c7a2864c03c470a16acdc6a6cb142be96dbb22641a2b558b16815c1a04bc3",
+  "currentFeatureValidation": {
+    "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
+    "automated": {
+      "passed": 924,
+      "failed": 0,
+      "conditionalSkipped": 2,
+      "originalAndIndependentCopy": true,
+      "typecheckBuild": "PASS"
+    },
+    "native": {
+      "apps": [
+        "1.8.7",
+        "1.14.5"
+      ],
+      "freshProcesses": 4,
+      "questions": 1000,
+      "histories": 100005,
+      "scope": "Startup/default random migration/sequential preference persists across restart; grade+restore+sync APIs; exact whole reviews preserved"
+    },
+    "virtualUi": {
+      "widths": [
+        320,
+        390,
+        430,
+        768
+      ],
+      "appearanceModalPairs": 100,
+      "scope": "Real IAB DOM interactions with candidate bundle and simulated Obsidian host; long titles/search/select/save and44px targets; not native UI hour or phone hardware"
+    },
+    "fix": "Follow-up result list collapsed to zero height in flex modal; prevent list/button shrink and wrap long selected labels",
+    "remaining": "Native physical UI hour/100 modal pairs, OS sleep/resume, other OS and synchronous full-history/XML costs"
   }
 }

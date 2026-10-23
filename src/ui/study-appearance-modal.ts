@@ -24,7 +24,11 @@ export class StudyAppearanceModal extends Modal {
       dropdown.addOption("stacked", "위아래로").addOption("split", "나란히").setValue(this.store.appearance.answerLayout);
       dropdown.onChange((value) => { if (value === "stacked" || value === "split") this.apply({ answerLayout: value }); });
     });
-    new Setting(this.contentEl).setName("쓸어넘겨 문제 이동").addToggle((toggle) => {
+    new Setting(this.contentEl).setName("암기 모드 순서").setDesc("새 학습부터 적용합니다. 순서대로는 문제 목록 순서를 따릅니다.").addDropdown((dropdown) => {
+      dropdown.addOption("sequential", "순서대로").addOption("random", "랜덤").setValue(this.store.appearance.memorizationOrder);
+      dropdown.onChange((value) => { if (value === "sequential" || value === "random") this.apply({ memorizationOrder: value }); });
+    });
+    new Setting(this.contentEl).setName("쓸어서 뒤로가기").setDesc("화면 왼쪽에서 중앙 방향으로 쓸면 학습을 시작한 화면으로 돌아갑니다.").addToggle((toggle) => {
       toggle.setValue(this.store.appearance.swipeEnabled).onChange((value) => this.apply({ swipeEnabled: value }));
     });
     new Setting(this.contentEl).setName("쓸어넘기기 민감도").addDropdown((dropdown) => {

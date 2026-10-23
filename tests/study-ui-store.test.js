@@ -11,12 +11,12 @@ function device(files = new Map()) {
 
 describe("resume persistence and device reading preferences", () => {
   it("loads an existing session on another device without sharing device font preferences", async () => {
-    const first = device(); first.store.updateAppearance({ size: "large", density: "compact" });
+    const first = device(); first.store.updateAppearance({ size: "large", density: "compact", memorizationOrder: "sequential" });
     await first.store.saveResume(saved);
     const second = device(first.files); await second.store.load();
     expect(second.store.resume).toEqual(saved);
     expect(second.store.appearance).toMatchObject({ size: "medium", density: "detailed" });
-    expect(new StudyUiStore(first.app, "plugin/ui-state.json").appearance).toMatchObject({ size: "large", density: "compact" });
+    expect(new StudyUiStore(first.app, "plugin/ui-state.json").appearance).toMatchObject({ size: "large", density: "compact", memorizationOrder: "sequential" });
     expect([...first.files.keys()]).toEqual(["plugin/ui-state.json"]);
   });
   it("persists the latest of several quick position changes in order", async () => {

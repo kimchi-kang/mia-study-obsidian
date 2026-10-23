@@ -7,6 +7,7 @@ export interface StudyAppearance {
   density: "compact" | "detailed";
   focus: boolean;
   answerLayout: "stacked" | "split";
+  memorizationOrder: "sequential" | "random";
   swipeEnabled: boolean;
   swipeSensitivity: SwipeSensitivity;
 }
@@ -50,6 +51,7 @@ export function parseStudyAppearance(value: unknown): StudyAppearance {
     density: raw.density === "compact" ? "compact" : "detailed",
     focus: raw.focus === true,
     answerLayout: raw.answerLayout === "split" ? "split" : "stacked",
+    memorizationOrder: raw.memorizationOrder === "sequential" ? "sequential" : "random",
     swipeEnabled: raw.swipeEnabled !== false,
     swipeSensitivity: raw.swipeSensitivity === "light" || raw.swipeSensitivity === "firm" ? raw.swipeSensitivity : "normal",
   };
