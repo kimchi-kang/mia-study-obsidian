@@ -2,7 +2,7 @@
   "version": "0.10.2",
   "date": "2026-10-23",
   "status": "candidate",
-  "qualification": "Virtual mobile functional checks passed in tested scope; other release QA remains",
+  "qualification": "Virtual mobile and tested macOS native1.8.7/1.14.5 core flows passed; other release QA remains",
   "files": {
     "main.js": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1",
     "styles.css": "c5d02c902fe952bd1ae546ad60141fe4f513f244bcc2e60c3ba9a7565ec1d7ae",
@@ -16,5 +16,17 @@
     "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified"
   ],
   "license": "MIT",
-  "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki"
+  "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
+  "verificationRevision": "2026-10-23-native-minimum-latest",
+  "nativeValidation": {
+    "platform": "macOS",
+    "appVersions": [
+      "1.8.7",
+      "1.14.5"
+    ],
+    "freshProcesses": 6,
+    "fixtureQuestionsPerApp": 3,
+    "scope": "Exact candidate startup, native API persistence/recovery, actual resume/reveal/Good-rating UI and fresh-process restoration; current desktop dark settings/appearance observed",
+    "limits": "Not native1000-question performance/endurance, all OS/device/version combinations or actual mobile/cloud validation"
+  }
 }
