@@ -595,8 +595,8 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-touch-hint { display: none; font-size: 10px; color: var(--text-muted); text-align: center; margin: 4px 0 0; }
 .mia-controls-modal { width: min(520px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); }
 .mia-controls-modal .modal-content { overflow-y: auto; line-height: 1.75; }
-.mia-controls-modal h3 { font-size: 15px; margin: 20px 0 6px; }
-.mia-controls-modal p { font-size: 13px; color: var(--text-muted); }
+.mia-controls-modal h3 { font-size: var(--font-ui-medium); margin: 20px 0 6px; }
+.mia-controls-modal p { font-size: var(--font-ui-small); color: var(--text-muted); }
 .mia-controls-modal button { min-height: 44px; width: 100%; margin-top: 12px; }
 .mia-view[data-device="phone"] .mia-thumb-navigation > button,
 .mia-view[data-device="tablet"] .mia-thumb-navigation > button { min-height: 44px; min-width: 64px; }

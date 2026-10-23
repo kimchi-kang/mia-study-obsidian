@@ -1,23 +1,23 @@
 {
   "version": "0.10.2",
-  "date": "2026-10-23",
+  "date": "2026-10-24",
   "status": "candidate",
-  "qualification": "924 automated tests (2 conditional skips); current help-only bundle rechecked in native1.14.5; native hour/modal and virtual feature evidence retained on previous SHA with exact executable-logic equivalence; further screen/OS/performance QA remains",
+  "qualification": "924 tests pass (2 conditional skips); native Mac light settings/study observed before guide-only CSS change, virtual guide font/scroll6 cases pass on new CSS; native narrow/other screens, OS and latency QA remain",
   "files": {
     "main.js": "2392bfbc9eba60cd3819ec8f5c3b976811161b9800005caf5831770f02dcb369",
-    "styles.css": "b3e8cbc5956039bcd7dfbe6ddc66960fdb340761b379477004a54e2570bcbf43",
+    "styles.css": "d1e3339247152bdde6ee84a37a2316f0da8e9a70c51bf8cc66083182cccc4924",
     "manifest.json": "724ed877d855ca1d6464aa24673c590188727d3131c31166a70a136b0f787f98",
     "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
     "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
   },
-  "revision": "2026-10-23-correct-swipe-help",
+  "revision": "2026-10-24-help-host-font-size",
   "mobileValidation": "WebKit virtual mobile + Chromium touch control; real devices not qualified",
   "excludedValidation": [
     "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified"
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "2026-10-23-native-screen-help-fix",
+  "verificationRevision": "2026-10-24-native-light-and-virtual-font",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -104,7 +104,7 @@
     "limits": "Controlled native API boundaries and owned root SIGKILL only; not physical UI, arbitrary in-flight write, power loss, OS sleep/resume or other OS qualification",
     "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
   },
-  "archiveSha256": "b70298a6c86f76377e200c06d54062d2256e91bfd308107b4539265a8534c9b4",
+  "archiveSha256": "62ee9b88ebda5380db4b914b8b7b2844228eca25668c824cacbbab48e526f5f2",
   "currentFeatureValidation": {
     "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
     "automated": {
@@ -227,5 +227,68 @@
     "priorEnduranceEvidence": "65/66 on previous SHA retained, not rerun on new SHA",
     "rejectedScreens": "Progress route returned stale dashboard pixels/AX; not accepted",
     "remaining": "Further screen states/widths/themes, OS sleep/other OS, full-history/Word latency; cloud excluded, virtual mobile scope passed"
+  },
+  "guideFontValidation": {
+    "mainSha256Unchanged": "2392bfbc9eba60cd3819ec8f5c3b976811161b9800005caf5831770f02dcb369",
+    "stylesSha256": "d1e3339247152bdde6ee84a37a2316f0da8e9a70c51bf8cc66083182cccc4924",
+    "previousStylesSha256": "b3e8cbc5956039bcd7dfbe6ddc66960fdb340761b379477004a54e2570bcbf43",
+    "fix": "Guide paragraphs/headings follow host font tokens instead of fixed13/15px",
+    "virtualCases": [
+      {
+        "width": 320,
+        "height": 568,
+        "theme": "light",
+        "paragraphPx": 17,
+        "confirmClosed": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "paragraphPx": 17,
+        "confirmClosed": true
+      },
+      {
+        "width": 844,
+        "height": 390,
+        "theme": "light",
+        "paragraphPx": 17,
+        "confirmClosed": true
+      },
+      {
+        "width": 320,
+        "height": 568,
+        "theme": "dark",
+        "paragraphPx": 17,
+        "confirmClosed": true
+      },
+      {
+        "width": 768,
+        "height": 1024,
+        "theme": "light",
+        "paragraphPx": 17,
+        "confirmClosed": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "paragraphPx": 14.992,
+        "fontMode": "standard",
+        "hostTokenMatchesExistingButton": true,
+        "confirmClosed": true
+      }
+    ],
+    "nativeScope": "Actual Mac1.14.5 light plugin settings and study before CSS change; CSS fix only virtual verified",
+    "nativeNarrow": "NOT_COMPLETED_MAC_LOCKED",
+    "testResults": {
+      "passed": 924,
+      "failed": 0,
+      "conditionalSkipped": 2,
+      "copyAndSourceTypeBuild": "PASS"
+    },
+    "runtimeDelta": "Two guide-only CSS font-size declarations; main.js and other assets unchanged",
+    "cleanup": "Owned app/server stopped, dummy host settings/theme/assets/data/ui restored, image detached, browser viewport reset/tab closed",
+    "remaining": "Native narrower states and further screens, OS sleep/other OS, full-history/Word latency; cloud excluded"
   }
 }
