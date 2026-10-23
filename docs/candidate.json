@@ -2,7 +2,7 @@
   "version": "0.10.2",
   "date": "2026-10-23",
   "status": "candidate",
-  "qualification": "Current candidate:924 automated tests, four native startup/API processes on1.8.7/1.14.5, virtual new-feature checks; native UI endurance and other release QA remain",
+  "qualification": "Current candidate:924 automated tests (2 conditional skips), native startup/API on1.8.7/1.14.5, virtual mobile/new-feature checks, native keyboard modal100 and UI hour60 complete; visual/OS compatibility and storage/Word stalls remain",
   "files": {
     "main.js": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
     "styles.css": "b3e8cbc5956039bcd7dfbe6ddc66960fdb340761b379477004a54e2570bcbf43",
@@ -190,5 +190,24 @@
     "restart": "Whole reviews and semantic resume values, native view position and answer visibility restored; initial property-order hash false failure retained and comparator corrected/rechecked",
     "scope": "Same dummy question and adjacent navigation repeated, not1000 distinct rated questions. Actual CUA keyboard UI; observer reads/asserts only. Final temporal/sample gates cross-checked externally from native60 checkpoints and121 samples after REPL final flag omission.",
     "limits": "Host/observer included; no forced GC, peak/complete leak/phone memory/CPU profiling, new reliable pixels/mouse/touch/OS sleep/other OS qualification"
+  },
+  "currentPerformanceDiagnosis": {
+    "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
+    "method": "Current source synthetic Node;2 warmups+30 unprofiled trials per case; one separate CPU-profile trial per case",
+    "maximumQuestions": 1000,
+    "saveHistoryEach": 100,
+    "saveMedianMs": 371.9,
+    "saveP95Ms": 379.4,
+    "plainDocxMedianMs": 95.2,
+    "plainDocxP95Ms": 99.7,
+    "richDocxMedianMs": 460.4,
+    "richDocxP95Ms": 488.8,
+    "richSynchronousPackMedianMs": 250.0,
+    "richSynchronousPackP95Ms": 268.7,
+    "richTimerLatenessP95Ms": 270.5,
+    "integrity": "PASS_DEFINED_SYNTHETIC_SCOPE",
+    "performanceRemediation": "OPEN",
+    "productChanged": false,
+    "limits": "Not native/mobile speed or paint; CPU sampling overhead excluded from ordinary distributions; no cross-run improvement claim"
   }
 }
