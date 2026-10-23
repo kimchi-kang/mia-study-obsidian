@@ -17,7 +17,7 @@
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "2026-10-23-native-minimum-latest",
+  "verificationRevision": "2026-10-23-native-1000-history-feedback",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -27,6 +27,28 @@
     "freshProcesses": 6,
     "fixtureQuestionsPerApp": 3,
     "scope": "Exact candidate startup, native API persistence/recovery, actual resume/reveal/Good-rating UI and fresh-process restoration; current desktop dark settings/appearance observed",
-    "limits": "Not native1000-question performance/endurance, all OS/device/version combinations or actual mobile/cloud validation"
+    "limits": "Historical three-question core-flow checks; additional native1000/history100 diagnostic below. Not all OS/device/version combinations, endurance, phone memory or actual cloud validation"
+  },
+  "nativeLoadValidation": {
+    "app": "1.14.5",
+    "questions": 1000,
+    "initialHistoryEach": 100,
+    "actualUiGrades": 5,
+    "busyDomRangeMs": [
+      1.2,
+      1.7
+    ],
+    "firstRafBusyRangeMs": [
+      2.7,
+      8.7
+    ],
+    "saveCompleteRangeMs": [
+      361.9,
+      400.1
+    ],
+    "saveMedianMs": 381.9,
+    "maxTimerLagMs": 169.7,
+    "integrity": "100005 histories; ungraded records preserved; primary/recovery equal; fresh-process exact reviews and resume restored",
+    "limits": "Five diagnostic clicks; RAF opportunity not OS paint proof. Renderer snapshots not leak/endurance/phone-RAM certification. Synchronous full-history costs remain."
   }
 }
