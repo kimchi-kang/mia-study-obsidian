@@ -17,7 +17,7 @@
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "2026-10-23-native-storage-hour",
+  "verificationRevision": "2026-10-23-native-save-boundary-kill",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -84,5 +84,19 @@
     "maxSampleGapSeconds": 37.3,
     "integrity": "Whole review/source preservation, expected-state grade+undo, primary/recovery equality, sync, index refresh, resume persistence and fresh-process exact review/resume values passed",
     "limits": "Native candidate API/store/FSRS/index/resume, not physical UI soak. Renderer snapshots include host+observer, no forced GC or complete leak certificate. Process-tree summed RSS double-counts shared pages and collection started after soak began. UI1hour/100modals NOT_STARTED; not a new UI visual or OS lifecycle certification."
+  },
+  "nativeInterruptionValidation": {
+    "app": "1.14.5",
+    "questions": 1000,
+    "baselineHistories": 100005,
+    "cases": [
+      "before native save",
+      "after native save before verification",
+      "after store commit acknowledgement"
+    ],
+    "freshProcesses": 6,
+    "result": "PASS: old state before write, exact new state after native write and commit; source/settings/quarantine/conflicts preserved",
+    "recovery": "Latest primary restored even when local recovery remained older; explicit synchronize brought primary and recovery equal",
+    "limits": "Controlled native API boundaries and owned root SIGKILL only; not physical UI, arbitrary in-flight write, power loss, OS sleep/resume or other OS qualification"
   }
 }
