@@ -17,7 +17,7 @@
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "2026-10-23-native-keyboard-modal100",
+  "verificationRevision": "2026-10-23-native-keyboard-hour",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -135,7 +135,7 @@
       "scope": "Real IAB DOM interactions with candidate bundle and simulated Obsidian host; long titles/search/select/save and44px targets; not native UI hour or phone hardware"
     },
     "fix": "Follow-up result list collapsed to zero height in flex modal; prevent list/button shrink and wrap long selected labels",
-    "remaining": "Native UI hour, reliable pixel cross-check, OS sleep/resume, other OS and synchronous full-history/XML costs"
+    "remaining": "Reliable pixel cross-check, OS sleep/resume, other OS and synchronous full-history/XML costs"
   },
   "nativeKeyboardUiValidation": {
     "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
@@ -150,5 +150,45 @@
     "result": "Every modal opened once/closed to zero and restored focus; owner resources stable; exact reviews/source preserved. Grade changed one question and undo restored all reviews and prior question position.",
     "method": "CUA key presses only; read-only native observer cross-checks focus/DOM sequence/resource state, backing-file records checked separately",
     "limits": "Not one-hour mixed use, new reliable pixel/visual or mouse/touch qualification; observer included, no complete leak certificate"
+  },
+  "currentNativeUiEnduranceValidation": {
+    "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
+    "app": "1.14.5",
+    "elapsedSeconds": 3618.379,
+    "fixtureQuestions": 1000,
+    "initialFinalHistories": 100005,
+    "keyboardGradeUndoCycles": 60,
+    "appearanceModalPairs": 60,
+    "explicitNextPreviousMoves": 120,
+    "warmupCyclesExcluded": 1,
+    "sampleCount": 121,
+    "maxSampleGapSeconds": 30.4081,
+    "resources": {
+      "pluginEvents": 14,
+      "storeOwnerListeners": 2,
+      "observerStoreListeners": 1,
+      "indexListeners": 1,
+      "indexEventRefs": 4,
+      "indexRefreshTimers": 0,
+      "viewEvents": 7,
+      "viewUnsubscribers": 2
+    },
+    "rendererMemorySamplesMiB": {
+      "heapUsed": {
+        "firstMiB": 70.83901977539062,
+        "lastMiB": 49.10039138793945,
+        "minMiB": 48.24772262573242,
+        "maxMiB": 150.75201797485352
+      },
+      "rss": {
+        "firstMiB": 342.1875,
+        "lastMiB": 276.6875,
+        "minMiB": 163.34375,
+        "maxMiB": 445.671875
+      }
+    },
+    "restart": "Whole reviews and semantic resume values, native view position and answer visibility restored; initial property-order hash false failure retained and comparator corrected/rechecked",
+    "scope": "Same dummy question and adjacent navigation repeated, not1000 distinct rated questions. Actual CUA keyboard UI; observer reads/asserts only. Final temporal/sample gates cross-checked externally from native60 checkpoints and121 samples after REPL final flag omission.",
+    "limits": "Host/observer included; no forced GC, peak/complete leak/phone memory/CPU profiling, new reliable pixels/mouse/touch/OS sleep/other OS qualification"
   }
 }
