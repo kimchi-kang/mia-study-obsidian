@@ -18,7 +18,7 @@ vi.mock("obsidian", () => {
     setName() { return this; } setDesc() { return this; }
     addDropdown(callback) {
       const select = this.parent.createEl("select");
-      callback({ addOption() { return this; }, setValue(value) { select.value = value; return this; }, onChange(handler) { select.handlers.set("change", handler); return this; } }); return this;
+      callback({ addOption() { return this; }, setValue(value) { select.value = value; return this; }, setDisabled(value) { select.disabled = value; return this; }, onChange(handler) { select.handlers.set("change", handler); return this; } }); return this;
     }
     addToggle(callback) {
       const toggle = this.parent.createEl("input");
@@ -26,9 +26,14 @@ vi.mock("obsidian", () => {
     }
     addText(callback) {
       const input = this.parent.createEl("input");
-      callback({ setPlaceholder() { return this; }, setValue(value) { input.value = value; return this; }, onChange() { return this; } });
+      callback({ setPlaceholder() { return this; }, setValue(value) { input.value = value; return this; }, onChange(handler) { input.handlers.set("change", handler); return this; } });
       return this;
     }
+    addTextArea(callback) {
+      const input = this.parent.createEl("textarea");
+      callback({ inputEl: input, setPlaceholder() { return this; }, setValue(value) { input.value = value; return this; }, onChange(handler) { input.handlers.set("change", handler); return this; } }); return this;
+    }
+    addSearch(callback) { return this.addText(callback); }
     addButton(callback) {
       const button = this.parent.createEl("button");
       callback({ setButtonText(text) { button.text = text; return this; }, setCta() { return this; }, setDisabled(value) { button.disabled = value; return this; }, onClick(handler) { button.addEventListener("click", handler); return this; } });
@@ -91,9 +96,9 @@ describe("modal interaction regressions", () => {
     const toggles = modal.contentEl.children.filter(item => item.tag === "input");
     selects[0].handlers.get("change")("large"); selects[1].handlers.get("change")("compact");
     toggles[0].handlers.get("change")(true); selects[2].handlers.get("change")("split");
-    toggles[1].handlers.get("change")(false); selects[3].handlers.get("change")("firm");
-    expect(store.appearance).toEqual({ size: "large", density: "compact", focus: true, answerLayout: "split", swipeEnabled: false, swipeSensitivity: "firm" });
-    expect(change).toHaveBeenCalledTimes(6); expect(modal.close).not.toHaveBeenCalled();
+    toggles[1].handlers.get("change")(false); selects[4].handlers.get("change")("firm"); selects[3].handlers.get("change")("sequential");
+    expect(store.appearance).toEqual({ size: "large", density: "compact", focus: true, answerLayout: "split", swipeEnabled: false, swipeSensitivity: "firm", memorizationOrder: "sequential" });
+    expect(change).toHaveBeenCalledTimes(7); expect(modal.close).not.toHaveBeenCalled();
   });
   it("preserves another subject's follow-up path when metadata is saved without edits", async () => {
     const save = vi.fn().mockResolvedValue(undefined);
@@ -196,4 +201,53 @@ it("opens desktop exports through the system and offers the saved folder", async
   modal.contentEl.find("저장 폴더에서 보기").click();
   expect(openFile).toHaveBeenCalledOnce(); expect(revealFile).toHaveBeenCalledOnce();
   expect(openLinkText).not.toHaveBeenCalled();
+});
+
+
+import { ManagedQuestionModal } from "../src/ui/manage-modals";
+import { appendManagedQuestion, createSubjectBank } from "../src/core/managed-question";
+import { parseQuestionFile } from "../src/core/question-parser";
+import { MAX_FOLLOW_UPS } from "../src/core/follow-up";
+
+describe("manual question follow-up selection", () => {
+  function editor(questions) {
+    const save = vi.fn().mockResolvedValue(undefined);
+    const modal = new ManagedQuestionModal({}, ["과목"], "키워드", null, new Map(), save, questions);
+    modal.onOpen();
+    const inputs = modal.contentEl.children.filter(child => child.tag === "input");
+    inputs[1].handlers.get("change")("핵심");
+    const areas = modal.contentEl.children.filter(child => child.tag === "textarea");
+    areas[0].handlers.get("change")("새 질문"); areas[1].handlers.get("change")("새 정답");
+    return { modal, save, search: inputs.at(-1).handlers.get("change"), submit: () => modal.contentEl.find("저장").handlers.get("click")() };
+  }
+  const other = { ...question, id: "mia-q-other", heading: "연결 질문", subject: "다른 과목", filePath: "다른 과목/문제은행.md" };
+  it("searches, selects, deselects and writes cross-subject links into the saved bank", async () => {
+    const ui = editor([other, { ...other, id: "mia-q-second", heading: "두 번째" }]);
+    ui.search("연결 질문");
+    expect(ui.modal.contentEl.find("다른 과목 · 두 번째")).toBeUndefined();
+    ui.modal.contentEl.find("다른 과목 · 연결 질문").click();
+    ui.search("검색 결과 없음");
+    expect(ui.modal.contentEl.find("다른 과목 · 연결 질문 · 선택 해제")).toBeDefined();
+    ui.modal.contentEl.find("다른 과목 · 연결 질문 · 선택 해제").click();
+    ui.search("연결 질문"); ui.modal.contentEl.find("다른 과목 · 연결 질문").click();
+    await ui.submit();
+    const draft = ui.save.mock.calls[0][0];
+    expect(draft.followUpLinks).toEqual(["[[다른 과목/문제은행#^mia-q-other|연결 질문]]"]);
+    const bank = appendManagedQuestion(createSubjectBank("과목"), draft, "mia-q-new");
+    expect(parseQuestionFile("과목/문제은행.md", bank).questions[0].followUpIds).toEqual(["mia-q-other"]);
+  });
+  it("allows saving with no follow-ups and caps selections at the supported limit", async () => {
+    const empty = editor([]); await empty.submit();
+    expect(empty.save).toHaveBeenCalledWith(expect.objectContaining({ followUpLinks: [] }));
+    const ui = editor(Array.from({ length: MAX_FOLLOW_UPS + 1 }, (_, i) => ({ ...other, id: `mia-q-${i}`, heading: `질문 ${i}` })));
+    for (let i = 0; i < MAX_FOLLOW_UPS; i++) ui.modal.contentEl.find(`다른 과목 · 질문 ${i}`).click();
+    expect(ui.modal.contentEl.find(`다른 과목 · 질문 ${MAX_FOLLOW_UPS}`).disabled).toBe(true);
+    await ui.submit(); expect(ui.save.mock.calls[0][0].followUpLinks).toHaveLength(MAX_FOLLOW_UPS);
+  });
+  it("keeps existing links untouched when editing an existing question", async () => {
+    const save = vi.fn().mockResolvedValue(undefined);
+    const modal = new ManagedQuestionModal({}, ["과목"], "키워드", question, new Map(), save, [other]);
+    modal.onOpen(); await modal.contentEl.find("저장").handlers.get("click")();
+    expect(save.mock.calls[0][0].followUpLinks).toBeUndefined();
+  });
 });

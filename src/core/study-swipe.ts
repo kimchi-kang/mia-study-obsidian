@@ -1,5 +1,5 @@
 export type SwipeSensitivity = "light" | "normal" | "firm";
-export type StudySwipeDirection = "previous" | "next";
+export type StudySwipeDirection = "back";
 
 export interface SwipePoint {
   pointerId: number;
@@ -22,7 +22,7 @@ export class StudySwipe {
 
   cancel(): void { this.start = null; }
 
-  move(point: SwipePoint): { direction: StudySwipeDirection; progress: number; offset: number } | null {
+  move(point: SwipePoint): { direction: StudySwipeDirection; progress: number } | null {
     const start = this.start;
     if (!start || point.pointerId !== start.pointerId) return null;
     const dx = point.x - start.x;
@@ -31,8 +31,9 @@ export class StudySwipe {
       this.cancel();
       return null;
     }
-    if (Math.abs(dx) < 16 || Math.abs(dx) < Math.abs(dy) * 2) return null;
-    return { direction: dx < 0 ? "next" : "previous", progress: Math.min(1, Math.abs(dx) / this.threshold), offset: Math.max(-22, Math.min(22, dx / 5)) };
+    if (dx < 0) { this.cancel(); return null; }
+    if (dx < 16 || dx < Math.abs(dy) * 2) return null;
+    return { direction: "back", progress: Math.min(1, Math.abs(dx) / this.threshold) };
   }
 
   finish(point: SwipePoint): StudySwipeDirection | null {

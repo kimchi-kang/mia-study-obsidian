@@ -2,6 +2,7 @@ import { App, Modal, Notice, Setting } from "obsidian";
 import { keywordReferencesFromInput } from "../core/keyword-path";
 import { ManagedQuestionInput } from "../core/managed-question";
 import { QUESTION_TYPES, QuestionRecord, QuestionType } from "../core/models";
+import { MAX_FOLLOW_UPS, questionBlockLink } from "../core/follow-up";
 import { errorMessage } from "./error-message";
 import { KeyboardAwareModal } from "./mobile-keyboard";
 
@@ -96,14 +97,16 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
   private coreMeanings: string;
   private subNames: string;
   private subMeanings: string;
+  private readonly selectedFollowUps = new Map<string, QuestionRecord & { id: string }>();
 
   constructor(
     app: App,
     private readonly subjects: string[],
     private readonly keywordFolder: string,
-    existing: QuestionRecord | null,
+    private readonly existing: QuestionRecord | null,
     meanings: ReadonlyMap<string, string>,
     private readonly onSubmit: (draft: ManagedQuestionDraft) => Promise<void>,
+    private readonly availableQuestions: ReadonlyArray<QuestionRecord & { id: string }> = [],
   ) {
     super(app, "long");
     this.subject = existing?.subject ?? subjects[0] ?? "";
@@ -152,6 +155,7 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
       text.setValue(this.subMeanings).onChange((value) => { this.subMeanings = value; });
       text.inputEl.rows = 4;
     });
+    if (!this.existing) this.renderFollowUpPicker();
     new Setting(this.contentEl).addButton((button) => button.setButtonText("저장").setCta().onClick(async () => {
       const question = this.question.trim();
       const answer = this.answer.trim();
@@ -171,6 +175,7 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
           questionType: this.type,
           coreKeywords,
           subKeywords,
+          ...(!this.existing ? { followUpLinks: [...this.selectedFollowUps.values()].map(questionBlockLink) } : {}),
           keywordMeanings: [
             ...keywordMeanings(coreKeywords, this.coreMeanings),
             ...keywordMeanings(subKeywords, this.subMeanings),
@@ -182,6 +187,41 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
         button.setDisabled(false);
       }
     }));
+  }
+
+  private renderFollowUpPicker(): void {
+    this.contentEl.createEl("h3", { text: "꼬리질문 선택" });
+    this.contentEl.createEl("p", { text: `기존 문제를 최대 ${MAX_FOLLOW_UPS}개까지 연결할 수 있습니다.`, cls: "mia-muted" });
+    const searchSetting = new Setting(this.contentEl).setName("꼬리질문 검색");
+    const selected = this.contentEl.createDiv({ cls: "mia-follow-up-selected" });
+    const results = this.contentEl.createDiv({ cls: "mia-follow-up-picker" });
+    let query = "";
+    const render = () => {
+      selected.empty();
+      selected.createEl("p", { text: `선택 ${this.selectedFollowUps.size} / ${MAX_FOLLOW_UPS}` });
+      for (const question of this.selectedFollowUps.values()) {
+        selected.createEl("button", { text: `${question.subject} · ${question.heading} · 선택 해제` }).addEventListener("click", () => {
+          this.selectedFollowUps.delete(question.id); render();
+        });
+      }
+      results.empty();
+      const matches = this.availableQuestions.filter((question) => !this.selectedFollowUps.has(question.id)
+        && `${question.subject} ${question.heading} ${question.questionMarkdown}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+      if (!matches.length) results.createEl("p", { text: "선택할 문제가 없습니다.", cls: "mia-muted" });
+      for (const question of matches.slice(0, 50)) {
+        const button = results.createEl("button", { text: `${question.subject} · ${question.heading}` });
+        button.disabled = this.selectedFollowUps.size >= MAX_FOLLOW_UPS;
+        button.addEventListener("click", () => {
+          if (this.selectedFollowUps.size >= MAX_FOLLOW_UPS) return;
+          this.selectedFollowUps.set(question.id, question); render();
+        });
+      }
+      if (matches.length > 50) results.createEl("p", { text: "검색어를 입력해 더 좁혀보세요. 처음 50개를 표시합니다.", cls: "mia-muted" });
+    };
+    searchSetting.addSearch((search) => {
+      search.setPlaceholder("과목, 제목, 질문 내용").onChange((value) => { query = value.trim(); render(); });
+    });
+    render();
   }
 
   onClose(): void { this.contentEl.empty(); }

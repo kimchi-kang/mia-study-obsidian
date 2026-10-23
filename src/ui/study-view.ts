@@ -109,7 +109,7 @@ export class MiaStudyView extends ItemView {
     this.gestures = bindStudyGestures(
       this.contentEl,
       () => this.route === "study" && !this.isMutatingReview && !this.closed && this.plugin.studyUi.appearance.swipeEnabled,
-      (direction) => this.studyShortcuts.get(direction === "next" ? "ArrowRight" : "ArrowLeft")?.click(),
+      () => this.returnToSessionOrigin(),
       () => this.plugin.studyUi.appearance.swipeSensitivity,
     );
     this.ratingTapGuard = bindRatingTapGuard(this.contentEl);
@@ -184,7 +184,10 @@ export class MiaStudyView extends ItemView {
     const questions = this.plugin.index.registered;
     const requestedIds = questionIds ? new Set(questionIds) : null;
     const scope = requestedIds ? questions.filter((question) => requestedIds.has(question.id)) : questions;
-    this.queue = buildReviewQueue(scope, this.plugin.store.reviews, this.plugin.fsrs, { random: Math.random })
+    const sequential = mode === "browse" && this.plugin.studyUi.appearance.memorizationOrder === "sequential";
+    const eligible = buildReviewQueue(scope, this.plugin.store.reviews, this.plugin.fsrs, sequential ? {} : { random: Math.random });
+    const eligibleIds = new Set(eligible.map((question) => question.id));
+    this.queue = (sequential ? scope.filter((question) => question.id && eligibleIds.has(question.id)) : eligible)
       .map((question) => question.id);
     this.sessionSeed = [...this.queue];
     if (this.route !== "study") this.sessionOrigin = this.route;
@@ -1190,7 +1193,7 @@ export class MiaStudyView extends ItemView {
     forward.setAttr("aria-label", "평가 없이 다음 문제");
     forward.addEventListener("click", () => next.click());
     dock.createEl("p", { text: "Space 정답 · 1–4 평가 · ← → 이동 · U 취소", cls: "mia-shortcut-hint" });
-    dock.createEl("p", { text: "← 밀면 다음 · → 밀면 이전 · 평가는 버튼으로", cls: "mia-touch-hint" });
+    dock.createEl("p", { text: "화면 왼쪽에서 오른쪽으로 쓸면 뒤로가기 · 문제 이동은 버튼으로", cls: "mia-touch-hint" });
   }
 
   private renderUndoButton(parent: HTMLElement, cls?: string): void {

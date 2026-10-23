@@ -43,6 +43,12 @@ export class MiaSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName("키워드 노트 폴더").setDesc("키워드 링크를 만들 때 기준으로 표시할 폴더입니다.").addText((text) => {
       text.setValue(settings.keywordFolder).onChange(async (value) => this.save(() => this.miaPlugin.store.updateSettings({ keywordFolder: value })));
     });
+    new Setting(containerEl).setName("암기 모드 순서").setDesc("이 기기에 저장하며 새 암기 학습부터 적용합니다. 순서대로는 문제 목록 순서를 따릅니다.").addDropdown((dropdown) => {
+      dropdown.addOption("sequential", "순서대로").addOption("random", "랜덤").setValue(this.miaPlugin.studyUi.appearance.memorizationOrder);
+      dropdown.onChange(async (value) => {
+        if (value === "sequential" || value === "random") await this.save(async () => { this.miaPlugin.studyUi.updateAppearance({ memorizationOrder: value }); });
+      });
+    });
     this.keyboardViewport = bindKeyboardViewport(containerEl);
   }
 

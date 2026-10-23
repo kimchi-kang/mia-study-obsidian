@@ -809,3 +809,30 @@ it("keeps the pre-commit version in a workspace snapshot while the rating promis
   release(); await pending;
   expect(snapshot.queueIndex).toBe(0); expect(snapshot.reviewCheckpoint).toEqual({ id: "q", version: null });
 });
+
+
+describe("memorization ordering and back navigation", () => {
+  it("preserves source order for eligible questions and keeps the chosen queue on resume", async () => {
+    const ui = setup({ start: false }); const template = ui.plugin.index.registered[0];
+    ui.plugin.index.registered.splice(0, 1, ...["new-b", "future", "due-z", "new-a", "due-a"].map(id => ({ ...template, id, heading: id })));
+    for (const id of ["due-z", "due-a"]) ui.reviews[id] = ui.plugin.fsrs.rate(undefined, Rating.Easy, new Date(Date.now() - 30 * 86_400_000));
+    ui.reviews.future = ui.plugin.fsrs.rate(undefined, Rating.Easy);
+    ui.plugin.studyUi.updateAppearance({ memorizationOrder: "sequential" });
+    ui.view.startReview(undefined, "browse");
+    expect(ui.view.getState().queue).toEqual(["new-b", "due-z", "new-a", "due-a"]);
+    ui.plugin.studyUi.updateAppearance({ memorizationOrder: "random" });
+    ui.view.showDashboard(); await ui.button("이어하기").click();
+    expect(ui.view.getState().queue).toEqual(["new-b", "due-z", "new-a", "due-a"]);
+    ui.plugin.studyUi.updateAppearance({ memorizationOrder: "sequential" });
+    Math.random.mockReturnValue(0);
+    ui.view.startReview(undefined, "recall");
+    expect(ui.view.getState().queue).toEqual(["due-z", "due-a", "new-a", "new-b"]);
+  });
+  it.each(["recall", "browse"])("backs out of %s while keeping the question and resume position", async mode => {
+    const ui = setup({ start: false }); ui.view.startReview(undefined, mode);
+    const before = ui.view.getState(); ui.view.returnToSessionOrigin();
+    expect(ui.view.getState()).toMatchObject({ route: "dashboard", queueIndex: before.queueIndex, queue: before.queue });
+    await ui.button("이어하기").click();
+    expect(ui.view.getState()).toMatchObject(before);
+  });
+});

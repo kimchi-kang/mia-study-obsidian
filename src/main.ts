@@ -339,6 +339,7 @@ export default class MiaStudyPlugin extends Plugin {
         if (question) await this.updateManagedQuestion(question, draft);
         else await this.createManagedQuestion(draft);
       },
+      this.index.registered,
     ).open();
   }
 
