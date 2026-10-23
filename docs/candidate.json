@@ -17,7 +17,7 @@
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "2026-10-23-native-1000-history-feedback",
+  "verificationRevision": "2026-10-23-native-lifecycle20",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -50,5 +50,27 @@
     "maxTimerLagMs": 169.7,
     "integrity": "100005 histories; ungraded records preserved; primary/recovery equal; fresh-process exact reviews and resume restored",
     "limits": "Five diagnostic clicks; RAF opportunity not OS paint proof. Renderer snapshots not leak/endurance/phone-RAM certification. Synchronous full-history costs remain."
+  },
+  "nativeLifecycleValidation": {
+    "app": "1.14.5",
+    "questions": 1000,
+    "histories": 100005,
+    "disableEnableApiCycles": 20,
+    "unloadedOwnedResourceCounts": {
+      "eventRefs": 0,
+      "refreshTimers": 0,
+      "pluginEvents": 0,
+      "storeListeners": 0,
+      "indexListeners": 0
+    },
+    "activeOwnedResourceCounts": {
+      "eventRefs": 4,
+      "refreshTimers": 0,
+      "pluginEvents": 14,
+      "storeListeners": 2,
+      "indexListeners": 1
+    },
+    "integrity": "Exact reviews/resume and primary/question source bytes preserved each cycle; fresh-process native DOM and exact records restored",
+    "limits": "Manager API, not20 physical settings clicks. About49.5seconds, not one-hour endurance. Renderer snapshots not full leak/phone memory certification. CUA capture failed, no new visual qualification."
   }
 }
