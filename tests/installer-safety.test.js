@@ -63,7 +63,7 @@ async function faultHook(root,plugin,outcome,operation='rename',name=outcome==='
  const target=await realpath(plugin),marker=join(root,'checkpoint'),hook=join(root,'hook.mjs');
  await writeFile(hook,`import fs from 'node:fs/promises';import{dirname,basename}from'node:path';import{syncBuiltinESMExports}from'node:module';
 const operation=${JSON.stringify(operation)},name=${JSON.stringify(name)},original=fs[operation],write=fs.writeFile;
-fs[operation]=async(a,b,...rest)=>{const path=operation==='rename'?b:a;const filename=basename(path);const match=await fs.realpath(dirname(path))===${JSON.stringify(target)}&&(operation==='rename'?filename===name:filename.startsWith('.'+name+'.')&&filename.endsWith('.tmp'));
+fs[operation]=async(a,b,...rest)=>{const path=operation==='rename'?b:a;const filename=basename(path);const match=await fs.realpath(dirname(path))===${JSON.stringify(target)}&&((operation==='rename'||operation==='readFile')?filename===name:filename.startsWith('.'+name+'.')&&filename.endsWith('.tmp'));
 if(match&&${JSON.stringify(outcome)}==='error'){await write(${JSON.stringify(marker)},'before '+operation+' '+name);const error=Error('QA_INSTALL_FAULT');error.code='EIO';throw error;}
 const result=await original(a,b,...rest);if(match&&${JSON.stringify(outcome)}==='kill'){await write(${JSON.stringify(marker)},'after '+operation+' '+name);process.kill(process.pid,'SIGKILL');}return result;};syncBuiltinESMExports();`);
  return{hook,marker};
@@ -107,4 +107,16 @@ it.each(['read-error','changed-content'])('rejects %s at install verification an
  await writeFile(hook,`import fs from 'node:fs/promises';import{dirname,basename}from'node:path';import{syncBuiltinESMExports}from'node:module';const rename=fs.rename,read=fs.readFile,write=fs.writeFile;let verifying=false;fs.rename=async(a,b,...rest)=>{const result=await rename(a,b,...rest);if(basename(b)==='manifest.json'&&await fs.realpath(dirname(b))===${JSON.stringify(target)}){verifying=true;if(${JSON.stringify(fault)}==='changed-content')await write(${JSON.stringify(join(target,'main.js'))},'QA externally replaced asset');}return result;};fs.readFile=async(path,...rest)=>{if(verifying&&${JSON.stringify(fault)}==='read-error'&&path===${JSON.stringify(join(target,'main.js'))}){const error=Error('QA_VERIFY_READ');error.code='EIO';throw error;}return read(path,...rest);};syncBuiltinESMExports();`);
  const result=install(pkg,vault,['--import',hook]);expect(result.status).not.toBe(0);expect(result.stdout).not.toContain('Installed MIA');expect(result.stderr).toContain(fault==='read-error'?'QA_VERIFY_READ':'검증');await unchanged(data);
  expect(install(pkg,vault).status).toBe(0);await installed(pkg,plugin);await unchanged(data);
+});
+
+
+it.each([['rename','styles.css'],['rename','manifest.json'],['readFile','main.js'],['readFile','styles.css'],['readFile','manifest.json']])('recovers the complete requested install after SIGKILL following %s %s',async(operation,name)=>{
+ const{root,vault,plugin}=await setup(),old=await pack(root,'old'),current=await pack(root),data=await preserved(vault,plugin);
+ expect(install(old,vault).status).toBe(0);
+ const{hook,marker}=await faultHook(root,plugin,'kill',operation,name),result=install(current,vault,['--import',hook]);
+ expect(result.signal).toBe('SIGKILL');expect(result.stdout).not.toContain('Installed MIA');
+ expect(await readFile(marker,'utf8')).toBe('after '+operation+' '+name);await unchanged(data);
+ for(const asset of assets){const bytes=await readFile(join(plugin,asset));expect(bytes.equals(await readFile(join(old,asset)))||bytes.equals(await readFile(join(current,asset)))).toBe(true);}
+ if(operation==='readFile')await installed(current,plugin);
+ expect(install(current,vault).status).toBe(0);await installed(current,plugin);await unchanged(data);
 });
