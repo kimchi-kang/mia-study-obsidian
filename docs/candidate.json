@@ -17,7 +17,7 @@
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "2026-10-23-new-features-native-and-virtual-ui",
+  "verificationRevision": "2026-10-23-native-keyboard-modal100",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -135,6 +135,20 @@
       "scope": "Real IAB DOM interactions with candidate bundle and simulated Obsidian host; long titles/search/select/save and44px targets; not native UI hour or phone hardware"
     },
     "fix": "Follow-up result list collapsed to zero height in flex modal; prevent list/button shrink and wrap long selected labels",
-    "remaining": "Native physical UI hour/100 modal pairs, OS sleep/resume, other OS and synchronous full-history/XML costs"
+    "remaining": "Native UI hour, reliable pixel cross-check, OS sleep/resume, other OS and synchronous full-history/XML costs"
+  },
+  "nativeKeyboardUiValidation": {
+    "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
+    "app": "1.14.5",
+    "questions": 1000,
+    "baselineFinalHistories": 100005,
+    "appearanceModalPairs": 100,
+    "domTransitions": 200,
+    "firstOpenToLastCloseSeconds": 131.1134,
+    "physicalKeyboardGrades": 1,
+    "physicalKeyboardUndos": 1,
+    "result": "Every modal opened once/closed to zero and restored focus; owner resources stable; exact reviews/source preserved. Grade changed one question and undo restored all reviews and prior question position.",
+    "method": "CUA key presses only; read-only native observer cross-checks focus/DOM sequence/resource state, backing-file records checked separately",
+    "limits": "Not one-hour mixed use, new reliable pixel/visual or mouse/touch qualification; observer included, no complete leak certificate"
   }
 }
