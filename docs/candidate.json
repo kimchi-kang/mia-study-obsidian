@@ -1,16 +1,16 @@
 {
-  "version": "0.10.2",
+  "version": "0.10.3",
   "date": "2026-10-24",
   "status": "released",
-  "qualification": "Agreed-scope pre-release validation complete:966 baseline cases plus2 conditional cases separately passed on1000-question dummy vault; exact current native grade/undo/fresh restore and five ZIP files verified; latency accepted as known limitation; other OS/sleep/cloud excluded by author",
+  "qualification": "0.10.3 CSS-only phone rating layout verified in six virtual profiles; underlying JS unchanged from0.10.2. All older native/endurance/full-suite evidence below is historical, not rerun on current styles.",
   "files": {
     "main.js": "bbc317fbbcadb0eec8801de49721b2221446c397ab6f5ad40b030a6d73733e66",
-    "styles.css": "2aa84915b35e658aea1f4a00b6c6ba370577ecc87a553fd7074e5ac7b0504dbb",
-    "manifest.json": "724ed877d855ca1d6464aa24673c590188727d3131c31166a70a136b0f787f98",
+    "styles.css": "34a4a74d126fda383be5e4be64798894c18c2b1e26e895905e6cfc1769b95c9f",
+    "manifest.json": "8292bb8658fe3bb1388c762c28c52e02889417597fbb6cdf10276340e449cd5a",
     "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
     "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
   },
-  "revision": "2026-10-24-official-release-0.10.2",
+  "revision": "2026-10-24-phone-rating-layout-0.10.3",
   "mobileValidation": "WebKit virtual mobile + Chromium touch control; real devices not qualified",
   "excludedValidation": [
     "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified",
@@ -19,7 +19,7 @@
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "2026-10-24-final-artifacts-native-restart-and-conditional-tests",
+  "verificationRevision": "79th scoped virtual layout and four grade/undo pairs; type/build; actual Mac reload; published assets",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -106,7 +106,7 @@
     "limits": "Controlled native API boundaries and owned root SIGKILL only; not physical UI, arbitrary in-flight write, power loss, OS sleep/resume or other OS qualification",
     "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
   },
-  "archiveSha256": "bcdb0a4f1d4714c900ba77be3555b1c4f19d4a7dc8318c1d25527e084e8568cf",
+  "archiveSha256": "04fe565717736407f81511d1a80cb2793ad144b5aab5ad5d0a75371aff7626a1",
   "currentFeatureValidation": {
     "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
     "automated": {
@@ -633,8 +633,9 @@
       "notAClaim": "Not faster code, removal of safety checks, a universal device timing guarantee or retroactive adoption of rejected experiment"
     },
     "productionChange": "NONE; rejected date cache not included; five downloadable assets unchanged from75th run",
-    "limits": "Passed defined scenarios, not a guarantee for every device/theme/third-party combination. Virtual mobile is the author-approved scope.65/66 hour/modal evidence remains historical; not rerun on this SHA.",
-    "cleanup": "Both owned apps stopped, all QA assets/data/ui/workspace/activation/observer restored byte-identically, image detached, real vault/install untouched"
+    "limits": "Passed defined scenarios, not a guarantee for every device/theme/third-party combination. Virtual mobile is the author-approved scope.65/66 hour/modal evidence remains historical; not rerun on this SHA. Historical baseline; current0.10.3 CSS patch has separate scoped validation.",
+    "cleanup": "Both owned apps stopped, all QA assets/data/ui/workspace/activation/observer restored byte-identically, image detached, real vault/install untouched",
+    "baselineVersion": "0.10.2"
   },
   "knownLimitations": [
     {
@@ -644,21 +645,43 @@
     }
   ],
   "release": {
-    "version": "0.10.2",
-    "tag": "0.10.2",
-    "url": "https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/0.10.2",
-    "zipUrl": "https://github.com/kimchi-kang/mia-study-obsidian/releases/download/0.10.2/mia-study-0.10.2.zip",
-    "publishedAt": "2026-10-24T07:43:31Z",
-    "targetCommit": "607d161bd9648854a6ca7188db0dfd668565d959",
+    "version": "0.10.3",
+    "tag": "0.10.3",
+    "url": "https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/0.10.3",
+    "zipUrl": "https://github.com/kimchi-kang/mia-study-obsidian/releases/download/0.10.3/mia-study-0.10.3.zip",
+    "publishedAt": "2026-10-24T11:33:41Z",
+    "targetCommit": "031a247ae89d3ba4204e68ffaad671e17a9bd31a",
     "all7AssetDigestsAndDownloadsVerified": true,
     "assetHashes": {
+      "main.js": "bbc317fbbcadb0eec8801de49721b2221446c397ab6f5ad40b030a6d73733e66",
+      "styles.css": "34a4a74d126fda383be5e4be64798894c18c2b1e26e895905e6cfc1769b95c9f",
+      "manifest.json": "8292bb8658fe3bb1388c762c28c52e02889417597fbb6cdf10276340e449cd5a",
       "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
       "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9",
-      "main.js": "bbc317fbbcadb0eec8801de49721b2221446c397ab6f5ad40b030a6d73733e66",
-      "manifest.json": "724ed877d855ca1d6464aa24673c590188727d3131c31166a70a136b0f787f98",
-      "mia-study-0.10.2.zip": "bcdb0a4f1d4714c900ba77be3555b1c4f19d4a7dc8318c1d25527e084e8568cf",
-      "styles.css": "2aa84915b35e658aea1f4a00b6c6ba370577ecc87a553fd7074e5ac7b0504dbb",
-      "SHA256SUMS.txt": "b253b4a094e669f0c36451e2349c585e2d30eb7d557bb996312377da81aeee0e"
+      "mia-study-0.10.3.zip": "04fe565717736407f81511d1a80cb2793ad144b5aab5ad5d0a75371aff7626a1",
+      "SHA256SUMS.txt": "8ff9336864413ceb15b41d47b607bc24524ee37ae07ddd96841fdae5bb34fc2f"
     }
+  },
+  "phoneRatingLayoutValidation": {
+    "status": "PASS_SCOPED_VIRTUAL_PHONE_RATING_LAYOUT",
+    "version": "0.10.3",
+    "mainJsUnchangedFrom": "0.10.2",
+    "cssScope": "mia-view[data-device=phone] rating dock only",
+    "gradeUndoPairs": 4,
+    "uiErrors": 0,
+    "typeBuild": "PASS_WORK_COPY_AND_SOURCE",
+    "fullTestSuite": "NOT_RERUN_FOR_CSS_ONLY_PATCH; historical 0.10.2 baseline966 +2 conditional cases retained",
+    "limits": "In-app browser with substituted Obsidian APIs and extracted host CSS; not physical iPhone/WebKit qualification. QA toolbar occupies40px beyond simulated plugin full-height sizing. Short panes retain outer scrolling.",
+    "beforeRatingHeightPx": 137.015625,
+    "afterRatingHeightPx": 55.5078125,
+    "readingAreaGainPx": 89.51,
+    "virtualProfiles": [
+      "320x568 large",
+      "390x844",
+      "430x932",
+      "844x390 large",
+      "768x1024 large",
+      "1280x900"
+    ]
   }
 }

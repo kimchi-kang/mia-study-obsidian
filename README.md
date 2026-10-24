@@ -1,8 +1,8 @@
 # MIA Study for Obsidian
 
-[0.10.2 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/0.10.2) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [최종 검증 결과·제외 범위·알려진 제약](RELEASE-QA.md)
+[0.10.3 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/0.10.3) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [최종 검증 결과·제외 범위·알려진 제약](RELEASE-QA.md)
 
-0.10.2 정식 릴리스는 합의한 범위의 배포 전 검증을 마쳤습니다. 모바일은 가상환경 범위로 확인했으며, 실제 클라우드·다른 OS·절전 복귀는 사용자 지시로 제외했습니다. 많은 이력의 저장·복합 Word 출력 지연은 알려진 제약으로 남깁니다. 이전0.10.2 검증 후보 사용자는 버전 표시가 같아도 정식 ZIP의 세 플러그인 파일로 수동 교체하세요.
+0.10.3은 휴대폰 평가 버튼을 한 줄로 정리해 문제·답안을 읽는 공간을 넓혔습니다. 글자 크기와 복습 간격 표시는 유지했습니다. 모바일은 가상환경 범위로 확인했으며, 실제 클라우드·다른 OS·절전 복귀는 사용자 지시로 제외했습니다. 많은 이력의 저장·복합 Word 출력 지연은 알려진 제약으로 남깁니다.
 
 Obsidian 안에서 과목·질문·키워드를 폼으로 관리하면서 FSRS-6 복습, 핵심·보조 키워드, 키워드 의미 노트, 연관 문제 추천을 제공한다. Markdown을 직접 작성할 필요가 없고 문제 하나마다 노트를 만들지도 않는다.
 
