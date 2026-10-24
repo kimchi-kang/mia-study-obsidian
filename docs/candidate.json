@@ -1,17 +1,17 @@
 {
-  "version": "0.10.4",
+  "version": "0.10.5",
   "date": "2026-10-24",
   "status": "released",
-  "qualification": "Current0.10.4 custom rating intervals and UI passed scoped validation. Older long-running/native/other version evidence is historical; see evidenceScope.",
+  "qualification": "Current0.10.5 exact fixed interval display verified; prior0.10.4 base settings checks retained on identical settings/models/store modules. Older endurance/native-load evidence is historical.",
   "files": {
-    "main.js": "d538548c047b86ae01efde91ca4a7db61ec123a01db2deaf8bcd1af78482e1c3",
-    "styles.css": "9b986af1c8f1b7f844e561c0849c6d32b0e264cf085eb420f4c837285a1c7ac3",
-    "manifest.json": "a487d3f1c1f4d3c1deb9126f7983d7a160323b92e545eef8ccfe8028bc3b0969",
+    "main.js": "d6ea9bb521f8cb3d404c83c6a195c345c0df2af05c14efec154fd07b255e68e3",
+    "styles.css": "f6c6110a856accf195aa17253d802e5cd3204c027bdda072a0d82f3292606808",
+    "manifest.json": "ef391b38cf356f222c443f87dcc3a87899a589f8d5b1d284401319944f47ff16",
     "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
     "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
   },
-  "revision": "2026-10-24-custom-grade-intervals-major-study",
-  "mobileValidation": "Current0.10.4 in-app browser virtual mobile; prior WebKit/touch runs are historical. Physical phones not qualified.",
+  "revision": "2026-10-24-exact-custom-intervals-final",
+  "mobileValidation": "Current0.10.5 in-app browser virtual mobile; no physical phone qualification.",
   "excludedValidation": [
     "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified",
     "Other operating-system execution; excluded by author request, not qualified",
@@ -19,7 +19,7 @@
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "80th custom intervals,974 baseline+2 separate conditional,6 virtual profiles,Mac startup/config display,release assets",
+  "verificationRevision": "81st979baseline+2conditional separately,6virtual profiles,4grade/undo,Mac startup,7release assets",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -106,7 +106,7 @@
     "limits": "Controlled native API boundaries and owned root SIGKILL only; not physical UI, arbitrary in-flight write, power loss, OS sleep/resume or other OS qualification",
     "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
   },
-  "archiveSha256": "64b7b38d708cfe844f28ab9a6b638f8d3e5ef9ee9ff1fb8c3dedaacdcab06a0a",
+  "archiveSha256": "a45f5bc5c970bf7cc920b927c41494a46888c3f3c4fe1ef81c666a9ffa83c2d4",
   "currentFeatureValidation": {
     "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
     "automated": {
@@ -645,21 +645,21 @@
     }
   ],
   "release": {
-    "version": "0.10.4",
-    "tag": "0.10.4",
-    "url": "https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/0.10.4",
-    "zipUrl": "https://github.com/kimchi-kang/mia-study-obsidian/releases/download/0.10.4/mia-study-0.10.4.zip",
-    "publishedAt": "2026-10-24T11:50:52Z",
-    "targetCommit": "5a78ee2c836d82c5876016cc294f4fb78f8d3e1b",
+    "version": "0.10.5",
+    "tag": "0.10.5",
+    "url": "https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/0.10.5",
+    "zipUrl": "https://github.com/kimchi-kang/mia-study-obsidian/releases/download/0.10.5/mia-study-0.10.5.zip",
+    "publishedAt": "2026-10-24T11:59:35Z",
+    "targetCommit": "a6177196ceb93189bcdc36a612d14b48b616cc14",
     "all7AssetDigestsAndDownloadsVerified": true,
     "assetHashes": {
-      "main.js": "d538548c047b86ae01efde91ca4a7db61ec123a01db2deaf8bcd1af78482e1c3",
-      "styles.css": "9b986af1c8f1b7f844e561c0849c6d32b0e264cf085eb420f4c837285a1c7ac3",
-      "manifest.json": "a487d3f1c1f4d3c1deb9126f7983d7a160323b92e545eef8ccfe8028bc3b0969",
+      "main.js": "d6ea9bb521f8cb3d404c83c6a195c345c0df2af05c14efec154fd07b255e68e3",
+      "styles.css": "f6c6110a856accf195aa17253d802e5cd3204c027bdda072a0d82f3292606808",
+      "manifest.json": "ef391b38cf356f222c443f87dcc3a87899a589f8d5b1d284401319944f47ff16",
       "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
       "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9",
-      "mia-study-0.10.4.zip": "64b7b38d708cfe844f28ab9a6b638f8d3e5ef9ee9ff1fb8c3dedaacdcab06a0a",
-      "SHA256SUMS.txt": "c9976dae89db503d49eaead2d8e7187af0fa09fa11b6df3e951aa84f12863054"
+      "mia-study-0.10.5.zip": "a45f5bc5c970bf7cc920b927c41494a46888c3f3c4fe1ef81c666a9ffa83c2d4",
+      "SHA256SUMS.txt": "810ee2f97f8b4266e0dce845462e6c78e6d2154325529c61672913c69cb84ced"
     }
   },
   "phoneRatingLayoutValidation": {
@@ -685,8 +685,8 @@
     ]
   },
   "evidenceScope": {
-    "currentVersion": "0.10.4",
-    "currentValidationField": "customGradeIntervalsValidation",
+    "currentVersion": "0.10.5",
+    "currentValidationField": "exactCustomIntervalValidation",
     "historicalValidationFields": [
       "mobileValidation",
       "excludedValidation",
@@ -706,7 +706,8 @@
       "reservedApiMobileValidation",
       "followupListLayoutValidation",
       "finalValidation",
-      "phoneRatingLayoutValidation"
+      "phoneRatingLayoutValidation",
+      "customGradeIntervalsValidation"
     ]
   },
   "customGradeIntervalsValidation": {
@@ -740,5 +741,31 @@
     "ratingGuidanceRemoved": true,
     "narrow320Header": "Badge hidden; heading/settings same y56; reading height221.8px",
     "limits": "Virtual in-app browser with extracted ObsidianCSS/substituted APIs; no physical phone/cloud/otherOS/sleep claim. Native current Mac startup/configuration display verified; no real grades/settings values modified."
+  },
+  "exactCustomIntervalValidation": {
+    "version": "0.10.5",
+    "status": "PASS_EXACT_FIXED_INTERVAL_DISPLAY",
+    "fullSuitePassed": 979,
+    "fullSuiteConditionalSkipped": 2,
+    "conditionalSeparatelyPassed": 2,
+    "conditionalDummyQuestions": 1000,
+    "distinctPassedAcrossTwoRuns": 981,
+    "failed": 0,
+    "typeBuild": "PASS_COPY_AND_SOURCE",
+    "exactLabels": [
+      "90분",
+      "36시간",
+      "45일",
+      "52559999분",
+      "1일"
+    ],
+    "virtualProfiles": 6,
+    "fourActualDueTimesMatchConfigured": true,
+    "gradeUndoPairs": 4,
+    "guidanceRemoved": true,
+    "heading": "Major Study",
+    "longValueWrap": "PASS320largefont; no horizontal overflow; row grows tofit",
+    "baseFeatureEvidence": "80th settings persistence/validation/automatic fallback and native settings display; settings/models/data-store files byte-identical",
+    "limits": "In-app browser with extracted host CSS/substituted APIs. Native final Mac startup/assets/data preservation verified. No physical phone/cloud/other OS/actual sleep or rerun of old native endurance claim."
   }
 }
