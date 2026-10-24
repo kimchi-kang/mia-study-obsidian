@@ -918,3 +918,9 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 /* Compact panes must keep a readable card even when the rating dock wraps. */
 .mia-view.mia-route-study:is([data-viewport-height="compact"], [data-viewport-height="short"]) { overflow-y: auto; }
 .mia-view.mia-route-study:is([data-viewport-height="compact"], [data-viewport-height="short"]) .mia-study-layout { flex: 1 0 160px; min-height: 160px; }
+
+/* Phone ratings share one row so the answer keeps the available reading space. */
+.mia-view[data-device="phone"] .mia-study-dock { padding: 8px 8px 6px; }
+.mia-view[data-device="phone"] .mia-study-dock .mia-ratings { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.mia-view[data-device="phone"] .mia-study-dock .mia-ratings button { display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center; gap: 2px; min-height: 52px; padding: 6px 2px; }
+.mia-view[data-device="phone"] .mia-study-dock .mia-ratings strong { word-break: keep-all; overflow-wrap: normal; }
