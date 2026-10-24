@@ -2,22 +2,22 @@
   "version": "0.10.2",
   "date": "2026-10-24",
   "status": "candidate",
-  "qualification": "924 tests pass (2 conditional skips); native Mac light settings/study observed before guide-only CSS change, virtual guide font/scroll6 cases pass on new CSS; native narrow/other screens, OS and latency QA remain",
+  "qualification": "924 pass/2 conditional skips; compact study reading collapse fixed and checked in native Mac two pane sizes plus six virtual layouts; OS and latency QA remain",
   "files": {
     "main.js": "2392bfbc9eba60cd3819ec8f5c3b976811161b9800005caf5831770f02dcb369",
-    "styles.css": "d1e3339247152bdde6ee84a37a2316f0da8e9a70c51bf8cc66083182cccc4924",
+    "styles.css": "a305bba4a962e56d35ec60b502f1432f67f83f530070f4bd9bee143daa79527c",
     "manifest.json": "724ed877d855ca1d6464aa24673c590188727d3131c31166a70a136b0f787f98",
     "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
     "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
   },
-  "revision": "2026-10-24-help-host-font-size",
+  "revision": "2026-10-24-compact-study-reading",
   "mobileValidation": "WebKit virtual mobile + Chromium touch control; real devices not qualified",
   "excludedValidation": [
     "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified"
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "2026-10-24-native-light-and-virtual-font",
+  "verificationRevision": "2026-10-24-native-compact-and-six-virtual-layouts",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -104,7 +104,7 @@
     "limits": "Controlled native API boundaries and owned root SIGKILL only; not physical UI, arbitrary in-flight write, power loss, OS sleep/resume or other OS qualification",
     "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
   },
-  "archiveSha256": "62ee9b88ebda5380db4b914b8b7b2844228eca25668c824cacbbab48e526f5f2",
+  "archiveSha256": "ed43002c84a99332eba632aef85fd87fcc09cb44b140d42c4a94faeb9e47c0c1",
   "currentFeatureValidation": {
     "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
     "automated": {
@@ -290,5 +290,95 @@
     "runtimeDelta": "Two guide-only CSS font-size declarations; main.js and other assets unchanged",
     "cleanup": "Owned app/server stopped, dummy host settings/theme/assets/data/ui restored, image detached, browser viewport reset/tab closed",
     "remaining": "Native narrower states and further screens, OS sleep/other OS, full-history/Word latency; cloud excluded"
+  },
+  "compactReadingValidation": {
+    "status": "PASS_DEFINED_NATIVE_AND_VIRTUAL_SCOPE",
+    "mainSha256": "2392bfbc9eba60cd3819ec8f5c3b976811161b9800005caf5831770f02dcb369",
+    "stylesSha256": "a305bba4a962e56d35ec60b502f1432f67f83f530070f4bd9bee143daa79527c",
+    "fix": "Compact/short study panes retain160px reading area; outer scroll exposes wrapped dock",
+    "nativeApp": "1.14.5",
+    "nativePaneCssPx": [
+      [
+        367.1115,
+        478.6404
+      ],
+      [
+        305.157,
+        430.5331
+      ]
+    ],
+    "nativeReadingHeightPx": 160,
+    "nativeInteractions": "CUA answer reveal, reading scroll, dock focus, guide/appearance open-close, next/previous; no grades saved",
+    "additionalScreens": "Dashboard/progress/questions upper visible range; weak/keywords empty states",
+    "virtualCases": [
+      {
+        "viewport": {
+          "height": 568,
+          "width": 320
+        },
+        "theme": "dark",
+        "kind": "compact",
+        "readingHeightPx": 160,
+        "nextPreviousPassed": true
+      },
+      {
+        "viewport": {
+          "height": 844,
+          "width": 390
+        },
+        "theme": "light",
+        "kind": "regular",
+        "readingHeightPx": 348.421875,
+        "nextPreviousPassed": true
+      },
+      {
+        "viewport": {
+          "height": 390,
+          "width": 844
+        },
+        "theme": "light",
+        "kind": "short",
+        "readingHeightPx": 160,
+        "nextPreviousPassed": true
+      },
+      {
+        "viewport": {
+          "height": 320,
+          "width": 844
+        },
+        "theme": "dark",
+        "kind": "short",
+        "readingHeightPx": 160,
+        "nextPreviousPassed": true
+      },
+      {
+        "viewport": {
+          "height": 512,
+          "width": 768
+        },
+        "theme": "light",
+        "kind": "compact",
+        "readingHeightPx": 160,
+        "nextPreviousPassed": true
+      },
+      {
+        "viewport": {
+          "height": 900,
+          "width": 1280
+        },
+        "theme": "dark",
+        "kind": "regular",
+        "readingHeightPx": 484.265625,
+        "nextPreviousPassed": true
+      }
+    ],
+    "tests": {
+      "passed": 924,
+      "failed": 0,
+      "conditionalSkipped": 2,
+      "typeBuild": "PASS_COPY_AND_SOURCE"
+    },
+    "limits": "Native Mac zoomed content, not physical phone; virtual host boundary simulation. Small panes require scrolling. Not all screen states/assistive technologies/OS sleep/other OS. Prior endurance retained on historical SHA, not rerun.",
+    "cleanup": "Owned apps/server stopped, dummy files byte-restored, mounted image detached, browser tab closed and viewport reset"
   }
 }
