@@ -924,3 +924,8 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-view[data-device="phone"] .mia-study-dock .mia-ratings { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
 .mia-view[data-device="phone"] .mia-study-dock .mia-ratings button { display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center; gap: 2px; min-height: 52px; padding: 6px 2px; }
 .mia-view[data-device="phone"] .mia-study-dock .mia-ratings strong { word-break: keep-all; overflow-wrap: normal; }
+
+/* Keep the renamed heading and view settings on one row in narrow phone panes. */
+@container mia-view (max-width: 320px) {
+  .mia-view[data-device="phone"] .mia-header .mia-badge { display: none; }
+}

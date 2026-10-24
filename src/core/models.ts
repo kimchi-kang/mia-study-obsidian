@@ -82,10 +82,14 @@ export interface QuestionReviewState {
   lastRating: number | null;
 }
 
+export type GradeIntervalsMinutes = Partial<Record<1 | 2 | 3 | 4, number>>;
+export const MAX_GRADE_INTERVAL_MINUTES = 36500 * 24 * 60;
+
 export interface MiaSettings {
   sourceRoots: string[];
   targetRetention: number;
   maximumIntervalDays: number;
+  gradeIntervalsMinutes: GradeIntervalsMinutes;
   keywordFolder: string;
 }
 
@@ -102,6 +106,7 @@ export const DEFAULT_SETTINGS: MiaSettings = {
   sourceRoots: ["MIA"],
   targetRetention: 0.9,
   maximumIntervalDays: 36500,
+  gradeIntervalsMinutes: {},
   keywordFolder: "MIA/키워드",
 };
 

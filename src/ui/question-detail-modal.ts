@@ -4,7 +4,7 @@ import { StudyGrade } from "../core/fsrs-service";
 import { QuestionRecord, QuestionReviewState } from "../core/models";
 import { QuestionRecommendation } from "../core/recommendation-engine";
 import { errorMessage } from "./error-message";
-import { GRADE_GUIDANCE, GRADE_HINTS } from "./study-grades";
+import { GRADE_HINTS } from "./study-grades";
 
 type RegisteredQuestion = QuestionRecord & { id: string };
 
@@ -70,7 +70,6 @@ export class QuestionDetailModal extends Modal {
     this.renderKeywords("보조 키워드", this.question.subKeywords);
 
     this.contentEl.createEl("h3", { text: "현재 상태 변경" });
-    this.contentEl.createEl("p", { text: GRADE_GUIDANCE, cls: "mia-muted" });
     const ratings = this.contentEl.createDiv({ cls: "mia-ratings" });
     for (const grade of [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as StudyGrade[]) {
       const button = ratings.createEl("button", { text: RATING_LABELS[grade] ?? String(grade) });

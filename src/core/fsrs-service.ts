@@ -64,10 +64,12 @@ export class FsrsService {
   private readonly scheduler;
   private readonly targetRetention: number;
   private readonly maximumIntervalDays: number;
+  private readonly gradeIntervalsMinutes: MiaSettings["gradeIntervalsMinutes"];
 
-  constructor(settings: Pick<MiaSettings, "targetRetention" | "maximumIntervalDays">) {
+  constructor(settings: Pick<MiaSettings, "targetRetention" | "maximumIntervalDays"> & Partial<Pick<MiaSettings, "gradeIntervalsMinutes">>) {
     this.targetRetention = settings.targetRetention;
     this.maximumIntervalDays = settings.maximumIntervalDays;
+    this.gradeIntervalsMinutes = { ...settings.gradeIntervalsMinutes };
     this.scheduler = fsrs({
       request_retention: settings.targetRetention,
       maximum_interval: settings.maximumIntervalDays,
@@ -85,7 +87,7 @@ export class FsrsService {
     const preview = this.scheduler.repeat(card, now);
     const grades: StudyGrade[] = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy];
     return grades.map((grade) => {
-      const scheduled = this.capInterval(preview[grade].card, now);
+      const scheduled = this.scheduleInterval(preview[grade].card, grade, now);
       return { grade, due: scheduled.due, scheduledDays: scheduled.scheduled_days };
     });
   }
@@ -95,7 +97,7 @@ export class FsrsService {
     const card = { ...deserializeCard(current.card), questionSeed: `${questionId}:` };
     const result = this.scheduler.next(card, now, grade as Grade);
     return {
-      card: serializeCard(this.capInterval(result.card, now)),
+      card: serializeCard(this.scheduleInterval(result.card, grade, now)),
       history: [...current.history, serializeLog(result.log)],
       lastRating: grade,
     };
@@ -133,6 +135,17 @@ export class FsrsService {
       if (recall !== 0) return recall;
     }
     return Date.parse(left.card.due) - Date.parse(right.card.due);
+  }
+
+  private scheduleInterval(card: Card, grade: StudyGrade, now: Date): Card {
+    const configured = this.gradeIntervalsMinutes[grade];
+    if (configured === undefined) return this.capInterval(card, now);
+    const minutes = Math.min(configured, this.maximumIntervalDays * 1440);
+    return {
+      ...card,
+      due: date_scheduler(now, minutes, false),
+      scheduled_days: minutes < 1440 ? 0 : minutes / 1440,
+    };
   }
 
   private capInterval(card: Card, now: Date): Card {
