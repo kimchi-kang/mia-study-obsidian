@@ -2,7 +2,7 @@
   "version": "0.10.2",
   "date": "2026-10-24",
   "status": "candidate",
-  "qualification": "966 tests pass/2 conditional skips; virtual follow-up manager12px collapse fixed with128px minimum and narrow subject filter expanded; five layouts and dummy creation/link/save/reopen verified; sleep/latency QA remain",
+  "qualification": "Agreed-scope pre-release validation complete:966 baseline cases plus2 conditional cases separately passed on1000-question dummy vault; exact current native grade/undo/fresh restore and five ZIP files verified; latency accepted as known limitation; other OS/sleep/cloud excluded by author",
   "files": {
     "main.js": "bbc317fbbcadb0eec8801de49721b2221446c397ab6f5ad40b030a6d73733e66",
     "styles.css": "2aa84915b35e658aea1f4a00b6c6ba370577ecc87a553fd7074e5ac7b0504dbb",
@@ -10,15 +10,16 @@
     "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
     "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
   },
-  "revision": "2026-10-24-followup-list-readable-minimum",
+  "revision": "2026-10-24-final-agreed-scope-validation",
   "mobileValidation": "WebKit virtual mobile + Chromium touch control; real devices not qualified",
   "excludedValidation": [
     "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified",
-    "Other operating-system execution; excluded by author request, not qualified"
+    "Other operating-system execution; excluded by author request, not qualified",
+    "Actual operating-system sleep/wake; excluded by author request, not qualified"
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "2026-10-24-followup-flow-and-five-layouts",
+  "verificationRevision": "2026-10-24-final-artifacts-native-restart-and-conditional-tests",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -583,5 +584,63 @@
     },
     "limits": "In-app browser with substituted Obsidian host/extracted host CSS; no new native Mac/iPhone/WebKit/OS-sleep or accessibility compliance claim. Scroll required in smaller/long-content states. Historical native hour retained on old asset SHA.",
     "cleanup": "Owned server terminated143, viewport reset, browser tab closed; no real vault/install touched"
-  }
+  },
+  "releaseReadiness": "READY_WITH_ACCEPTED_LIMITATIONS",
+  "finalValidation": {
+    "status": "COMPLETE_AGREED_SCOPE_WITH_ACCEPTED_LIMITATIONS",
+    "candidateMainSha256": "bbc317fbbcadb0eec8801de49721b2221446c397ab6f5ad40b030a6d73733e66",
+    "candidateStylesSha256": "2aa84915b35e658aea1f4a00b6c6ba370577ecc87a553fd7074e5ac7b0504dbb",
+    "fiveZipAssetsAndCrc": "PASS",
+    "tests": {
+      "baselinePassed": 966,
+      "baselineConditionalSkipped": 2,
+      "conditionalSeparatelyPassed": 2,
+      "conditionalVaultQuestions": 1000,
+      "distinctCasesPassedAcrossTwoInvocations": 968,
+      "failed": 0,
+      "lastFullSuite": "75th run exact same product assets",
+      "typeBuild": "PASS_75TH_IDENTICAL_ASSETS"
+    },
+    "dependencyAudit": {
+      "reportedVulnerabilities": 0,
+      "method": "npm audit --package-lock-only, production+development declared dependency graph",
+      "limits": "Known advisory report only, not all bundled code or complete security certification"
+    },
+    "currentNativeSmoke": {
+      "app": "1.14.5",
+      "freshProcesses": 2,
+      "cuaGrades": 1,
+      "cuaUndos": 1,
+      "initialFinalHistories": 100005,
+      "other999QuestionReviewsPreserved": true,
+      "primaryEqualsPostUndoCheckpointAfterFreshStart": true,
+      "restoredQueueIndex": 9,
+      "restoredQueueId": "mia-q-load-9",
+      "answerVisible": true,
+      "method": "CUA click/keyboard; read-only observer; actual backing file values cross-checked"
+    },
+    "excludedValidation": {
+      "actualCloudSynchronization": "EXCLUDED_BY_USER_NOT_PASS",
+      "actualCloudConcurrentUpdates": "EXCLUDED_BY_USER_NOT_PASS",
+      "otherOperatingSystems": "EXCLUDED_BY_USER_NOT_PASS",
+      "actualOsSleepWake": "EXCLUDED_BY_USER_NOT_PASS"
+    },
+    "performanceDisposition": {
+      "status": "ACCEPTED_KNOWN_LIMITATION_BY_USER",
+      "scope": "Maximum1000question validation workload",
+      "userInstruction": "알려진 제약으로 기록하고 최종 검증",
+      "basis": "Current before synthetic save median368.3/376.2ms,p95374.4/383.0ms; prior rich Word about0.46s; processing feedback and record preservation have passed within defined tests",
+      "notAClaim": "Not faster code, removal of safety checks, a universal device timing guarantee or retroactive adoption of rejected experiment"
+    },
+    "productionChange": "NONE; rejected date cache not included; five downloadable assets unchanged from75th run",
+    "limits": "Passed defined scenarios, not a guarantee for every device/theme/third-party combination. Virtual mobile is the author-approved scope.65/66 hour/modal evidence remains historical; not rerun on this SHA.",
+    "cleanup": "Both owned apps stopped, all QA assets/data/ui/workspace/activation/observer restored byte-identically, image detached, real vault/install untouched"
+  },
+  "knownLimitations": [
+    {
+      "name": "Large-history save and rich Word generation latency",
+      "disposition": "ACCEPTED_BY_AUTHOR",
+      "basis": "Synthetic save about0.37-0.39s; prior rich Word about0.46s, not a universal device budget"
+    }
+  ]
 }
