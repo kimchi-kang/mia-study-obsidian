@@ -23,6 +23,7 @@ export interface RatingPreview {
   grade: StudyGrade;
   due: Date;
   scheduledDays: number;
+  fixedIntervalMinutes?: number;
 }
 
 function serializeCard(card: Card): SerializedFsrsCard {
@@ -88,7 +89,9 @@ export class FsrsService {
     const grades: StudyGrade[] = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy];
     return grades.map((grade) => {
       const scheduled = this.scheduleInterval(preview[grade].card, grade, now);
-      return { grade, due: scheduled.due, scheduledDays: scheduled.scheduled_days };
+      return { grade, due: scheduled.due, scheduledDays: scheduled.scheduled_days,
+        ...(this.gradeIntervalsMinutes[grade] === undefined ? {} : { fixedIntervalMinutes: (scheduled.due.getTime() - now.getTime()) / 60000 }),
+      };
     });
   }
 
