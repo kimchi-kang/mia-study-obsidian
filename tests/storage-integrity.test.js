@@ -238,3 +238,26 @@ describe("reserved JSON review-map key safety", () => {
     expect(env.plugin.saveData).not.toHaveBeenCalled(); expect(env.recovery.write).not.toHaveBeenCalled();
   });
 });
+
+
+describe("review-key API and inherited-property safety", () => {
+  it.each(["__proto__", "constructor", "toString"])("rejects special key %s in direct set/remove calls before a write", async id => {
+    const initial = data({ safe: grade(Rating.Good) }), env = environment(initial); await env.store.load();
+    await expect(env.store.setReview(id, grade(Rating.Hard))).rejects.toThrow(/키/);
+    await expect(env.store.removeReview(id)).rejects.toThrow(/키/);
+    await expect(env.store.removeReviews(["safe", id])).rejects.toThrow(/키/);
+    expect(env.disk()).toEqual(initial); expect(env.store.reviews).toEqual(initial.reviews);
+    expect(env.plugin.saveData).not.toHaveBeenCalled(); expect(env.recovery.write).not.toHaveBeenCalled();
+  });
+  it.each(Object.getOwnPropertyNames(Object.prototype))("does not read inherited %s as a stored review or version", async id => {
+    const env = environment(); await env.store.load();
+    expect(env.store.getReview(id)).toBeUndefined(); expect(env.store.getReviewVersion(id)).toBeNull();
+  });
+  it.each(["reviews", "reviewVersions", "reviewConflicts", "quarantinedReviews"])("rejects own constructor/toString keys in external %s", async field => {
+    for (const id of ["constructor", "toString"]) {
+      const raw = data(); raw[field] = Object.fromEntries([[id, field === "reviewVersions" ? "2026-10-20T00:00:00.000Z:keep" : field === "reviewConflicts" ? [grade(Rating.Hard)] : grade(Rating.Good)]]);
+      const env = environment(JSON.parse(JSON.stringify(raw))); await expect(env.store.load()).rejects.toThrow(/키/);
+      expect(env.disk()).toEqual(raw); expect(env.plugin.saveData).not.toHaveBeenCalled(); expect(env.recovery.write).not.toHaveBeenCalled();
+    }
+  });
+});
