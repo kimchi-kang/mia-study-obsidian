@@ -3,6 +3,8 @@ import type { PluginDataStorage } from "./verified-plugin-storage";
 import {
   DEFAULT_PLUGIN_DATA,
   DEFAULT_SETTINGS,
+  GradeIntervalsMinutes,
+  MAX_GRADE_INTERVAL_MINUTES,
   MiaPluginData,
   MiaSettings,
   QuestionReviewState,
@@ -44,10 +46,19 @@ function parseSettings(value: unknown): MiaSettings {
     : DEFAULT_SETTINGS.sourceRoots;
   const retention = finiteNumber(raw.targetRetention, DEFAULT_SETTINGS.targetRetention);
   const keywordFolder = typeof raw.keywordFolder === "string" ? configuredPath(raw.keywordFolder) : null;
+  const gradeIntervalsMinutes: GradeIntervalsMinutes = {};
+  if (isRecord(raw.gradeIntervalsMinutes)) {
+    for (const grade of [1, 2, 3, 4] as const) {
+      const minutes = raw.gradeIntervalsMinutes[grade];
+      if (Object.hasOwn(raw.gradeIntervalsMinutes, grade) && typeof minutes === "number"
+        && Number.isInteger(minutes) && minutes >= 1 && minutes <= MAX_GRADE_INTERVAL_MINUTES) gradeIntervalsMinutes[grade] = minutes;
+    }
+  }
   return {
     sourceRoots: roots,
     targetRetention: Math.min(0.99, Math.max(0.7, retention)),
     maximumIntervalDays: positiveInteger(raw.maximumIntervalDays, DEFAULT_SETTINGS.maximumIntervalDays),
+    gradeIntervalsMinutes,
     keywordFolder: keywordFolder ?? DEFAULT_SETTINGS.keywordFolder,
   };
 }

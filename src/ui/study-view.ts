@@ -11,7 +11,7 @@ import { buildReviewQueue, recommendQuestions } from "../core/recommendation-eng
 import { errorMessage } from "./error-message";
 import { bindKeyboardViewport, KeyboardViewportBinding } from "./mobile-keyboard";
 import { StudyResult, StudyResultModal } from "./study-result-modal";
-import { GRADE_GUIDANCE, GRADE_HINTS } from "./study-grades";
+import { GRADE_LABELS, GRADE_HINTS } from "./study-grades";
 import { bindStudyGestures, StudyGestureBinding } from "./study-gestures";
 import { bindAdaptiveLayout } from "./adaptive-layout";
 import { bindRatingTapGuard } from "./rating-tap-guard";
@@ -20,13 +20,6 @@ import { ReviewConflictModal } from "./review-conflict-modal";
 import { StudyAppearanceModal } from "./study-appearance-modal";
 
 export const MIA_VIEW_TYPE = "mia-study-view";
-
-const GRADE_LABELS: Record<StudyGrade, string> = {
-  [Rating.Again]: "못 암기",
-  [Rating.Hard]: "애매",
-  [Rating.Good]: "암기",
-  [Rating.Easy]: "너무 쉬움",
-};
 
 function formatInterval(due: Date, days: number, now = new Date()): string {
   const minutes = Math.max(1, Math.round((due.getTime() - now.getTime()) / 60_000));
@@ -97,7 +90,7 @@ export class MiaStudyView extends ItemView {
   }
 
   getViewType(): string { return MIA_VIEW_TYPE; }
-  getDisplayText(): string { return "MIA Study"; }
+  getDisplayText(): string { return "Major Study"; }
   getIcon(): string { return "brain-circuit"; }
 
   async onOpen(): Promise<void> {
@@ -486,9 +479,9 @@ export class MiaStudyView extends ItemView {
   private renderHeader(root: HTMLElement): void {
     const header = root.createDiv({ cls: "mia-header" });
     const title = header.createDiv();
-    const home = title.createEl("h2").createEl("button", { text: "MIA Study", cls: "mia-home-button" });
+    const home = title.createEl("h2").createEl("button", { text: "Major Study", cls: "mia-home-button" });
     home.setAttr("type", "button");
-    home.setAttr("aria-label", "MIA Study 초기 화면으로 이동");
+    home.setAttr("aria-label", "Major Study 초기 화면으로 이동");
     home.addEventListener("click", () => this.showDashboard());
     title.createEl("span", { text: "FSRS-6", cls: "mia-badge" });
     const appearance = title.createEl("button", { text: "보기 설정", cls: "mia-appearance-button" });
@@ -1276,7 +1269,6 @@ export class MiaStudyView extends ItemView {
   }
 
   private renderRatings(parent: HTMLElement, question: QuestionRecord & { id: string }): void {
-    parent.createEl("p", { text: `${GRADE_GUIDANCE} 복습 간격은 평가 시점의 시간과 설정에 따라 달라질 수 있습니다.`, cls: "mia-muted mia-grade-guidance" });
     const ratings = parent.createDiv({ cls: "mia-ratings" });
     const buttons: HTMLButtonElement[] = [];
     const renderedIndex = this.queueIndex;

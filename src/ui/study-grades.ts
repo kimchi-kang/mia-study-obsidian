@@ -8,4 +8,9 @@ export const GRADE_HINTS: Record<StudyGrade, string> = {
   [Rating.Easy]: "정답을 망설임 없이 바로 떠올렸습니다.",
 };
 
-export const GRADE_GUIDANCE = "틀리거나 기억나지 않으면 ‘못 암기’, 정답을 떠올렸지만 어려웠으면 ‘애매’를 선택하세요.";
+export const GRADE_LABELS: Record<StudyGrade, string> = {
+  [Rating.Again]: "못 암기",
+  [Rating.Hard]: "애매",
+  [Rating.Good]: "암기",
+  [Rating.Easy]: "너무 쉬움",
+};
