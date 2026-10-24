@@ -128,7 +128,8 @@ async function blocks(markdown: string, context: RenderContext): Promise<Array<P
     const token = tokens[index];
     if (!token) continue;
     if (token.type === "table_open") {
-      const end = tokens.findIndex((item, offset) => offset > index && item.type === "table_close");
+      let end = index + 1;
+      while (end < tokens.length && tokens[end]?.type !== "table_close") end++;
       output.push(await table(tokens.slice(index, end + 1), context)); index = end; continue;
     }
     if (token.type === "heading_open") heading = true;

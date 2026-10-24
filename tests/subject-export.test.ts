@@ -129,3 +129,33 @@ it("keeps Korean numeric path order, heading order and stable ties without chang
   expect(result.count).toBe(5);
   expect(JSON.stringify(questions)).toBe(before);
 });
+
+it("preserves each table and the prose between tables in one long answer", async () => {
+  const answer = Array.from({ length: 24 }, (_, index) =>
+    `문단시작_${index}_끝\n\n| 머리_${index}_끝 | 값 |\n| --- | --- |\n| 셀_${index}_끝 | **강조_${index}_끝** |\n\n문단종료_${index}_끝`,
+  ).join("\n\n");
+  const questions = question("연속표", "mia-q-multiple-tables", "질문 표 보존", answer);
+  const original = JSON.stringify(questions);
+  const result = await exportSubjectDocx("연속표", questions);
+  const { xml } = await documentXml(result.data);
+  const tables = xml.match(/<w:tbl>[\s\S]*?<\/w:tbl>/gu) ?? [];
+  expect(tables).toHaveLength(24);
+  let previousEnd = -1;
+  for (let index = 0; index < 24; index++) {
+    const table = tables[index] ?? "";
+    for (const marker of [`머리_${index}_끝`, `셀_${index}_끝`, `강조_${index}_끝`]) {
+      expect(table).toContain(marker);
+      expect(xml.split(marker)).toHaveLength(2);
+    }
+    expect(table).toContain("<w:b/>");
+    const start = xml.indexOf(`문단시작_${index}_끝`);
+    const tableStart = xml.indexOf(table, start);
+    const end = xml.indexOf(`문단종료_${index}_끝`);
+    expect(start).toBeGreaterThan(previousEnd);
+    expect(tableStart).toBeGreaterThan(start);
+    expect(end).toBeGreaterThan(tableStart + table.length);
+    previousEnd = end;
+  }
+  expect(result.warnings).toEqual([]);
+  expect(JSON.stringify(questions)).toBe(original);
+});
