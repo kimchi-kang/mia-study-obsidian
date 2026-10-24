@@ -1,17 +1,17 @@
 {
-  "version": "0.10.5",
+  "version": "0.10.6",
   "date": "2026-10-24",
   "status": "released",
-  "qualification": "Current0.10.5 exact fixed interval display verified; prior0.10.4 base settings checks retained on identical settings/models/store modules. Older endurance/native-load evidence is historical.",
+  "qualification": "0.10.6: four reproduced code bugs fixed; 1003 automated tests passed, 2 conditional tests skipped; typecheck and production build passed; native Mac installation/startup and review/resume preservation verified. Earlier UI/endurance evidence is historical.",
   "files": {
-    "main.js": "d6ea9bb521f8cb3d404c83c6a195c345c0df2af05c14efec154fd07b255e68e3",
+    "main.js": "35e3a5f4db3f12e5eb0a3687af8d12dfc97283d1abe354cb60e8aa7cfe2fd775",
     "styles.css": "f6c6110a856accf195aa17253d802e5cd3204c027bdda072a0d82f3292606808",
-    "manifest.json": "ef391b38cf356f222c443f87dcc3a87899a589f8d5b1d284401319944f47ff16",
+    "manifest.json": "44389e75a0a326680a371d7d064453dfd3dfabfb553501b056e467e98accd690",
     "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
     "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
   },
-  "revision": "2026-10-24-exact-custom-intervals-final",
-  "mobileValidation": "Current0.10.5 in-app browser virtual mobile; no physical phone qualification.",
+  "revision": "4a70f3726865b2a4cfb24d9935ed72ab63fa423f",
+  "mobileValidation": "0.10.6 production mobile startup bundle automated tests passed; no new physical phone or virtual layout qualification.",
   "excludedValidation": [
     "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified",
     "Other operating-system execution; excluded by author request, not qualified",
@@ -19,7 +19,7 @@
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "81st979baseline+2conditional separately,6virtual profiles,4grade/undo,Mac startup,7release assets",
+  "verificationRevision": "4a70f3726865b2a4cfb24d9935ed72ab63fa423f",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -106,7 +106,7 @@
     "limits": "Controlled native API boundaries and owned root SIGKILL only; not physical UI, arbitrary in-flight write, power loss, OS sleep/resume or other OS qualification",
     "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
   },
-  "archiveSha256": "a45f5bc5c970bf7cc920b927c41494a46888c3f3c4fe1ef81c666a9ffa83c2d4",
+  "archiveSha256": "55804bad5e9481b8d771c9df85dd9feb97a8e7f027e1e1dc644941b4863307a7",
   "currentFeatureValidation": {
     "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
     "automated": {
@@ -645,21 +645,21 @@
     }
   ],
   "release": {
-    "version": "0.10.5",
-    "tag": "0.10.5",
-    "url": "https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/0.10.5",
-    "zipUrl": "https://github.com/kimchi-kang/mia-study-obsidian/releases/download/0.10.5/mia-study-0.10.5.zip",
-    "publishedAt": "2026-10-24T11:59:35Z",
-    "targetCommit": "a6177196ceb93189bcdc36a612d14b48b616cc14",
+    "version": "0.10.6",
+    "tag": "0.10.6",
+    "url": "https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/0.10.6",
+    "zipUrl": "https://github.com/kimchi-kang/mia-study-obsidian/releases/download/0.10.6/mia-study-0.10.6.zip",
+    "publishedAt": "2026-10-24T12:24:16Z",
+    "targetCommit": "4a70f3726865b2a4cfb24d9935ed72ab63fa423f",
     "all7AssetDigestsAndDownloadsVerified": true,
     "assetHashes": {
-      "main.js": "d6ea9bb521f8cb3d404c83c6a195c345c0df2af05c14efec154fd07b255e68e3",
-      "styles.css": "f6c6110a856accf195aa17253d802e5cd3204c027bdda072a0d82f3292606808",
-      "manifest.json": "ef391b38cf356f222c443f87dcc3a87899a589f8d5b1d284401319944f47ff16",
       "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
+      "styles.css": "f6c6110a856accf195aa17253d802e5cd3204c027bdda072a0d82f3292606808",
+      "main.js": "35e3a5f4db3f12e5eb0a3687af8d12dfc97283d1abe354cb60e8aa7cfe2fd775",
+      "mia-study-0.10.6.zip": "55804bad5e9481b8d771c9df85dd9feb97a8e7f027e1e1dc644941b4863307a7",
+      "manifest.json": "44389e75a0a326680a371d7d064453dfd3dfabfb553501b056e467e98accd690",
       "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9",
-      "mia-study-0.10.5.zip": "a45f5bc5c970bf7cc920b927c41494a46888c3f3c4fe1ef81c666a9ffa83c2d4",
-      "SHA256SUMS.txt": "810ee2f97f8b4266e0dce845462e6c78e6d2154325529c61672913c69cb84ced"
+      "SHA256SUMS.txt": "be3c01d1e09fa723bf986651b06a8fbb78a5566d2807898094341a65b59a758e"
     }
   },
   "phoneRatingLayoutValidation": {
@@ -685,29 +685,30 @@
     ]
   },
   "evidenceScope": {
-    "currentVersion": "0.10.5",
-    "currentValidationField": "exactCustomIntervalValidation",
+    "currentVersion": "0.10.6",
+    "currentValidationField": "codeBugFixValidation",
     "historicalValidationFields": [
-      "mobileValidation",
-      "excludedValidation",
-      "nativeValidation",
-      "nativeLoadValidation",
-      "nativeLifecycleValidation",
-      "nativeStorageEnduranceValidation",
-      "nativeInterruptionValidation",
-      "currentFeatureValidation",
-      "nativeKeyboardUiValidation",
-      "currentNativeUiEnduranceValidation",
-      "nativeScreenHelpFixValidation",
-      "guideFontValidation",
       "compactReadingValidation",
-      "wordTableScanValidation",
-      "reservedKeyValidation",
-      "reservedApiMobileValidation",
-      "followupListLayoutValidation",
+      "currentFeatureValidation",
+      "currentNativeUiEnduranceValidation",
+      "currentPerformanceDiagnosis",
+      "customGradeIntervalsValidation",
+      "exactCustomIntervalValidation",
       "finalValidation",
+      "followupListLayoutValidation",
+      "guideFontValidation",
+      "nativeInterruptionValidation",
+      "nativeKeyboardUiValidation",
+      "nativeLifecycleValidation",
+      "nativeLoadValidation",
+      "nativeScreenHelpFixValidation",
+      "nativeStorageEnduranceValidation",
+      "nativeValidation",
       "phoneRatingLayoutValidation",
-      "customGradeIntervalsValidation"
+      "releaseReadiness",
+      "reservedApiMobileValidation",
+      "reservedKeyValidation",
+      "wordTableScanValidation"
     ]
   },
   "customGradeIntervalsValidation": {
@@ -767,5 +768,20 @@
     "longValueWrap": "PASS320largefont; no horizontal overflow; row grows tofit",
     "baseFeatureEvidence": "80th settings persistence/validation/automatic fallback and native settings display; settings/models/data-store files byte-identical",
     "limits": "In-app browser with extracted host CSS/substituted APIs. Native final Mac startup/assets/data preservation verified. No physical phone/cloud/other OS/actual sleep or rerun of old native endurance claim."
+  },
+  "codeBugFixValidation": {
+    "version": "0.10.6",
+    "status": "PASS_SCOPED_CODE_REGRESSIONS_AND_NATIVE_STARTUP",
+    "passed": 1003,
+    "conditionalSkipped": 2,
+    "failed": 0,
+    "reproducedBugRegressions": 5,
+    "markdownLinkCases": 19,
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "nativeMacStartup": "PASS",
+    "existingReviewAndResumePreserved": "PASS",
+    "liveDeletionOrRatingPerformed": false,
+    "limits": "Vault boundary tests use in-memory Obsidian substitutes; no current physical-phone, cloud-concurrency, other-OS, sleep/wake or endurance qualification."
   }
 }
