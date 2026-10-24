@@ -196,3 +196,45 @@ describe("delivery order and restart convergence", () => {
     }
   });
 });
+
+
+describe("reserved JSON review-map key safety", () => {
+  const fields = ["reviews", "reviewVersions", "reviewConflicts", "quarantinedReviews"];
+  function reservedData(field) {
+    const raw = data({ safe: grade(Rating.Good) });
+    const value = field === "reviewVersions" ? "2026-10-20T00:00:00.000Z:keep" : field === "reviewConflicts" ? [grade(Rating.Hard)] : grade(Rating.Again);
+    raw[field] = Object.fromEntries([...Object.entries(raw[field]), ["__proto__", value]]);
+    return JSON.parse(JSON.stringify(raw));
+  }
+  it.each(fields)("refuses %s.__proto__ without a usable recovery copy", async field => {
+    const raw = reservedData(field), original = JSON.stringify(raw), env = environment(raw);
+    expect(Object.hasOwn(raw[field], "__proto__")).toBe(true);
+    await expect(env.store.load()).rejects.toThrow(/키/);
+    expect(JSON.stringify(env.disk())).toBe(original);
+    expect(env.plugin.saveData).not.toHaveBeenCalled();
+    expect(env.recovery.write).not.toHaveBeenCalled();
+  });
+  it.each(fields)("can read a safe recovery but cannot overwrite an unsafe primary %s", async field => {
+    const raw = reservedData(field), original = JSON.stringify(raw), recovered = data({ saved: grade(Rating.Hard) });
+    const env = environment(raw, recovered); await env.store.load();
+    expect(env.store.getReview("saved")).toEqual(recovered.reviews.saved);
+    expect(env.store.loadWarnings.join(" ")).toMatch(/복구/);
+    await expect(env.store.updateSettings({targetRetention: .85})).rejects.toThrow(/키/);
+    expect(JSON.stringify(env.disk())).toBe(original); expect(env.cache()).toEqual(recovered);
+    expect(env.plugin.saveData).not.toHaveBeenCalled(); expect(env.recovery.write).not.toHaveBeenCalled();
+  });
+  it.each(fields)("preserves unsafe recovery %s during a later safe primary save", async field => {
+    const recovered = reservedData(field), original = JSON.stringify(recovered), env = environment(data(), recovered);
+    await env.store.load(); expect(env.store.loadWarnings.join(" ")).toMatch(/복구/);
+    await env.store.updateSettings({targetRetention: .85});
+    expect(env.disk().settings.targetRetention).toBe(.85); expect(JSON.stringify(env.cache())).toBe(original);
+    expect(env.recovery.write).not.toHaveBeenCalled();
+  });
+  it.each(fields.flatMap(field => ["commit", "synchronize"].map(action => [field, action])))("blocks unsafe %s delivered before %s", async (field, action) => {
+    const env = environment(); await env.store.load();
+    const raw = reservedData(field), original = JSON.stringify(raw); env.overwrite(raw);
+    await expect(action === "commit" ? env.store.setReview("new", grade(Rating.Good)) : env.store.synchronize()).rejects.toThrow(/키/);
+    expect(JSON.stringify(env.disk())).toBe(original); expect(env.store.getReview("new")).toBeUndefined();
+    expect(env.plugin.saveData).not.toHaveBeenCalled(); expect(env.recovery.write).not.toHaveBeenCalled();
+  });
+});

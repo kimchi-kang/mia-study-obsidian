@@ -162,6 +162,10 @@ function parseData(raw: unknown): MiaPluginData {
     if (record[field] !== undefined && !isRecord(record[field])) {
       throw new InvalidReviewDataError("복습 기록의 저장 형식이 손상되었습니다. 원본을 덮어쓰지 않았습니다.");
     }
+    // JSON permits this own key, but assignment into plain record maps invokes its prototype setter.
+    if (field !== "settings" && isRecord(record[field]) && Object.hasOwn(record[field], "__proto__")) {
+      throw new InvalidReviewDataError("복습 기록에 안전하게 처리할 수 없는 문제 키가 있습니다. 원본을 덮어쓰지 않았습니다.");
+    }
   }
   const parsed = parseReviews(record.reviews, record.quarantinedReviews);
   const reviewVersions: Record<string, string> = {};

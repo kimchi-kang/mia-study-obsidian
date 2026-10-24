@@ -2,22 +2,22 @@
   "version": "0.10.2",
   "date": "2026-10-24",
   "status": "candidate",
-  "qualification": "925 tests pass/2 conditional skips; Word many-table token scan improved29-31% in synthetic stress case with identical document XML; prior UI evidence retained on historical assets; OS and broader latency QA remain",
+  "qualification": "945 tests pass/2 conditional skips; reserved external JSON review-map key no longer silently disappears on save;20 failure/recovery boundaries and64 normal large-history saves checked; OS and latency QA remain",
   "files": {
-    "main.js": "2218efd46f2aa85ce031814bb356f96fbfb2578d81b34a5fe093c8aaf0f09b42",
+    "main.js": "45223cd8f10a86d0c1d2d0ae3094dea5089231cbee07691f5ce324a089c2197d",
     "styles.css": "a305bba4a962e56d35ec60b502f1432f67f83f530070f4bd9bee143daa79527c",
     "manifest.json": "724ed877d855ca1d6464aa24673c590188727d3131c31166a70a136b0f787f98",
     "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
     "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
   },
-  "revision": "2026-10-24-word-table-forward-scan",
+  "revision": "2026-10-24-reserved-json-key-preservation",
   "mobileValidation": "WebKit virtual mobile + Chromium touch control; real devices not qualified",
   "excludedValidation": [
     "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified"
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "2026-10-24-word-table-performance-and-integrity",
+  "verificationRevision": "2026-10-24-storage-reserved-key-boundaries",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -104,7 +104,7 @@
     "limits": "Controlled native API boundaries and owned root SIGKILL only; not physical UI, arbitrary in-flight write, power loss, OS sleep/resume or other OS qualification",
     "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
   },
-  "archiveSha256": "9a25d68296e3943bacadf485b7200a72f4d3976389dc3a7174dff960293d20e5",
+  "archiveSha256": "2a126d5303555e00dbea67957da719458886b848d61194630e82c26c67c2ae03",
   "currentFeatureValidation": {
     "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
     "automated": {
@@ -428,5 +428,41 @@
       "typeBuild": "PASS_COPY_AND_SOURCE"
     },
     "limits": "Benefit specific to many tables in one Markdown body. Typical1000-question rich case1.2% slower, no measured benefit. Node timings not native/mobile paint; docx synchronous XML and full-history storage latency remain OPEN. Historical UI/endurance evidence is not rerun on new main SHA."
+  },
+  "reservedKeyValidation": {
+    "status": "PASS_DEFINED_RESERVED_KEY_PRESERVATION_SCOPE",
+    "candidateMainSha256": "45223cd8f10a86d0c1d2d0ae3094dea5089231cbee07691f5ce324a089c2197d",
+    "previousMainSha256": "2218efd46f2aa85ce031814bb356f96fbfb2578d81b34a5fe093c8aaf0f09b42",
+    "reproducedBug": "Valid external JSON own reviews.__proto__ silently disappears after ordinary updateSettings on previous candidate",
+    "fix": "Reject own __proto__ in reviews/reviewVersions/reviewConflicts/quarantinedReviews before constructing record maps; preserve existing safe recovery fallback and block unsafe primary writes",
+    "newBoundaryCases": 20,
+    "targetedPassed": 76,
+    "tests": {
+      "passed": 945,
+      "failed": 0,
+      "conditionalSkipped": 2,
+      "typeBuild": "PASS_COPY_AND_SOURCE"
+    },
+    "normalLoadRegression": {
+      "questions": 1000,
+      "initialHistories": 100000,
+      "savesPerSide": 32,
+      "warmupsPerSide": 2,
+      "measuredTrialsPerSide": 30,
+      "statisticsMs": {
+        "before": {
+          "medianMs": 376.1243340000001,
+          "p95Ms": 384.12041699999827,
+          "maxMs": 457.101584
+        },
+        "after": {
+          "medianMs": 374.04341699999895,
+          "p95Ms": 382.75074999999924,
+          "maxMs": 385.7835420000001
+        }
+      },
+      "integrity": "Every save preserves all999 unrelated question histories, whole primary/recovery value equality, expected graded history growth, no conflicts or warnings"
+    },
+    "limits": "Own-key malformed external data boundary, not normally generated mia-q IDs or demonstrated global Object.prototype pollution. Synthetic Node storage, not native host/mobile/cloud/OS sleep. No storage speed improvement claim. Native/endurance evidence retained on historical SHA."
   }
 }
