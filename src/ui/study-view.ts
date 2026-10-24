@@ -21,7 +21,12 @@ import { StudyAppearanceModal } from "./study-appearance-modal";
 
 export const MIA_VIEW_TYPE = "mia-study-view";
 
-function formatInterval(due: Date, days: number, now = new Date()): string {
+function formatInterval(due: Date, days: number, fixedMinutes?: number, now = new Date()): string {
+  if (fixedMinutes !== undefined) {
+    if (fixedMinutes % 1440 === 0) return `${fixedMinutes / 1440}일`;
+    if (fixedMinutes % 60 === 0) return `${fixedMinutes / 60}시간`;
+    return `${fixedMinutes}분`;
+  }
   const minutes = Math.max(1, Math.round((due.getTime() - now.getTime()) / 60_000));
   if (days === 0 && minutes < 60) return `${minutes}분`;
   if (days === 0) return `${Math.max(1, Math.round(minutes / 60))}시간`;
@@ -1284,13 +1289,13 @@ export class MiaStudyView extends ItemView {
       button.dataset.grade = String(preview.grade);
       button.setAttr("aria-keyshortcuts", String(preview.grade));
       this.studyShortcuts.set(String(preview.grade), button);
-      const interval = formatInterval(preview.due, preview.scheduledDays);
+      const interval = formatInterval(preview.due, preview.scheduledDays, preview.fixedIntervalMinutes);
       button.setAttr("aria-label", `${GRADE_LABELS[preview.grade]} · 다음 복습 ${interval} · ${GRADE_HINTS[preview.grade]}`);
       button.setAttr("title", GRADE_HINTS[preview.grade]);
       buttons.push(button);
       button.disabled = hasLaterAttempt || this.isMutatingReview;
       button.createEl("strong", { text: GRADE_LABELS[preview.grade] });
-      button.createEl("small", { text: formatInterval(preview.due, preview.scheduledDays) });
+      button.createEl("small", { text: interval });
       button.createEl("kbd", { text: String(preview.grade), cls: "mia-grade-key" }).setAttr("aria-hidden", "true");
       button.addEventListener("click", async () => {
         if (this.isMutatingReview || hasLaterAttempt || this.closed

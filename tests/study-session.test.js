@@ -836,3 +836,13 @@ describe("memorization ordering and back navigation", () => {
     expect(ui.view.getState()).toMatchObject(before);
   });
 });
+
+it.each([[90, "90분"], [36 * 60, "36시간"], [45 * 1440, "45일"], [36500 * 1440 - 1, "52559999분"], [1440, "1일"]])("shows a fixed interval of %s minutes exactly and saves that duration", async (minutes, label) => {
+  const ui = setup({ start: false });
+  ui.plugin.fsrs = new FsrsService({ targetRetention: .9, maximumIntervalDays: 36500, gradeIntervalsMinutes: { 3: minutes } });
+  ui.view.startReview(["q"], "browse");
+  expect(ui.button("암기").content).toContain(label);
+  const now = Date.now();
+  await ui.button("암기").click();
+  expect(Date.parse(ui.reviews.q.card.due) - now).toBe(minutes * 60000);
+});
