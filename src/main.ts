@@ -311,7 +311,8 @@ export default class MiaStudyPlugin extends Plugin {
   }
 
   confirmDeleteSubject(subject: string): void {
-    const count = this.index.registered.filter((question) => question.subject === subject).length;
+    const folderPath = normalizePath(`${this.managedRoot}/${subject}`);
+    const count = this.index.registered.filter((question) => question.filePath.startsWith(`${folderPath}/`)).length;
     new ConfirmDeleteModal(
       this.app,
       `${subject} 과목 삭제`,
@@ -514,7 +515,7 @@ export default class MiaStudyPlugin extends Plugin {
     const folder = this.app.vault.getAbstractFileByPath(folderPath);
     if (!(folder instanceof TFolder)) throw new Error("과목 폴더를 찾지 못했습니다.");
     const ids = this.index.registered
-      .filter((question) => question.subject === subject)
+      .filter((question) => question.filePath.startsWith(`${folderPath}/`))
       .map((question) => question.id);
     await this.trashFileVerified(folder);
     try {
@@ -606,7 +607,8 @@ export default class MiaStudyPlugin extends Plugin {
     );
     const editedQuestion = parseQuestionFile(question.filePath, edited).questions.find(item => item.id === question.id);
     if (!editedQuestion) throw new Error("이동할 문제를 확인하지 못했습니다.");
-    const block = blockOf(edited, editedQuestion);
+    const { rebaseMarkdownLinks } = await import("./core/markdown-links");
+    const questionBlock = blockOf(edited, editedQuestion);
     const originalQuestion = parseQuestionFile(question.filePath, source).questions.find(item => item.id === question.id);
     if (!originalQuestion) throw new Error("원본 문제를 확인하지 못했습니다.");
     const originalBlock = blockOf(source, originalQuestion);
@@ -618,6 +620,7 @@ export default class MiaStudyPlugin extends Plugin {
     if (!nextFile) nextFile = await this.app.vault.create(nextPath, createSubjectBank(draft.subject));
     if (!(nextFile instanceof TFile)) throw new Error("이동할 문제은행 경로가 파일이 아닙니다.");
 
+    const block = rebaseMarkdownLinks(questionBlock, question.filePath, nextPath);
     let nextContent = "";
     let inserted: QuestionRecord | undefined;
     await this.app.vault.process(nextFile, (content) => {
@@ -757,8 +760,16 @@ export default class MiaStudyPlugin extends Plugin {
 
   private async saveKeyword(current: KeywordNoteEntry | null, value: string, meaning: string): Promise<void> {
     const name = validateKeywordName(value);
-    if (!current || current.name === name) {
+    if (!current) {
       await this.saveKeywordMeaning(name, meaning);
+      return;
+    }
+    if (current.name === name) {
+      validateKeywordMeaning(meaning);
+      const file = this.app.vault.getAbstractFileByPath(current.filePath);
+      if (!(file instanceof TFile)) throw new Error("기존 키워드 노트를 찾지 못했습니다.");
+      await this.app.vault.process(file, content => updateKeywordMeaning(content, name, meaning));
+      new Notice(`${name} 키워드를 저장했습니다.`);
       return;
     }
     const source = this.app.vault.getAbstractFileByPath(current.filePath);
@@ -1055,7 +1066,10 @@ export default class MiaStudyPlugin extends Plugin {
     const path = this.subjectNotePath(subject);
     const content = renderSubjectNote(subject, questions);
     const existing = this.app.vault.getAbstractFileByPath(path);
-    if (existing instanceof TFile) await this.app.vault.process(existing, () => content);
+    if (existing instanceof TFile) await this.app.vault.process(existing, latest => {
+      if (!isManagedSubjectNote(latest)) throw new Error(`${subjectNoteFileName(subject)} 파일이 사용자 노트로 변경되어 덮어쓰지 않았습니다.`);
+      return content;
+    });
     else await this.app.vault.create(path, content);
   }
 
