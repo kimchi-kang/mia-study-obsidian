@@ -913,3 +913,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 
 .mia-follow-up-picker, .mia-follow-up-selected { display: flex; flex-direction: column; flex-shrink: 0; gap: 6px; max-height: 260px; overflow-y: auto; }
 :is(.mia-follow-up-picker, .mia-follow-up-selected) button { flex-shrink: 0; width: 100%; white-space: normal; overflow-wrap: anywhere; height: auto; text-align: left; }
+
+/* Compact panes must keep a readable card even when the rating dock wraps. */
+.mia-view.mia-route-study:is([data-viewport-height="compact"], [data-viewport-height="short"]) { overflow-y: auto; }
+.mia-view.mia-route-study:is([data-viewport-height="compact"], [data-viewport-height="short"]) .mia-study-layout { flex: 1 0 160px; min-height: 160px; }
