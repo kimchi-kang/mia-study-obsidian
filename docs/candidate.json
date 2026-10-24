@@ -2,22 +2,23 @@
   "version": "0.10.2",
   "date": "2026-10-24",
   "status": "candidate",
-  "qualification": "966 tests pass/2 conditional skips; inherited and direct special review keys blocked before writes; current bundle grade/reset/Word table APIs pass without Node/Electron provided in VM boundary; OS/latency QA remain",
+  "qualification": "966 tests pass/2 conditional skips; virtual follow-up manager12px collapse fixed with128px minimum and narrow subject filter expanded; five layouts and dummy creation/link/save/reopen verified; sleep/latency QA remain",
   "files": {
     "main.js": "bbc317fbbcadb0eec8801de49721b2221446c397ab6f5ad40b030a6d73733e66",
-    "styles.css": "a305bba4a962e56d35ec60b502f1432f67f83f530070f4bd9bee143daa79527c",
+    "styles.css": "2aa84915b35e658aea1f4a00b6c6ba370577ecc87a553fd7074e5ac7b0504dbb",
     "manifest.json": "724ed877d855ca1d6464aa24673c590188727d3131c31166a70a136b0f787f98",
     "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
     "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
   },
-  "revision": "2026-10-24-review-key-api-mobile-bundle",
+  "revision": "2026-10-24-followup-list-readable-minimum",
   "mobileValidation": "WebKit virtual mobile + Chromium touch control; real devices not qualified",
   "excludedValidation": [
-    "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified"
+    "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified",
+    "Other operating-system execution; excluded by author request, not qualified"
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "2026-10-24-reserved-api-and-mobile-module-boundary",
+  "verificationRevision": "2026-10-24-followup-flow-and-five-layouts",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -104,7 +105,7 @@
     "limits": "Controlled native API boundaries and owned root SIGKILL only; not physical UI, arbitrary in-flight write, power loss, OS sleep/resume or other OS qualification",
     "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
   },
-  "archiveSha256": "692013cd2a8e89d2c3dd8ab96e00b72a27b879efec7f37d458203bd65c17a0fb",
+  "archiveSha256": "bcdb0a4f1d4714c900ba77be3555b1c4f19d4a7dc8318c1d25527e084e8568cf",
   "currentFeatureValidation": {
     "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
     "automated": {
@@ -502,5 +503,85 @@
       "performanceClaim": "NONE_ONE_SAMPLE_IS_NOT_DISTRIBUTION"
     },
     "limits": "No new visual/touch/real phone or other OS/sleep qualification. Prior UI/endurance retained on historical SHA. Normal parser-generated mia-q IDs unaffected; no demonstrated global prototype pollution."
+  },
+  "followupListLayoutValidation": {
+    "status": "PASS_SCOPED_VIRTUAL_FOLLOWUP_LIST_FIX",
+    "mainSha256Unchanged": "bbc317fbbcadb0eec8801de49721b2221446c397ab6f5ad40b030a6d73733e66",
+    "stylesSha256": "2aa84915b35e658aea1f4a00b6c6ba370577ecc87a553fd7074e5ac7b0504dbb",
+    "reproduced": "320x568 large-font follow-up management list shrinks to12px; subject filter wastes half its narrow row",
+    "fix": "List min-height min(128px,42dvh), retain normal flex shrink; editor filter uses one column at widths<=640px",
+    "beforeListHeightPx": 12,
+    "final320ListHeightPx": 128,
+    "virtualLayoutCases": [
+      {
+        "name": "final-320-dark",
+        "viewport": {
+          "height": 568,
+          "width": 320
+        },
+        "theme": "theme-dark is-mobile is-touch mod-ios is-phone",
+        "listHeightPx": 128,
+        "modalHorizontalOverflow": false,
+        "actionFontPx": "17px",
+        "actionHeightPx": 44
+      },
+      {
+        "name": "final-390-light",
+        "viewport": {
+          "height": 844,
+          "width": 390
+        },
+        "theme": "is-mobile is-touch mod-ios is-phone theme-light",
+        "listHeightPx": 302.0078125,
+        "modalHorizontalOverflow": false,
+        "actionFontPx": "17px",
+        "actionHeightPx": 44
+      },
+      {
+        "name": "final-landscape-light",
+        "viewport": {
+          "height": 390,
+          "width": 844
+        },
+        "theme": "is-mobile is-touch mod-ios is-phone theme-light",
+        "listHeightPx": 128,
+        "modalHorizontalOverflow": false,
+        "actionFontPx": "17px",
+        "actionHeightPx": 44
+      },
+      {
+        "name": "final-tablet-dark",
+        "viewport": {
+          "height": 1024,
+          "width": 768
+        },
+        "theme": "theme-dark is-mobile is-touch mod-ios is-tablet",
+        "listHeightPx": 520,
+        "modalHorizontalOverflow": false,
+        "actionFontPx": "17px",
+        "actionHeightPx": 44
+      },
+      {
+        "name": "final-desktop-footer",
+        "viewport": {
+          "height": 900,
+          "width": 1280
+        },
+        "theme": "theme-light mod-macos",
+        "listHeightPx": 468,
+        "modalHorizontalOverflow": false,
+        "actionFontPx": "17px",
+        "actionHeightPx": 44
+      }
+    ],
+    "flows": "CUA dummy question creation12->13, one link selected on creation, select second and save bidirectionally, reopen two links, reverse question checked, no-match search/subject filter/cancel and keyboard footer access",
+    "tests": {
+      "passed": 966,
+      "failed": 0,
+      "conditionalSkipped": 2,
+      "typeBuild": "PASS_COPY_AND_SOURCE"
+    },
+    "limits": "In-app browser with substituted Obsidian host/extracted host CSS; no new native Mac/iPhone/WebKit/OS-sleep or accessibility compliance claim. Scroll required in smaller/long-content states. Historical native hour retained on old asset SHA.",
+    "cleanup": "Owned server terminated143, viewport reset, browser tab closed; no real vault/install touched"
   }
 }
