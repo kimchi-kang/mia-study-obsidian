@@ -2,22 +2,22 @@
   "version": "0.10.2",
   "date": "2026-10-24",
   "status": "candidate",
-  "qualification": "945 tests pass/2 conditional skips; reserved external JSON review-map key no longer silently disappears on save;20 failure/recovery boundaries and64 normal large-history saves checked; OS and latency QA remain",
+  "qualification": "966 tests pass/2 conditional skips; inherited and direct special review keys blocked before writes; current bundle grade/reset/Word table APIs pass without Node/Electron provided in VM boundary; OS/latency QA remain",
   "files": {
-    "main.js": "45223cd8f10a86d0c1d2d0ae3094dea5089231cbee07691f5ce324a089c2197d",
+    "main.js": "bbc317fbbcadb0eec8801de49721b2221446c397ab6f5ad40b030a6d73733e66",
     "styles.css": "a305bba4a962e56d35ec60b502f1432f67f83f530070f4bd9bee143daa79527c",
     "manifest.json": "724ed877d855ca1d6464aa24673c590188727d3131c31166a70a136b0f787f98",
     "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
     "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
   },
-  "revision": "2026-10-24-reserved-json-key-preservation",
+  "revision": "2026-10-24-review-key-api-mobile-bundle",
   "mobileValidation": "WebKit virtual mobile + Chromium touch control; real devices not qualified",
   "excludedValidation": [
     "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified"
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "2026-10-24-storage-reserved-key-boundaries",
+  "verificationRevision": "2026-10-24-reserved-api-and-mobile-module-boundary",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -104,7 +104,7 @@
     "limits": "Controlled native API boundaries and owned root SIGKILL only; not physical UI, arbitrary in-flight write, power loss, OS sleep/resume or other OS qualification",
     "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
   },
-  "archiveSha256": "2a126d5303555e00dbea67957da719458886b848d61194630e82c26c67c2ae03",
+  "archiveSha256": "692013cd2a8e89d2c3dd8ab96e00b72a27b879efec7f37d458203bd65c17a0fb",
   "currentFeatureValidation": {
     "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
     "automated": {
@@ -464,5 +464,43 @@
       "integrity": "Every save preserves all999 unrelated question histories, whole primary/recovery value equality, expected graded history growth, no conflicts or warnings"
     },
     "limits": "Own-key malformed external data boundary, not normally generated mia-q IDs or demonstrated global Object.prototype pollution. Synthetic Node storage, not native host/mobile/cloud/OS sleep. No storage speed improvement claim. Native/endurance evidence retained on historical SHA."
+  },
+  "reservedApiMobileValidation": {
+    "status": "PASS_SCOPED_RESERVED_API_AND_MOBILE_BUNDLE_BOUNDARIES",
+    "candidateMainSha256": "bbc317fbbcadb0eec8801de49721b2221446c397ab6f5ad40b030a6d73733e66",
+    "previousMainSha256": "45223cd8f10a86d0c1d2d0ae3094dea5089231cbee07691f5ce324a089c2197d",
+    "negativeControls": "19 new API/inherited/external-map cases fail on previous candidate",
+    "change": "Reject Object.prototype property names at map parsing and direct set/remove entry; read only own review/version properties; batch rejection before first mutation",
+    "newTests": 21,
+    "tests": {
+      "passed": 966,
+      "failed": 0,
+      "conditionalSkipped": 2,
+      "typeBuild": "PASS_COPY_AND_SOURCE"
+    },
+    "mobileProductionBundle": {
+      "engine": "Node VM with browser globals and substituted Obsidian boundary; not WebKit/native iOS",
+      "providedDesktopModules": false,
+      "providedNodeBuffer": false,
+      "startupSuitePassed": 6,
+      "flows": [
+        "grade persistence with exact disk value",
+        "reserved direct/batch request leaves disk unchanged",
+        "review reset retains revision tombstone",
+        "Word table vault output with ZIP CRC and content checks"
+      ],
+      "optionalUnavailableModuleProbe": "stream; JSZip support detection catches thrown unavailable-module error; no module provided",
+      "harnessCorrections": "Provide standard performance and window/self aliases; folder root boundary. Not a product polyfill change."
+    },
+    "normalLoad": {
+      "questions": 1000,
+      "initialHistories": 100000,
+      "saves": 3,
+      "warmups": 2,
+      "timedSamples": 1,
+      "integrity": "All999 unrelated question histories and whole primary/recovery values exact; expected changed history growth; no conflicts or warnings",
+      "performanceClaim": "NONE_ONE_SAMPLE_IS_NOT_DISTRIBUTION"
+    },
+    "limits": "No new visual/touch/real phone or other OS/sleep qualification. Prior UI/endurance retained on historical SHA. Normal parser-generated mia-q IDs unaffected; no demonstrated global prototype pollution."
   }
 }

@@ -10,6 +10,8 @@ import {
   SerializedReviewLog,
 } from "../core/models";
 
+const RESERVED_REVIEW_KEYS = new Set(Object.getOwnPropertyNames(Object.prototype));
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -149,6 +151,12 @@ function parseReviews(value: unknown, existingQuarantine: unknown = {}): ParsedR
 }
 
 class InvalidReviewDataError extends Error {}
+
+function assertReviewKey(id: string): void {
+  if (RESERVED_REVIEW_KEYS.has(id)) {
+    throw new InvalidReviewDataError("복습 기록에 안전하게 처리할 수 없는 문제 키가 있습니다. 원본을 덮어쓰지 않았습니다.");
+  }
+}
 class UnsupportedReviewDataVersionError extends InvalidReviewDataError {}
 
 function parseData(raw: unknown): MiaPluginData {
@@ -162,9 +170,9 @@ function parseData(raw: unknown): MiaPluginData {
     if (record[field] !== undefined && !isRecord(record[field])) {
       throw new InvalidReviewDataError("복습 기록의 저장 형식이 손상되었습니다. 원본을 덮어쓰지 않았습니다.");
     }
-    // JSON permits this own key, but assignment into plain record maps invokes its prototype setter.
-    if (field !== "settings" && isRecord(record[field]) && Object.hasOwn(record[field], "__proto__")) {
-      throw new InvalidReviewDataError("복습 기록에 안전하게 처리할 수 없는 문제 키가 있습니다. 원본을 덮어쓰지 않았습니다.");
+    // Reject inherited object keys before plain record maps can reinterpret them.
+    if (field !== "settings" && isRecord(record[field])) {
+      for (const id of Object.keys(record[field])) assertReviewKey(id);
     }
   }
   const parsed = parseReviews(record.reviews, record.quarantinedReviews);
@@ -271,10 +279,10 @@ export class MiaDataStore {
   }
 
   getReview(questionId: string): QuestionReviewState | undefined {
-    return this.data.reviews[questionId];
+    return Object.hasOwn(this.data.reviews, questionId) ? this.data.reviews[questionId] : undefined;
   }
 
-  getReviewVersion(questionId: string): string | null { return this.data.reviewVersions[questionId] ?? null; }
+  getReviewVersion(questionId: string): string | null { return Object.hasOwn(this.data.reviewVersions, questionId) ? this.data.reviewVersions[questionId]! : null; }
 
   async updateSettings(patch: Partial<MiaSettings>): Promise<void> {
     const settings = structuredClone(patch);
@@ -282,6 +290,7 @@ export class MiaDataStore {
   }
 
   async setReview(questionId: string, state: QuestionReviewState, expected?: { state: QuestionReviewState | undefined }): Promise<void> {
+    assertReviewKey(questionId);
     const review = structuredClone(state);
     await this.commit((next) => {
       if (expected && JSON.stringify(next.reviews[questionId]) !== JSON.stringify(expected.state)) throw new ReviewChangedError("다른 기기에서 이 문제의 평가가 변경되었습니다. 최신 기록을 확인한 뒤 다시 평가하세요.");
@@ -297,6 +306,7 @@ export class MiaDataStore {
   async removeReviews(questionIds: readonly string[], expected?: { state: QuestionReviewState | undefined }): Promise<void> {
     const ids = [...new Set(questionIds)];
     if (!ids.length) return;
+    for (const id of ids) assertReviewKey(id);
     await this.commit((next) => {
       if (expected) {
         for (const id of ids) {

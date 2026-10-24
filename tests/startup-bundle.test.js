@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
+import { webcrypto } from "node:crypto";
+import JSZip from "jszip";
 import { describe, expect, it } from "vitest";
 
 function mobilePlugin(loadError) {
@@ -11,15 +13,18 @@ function mobilePlugin(loadError) {
     addRibbonIcon() {} addCommand(command) { commands.push(command.id); } addSettingTab() {}
   }
   const boundary = { Plugin, ItemView: class {}, Modal: class {}, PluginSettingTab: class {}, Component: class {},
-    Notice: class {}, Platform: { isMobile: true, isDesktopApp: false }, normalizePath: (path) => path };
+    Notice: class {}, TFile: class {}, TFolder: class {}, Platform: { isMobile: true, isDesktopApp: false }, normalizePath: (path) => path };
   const module = { exports: {} };
-  vm.runInNewContext(readFileSync(new URL("../main.js", import.meta.url), "utf8"), {
+  const context = {
     module, exports: module.exports,
     require(name) { imports.push(name); if (name !== "obsidian") throw Error(`Unavailable mobile module: ${name}`); return boundary; },
-    console, TextEncoder, TextDecoder, Uint8Array, ArrayBuffer, Blob, URL, structuredClone,
+    console, performance, crypto: webcrypto, TextEncoder, TextDecoder, Uint8Array, ArrayBuffer, Blob, URL, structuredClone,
     setTimeout, clearTimeout, setInterval, clearInterval,
-    navigator: { userAgent: "iPhone" }, window: {}, self: {},
-  }, { timeout: 5000 });
+    navigator: { userAgent: "iPhone" },
+  };
+  // Browser globals alias one object; library browser polyfills install on self.
+  context.window = context; context.self = context;
+  vm.runInNewContext(readFileSync(new URL("../main.js", import.meta.url), "utf8"), context, { timeout: 5000 });
   const app = { loadLocalStorage: (key) => local.get(key), saveLocalStorage: (key, value) => local.set(key, value),
     vault: { getName: () => "Test", configDir: ".obsidian", adapter: { exists: async () => false } },
     workspace: { onLayoutReady() {} } };
@@ -57,5 +62,51 @@ describe("production mobile startup bundle", () => {
     expect(run.local.get("mia-study:startup-diagnostics:v1").at(-1).phase).toBe("failed");
     expect(JSON.stringify([...run.local])).not.toContain("private-note-content");
     expect(() => run.plugin.onunload()).not.toThrow();
+  });
+});
+
+
+describe("production mobile API boundaries without desktop modules", () => {
+  it("persists a grade and reset and rejects reserved keys without changing disk", async () => {
+    const run = mobilePlugin(); let disk = "{}";
+    run.plugin.loadData = async () => JSON.parse(disk);
+    run.plugin.saveData = async data => { disk = JSON.stringify(data, null, 2); };
+    run.plugin.app.vault.adapter.read = async () => disk;
+    await run.plugin.onload();
+    await run.plugin.rateQuestionDirectly("mia-q-mobile-api", 3, undefined);
+    const review = run.plugin.store.getReview("mia-q-mobile-api");
+    expect(review.history).toHaveLength(1);
+    expect(JSON.parse(disk).reviews["mia-q-mobile-api"]).toEqual(review);
+    const before = disk;
+    await expect(run.plugin.store.setReview("__proto__", review)).rejects.toThrow(/키/);
+    await expect(run.plugin.store.removeReviews(["mia-q-mobile-api", "constructor"])).rejects.toThrow(/키/);
+    expect(disk).toBe(before);
+    await run.plugin.store.removeReview("mia-q-mobile-api", {state: review});
+    expect(run.plugin.store.getReview("mia-q-mobile-api")).toBeUndefined();
+    expect(JSON.parse(disk).reviewVersions["mia-q-mobile-api"]).toBeTruthy();
+    expect(run.imports.every(name => name === "obsidian")).toBe(true);
+    run.plugin.onunload();
+  });
+  it("exports Word tables into the mobile vault with Node and Electron unavailable", async () => {
+    const run = mobilePlugin(), files = new Map();
+    run.plugin.app.vault.getRoot = () => ({children: []});
+    run.plugin.app.vault.getAbstractFileByPath = path => files.get(path);
+    run.plugin.app.vault.createFolder = async path => { files.set(path, {path}); };
+    run.plugin.app.vault.createBinary = async (path, data) => { files.set(path, new Uint8Array(data)); };
+    await run.plugin.onload();
+    run.plugin.index = {rebuild: async () => {}, stop() {}, registered: [{
+      subject: "가상출력", filePath: "MIA/가상출력/a.md", location: {headingLine: 1},
+      questionMarkdown: "MOBILE_PROMPT_END", answerMarkdown: "MOBILE_ANSWER_END\n\n| 머리 | 값 |\n| --- | --- |\n| 보존 | 7 |",
+    }]};
+    const result = await run.plugin.exportSubject("가상출력");
+    expect(result.path.startsWith("MIA 출력/")).toBe(true); expect(result.count).toBe(1);
+    const zip = await JSZip.loadAsync(files.get(result.path), {checkCRC32: true});
+    const xml = await zip.file("word/document.xml").async("string");
+    for (const marker of ["MOBILE_PROMPT_END", "MOBILE_ANSWER_END", "보존", "<w:tbl>"]) expect(xml).toContain(marker);
+    expect(result.warnings).toEqual([]);
+    expect(result.openFile).toBeUndefined(); expect(result.revealFile).toBeUndefined();
+    // JSZip probes an optional stream feature and handles its unavailable-module error.
+    expect(run.imports.filter(name => name !== "obsidian")).toEqual(["stream"]);
+    run.plugin.onunload();
   });
 });
