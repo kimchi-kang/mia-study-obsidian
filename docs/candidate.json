@@ -1,8 +1,8 @@
 {
   "version": "0.10.6",
-  "date": "2026-10-24",
+  "date": "2026-10-25",
   "status": "released",
-  "qualification": "0.10.6: four reproduced code bugs fixed; 1003 automated tests passed, 2 conditional tests skipped; typecheck and production build passed; native Mac installation/startup and review/resume preservation verified. Earlier UI/endurance evidence is historical.",
+  "qualification": "0.10.6 final check: 1003 default automated tests plus 2 separate conditional tests on 1000 synthetic questions at 30s timeout; native Mac24 and simulated mobile6 profiles/24 grade-undo pairs/16 additional checks. Actual phone/IME/cloud remains unqualified.",
   "files": {
     "main.js": "35e3a5f4db3f12e5eb0a3687af8d12dfc97283d1abe354cb60e8aa7cfe2fd775",
     "styles.css": "f6c6110a856accf195aa17253d802e5cd3204c027bdda072a0d82f3292606808",
@@ -11,7 +11,7 @@
     "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
   },
   "revision": "4a70f3726865b2a4cfb24d9935ed72ab63fa423f",
-  "mobileValidation": "0.10.6 production mobile startup bundle automated tests passed; no new physical phone or virtual layout qualification.",
+  "mobileValidation": "0.10.6 responsive in-app-browser simulation: six profiles,24 grade-undo pairs,16 additional checks; Obsidian APIs/Markdown substituted and touch synthetic. Not physical-phone, real IME, WebView or cloud qualification.",
   "excludedValidation": [
     "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified",
     "Other operating-system execution; excluded by author request, not qualified",
@@ -709,6 +709,10 @@
       "reservedApiMobileValidation",
       "reservedKeyValidation",
       "wordTableScanValidation"
+    ],
+    "currentValidationFields": [
+      "codeBugFixValidation",
+      "finalValidation20261025"
     ]
   },
   "customGradeIntervalsValidation": {
@@ -783,5 +787,24 @@
     "existingReviewAndResumePreserved": "PASS",
     "liveDeletionOrRatingPerformed": false,
     "limits": "Vault boundary tests use in-memory Obsidian substitutes; no current physical-phone, cloud-concurrency, other-OS, sleep/wake or endurance qualification."
+  },
+  "finalValidation20261025": {
+    "fullSuitePassed": 1003,
+    "fullSuiteConditionalSkipped": 2,
+    "conditionalSyntheticQuestions": 1000,
+    "conditionalTestTimeoutMs": 30000,
+    "conditionalDefaultTimeoutObservation": "Initial single-file 1000-question round-trip run completed its assertions in 6.3s but exceeded the default 5s test limit. Rerun separately at 30s; see final outcome.",
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "rebuildByteIdenticalToRelease": true,
+    "conditionalSeparatelyPassed": 2,
+    "distinctTestsPassedAcrossRuns": 1005,
+    "failedAtFinalConfiguration": 0,
+    "nativeMacPassed": 24,
+    "mobileProfilesPassed": 6,
+    "mobileGradeUndoPairs": 24,
+    "mobileAdditionalChecksPassed": 16,
+    "publicEvidenceUrl": "https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/0.10.6/README.md",
+    "bundleUnchanged": true
   }
 }
