@@ -1,17 +1,16 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "date": "2026-10-25",
   "status": "released",
-  "qualification": "1.0.0 stable promotion of validated0.10.6 product code. 1003 default tests plus2 separate conditional tests on1000 synthetic questions passed; typecheck/build passed. Main bundle and CSS byte-identical to0.10.6. Native/mobile evidence belongs to0.10.6 same code; no new physical-phone/cloud qualification.",
+  "qualification": "1.0.1 math rendering patch. 1015 default tests plus 2 separate conditional tests passed; typecheck/build passed. Installed Obsidian MathJax tested in browser harness at 4 viewport widths. No new native Obsidian UI or physical-phone qualification.",
   "files": {
-    "main.js": "35e3a5f4db3f12e5eb0a3687af8d12dfc97283d1abe354cb60e8aa7cfe2fd775",
-    "styles.css": "f6c6110a856accf195aa17253d802e5cd3204c027bdda072a0d82f3292606808",
-    "manifest.json": "96662ccffa0ba8f71be15d2db776fa3545b80a1c04e0ddd35e8dbf1fe8bb5b88",
+    "main.js": "cb96b7eeb0992d9f1dc7e37538c5a5eb81f54f197640847067d77de5331ff17c",
+    "styles.css": "0368166a954290e09075514734c2ea364cd63c8b4eb11b1076df7617eaa52d94",
+    "manifest.json": "5d8600f7f28350dae8163e4e5aaf4690c104cd1181e49f412baef5499ca0f616",
     "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
     "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
   },
-  "revision": "d07e6a5128cc8864c24a3e1466131bcd2a0bf866",
-  "mobileValidation": "Inherited same-code0.10.6 responsive-browser evidence:6 profiles,24 grade-undo pairs,16 extra checks. Not a1.0.0 physical-phone, real IME/WebView or cloud qualification.",
+  "mobileValidation": "Historical 0.10.6 baseline. Current 1.0.1 math checks are in stableReleaseValidation; not a physical-phone qualification.",
   "excludedValidation": [
     "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified",
     "Other operating-system execution; excluded by author request, not qualified",
@@ -19,7 +18,6 @@
   ],
   "license": "MIT",
   "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
-  "verificationRevision": "d07e6a5128cc8864c24a3e1466131bcd2a0bf866",
   "nativeValidation": {
     "platform": "macOS",
     "appVersions": [
@@ -106,7 +104,7 @@
     "limits": "Controlled native API boundaries and owned root SIGKILL only; not physical UI, arbitrary in-flight write, power loss, OS sleep/resume or other OS qualification",
     "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
   },
-  "archiveSha256": "2ca986eb23b8f5ed9d555a77d826483c71a7c5b68386aa5c1b8455fce1f85c12",
+  "archiveSha256": "478cb41a2991806e0ecb6ab0a1195d712de5fec9620bbdfa1c93cbeb5feba5d2",
   "currentFeatureValidation": {
     "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
     "automated": {
@@ -645,21 +643,18 @@
     }
   ],
   "release": {
-    "version": "1.0.0",
-    "tag": "1.0.0",
-    "url": "https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.0.0",
-    "zipUrl": "https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.0.0/mia-study-1.0.0.zip",
-    "publishedAt": "2026-10-25T03:12:05Z",
-    "targetCommit": "d07e6a5128cc8864c24a3e1466131bcd2a0bf866",
-    "all7AssetDigestsAndDownloadsVerified": true,
+    "tag": "1.0.1",
+    "url": "https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.0.1",
+    "zipUrl": "https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.0.1/mia-study-1.0.1.zip",
+    "version": "1.0.1",
     "assetHashes": {
-      "mia-study-1.0.0.zip": "2ca986eb23b8f5ed9d555a77d826483c71a7c5b68386aa5c1b8455fce1f85c12",
+      "mia-study-1.0.1.zip": "478cb41a2991806e0ecb6ab0a1195d712de5fec9620bbdfa1c93cbeb5feba5d2",
       "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
-      "styles.css": "f6c6110a856accf195aa17253d802e5cd3204c027bdda072a0d82f3292606808",
-      "main.js": "35e3a5f4db3f12e5eb0a3687af8d12dfc97283d1abe354cb60e8aa7cfe2fd775",
-      "manifest.json": "96662ccffa0ba8f71be15d2db776fa3545b80a1c04e0ddd35e8dbf1fe8bb5b88",
+      "styles.css": "0368166a954290e09075514734c2ea364cd63c8b4eb11b1076df7617eaa52d94",
+      "main.js": "cb96b7eeb0992d9f1dc7e37538c5a5eb81f54f197640847067d77de5331ff17c",
+      "manifest.json": "5d8600f7f28350dae8163e4e5aaf4690c104cd1181e49f412baef5499ca0f616",
       "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9",
-      "SHA256SUMS.txt": "e7648f637b7d04b6a9e139db9fb9d9a9842cafd7362d659547d24768b6a5f1a9"
+      "SHA256SUMS.txt": "57274aff1c61173d29e6055d2a7852e5bc39db68721a0ba26b794323c7b1507e"
     }
   },
   "phoneRatingLayoutValidation": {
@@ -685,7 +680,7 @@
     ]
   },
   "evidenceScope": {
-    "currentVersion": "1.0.0",
+    "currentVersion": "1.0.1",
     "currentValidationField": "stableReleaseValidation",
     "historicalValidationFields": [
       "compactReadingValidation",
@@ -708,14 +703,12 @@
       "releaseReadiness",
       "reservedApiMobileValidation",
       "reservedKeyValidation",
-      "wordTableScanValidation"
+      "wordTableScanValidation",
+      "codeBugFixValidation",
+      "finalValidation20261025"
     ],
     "currentValidationFields": [
       "stableReleaseValidation"
-    ],
-    "baseSameCodeValidationFields": [
-      "codeBugFixValidation",
-      "finalValidation20261025"
     ]
   },
   "customGradeIntervalsValidation": {
@@ -811,18 +804,57 @@
     "bundleUnchanged": true
   },
   "stableReleaseValidation": {
-    "version": "1.0.0",
-    "typecheck": "PASS",
-    "productionBuild": "PASS",
-    "fullSuitePassed": 1003,
-    "fullSuiteConditionalSkipped": 2,
-    "conditionalSeparatelyPassed": 2,
-    "conditionalQuestions": 1000,
-    "conditionalTimeoutMs": 30000,
-    "distinctPassedAcrossRuns": 1005,
-    "productSourceUnchangedFrom": "0.10.6",
-    "mainJsByteIdenticalTo": "0.10.6",
-    "cssByteIdenticalTo": "0.10.6",
-    "mainSha256": "35e3a5f4db3f12e5eb0a3687af8d12dfc97283d1abe354cb60e8aa7cfe2fd775"
-  }
+    "version": "1.0.1",
+    "defaultPassed": 1015,
+    "separateConditionalPassed": 2,
+    "conditionalSyntheticQuestions": 1000,
+    "typecheck": "passed",
+    "productionBuild": "passed",
+    "mathBrowserViewports": [
+      320,
+      390,
+      768,
+      1280
+    ],
+    "mathEngine": "Installed Obsidian 1.14.5 MathJax; substitute file/settings/Markdown APIs",
+    "physicalPhoneTested": false,
+    "nativeObsidianUiRetested": false,
+    "details": "qa/1.0.1/README.md"
+  },
+  "previousStableRelease": {
+    "release": {
+      "version": "1.0.0",
+      "tag": "1.0.0",
+      "url": "https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.0.0",
+      "zipUrl": "https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.0.0/mia-study-1.0.0.zip",
+      "publishedAt": "2026-10-25T03:12:05Z",
+      "targetCommit": "d07e6a5128cc8864c24a3e1466131bcd2a0bf866",
+      "all7AssetDigestsAndDownloadsVerified": true,
+      "assetHashes": {
+        "mia-study-1.0.0.zip": "2ca986eb23b8f5ed9d555a77d826483c71a7c5b68386aa5c1b8455fce1f85c12",
+        "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
+        "styles.css": "f6c6110a856accf195aa17253d802e5cd3204c027bdda072a0d82f3292606808",
+        "main.js": "35e3a5f4db3f12e5eb0a3687af8d12dfc97283d1abe354cb60e8aa7cfe2fd775",
+        "manifest.json": "96662ccffa0ba8f71be15d2db776fa3545b80a1c04e0ddd35e8dbf1fe8bb5b88",
+        "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9",
+        "SHA256SUMS.txt": "e7648f637b7d04b6a9e139db9fb9d9a9842cafd7362d659547d24768b6a5f1a9"
+      }
+    },
+    "validation": {
+      "version": "1.0.0",
+      "typecheck": "PASS",
+      "productionBuild": "PASS",
+      "fullSuitePassed": 1003,
+      "fullSuiteConditionalSkipped": 2,
+      "conditionalSeparatelyPassed": 2,
+      "conditionalQuestions": 1000,
+      "conditionalTimeoutMs": 30000,
+      "distinctPassedAcrossRuns": 1005,
+      "productSourceUnchangedFrom": "0.10.6",
+      "mainJsByteIdenticalTo": "0.10.6",
+      "cssByteIdenticalTo": "0.10.6",
+      "mainSha256": "35e3a5f4db3f12e5eb0a3687af8d12dfc97283d1abe354cb60e8aa7cfe2fd775"
+    }
+  },
+  "baseRevision": "d07e6a5128cc8864c24a3e1466131bcd2a0bf866"
 }

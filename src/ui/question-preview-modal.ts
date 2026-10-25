@@ -12,16 +12,16 @@ export class QuestionPreviewModal extends Modal {
     this.modalEl.dataset.readingSize = this.appearance.size;
     this.renderer = new Component(); this.renderer.load();
     this.contentEl.createEl("p", { text: `${this.question.subject} · ${this.question.questionType}`, cls: "mia-muted" });
-    this.contentEl.createEl("h3", { text: this.question.heading });
-    const prompt = this.contentEl.createDiv({ cls: "mia-markdown" });
+    const headingIsPrompt = this.question.questionMarkdown.trim() === this.question.heading.trim();
+    const heading = this.contentEl.createEl("h3", headingIsPrompt ? {} : { text: this.question.heading });
+    const prompt = headingIsPrompt ? heading : this.contentEl.createDiv({ cls: "mia-markdown" });
     this.contentEl.createEl("h4", { text: "모범 답안" });
     const answer = this.contentEl.createDiv({ cls: "mia-markdown mia-answer" });
     const actions = this.contentEl.createDiv({ cls: "mia-preview-actions" });
     actions.createEl("button", { text: "전체 상세" }).addEventListener("click", () => { this.close(); this.details(); });
     actions.createEl("button", { text: "닫기", cls: "mod-cta" }).addEventListener("click", () => this.close());
     await Promise.all([
-      this.question.questionMarkdown.trim() !== this.question.heading.trim()
-        ? MarkdownRenderer.render(this.app, this.question.questionMarkdown, prompt, this.question.filePath, this.renderer) : Promise.resolve(),
+      MarkdownRenderer.render(this.app, this.question.questionMarkdown, prompt, this.question.filePath, this.renderer),
       MarkdownRenderer.render(this.app, this.question.answerMarkdown, answer, this.question.filePath, this.renderer),
     ]);
   }

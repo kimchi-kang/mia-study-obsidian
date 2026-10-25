@@ -32,6 +32,7 @@ vi.mock("obsidian", () => {
     MarkdownRenderer: { render: async (_app, text, element) => { element.text = text; } },
   };
 });
+import { MarkdownRenderer } from "obsidian";
 import { StudyUiStore } from "../src/services/study-ui-store";
 import { MiaStudyView } from "../src/ui/study-view";
 import { MiaDataStore } from "../src/services/data-store";
@@ -845,4 +846,18 @@ it.each([[90, "90분"], [36 * 60, "36시간"], [45 * 1440, "45일"], [36500 * 14
   const now = Date.now();
   await ui.button("암기").click();
   expect(Date.parse(ui.reviews.q.card.due) - now).toBe(minutes * 60000);
+});
+
+
+describe("question-only markdown rendering", () => {
+  it.each(["$E=mc^2$", "$\\frac{a}{b}$", "plain question"])('renders a matching heading and prompt once: %s', text => {
+    const ui = setup({ start: false });
+    Object.assign(ui.plugin.index.registered[0], { heading: text, questionMarkdown: text });
+    const render = vi.spyOn(MarkdownRenderer, "render");
+    ui.view.startReview(["q"]);
+    const calls = render.mock.calls.filter(call => call[1] === text);
+    expect(calls).toHaveLength(1);
+    expect(calls[0][2].tag).toBe("h2");
+    expect(calls[0][3]).toBe("bank.md");
+  });
 });
