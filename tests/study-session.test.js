@@ -611,6 +611,18 @@ describe("study view scheduling integration", () => {
 
 
 describe("return and quick recovery", () => {
+  it.each(["dashboard", "study"])("keeps the pending tap target on unchanged %s focus", async route => {
+    const ui = setup({ start: route === "study" });
+    if (route === "dashboard") await ui.view.setState({ route, queue: [], queueIndex: 0, answerVisible: false, sessionMode: "recall" }, {});
+    ui.plugin.store.synchronize = vi.fn().mockResolvedValue(undefined);
+    const button = ui.exactButton(route === "study" ? "정답 보기" : "시험 모드 시작");
+    await ui.view.refreshAfterReturn(false);
+    expect(ui.exactButton(route === "study" ? "정답 보기" : "시험 모드 시작")).toBe(button);
+    await button.click();
+    expect(ui.view.getState().route).toBe("study");
+    if (route === "study") expect(ui.view.getState().answerVisible).toBe(true);
+  });
+
   it("does not replace the search form on an unchanged app return", async () => {
     const ui = setup({ start: false }); ui.plugin.store.synchronize = vi.fn().mockResolvedValue(undefined);
     await ui.view.setState({route:"questions",queue:[],queueIndex:0,answerVisible:false,sessionMode:"recall"},{});

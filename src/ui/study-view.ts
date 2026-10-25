@@ -133,7 +133,7 @@ export class MiaStudyView extends ItemView {
       if (this.contentEl.ownerDocument.hidden) this.flushReadingPosition();
       else void this.refreshAfterReturn();
     });
-    this.registerDomEvent(window, "focus", () => void this.refreshAfterReturn());
+    this.registerDomEvent(window, "focus", () => void this.refreshAfterReturn(false));
     this.registerDomEvent(window, "pagehide", () => this.flushReadingPosition());
     this.registerInterval(window.setInterval(() => {
       if (this.route === "dashboard" || this.route === "progress") this.render();
@@ -308,14 +308,19 @@ export class MiaStudyView extends ItemView {
     this.readingTimer = window.setTimeout(() => this.flushReadingPosition(), 400);
   }
 
-  private async refreshAfterReturn(): Promise<void> {
+  private async refreshAfterReturn(refreshTime = true): Promise<void> {
     if (this.closed || this.refreshingAfterReturn || this.isMutatingReview) return;
     this.refreshingAfterReturn = true;
+    const previousResume = JSON.stringify(this.plugin.studyUi.resume);
     try {
       await this.plugin.store.synchronize();
       if (this.closed) return;
       await this.plugin.studyUi.load();
-      if (!this.closed && (this.route === "study" || this.route === "dashboard")) this.render();
+      // A focus event can occur between pointerdown and click. Replacing unchanged
+      // controls here drops that first tap; visibility changes still refresh timers.
+      const resumeChanged = previousResume !== JSON.stringify(this.plugin.studyUi.resume);
+      if (!this.closed && ((refreshTime && (this.route === "study" || this.route === "dashboard"))
+        || (resumeChanged && this.route === "dashboard"))) this.render();
     } catch (error) { new Notice(`앱 복귀 후 기록 확인 실패: ${errorMessage(error)}`); }
     finally { this.refreshingAfterReturn = false; }
   }
