@@ -43,7 +43,7 @@ export class MiaSettingTab extends PluginSettingTab {
         if (Number.isInteger(parsed) && parsed > 0) await this.save(() => this.miaPlugin.updateSettings({ maximumIntervalDays: parsed }));
       });
     });
-    renderStudyManagementSettings(containerEl, this.miaPlugin, action => this.save(action));
+    renderStudyManagementSettings(containerEl.createDiv({ cls: "mia-study-management-settings" }), this.miaPlugin, action => this.save(action, false));
     this.renderGradeIntervals(containerEl, settings);
     new Setting(containerEl).setName("키워드 노트 폴더").setDesc("키워드 링크를 만들 때 기준으로 표시할 폴더입니다.").addText((text) => {
       text.setValue(settings.keywordFolder).onChange(async (value) => this.save(() => this.miaPlugin.store.updateSettings({ keywordFolder: value })));
@@ -114,12 +114,12 @@ export class MiaSettingTab extends PluginSettingTab {
     }));
   }
 
-  private async save(action: () => Promise<void>): Promise<void> {
+  private async save(action: () => Promise<void>, refreshOnFailure = true): Promise<void> {
     try {
       await action();
     } catch (error) {
       new Notice(`MIA 설정 저장 실패: ${errorMessage(error)}`);
-      this.display();
+      if (refreshOnFailure) this.display();
     }
   }
 }

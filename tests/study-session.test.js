@@ -51,6 +51,7 @@ vi.mock("obsidian", () => {
   }
   return {
     Setting,
+    PluginSettingTab: class { constructor(app) { this.app=app; this.containerEl=new Element(); this.containerEl.ownerDocument={defaultView:null}; } hide() {} },
     ItemView: class { constructor(leaf) { this.leaf = leaf; this.app = leaf.app; this.contentEl = new Element(); } },
     Component: class { load() {} unload() {} },
     Modal: class { setTitle() {} open = vi.fn(); close = vi.fn(); }, Notice: class {}, Platform: { isMobile: false },
@@ -60,6 +61,7 @@ vi.mock("obsidian", () => {
 import { MarkdownRenderer } from "obsidian";
 import { StudyUiStore } from "../src/services/study-ui-store";
 import { MiaStudyView } from "../src/ui/study-view";
+import { MiaSettingTab } from "../src/ui/settings-tab";
 import { MiaDataStore } from "../src/services/data-store";
 import { buildReviewQueue } from "../src/core/recommendation-engine";
 import { DEFAULT_SETTINGS } from "../src/core/models";
@@ -164,6 +166,30 @@ describe("dashboard learning settings", () => {
     expect(ui.exactButton("학습 설정 저장").disabled).toBe(false);
     await ui.exactButton("학습 설정 저장").click();
     expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(9);
+  });
+});
+
+describe("Obsidian learning settings integration", () => {
+  const field = (root, label) => root.attrs["aria-label"] === label ? root : root.children.map(child => field(child,label)).find(Boolean);
+  it("keeps existing settings above and below learning settings, including when loading defaults", async () => {
+    const ui=setup({start:false});const tab=new MiaSettingTab({},ui.plugin);tab.display();
+    const original=field(tab.containerEl,"못 암기 복습 간격");original.value="12";original.handlers.get("input")("12");
+    for(const text of ["문제 폴더","목표 기억률","최대 복습 간격(일)","키워드 노트 폴더"])expect(tab.containerEl.content).toContain(text);
+    await tab.containerEl.find("기본값 불러오기",true).click();
+    for(const text of ["문제 폴더","목표 기억률","최대 복습 간격(일)","키워드 노트 폴더"])expect(tab.containerEl.content).toContain(text);
+    expect(field(tab.containerEl,"못 암기 복습 간격")).toBe(original);expect(original.value).toBe("12");
+  });
+  it("keeps the learning draft and unrelated drafts after a failed save, then retries", async () => {
+    const ui=setup({start:false});ui.plugin.updateSettings=vi.fn(async patch=>Object.assign(ui.plugin.store.settings,structuredClone(patch)));
+    const tab=new MiaSettingTab({},ui.plugin);tab.display();
+    const fresh=field(tab.containerEl,"하루 새 문제");fresh.value="9";fresh.handlers.get("input")("9");
+    const fixed=field(tab.containerEl,"못 암기 복습 간격");fixed.value="12";fixed.handlers.get("input")("12");
+    ui.plugin.updateSettings.mockRejectedValueOnce(Error("disk full"));
+    await tab.containerEl.find("학습 설정 저장",true).click();
+    expect(field(tab.containerEl,"하루 새 문제")).toBe(fresh);expect(fresh.value).toBe("9");
+    expect(field(tab.containerEl,"못 암기 복습 간격")).toBe(fixed);expect(fixed.value).toBe("12");
+    expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(20);
+    await tab.containerEl.find("학습 설정 저장",true).click();expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(9);
   });
 });
 
