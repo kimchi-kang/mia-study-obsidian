@@ -89,6 +89,6 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       new Notice("학습관리 설정을 Anki 기본값으로 복원했습니다.");
     });
   }));
-  container.createEl("p", { text: "Anki와의 차이: MIA는 FSRS-6 전용이며 전체 과목에 공통 상한을 적용합니다. 덱별 프리셋·형제 카드 묻기·오디오·타이머·자동 넘김·쉬운 요일·반복 실패 카드 관리·매개변수 자동 최적화·SM-2 전용 설정은 포함하지 않습니다. 단계는 실제 예약 시각에 출제하며 Anki의 날짜 경계 변환과는 다릅니다. 아래 평가별 고정 간격을 지정하면 FSRS와 학습 단계보다 우선합니다.", cls: "setting-item-description" });
+  container.createEl("p", { text: "Anki와의 차이: MIA는 FSRS-6 전용이며 전체 과목에 공통 상한을 적용합니다. 덱별 프리셋·형제 카드 묻기·오디오·타이머·자동 넘김·쉬운 요일·반복 실패 카드 관리·매개변수 자동 최적화·SM-2 전용 설정은 포함하지 않습니다. 단계는 실제 예약 시각에 출제하며 Anki의 날짜 경계 변환과는 다릅니다. 평가별 고정 간격을 별도로 지정하면 FSRS와 학습 단계보다 우선합니다.", cls: "setting-item-description" });
   container.createEl("a", { text: "Anki 공식 학습관리 설정 설명", href: "https://docs.ankiweb.net/deck-options.html" });
 }

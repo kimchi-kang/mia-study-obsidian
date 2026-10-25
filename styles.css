@@ -942,3 +942,26 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-header .mia-version { font-size: 11px; font-weight: 400; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
 
 .mia-header .mia-brand { display: flex; align-items: baseline; gap: 6px; flex-shrink: 0; }
+
+/* Learning settings stay visible on the initial dashboard. */
+.mia-dashboard-settings {
+  padding: 20px;
+  margin-block: 16px 24px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 16px;
+  background: var(--background-secondary);
+  min-width: 0;
+}
+.mia-dashboard-settings > h3:first-child { margin-top: 0; }
+.mia-dashboard-settings .setting-item { min-width: 0; }
+.mia-dashboard-settings .setting-item-info { min-width: 0; }
+.mia-dashboard-settings .setting-item-control { min-width: 0; flex-wrap: wrap; }
+.mia-dashboard-settings :is(input, textarea, select) { max-width: 100%; }
+.mia-dashboard-settings textarea { min-height: 80px; }
+@container mia-view (max-width: 700px) {
+  .mia-dashboard-settings { padding: 16px; }
+  .mia-dashboard-settings .setting-item:not(.mod-toggle) { display: block; }
+  .mia-dashboard-settings .setting-item:not(.mod-toggle) .setting-item-info { margin: 0 0 8px; }
+  .mia-dashboard-settings .setting-item:not(.mod-toggle) .setting-item-control { justify-content: stretch; width: 100%; }
+  .mia-dashboard-settings .setting-item:not(.mod-toggle) :is(input, textarea, select, button) { width: 100%; }
+}
