@@ -935,3 +935,6 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 /* Markdown-only questions keep their heading spacing after math rendering. */
 .mia-question-section > h2 > p,
 .mia-preview-modal h3 > p { margin: 0; }
+
+.mia-question-heading > p { display: inline; margin: 0; }
+.mia-question-heading { max-width: 100%; overflow-x: auto; }

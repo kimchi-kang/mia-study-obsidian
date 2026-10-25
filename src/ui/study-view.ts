@@ -1,3 +1,4 @@
+import { renderQuestionTitle } from "./question-title";
 import { Component, ItemView, MarkdownRenderer, Notice, Platform, ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { Rating } from "ts-fsrs";
 import type MiaStudyPlugin from "../main";
@@ -530,7 +531,9 @@ export class MiaStudyView extends ItemView {
       const current = this.plugin.index.questionById(saved.queue[saved.queueIndex] ?? saved.seed[0] ?? "");
       const resume = root.createDiv({ cls: "mia-resume-card" });
       resume.createEl("span", { text: "마지막 학습", cls: "mia-card-label" });
-      resume.createEl("h3", { text: current?.heading ?? "저장된 학습" });
+      const heading = resume.createEl("h3");
+      if (current) this.renderQuestionHeading(heading, current);
+      else heading.setText("저장된 학습");
       resume.createEl("p", { text: `${current?.subject ?? ""} · ${saved.sessionMode === "recall" ? "시험" : "암기"} · ${Math.min(saved.queueIndex + 1, saved.queue.length)} / ${saved.queue.length}${saved.queueIndex >= saved.queue.length ? " · 다음 복습 대기" : ""}` });
       resume.createEl("small", { text: `${new Date(saved.updatedAt).toLocaleString("ko-KR")} 저장`, cls: "mia-muted" });
       resume.createEl("button", { text: "이어하기", cls: "mod-cta" }).addEventListener("click", () => this.resumeStudy());
@@ -835,7 +838,7 @@ export class MiaStudyView extends ItemView {
         for (const question of matches.slice(0, this.candidateLimit)) {
           const row = candidateList.createDiv({ cls: "mia-candidate" });
           const label = row.createDiv({ cls: "mia-candidate-label" });
-          label.createEl("strong", { text: question.heading });
+          this.renderQuestionHeading(label.createEl("strong"), question);
           label.createEl("small", { text: question.filePath });
           const candidateActions = row.createDiv({ cls: "mia-inline-actions" });
           candidateActions.createEl("button", { text: "등록" }).addEventListener("click", () => this.plugin.editMetadata(question));
@@ -852,10 +855,14 @@ export class MiaStudyView extends ItemView {
     }
   }
 
+  private renderQuestionHeading(element: HTMLElement, question: QuestionRecord): void {
+    this.readingRenders.push(renderQuestionTitle(this.app, question.heading, element, question.filePath, this.renderComponent ?? this));
+  }
+
   private renderQuestionRow(parent: HTMLElement, question: QuestionRecord & { id: string }): void {
     const row = parent.createDiv({ cls: "mia-row" });
     const body = row.createDiv({ cls: "mia-row-body" });
-    body.createEl("strong", { text: question.heading });
+    this.renderQuestionHeading(body.createEl("strong"), question);
     const prompt = body.createDiv({ cls: "mia-row-prompt mia-markdown" });
     this.readingRenders.push(MarkdownRenderer.render(this.app, question.questionMarkdown, prompt, question.filePath, this.renderComponent ?? this));
     body.createEl("small", { text: `${question.subject} · ${question.questionType} · 핵심 ${question.coreKeywords.map((item) => item.label).join(", ") || "없음"} · 보조 ${question.subKeywords.map((item) => item.label).join(", ") || "없음"}` });
@@ -893,7 +900,7 @@ export class MiaStudyView extends ItemView {
       for (const question of questions.slice(0, 300)) {
         const row = list.createDiv({ cls: "mia-row" });
         const body = row.createDiv({ cls: "mia-row-body" });
-        body.createEl("strong", { text: question.heading });
+        this.renderQuestionHeading(body.createEl("strong"), question);
         const review = this.plugin.store.getReview(question.id);
         body.createEl("small", { text: `${question.subject} · 긴급도 ${weaknessUrgency(review)}점 · ${review?.lastRating === Rating.Again ? "못 암기" : "애매"}` });
         const actions = row.createDiv({ cls: "mia-row-actions" });
@@ -979,7 +986,8 @@ export class MiaStudyView extends ItemView {
           details.addEventListener("click", (event) => event.stopPropagation());
           details.createEl("summary", { text: "연결 질문 보기" });
           for (const question of questions.slice(0, 300)) {
-            const questionButton = details.createEl("button", { text: question.heading });
+            const questionButton = details.createEl("button");
+            this.renderQuestionHeading(questionButton, question);
             questionButton.addEventListener("click", () => void this.plugin.openQuestionDetail(question));
           }
         }
@@ -1080,11 +1088,7 @@ export class MiaStudyView extends ItemView {
     questionSection.createDiv({ text: "질문", cls: "mia-card-label" });
     const heading = questionSection.createEl("h2");
     const headingIsPrompt = question.questionMarkdown.trim() === question.heading.trim();
-    if (headingIsPrompt) {
-      this.readingRenders.push(MarkdownRenderer.render(this.app, question.questionMarkdown, heading, question.filePath, this.renderComponent ?? this));
-    } else {
-      heading.setText(question.heading);
-    }
+    this.renderQuestionHeading(heading, question);
     const sessionGrade = this.sessionAttempts.get(this.queueIndex)?.grade;
     if (sessionGrade) questionSection.createEl("p", { text: `이번 학습 평가: ${GRADE_LABELS[sessionGrade]} · 다른 평가를 누르면 기존 기록을 대체합니다.`, cls: "mia-session-rating" });
     if (!headingIsPrompt) {
@@ -1136,7 +1140,7 @@ export class MiaStudyView extends ItemView {
         const row = related.createDiv({ cls: "mia-related-item" });
         const open = row.createEl("button", { cls: "mia-related-open" });
         open.setAttr("aria-label", `${target.heading} 질문과 정답 미리보기`);
-        open.createEl("strong", { text: target.heading });
+        this.renderQuestionHeading(open.createEl("strong"), target);
         open.createEl("small", { text: item.reasons.join(" · ") });
         open.addEventListener("click", () => {
           if (this.reviewSavePending()) return;

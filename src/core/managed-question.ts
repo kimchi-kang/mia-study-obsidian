@@ -32,6 +32,9 @@ function newlineFor(content: string): string {
 
 function cleanHeading(markdown: string): string {
   const firstLine = markdown.split(/\r?\n/).map((line) => line.trim()).find(Boolean) ?? "새 질문";
+  // Keep TeX operators, subscripts and paired delimiters intact in generated titles.
+  if (firstLine === "$$") return "수식 질문";
+  if (firstLine.includes("$")) return firstLine.replace(/^#+\s*/, "");
   const plain = firstLine
     .replace(/^#+\s*/, "")
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseQuestionFile } from "../src/core/question-parser";
 import {
   appendManagedQuestion,
+  renderManagedQuestion,
   createSubjectBank,
   deleteCurrentManagedQuestion,
   renameSubjectBank,
@@ -115,5 +116,19 @@ describe("managed question documents", () => {
     expect(renameSubjectBank("# 회로 문제은행\n\n본문\n", "회로", "전자회로"))
       .toBe("# 전자회로 문제은행\n\n본문\n");
     expect(renameSubjectBank("# 사용자 제목\n", "회로", "전자회로")).toBe("# 사용자 제목\n");
+  });
+});
+
+
+describe("generated equation headings", () => {
+  it.each([String.raw`$F_i = q*v_i$`, "$" + "x_1+".repeat(30) + "x_2$"])("preserves TeX in the heading: %s", questionMarkdown => {
+    const markdown = renderManagedQuestion({ ...first, questionMarkdown }, "mia-q-math-title");
+    expect(markdown.split("\n")[0]).toBe(`### ${questionMarkdown}`);
+    expect(markdown).toContain(`> ${questionMarkdown}`);
+  });
+  it("labels a display equation without using an opening delimiter as the title", () => {
+    const markdown = renderManagedQuestion({ ...first, questionMarkdown: "$$\nx_1+x_2\n$$" }, "mia-q-block-title");
+    expect(markdown.split("\n")[0]).toBe("### 수식 질문");
+    expect(markdown).toContain("> $$\n> x_1+x_2\n> $$");
   });
 });
