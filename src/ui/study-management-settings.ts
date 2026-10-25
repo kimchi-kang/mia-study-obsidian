@@ -45,13 +45,13 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
   container.createEl("h4", { text: "새 문제 · 재학습" });
   for (const [key, label, example] of [["learningSteps", "학습 단계", "1m 10m"], ["relearningSteps", "재학습 단계", "10m"]] as const) {
     let value = draft[key].join(" ");
-    new Setting(container).setName(label).setDesc(`공백으로 구분: ${example}. m=분, h=시간, d=일. FSRS는 1일 미만을 권장합니다. 비우면 FSRS가 단기 간격도 계산합니다.`).addText(text => {
+    new Setting(container).setName(label).setDesc(`공백으로 구분: ${example}. m=분, h=시간, d=일. 1분 이상이며 분 단위로 나누어떨어져야 합니다. FSRS는 1일 미만을 권장합니다. 비우면 FSRS가 단기 간격도 계산합니다.`).addText(text => {
       text.setValue(value).setPlaceholder(example).onChange(input => { value = input; });
       text.inputEl.setAttribute("aria-label", label);
     });
     validators.push(() => {
       const steps = parseSteps(value);
-      if (!steps) { new Notice(`${label}: 1m 10m처럼 양수와 m/h/d 단위를 입력하세요.`); return false; }
+      if (!steps) { new Notice(`${label}: 1m 10m처럼 1분 이상·분 단위의 m/h/d 값을 입력하세요.`); return false; }
       draft[key] = steps; return true;
     });
   }

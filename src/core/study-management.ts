@@ -1,5 +1,5 @@
 import { checkParameters, State, type StepUnit } from "ts-fsrs";
-import { DEFAULT_STUDY_MANAGEMENT, type QuestionRecord, type QuestionReviewState, type StudyManagementSettings } from "./models";
+import { DEFAULT_STUDY_MANAGEMENT, MAX_GRADE_INTERVAL_MINUTES, type QuestionRecord, type QuestionReviewState, type StudyManagementSettings } from "./models";
 
 export function parseSteps(text: string): StepUnit[] | null {
   const parts = text.trim() ? text.trim().split(/\s+/) : [];
@@ -7,10 +7,12 @@ export function parseSteps(text: string): StepUnit[] | null {
   for (const part of parts) {
     if (!/^(?:\d+(?:\.\d+)?)(?:m|h|d)$/.test(part)) return null;
     const amount = Number(part.slice(0, -1));
-    if (!Number.isFinite(amount) || amount <= 0 || amount > 36500) return null;
-    // FSRS recommends short learning steps, while accepting explicit day steps.
     const unit = part.at(-1);
-    if (unit === "m" || unit === "h" || unit === "d") result.push(`${amount}${unit}`);
+    const minutes = amount * (unit === "d" ? 1440 : unit === "h" ? 60 : 1);
+    if (!Number.isSafeInteger(minutes) || minutes < 1 || minutes > MAX_GRADE_INTERVAL_MINUTES) return null;
+    // ts-fsrs parses step amounts with parseInt. Normalize fractional hours/days
+    // to whole minutes instead of silently truncating the configured duration.
+    if (unit === "m" || unit === "h" || unit === "d") result.push(Number.isInteger(amount) ? `${amount}${unit}` : `${minutes}m`);
   }
   return result;
 }
