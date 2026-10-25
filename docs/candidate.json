@@ -1,12 +1,12 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "date": "2026-10-25",
   "status": "released",
-  "qualification": "1.0.2 equation title coverage: resume, related questions, lists, detail and edit labels. 1024 default tests plus 2 conditional passed; typecheck/build passed. Resume flow verified in browser harness. Native app flow incomplete due to computer-control failure.",
+  "qualification": "1.0.3 running manifest version label. 1025 default tests and 2 conditional tests passed; typecheck/build passed. Browser synthetic RC example with explicit math delimiters verified at 4 viewport sizes. Plain prose is not automatically converted; no physical-device or cloud propagation qualification.",
   "files": {
-    "main.js": "a09fe66dc309c6c92e25ef89425e62882081261a9a58fb7929caeb407a1bcf88",
-    "styles.css": "3e1208b73df227bb1fedba61ec405fc2c207ce1dda36f4ed907fff6410786cf7",
-    "manifest.json": "6b865cc481a911a1511e9e07d194b7363ef40c25d0f5661c0bf284f251f84bcb",
+    "main.js": "1a4e85253bbb3c5c19cdd7cbf538600d77c1967845336aca19209fcac62d606d",
+    "styles.css": "34791fcacb608cb9038daba5ef575dc967eeb32e851aeaf7d8b801f5d43ecc34",
+    "manifest.json": "e7678483a059115a9847aaa01509adea7e62ffa87ce1cacb0aca1771b165382b",
     "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
     "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
   },
@@ -104,7 +104,7 @@
     "limits": "Controlled native API boundaries and owned root SIGKILL only; not physical UI, arbitrary in-flight write, power loss, OS sleep/resume or other OS qualification",
     "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
   },
-  "archiveSha256": "ae60662073234d5937dddf5aa22e938d29fbbe36341611a94893a36a3c6c9b90",
+  "archiveSha256": "552971d9f1816e7a76d68d0489bccd3fb32d755d428971ae719f7bdef6dd023b",
   "currentFeatureValidation": {
     "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
     "automated": {
@@ -643,18 +643,18 @@
     }
   ],
   "release": {
-    "version": "1.0.2",
-    "tag": "1.0.2",
-    "url": "https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.0.2",
-    "zipUrl": "https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.0.2/mia-study-1.0.2.zip",
+    "version": "1.0.3",
+    "tag": "1.0.3",
+    "url": "https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.0.3",
+    "zipUrl": "https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.0.3/mia-study-1.0.3.zip",
     "assetHashes": {
       "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
-      "styles.css": "3e1208b73df227bb1fedba61ec405fc2c207ce1dda36f4ed907fff6410786cf7",
-      "mia-study-1.0.2.zip": "ae60662073234d5937dddf5aa22e938d29fbbe36341611a94893a36a3c6c9b90",
-      "main.js": "a09fe66dc309c6c92e25ef89425e62882081261a9a58fb7929caeb407a1bcf88",
-      "manifest.json": "6b865cc481a911a1511e9e07d194b7363ef40c25d0f5661c0bf284f251f84bcb",
+      "mia-study-1.0.3.zip": "552971d9f1816e7a76d68d0489bccd3fb32d755d428971ae719f7bdef6dd023b",
+      "styles.css": "34791fcacb608cb9038daba5ef575dc967eeb32e851aeaf7d8b801f5d43ecc34",
+      "main.js": "1a4e85253bbb3c5c19cdd7cbf538600d77c1967845336aca19209fcac62d606d",
+      "manifest.json": "e7678483a059115a9847aaa01509adea7e62ffa87ce1cacb0aca1771b165382b",
       "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9",
-      "SHA256SUMS.txt": "0d5b949f94989274b3b2e18e3769708b23dda3de5250a7e089004bf6df96356c"
+      "SHA256SUMS.txt": "1245ba32e64e9b3e8a8ca4b2edd9d1c45d1ec05b522d3a5b1997d6faf2541367"
     }
   },
   "phoneRatingLayoutValidation": {
@@ -680,7 +680,7 @@
     ]
   },
   "evidenceScope": {
-    "currentVersion": "1.0.2",
+    "currentVersion": "1.0.3",
     "currentValidationField": "stableReleaseValidation",
     "historicalValidationFields": [
       "compactReadingValidation",
@@ -804,15 +804,23 @@
     "bundleUnchanged": true
   },
   "stableReleaseValidation": {
-    "version": "1.0.2",
-    "defaultPassed": 1024,
+    "version": "1.0.3",
+    "defaultPassed": 1025,
     "separateConditionalPassed": 2,
     "conditionalSyntheticQuestions": 1000,
     "typecheck": "passed",
     "productionBuild": "passed",
-    "resumeFlow": "Browser harness with installed Obsidian MathJax: saved card, resumed question, related title and clicked preview",
-    "nativeAppFlow": "Incomplete: computer-control input/window failures",
-    "details": "qa/1.0.2/README.md"
+    "browserViewports": [
+      320,
+      390,
+      768,
+      1280
+    ],
+    "runningVersionVisible": true,
+    "syntheticMathCount": 6,
+    "nativeDeviceTested": false,
+    "cloudPropagationVerified": false,
+    "details": "qa/1.0.3/README.md"
   },
   "previousStableRelease": {
     "release": {
@@ -849,5 +857,5 @@
       "mainSha256": "35e3a5f4db3f12e5eb0a3687af8d12dfc97283d1abe354cb60e8aa7cfe2fd775"
     }
   },
-  "baseRevision": "6c3f2f5cddc913a4fa3889d2a816886e8cab0657"
+  "baseRevision": "0c5c1ba074477b2b63887744ea27ba4cf0093023"
 }

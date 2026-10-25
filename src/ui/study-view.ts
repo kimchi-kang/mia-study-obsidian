@@ -485,10 +485,13 @@ export class MiaStudyView extends ItemView {
   private renderHeader(root: HTMLElement): void {
     const header = root.createDiv({ cls: "mia-header" });
     const title = header.createDiv();
-    const home = title.createEl("h2").createEl("button", { text: "Major Study", cls: "mia-home-button" });
+    const brand = title.createEl("h2", { cls: "mia-brand" });
+    const home = brand.createEl("button", { text: "Major Study", cls: "mia-home-button" });
     home.setAttr("type", "button");
     home.setAttr("aria-label", "Major Study 초기 화면으로 이동");
     home.addEventListener("click", () => this.showDashboard());
+    const version = brand.createEl("span", { text: `v${this.plugin.manifest.version}`, cls: "mia-version" });
+    version.setAttr("aria-label", `실행 중인 MIA Study 버전 ${this.plugin.manifest.version}`);
     title.createEl("span", { text: "FSRS-6", cls: "mia-badge" });
     const appearance = title.createEl("button", { text: "보기 설정", cls: "mia-appearance-button" });
     appearance.addEventListener("click", () => new StudyAppearanceModal(this.app, this.plugin.studyUi, () => this.refreshAppearance()).open());

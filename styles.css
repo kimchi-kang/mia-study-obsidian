@@ -938,3 +938,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 
 .mia-question-heading > p { display: inline; margin: 0; }
 .mia-question-heading { max-width: 100%; overflow-x: auto; }
+
+.mia-header .mia-version { font-size: 11px; font-weight: 400; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
+
+.mia-header .mia-brand { display: flex; align-items: baseline; gap: 6px; flex-shrink: 0; }
