@@ -1,3 +1,4 @@
+import { renderStudyManagementSettings } from "./study-management-settings";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import type MiaStudyPlugin from "../main";
 import { GradeIntervalsMinutes, MAX_GRADE_INTERVAL_MINUTES, MiaSettings } from "../core/models";
@@ -42,6 +43,7 @@ export class MiaSettingTab extends PluginSettingTab {
         if (Number.isInteger(parsed) && parsed > 0) await this.save(() => this.miaPlugin.updateSettings({ maximumIntervalDays: parsed }));
       });
     });
+    renderStudyManagementSettings(containerEl, this.miaPlugin, action => this.save(action), () => this.display());
     this.renderGradeIntervals(containerEl, settings);
     new Setting(containerEl).setName("키워드 노트 폴더").setDesc("키워드 링크를 만들 때 기준으로 표시할 폴더입니다.").addText((text) => {
       text.setValue(settings.keywordFolder).onChange(async (value) => this.save(() => this.miaPlugin.store.updateSettings({ keywordFolder: value })));

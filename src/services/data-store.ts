@@ -1,3 +1,4 @@
+import { parseStudyManagement } from "../core/study-management";
 import { mergeIntoOwnedIncoming, mergeReviewData, nextReviewVersion } from "../core/review-sync";
 import type { PluginDataStorage } from "./verified-plugin-storage";
 import {
@@ -55,6 +56,7 @@ function parseSettings(value: unknown): MiaSettings {
     }
   }
   return {
+    studyManagement: parseStudyManagement(raw.studyManagement),
     sourceRoots: roots,
     targetRetention: Math.min(0.99, Math.max(0.7, retention)),
     maximumIntervalDays: positiveInteger(raw.maximumIntervalDays, DEFAULT_SETTINGS.maximumIntervalDays),

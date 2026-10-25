@@ -184,7 +184,7 @@ export class MiaStudyView extends ItemView {
     const requestedIds = questionIds ? new Set(questionIds) : null;
     const scope = requestedIds ? questions.filter((question) => requestedIds.has(question.id)) : questions;
     const sequential = mode === "browse" && this.plugin.studyUi.appearance.memorizationOrder === "sequential";
-    const eligible = buildReviewQueue(scope, this.plugin.store.reviews, this.plugin.fsrs, sequential ? {} : { random: Math.random });
+    const eligible = buildReviewQueue(scope, this.plugin.store.reviews, this.plugin.fsrs, mode === "browse" ? (sequential ? {} : { random: Math.random }) : { management: this.plugin.store.settings.studyManagement });
     const eligibleIds = new Set(eligible.map((question) => question.id));
     this.queue = (sequential ? scope.filter((question) => question.id && eligibleIds.has(question.id)) : eligible)
       .map((question) => question.id);
@@ -529,6 +529,9 @@ export class MiaStudyView extends ItemView {
     const progress = calculateProgress(questions, this.plugin.store.reviews, this.plugin.fsrs);
     const due = progress.due;
     const fresh = progress.new;
+    const available = buildReviewQueue(questions, this.plugin.store.reviews, this.plugin.fsrs, { management: this.plugin.store.settings.studyManagement });
+    const availableNew = available.filter(question => this.plugin.fsrs.isNew(this.plugin.store.getReview(question.id))).length;
+    const availableDue = available.length - availableNew;
     const saved = this.plugin.studyUi.resume;
     if (saved) {
       const current = this.plugin.index.questionById(saved.queue[saved.queueIndex] ?? saved.seed[0] ?? "");
@@ -559,11 +562,11 @@ export class MiaStudyView extends ItemView {
     manage.createEl("button", { text: "키워드 추가" }).addEventListener("click", () => this.plugin.openKeywordEditor());
     manage.createEl("button", { text: "출력" }).addEventListener("click", () => this.plugin.openSubjectExport());
     const action = root.createDiv({ cls: "mia-primary-card" });
-    action.createEl("h3", { text: due + fresh > 0 ? "오늘 학습을 시작할까요?" : "오늘 예정된 복습이 없습니다" });
-    action.createEl("p", { text: `복습 ${due}개 · 새 문제 ${fresh}개 · 복습 우선 · 각 그룹 무작위` });
+    action.createEl("h3", { text: available.length > 0 ? "오늘 학습을 시작할까요?" : "오늘 학습을 마쳤습니다" });
+    action.createEl("p", { text: `오늘 출제: 복습 ${availableDue}개 · 새 문제 ${availableNew}개 · 전체 대기: 복습 ${due}개 · 새 문제 ${fresh}개` });
     const actions = action.createDiv({ cls: "mia-inline-actions" });
     const start = actions.createEl("button", { text: "시험 모드 시작", cls: "mod-cta" });
-    start.disabled = due + fresh === 0;
+    start.disabled = available.length === 0;
     start.addEventListener("click", () => this.startReview());
     const browse = actions.createEl("button", { text: "전체 암기 모드" });
     browse.disabled = due + fresh === 0;
@@ -589,12 +592,12 @@ export class MiaStudyView extends ItemView {
         card.createEl("strong", { text: subject });
         card.createEl("span", { text: `${items.length}문제 · 복습 ${subjectDue} · 새 문제 ${subjectNew}` });
         const subjectActions = card.createDiv({ cls: "mia-inline-actions" });
-        const reviewIds = buildReviewQueue(items, this.plugin.store.reviews, this.plugin.fsrs).map((question) => question.id);
+        const reviewIds = buildReviewQueue(items, this.plugin.store.reviews, this.plugin.fsrs, { management: this.plugin.store.settings.studyManagement }).map((question) => question.id);
         const review = subjectActions.createEl("button", { text: "시험" });
         review.disabled = reviewIds.length === 0;
         review.addEventListener("click", () => this.startReview(reviewIds));
         const memorize = subjectActions.createEl("button", { text: "암기" });
-        memorize.disabled = reviewIds.length === 0;
+        memorize.disabled = subjectDue + subjectNew === 0;
         memorize.addEventListener("click", () => {
           this.startReview(items.map((question) => question.id), "browse");
         });
@@ -649,7 +652,7 @@ export class MiaStudyView extends ItemView {
       this.progressLink(values, `너무 쉬움 ${counts.easy}`, "easy", subject);
       const actions = card.createDiv({ cls: "mia-inline-actions" });
       const subjectQuestions = questions.filter((question) => question.subject === subject);
-      const reviewIds = buildReviewQueue(subjectQuestions, this.plugin.store.reviews, this.plugin.fsrs)
+      const reviewIds = buildReviewQueue(subjectQuestions, this.plugin.store.reviews, this.plugin.fsrs, { management: this.plugin.store.settings.studyManagement })
         .map((question) => question.id);
       const start = actions.createEl("button", { text: "복습 시작", cls: "mod-cta" });
       start.disabled = reviewIds.length === 0;

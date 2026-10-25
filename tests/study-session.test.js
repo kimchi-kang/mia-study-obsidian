@@ -37,6 +37,7 @@ import { StudyUiStore } from "../src/services/study-ui-store";
 import { MiaStudyView } from "../src/ui/study-view";
 import { MiaDataStore } from "../src/services/data-store";
 import { buildReviewQueue } from "../src/core/recommendation-engine";
+import { DEFAULT_SETTINGS } from "../src/core/models";
 import { calculateProgress } from "../src/core/progress";
 
 function setup({ failSave = false, start = true, linked = false } = {}) {
@@ -53,6 +54,7 @@ function setup({ failSave = false, start = true, linked = false } = {}) {
     fsrs: new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500 }),
     index: { diagnostics: [], candidates: [], isReady: true, registered: questions, questionById: id => questions.find(item => item.id === id) },
     store: {
+      settings: { ...structuredClone(DEFAULT_SETTINGS), studyManagement: { ...structuredClone(DEFAULT_SETTINGS.studyManagement), newCardOrder: "random", newReviewOrder: "after", reviewOrder: "random" } },
       reviews, getReview: id => reviews[id],
       getReviewVersion: id => reviews[id] ? JSON.stringify(reviews[id]) : null,
       setReview: async (id, state) => { if (failSave) throw Error("disk full"); reviews[id] = state; },
@@ -74,6 +76,19 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe("study view scheduling integration", () => {
+  it("disables global and subject recall at the daily limit while leaving browse available", async () => {
+    const ui = setup({ start: false });
+    ui.plugin.store.settings.studyManagement.newCardsPerDay = 0;
+    ui.view.showDashboard();
+    expect(ui.exactButton("시험 모드 시작").disabled).toBe(true);
+    expect(ui.exactButton("시험").disabled).toBe(true);
+    expect(ui.exactButton("전체 암기 모드").disabled).toBe(false);
+    expect(ui.exactButton("암기").disabled).toBe(false);
+    await ui.exactButton("암기").click();
+    expect(ui.view.getState().queue).toEqual(["q"]);
+    expect(ui.view.getState().sessionMode).toBe("browse");
+  });
+
   it.each([
     ["시험 모드 시작", "recall", false], ["전체 암기 모드", "browse", false],
     ["시험", "recall", true], ["암기", "browse", true],
