@@ -85,7 +85,36 @@ export interface QuestionReviewState {
 export type GradeIntervalsMinutes = Partial<Record<1 | 2 | 3 | 4, number>>;
 export const MAX_GRADE_INTERVAL_MINUTES = 36500 * 24 * 60;
 
+export interface StudyManagementSettings {
+  newCardsPerDay: number;
+  reviewsPerDay: number;
+  newCardsIgnoreReviewLimit: boolean;
+  dayStartsAt: number;
+  learningSteps: import("ts-fsrs").StepUnit[];
+  relearningSteps: import("ts-fsrs").StepUnit[];
+  newCardOrder: "sequential" | "random";
+  newReviewOrder: "before" | "after" | "mix";
+  reviewOrder: "due" | "retrievability" | "random" | "interval-ascending" | "interval-descending";
+  enableFuzz: boolean;
+  fsrsParameters: number[];
+}
+
+export const DEFAULT_STUDY_MANAGEMENT: StudyManagementSettings = {
+  newCardsPerDay: 20,
+  reviewsPerDay: 200,
+  newCardsIgnoreReviewLimit: false,
+  dayStartsAt: 4,
+  learningSteps: ["1m", "10m"],
+  relearningSteps: ["10m"],
+  newCardOrder: "sequential",
+  newReviewOrder: "mix",
+  reviewOrder: "due",
+  enableFuzz: true,
+  fsrsParameters: [],
+};
+
 export interface MiaSettings {
+  studyManagement: StudyManagementSettings;
   sourceRoots: string[];
   targetRetention: number;
   maximumIntervalDays: number;
@@ -103,6 +132,7 @@ export interface MiaPluginData {
 }
 
 export const DEFAULT_SETTINGS: MiaSettings = {
+  studyManagement: DEFAULT_STUDY_MANAGEMENT,
   sourceRoots: ["MIA"],
   targetRetention: 0.9,
   maximumIntervalDays: 36500,

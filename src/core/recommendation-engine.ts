@@ -1,3 +1,5 @@
+import { orderManagedQueue } from "./study-management";
+import type { StudyManagementSettings } from "./models";
 import { Rating } from "ts-fsrs";
 import { FsrsService } from "./fsrs-service";
 import { QUESTION_TYPES, QuestionRecord, QuestionReviewState } from "./models";
@@ -92,6 +94,7 @@ export function recommendQuestions(
 export interface ReviewQueueOptions {
   now?: Date;
   random?: () => number;
+  management?: StudyManagementSettings;
 }
 
 export function buildReviewQueue(
@@ -108,6 +111,10 @@ export function buildReviewQueue(
       || left.heading.localeCompare(right.heading, "ko"));
   const fresh = registered
     .filter((question) => fsrsService.isNew(reviews[question.id]));
+  if (options.management) {
+    return orderManagedQueue(due, fresh, reviews, options.management, now, options.random ?? Math.random,
+      (left, right) => fsrsService.compareDue(reviews[left], reviews[right], now));
+  }
   if (options.random) {
     // Shuffle each eligibility group once; future reviews never enter either group.
     for (const group of [due, fresh]) {

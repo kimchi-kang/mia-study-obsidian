@@ -11,6 +11,7 @@ import {
   StrategyMode,
 } from "ts-fsrs";
 import {
+  DEFAULT_STUDY_MANAGEMENT,
   MiaSettings,
   QuestionReviewState,
   SerializedFsrsCard,
@@ -67,14 +68,18 @@ export class FsrsService {
   private readonly maximumIntervalDays: number;
   private readonly gradeIntervalsMinutes: MiaSettings["gradeIntervalsMinutes"];
 
-  constructor(settings: Pick<MiaSettings, "targetRetention" | "maximumIntervalDays"> & Partial<Pick<MiaSettings, "gradeIntervalsMinutes">>) {
+  constructor(settings: Pick<MiaSettings, "targetRetention" | "maximumIntervalDays"> & Partial<Pick<MiaSettings, "gradeIntervalsMinutes" | "studyManagement">>) {
     this.targetRetention = settings.targetRetention;
     this.maximumIntervalDays = settings.maximumIntervalDays;
     this.gradeIntervalsMinutes = { ...settings.gradeIntervalsMinutes };
+    const management = settings.studyManagement ?? DEFAULT_STUDY_MANAGEMENT;
     this.scheduler = fsrs({
       request_retention: settings.targetRetention,
       maximum_interval: settings.maximumIntervalDays,
-      enable_fuzz: true,
+      enable_fuzz: management.enableFuzz,
+      learning_steps: management.learningSteps,
+      relearning_steps: management.relearningSteps,
+      ...(management.fsrsParameters.length ? { w: management.fsrsParameters } : {}),
     }).useStrategy(StrategyMode.SEED, GenSeedStrategyWithCardId("questionSeed"));
   }
 
