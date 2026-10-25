@@ -14,7 +14,7 @@ vi.mock("obsidian", () => {
     click() { if (!this.disabled) this.handlers.get("click")?.(); }
   }
   class Setting {
-    constructor(parent) { this.parent = parent; }
+    constructor(parent) { this.parent = parent; this.controlEl = parent; }
     setName() { return this; } setDesc() { return this; }
     addDropdown(callback) {
       const select = this.parent.createEl("select");
@@ -88,7 +88,7 @@ describe("modal interaction regressions", () => {
     modal.contentEl.find("전체 상세").click(); expect(modal.close).toHaveBeenCalledOnce(); expect(details).toHaveBeenCalledOnce();
     modal.onClose(); expect(restore).toHaveBeenCalledOnce(); expect(modal.contentEl.children).toHaveLength(0);
   });
-  it("applies device appearance settings through the controls without closing the modal", () => {
+  it("applies device appearance settings only after saving", () => {
     const saved = new Map(), change = vi.fn();
     const store = new StudyUiStore({ loadLocalStorage: key => saved.get(key), saveLocalStorage: (key, value) => saved.set(key, value) }, "ui.json");
     const modal = new StudyAppearanceModal({}, store, change); modal.onOpen();
@@ -97,8 +97,10 @@ describe("modal interaction regressions", () => {
     selects[0].handlers.get("change")("large"); selects[1].handlers.get("change")("compact");
     toggles[0].handlers.get("change")(true); selects[2].handlers.get("change")("split");
     toggles[1].handlers.get("change")(false); selects[4].handlers.get("change")("firm"); selects[3].handlers.get("change")("sequential");
+    expect(change).not.toHaveBeenCalled();
+    modal.contentEl.find("보기 설정 저장").click();
     expect(store.appearance).toEqual({ size: "large", density: "compact", focus: true, answerLayout: "split", swipeEnabled: false, swipeSensitivity: "firm", memorizationOrder: "sequential" });
-    expect(change).toHaveBeenCalledTimes(7); expect(modal.close).not.toHaveBeenCalled();
+    expect(change).toHaveBeenCalledOnce(); expect(modal.close).toHaveBeenCalledOnce();
   });
   it("preserves another subject's follow-up path when metadata is saved without edits", async () => {
     const save = vi.fn().mockResolvedValue(undefined);
