@@ -637,7 +637,7 @@ export class MiaStudyView extends ItemView {
       } catch (error) {
         new Notice(`학습관리 설정 저장 실패: ${errorMessage(error)}`);
       }
-    }, () => { this.dashboardSettingsPanel = null; this.render(); });
+    });
   }
 
   private renderProgress(root: HTMLElement): void {

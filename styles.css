@@ -965,3 +965,41 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   .mia-dashboard-settings .setting-item:not(.mod-toggle) .setting-item-control { justify-content: stretch; width: 100%; }
   .mia-dashboard-settings .setting-item:not(.mod-toggle) :is(input, textarea, select, button) { width: 100%; }
 }
+
+.mia-settings-basic { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.mia-settings-basic > h4 { grid-column: 1 / -1; margin-block: 8px 0; }
+.mia-settings-basic > .setting-item { display: block; border: 0; padding: 0; }
+.mia-settings-basic > .setting-item .setting-item-control { width: 100%; margin-top: 8px; }
+.mia-settings-basic > .setting-item input { width: 100%; }
+.mia-settings-status { color: var(--text-muted); font-size: var(--font-ui-small); }
+.mia-step-editor { padding: 14px; border: 1px solid var(--background-modifier-border); border-radius: 12px; min-width: 0; }
+.mia-step-editor h5 { font-size: var(--font-ui-medium); margin: 0 0 12px; }
+.mia-step-row { display: grid; grid-template-columns: minmax(54px, 1fr) minmax(86px, 1fr) auto; gap: 6px; align-items: center; margin-bottom: 8px; }
+.mia-step-row > input, .mia-step-row > select { width: 100%; min-width: 0; }
+.mia-step-row > button { padding-inline: 10px; }
+.mia-step-editor .mia-step-mode { display: block; border: 0; padding-block: 8px; }
+.mia-step-editor .mia-step-mode .setting-item-control { margin: 6px 0 8px; width: 100%; }
+.mia-step-editor .mia-step-mode select { width: 100%; }
+.mia-settings-advanced { margin-top: 16px; padding: 12px 0; border-block: 1px solid var(--background-modifier-border); }
+.mia-settings-advanced > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; list-style: none; }
+.mia-settings-advanced > summary::before { content: "+"; margin-inline-end: 10px; }
+.mia-settings-advanced[open] > summary::before { content: "−"; }
+.mia-learning-settings-actions, .mia-appearance-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.mia-learning-settings-actions > button, .mia-appearance-actions > button { flex: 1; min-height: 44px; }
+.mia-toggle-state { color: var(--text-muted); white-space: nowrap; font-size: var(--font-ui-small); }
+.mia-appearance-modal .setting-item-control { gap: 10px; }
+.mia-appearance-modal:focus { outline: none; }
+@container mia-view (max-width: 700px) {
+  .mia-settings-basic { grid-template-columns: minmax(0, 1fr); }
+  .mia-dashboard-settings .mia-step-row > :is(input, select, button) { width: auto; }
+  .mia-dashboard-settings .mia-step-row > :is(input, select) { width: 100%; }
+}
+.is-mobile .mia-learning-settings-actions > button, .is-mobile .mia-appearance-actions > button { min-width: 120px; }
+/* State labels need room beside the touch-sized toggle. */
+.is-mobile :is(.mia-appearance-modal, .mia-keyboard-settings) .setting-item.mod-toggle .setting-item-control:has(.mia-toggle-state) {
+  flex-basis: 86px;
+  min-width: 86px;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+.mia-step-editor [hidden] { display: none !important; }

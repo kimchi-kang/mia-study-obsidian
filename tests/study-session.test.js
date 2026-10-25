@@ -8,13 +8,14 @@ vi.mock("obsidian", () => {
   class Element {
     children = []; handlers = new Map(); text = ""; disabled = false;
     style = { setProperty() {} }; dataset = {}; attrs = {};
-    constructor(options = {}) { this.text = options.text ?? ""; this.cls=options.cls??""; }
+    constructor(options = {}) { this.text = options.text ?? ""; this.cls=options.cls??""; this.attrs={...options.attr}; this.validity={valid:true}; this.value=options.value??""; }
     createEl(tag, options = {}) { const child = new Element(options); child.tag = tag; child.parent=this; this.children.push(child); return child; }
     createDiv(options) { return this.createEl("div", options); }
     createSpan(options) { return this.createEl("span", options); }
     empty() { this.children = []; }
     appendChild(child) { child.remove(); child.parent=this; this.children.push(child); return child; }
     setAttribute(name,value) { this.attrs[name]=value; }
+    removeAttribute(name) { delete this.attrs[name]; }
     setText(text) { this.text = text; }
     addClass() {} removeClass() {} setAttr(name,value) { this.attrs[name]=value; } focus() {}
     querySelector(selector) {
@@ -35,7 +36,7 @@ vi.mock("obsidian", () => {
     addOption() { return this; }
   }
   class Setting {
-    constructor(root) { this.settingEl=root.createDiv({cls:"setting-item"}); this.control=this.settingEl.createDiv(); }
+    constructor(root) { this.settingEl=root.createDiv({cls:"setting-item"}); this.control=this.settingEl.createDiv(); this.controlEl=this.control; }
     setName(value) { this.settingEl.createEl("label",{text:value}); return this; }
     setDesc(value) { this.settingEl.createEl("p",{text:value}); return this; }
     addText(fn) { fn(new Control(this.control,"input")); return this; }
@@ -112,8 +113,8 @@ describe("dashboard learning settings", () => {
   };
   it("shows every learning setting directly before the stats without another settings screen", async () => {
     const ui = await dashboard();
-    for (const label of ["상세 학습관리 · Anki 방식", "하루 새 문제", "학습 단계", "재학습 단계", "새 문제 순서", "복습 정렬", "FSRS-6 매개변수", "학습관리 설정 저장"]) expect(ui.content()).toContain(label);
-    expect(ui.content().indexOf("상세 학습관리")).toBeLessThan(ui.content().indexOf("등록 문제"));
+    for (const label of ["학습 설정", "하루 새 문제", "처음 배우는 문제", "틀린 문제", "새 문제 순서", "복습 순서", "FSRS-6 매개변수", "학습 설정 저장"]) expect(ui.content()).toContain(label);
+    expect(ui.content().indexOf("학습 설정")).toBeLessThan(ui.content().indexOf("등록 문제"));
   });
   it("preserves an unsaved field across dashboard refreshes and saves it from home", async () => {
     const ui = await dashboard(); const input = field(ui, "하루 새 문제");
@@ -121,19 +122,47 @@ describe("dashboard learning settings", () => {
     ui.view.render();
     expect(field(ui, "하루 새 문제")).toBe(input);
     expect(field(ui, "하루 새 문제").value).toBe("7");
-    await ui.exactButton("학습관리 설정 저장").click();
+    await ui.exactButton("학습 설정 저장").click();
     expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(7);
     expect(field(ui, "하루 새 문제").value).toBe("7");
+  });
+  it("saves numeric step amounts and units without requiring Anki syntax", async () => {
+    const ui = await dashboard();
+    const amount = field(ui, "처음 배우는 문제 1단계 간격"); amount.value = "1.5"; amount.handlers.get("input")();
+    const unit = field(ui, "처음 배우는 문제 1단계 단위"); unit.value = "h"; unit.handlers.get("change")();
+    await ui.exactButton("학습 설정 저장").click();
+    expect(ui.plugin.store.settings.studyManagement.learningSteps).toEqual(["90m", "10m"]);
+  });
+  it("loads defaults into the draft without silently saving them", async () => {
+    const ui = await dashboard();ui.plugin.store.settings.studyManagement.newCardsPerDay = 7;ui.view.render();
+    await ui.exactButton("기본값 불러오기").click();
+    expect(field(ui, "하루 새 문제").value).toBe("20");expect(ui.plugin.updateSettings).not.toHaveBeenCalled();expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(7);
+    await ui.exactButton("학습 설정 저장").click();expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(20);
+  });
+  it("allows automatic steps and adds/removes manual steps without ambiguous labels", async () => {
+    const ui = await dashboard();
+    field(ui, "처음 배우는 문제 1단계 삭제").click();
+    expect(field(ui, "처음 배우는 문제 1단계 간격").value).toBe("10");
+    field(ui, "처음 배우는 문제 단계 추가").click();
+    expect(field(ui, "처음 배우는 문제 2단계 간격").value).toBe("10");
+    field(ui, "처음 배우는 문제 간격 결정").handlers.get("input")("auto");
+    await ui.exactButton("학습 설정 저장").click();expect(ui.plugin.store.settings.studyManagement.learningSteps).toEqual([]);
+  });
+  it("reveals advanced settings and points to an invalid parameter field on save", async () => {
+    const ui = await dashboard();const parameters = field(ui, "FSRS-6 매개변수");parameters.handlers.get("input")("1, 2");
+    await ui.exactButton("학습 설정 저장").click();expect(ui.plugin.updateSettings).not.toHaveBeenCalled();
+    const visit = el => el.tag === "details" ? el : el.children.map(visit).find(Boolean);
+    expect(visit(ui.view.contentEl).open).toBe(true);
   });
   it("keeps the draft and allows retry after a rejected save", async () => {
     const ui = await dashboard(); const input = field(ui, "하루 새 문제");
     input.value = "9"; input.handlers.get("input")("9");
     ui.plugin.updateSettings.mockRejectedValueOnce(new Error("disk full"));
-    await ui.exactButton("학습관리 설정 저장").click();
+    await ui.exactButton("학습 설정 저장").click();
     expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(20);
     expect(field(ui, "하루 새 문제").value).toBe("9");
-    expect(ui.exactButton("학습관리 설정 저장").disabled).toBe(false);
-    await ui.exactButton("학습관리 설정 저장").click();
+    expect(ui.exactButton("학습 설정 저장").disabled).toBe(false);
+    await ui.exactButton("학습 설정 저장").click();
     expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(9);
   });
 });

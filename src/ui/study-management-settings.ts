@@ -5,90 +5,148 @@ import { parseSteps, validParameters } from "../core/study-management";
 
 type Save = (action: () => Promise<void>) => Promise<void>;
 
-export function renderStudyManagementSettings(container: HTMLElement, plugin: MiaStudyPlugin, save: Save, refresh: () => void): void {
-  container.createEl("h3", { text: "상세 학습관리 · Anki 방식" });
-  container.createEl("p", { text: "시험 모드에 적용되는 전체 과목 공통 설정입니다. 암기 모드는 일일 상한 없이 훑어볼 수 있습니다. 설정 변경은 다음 학습·평가부터 적용하며 기존 복습일과 이력은 유지합니다.", cls: "setting-item-description" });
-  const draft = structuredClone(plugin.store.settings.studyManagement);
-  const validators: Array<() => boolean> = [];
-  const number = (key: "newCardsPerDay" | "reviewsPerDay" | "dayStartsAt", label: string, desc: string, max: number) => {
-    let value = String(draft[key]); let valid = true;
-    new Setting(container).setName(label).setDesc(desc).addText(text => {
-      text.setValue(value).onChange(input => { value = input; valid = text.inputEl.validity.valid; });
-      text.inputEl.type = "number"; text.inputEl.min = "0"; text.inputEl.max = String(max); text.inputEl.step = "1";
-      text.inputEl.setAttribute("aria-label", label);
+/** The dashboard and Obsidian settings share the same draft, validation and save. */
+export function renderStudyManagementSettings(container: HTMLElement, plugin: MiaStudyPlugin, save: Save): void {
+  const render = (initial: StudyManagementSettings, defaultsLoaded = false) => {
+    container.empty();
+    const draft = structuredClone(initial);
+    const validators: Array<() => boolean> = [];
+    container.createEl("h3", { text: "학습 설정" });
+    container.createEl("p", { text: "하루 학습량과 다시 볼 간격을 정하세요. 저장하면 다음 학습부터 적용됩니다.", cls: "setting-item-description" });
+    const status = container.createEl("p", { text: defaultsLoaded ? "기본값을 불러왔습니다. 저장하면 적용됩니다." : "현재 저장된 설정입니다.", cls: "mia-settings-status" });
+    status.setAttribute("role", "status");
+    const changed = () => status.setText("아직 저장하지 않은 변경사항이 있습니다.");
+    const basic = container.createDiv({ cls: "mia-settings-basic" });
+    const advanced = container.createEl("details", { cls: "mia-settings-advanced" });
+    advanced.createEl("summary", { text: "세부 설정 · 출제 순서와 FSRS" });
+    const extra = advanced.createDiv();
+    const fail = (message: string, input: HTMLElement, expert = false) => {
+      if (expert) advanced.open = true;
+      status.setText(message);
+      input.focus();
+      new Notice(message);
+      return false;
+    };
+    const number = (root: HTMLElement, key: "newCardsPerDay" | "reviewsPerDay" | "dayStartsAt", name: string, desc: string, max: number) => {
+      let value = String(draft[key]); let input!: HTMLInputElement;
+      new Setting(root).setName(name).setDesc(desc).addText(text => {
+        input = text.inputEl;
+        text.setValue(value).onChange(next => { value = next; changed(); });
+        input.type = "number"; input.min = "0"; input.max = String(max); input.step = "1";
+        input.setAttribute("aria-label", name);
+      });
+      validators.push(() => {
+        const parsed = Number(value);
+        if (!input.validity.valid || !value.trim() || !Number.isInteger(parsed) || parsed < 0 || parsed > max) return fail(`${name}: 0–${max} 사이 정수를 입력하세요.`, input, root === extra);
+        draft[key] = parsed; return true;
+      });
+    };
+    number(basic, "newCardsPerDay", "하루 새 문제", "처음 배우는 문제 수입니다. 기본 20개 · 0이면 새 문제를 쉽니다.", 9999);
+    number(basic, "reviewsPerDay", "하루 최대 복습", "기본 200회. 같은 날의 짧은 반복은 이 횟수에서 빠집니다.", 9999);
+    basic.createEl("h4", { text: "다시 보는 간격" });
+    for (const [key, title] of [["learningSteps", "처음 배우는 문제"], ["relearningSteps", "틀린 문제"]] as const) {
+      const section = basic.createDiv({ cls: "mia-step-editor" });
+      section.createEl("h5", { text: title });
+      let automatic = draft[key].length === 0;
+      const list = section.createDiv({ cls: "mia-step-list" });
+      const rows: Array<{ value: string; unit: string; input: HTMLInputElement; select: HTMLSelectElement; remove: HTMLButtonElement }> = [];
+      const labelRows = () => rows.forEach((row, index) => {
+        row.input.setAttribute("aria-label", `${title} ${index + 1}단계 간격`);
+        row.select.setAttribute("aria-label", `${title} ${index + 1}단계 단위`);
+        row.remove.setAttribute("aria-label", `${title} ${index + 1}단계 삭제`);
+      });
+      const add = (step: string) => {
+        const value = step.slice(0, -1); const unit = step.slice(-1);
+        const row = list.createDiv({ cls: "mia-step-row" });
+        const input = row.createEl("input", { attr: { type: "number", min: "0", step: "any", inputmode: "decimal" } });
+        const select = row.createEl("select");
+        const remove = row.createEl("button", { text: "삭제", attr: { type: "button" } });
+        const item = { value, unit, input, select, remove };
+        input.value = value;
+        input.addEventListener("input", () => { item.value = input.value; changed(); });
+        for (const [value, text] of [["m", "분 후"], ["h", "시간 후"], ["d", "일 후"]] as const) select.createEl("option", { value, text });
+        select.value = unit;
+        select.addEventListener("change", () => { item.unit = select.value; changed(); });
+        remove.addEventListener("click", () => { rows.splice(rows.indexOf(item), 1); row.remove(); labelRows(); changed(); });
+        rows.push(item);
+        labelRows();
+      };
+      for (const step of draft[key]) add(step);
+      if (!draft[key].length) add(key === "learningSteps" ? "1m" : "10m");
+      let modeSelect!: HTMLSelectElement;
+      const mode = new Setting(section).setName("간격 결정").addDropdown(control => {
+        modeSelect = control.selectEl;
+        control.addOption("manual", "직접 정하기").addOption("auto", "자동으로 정하기").setValue(automatic ? "auto" : "manual");
+        control.selectEl.setAttribute("aria-label", `${title} 간격 결정`);
+        control.onChange(value => { automatic = value === "auto"; list.hidden = automatic; addButton.hidden = automatic; changed(); });
+      });
+      modeSelect.removeAttribute("aria-labelledby");
+      mode.settingEl.addClass("mia-step-mode");
+      list.hidden = automatic;
+      const addButton = section.createEl("button", { text: "단계 추가", attr: { type: "button", "aria-label": `${title} 단계 추가` } });
+      addButton.hidden = automatic;
+      addButton.addEventListener("click", () => { add("10m"); changed(); });
+      section.createEl("p", { text: "순서대로 간격을 거쳐 학습합니다. 자동을 선택하면 FSRS가 간격을 계산합니다.", cls: "setting-item-description" });
+      validators.push(() => {
+        if (automatic) { draft[key] = []; return true; }
+        if (!rows.length) return fail(`${title}: 단계를 추가하거나 자동으로 정하기를 선택하세요.`, addButton);
+        const steps: StudyManagementSettings[typeof key] = [];
+        for (const row of rows) {
+          const parsed = row.input.validity.valid && row.value.trim() ? parseSteps(`${row.value}${row.unit}`) : null;
+          if (!parsed) return fail(`${title}: 간격은 1분 이상이어야 하고 분 단위로 나누어떨어져야 합니다.`, row.input);
+          steps.push(...parsed);
+        }
+        draft[key] = steps; return true;
+      });
+    }
+    const choice = <K extends "newCardOrder" | "newReviewOrder" | "reviewOrder">(key: K, name: string, options: Record<StudyManagementSettings[K], string>) => {
+      new Setting(extra).setName(name).addDropdown(control => {
+        for (const [value, label] of Object.entries(options)) if (typeof label === "string") control.addOption(value, label);
+        control.setValue(draft[key]).onChange(value => {
+          const selected = (Object.keys(options) as StudyManagementSettings[K][]).find(item => item === value);
+          if (selected) { draft[key] = selected; changed(); }
+        });
+      });
+    };
+    const toggle = (key: "newCardsIgnoreReviewLimit" | "enableFuzz", name: string, desc: string) => {
+      const row = new Setting(extra).setName(name).setDesc(desc);
+      const state = row.controlEl.createSpan({ text: draft[key] ? "켜짐" : "꺼짐", cls: "mia-toggle-state" });
+      state.setAttribute("aria-hidden", "true");
+      row.addToggle(control => control.setValue(draft[key]).onChange(value => { draft[key] = value; state.setText(value ? "켜짐" : "꺼짐"); changed(); }));
+    };
+    number(extra, "dayStartsAt", "하루를 새로 시작하는 시각", "기기 시간 기준 · 기본 오전 4시", 23);
+    toggle("newCardsIgnoreReviewLimit", "복습 상한과 별개로 새 문제 학습", "켜면 복습 횟수를 다 채워도 새 문제를 배울 수 있습니다.");
+    choice("newCardOrder", "새 문제 순서", { sequential: "문제 목록 순서", random: "무작위" });
+    choice("newReviewOrder", "새 문제와 복습", { before: "새 문제 먼저", after: "복습 먼저", mix: "섞어서" });
+    choice("reviewOrder", "복습 순서", { due: "복습일이 빠른 순", retrievability: "잊었을 가능성이 높은 순", random: "무작위", "interval-ascending": "짧은 간격 먼저", "interval-descending": "긴 간격 먼저" });
+    toggle("enableFuzz", "복습일 나누기", "비슷한 문제의 복습이 같은 날에 몰리지 않게 분산합니다.");
+    let parameters = draft.fsrsParameters.join(", "); let parameterInput!: HTMLTextAreaElement;
+    new Setting(extra).setName("FSRS-6 매개변수").setDesc("Anki에서 복사한 가중치 21개입니다. 잘 모르면 비워 두세요.").addTextArea(text => {
+      parameterInput = text.inputEl;
+      text.setValue(parameters).setPlaceholder("기본값 사용").onChange(value => { parameters = value; changed(); });
+      text.inputEl.setAttribute("aria-label", "FSRS-6 매개변수");
     });
     validators.push(() => {
-      const parsed = Number(value);
-      if (!valid || !value.trim() || !Number.isInteger(parsed) || parsed < 0 || parsed > max) {
-        new Notice(`${label}: 0–${max} 사이 정수를 입력하세요.`); return false;
-      }
-      draft[key] = parsed; return true;
+      const value = parameters.trim();
+      const parsed = value ? value.replace(/^\[|\]$/g, "").split(/[\s,]+/).map(Number) : [];
+      if (!validParameters(parsed)) return fail("FSRS-6 매개변수는 유효한 숫자 21개여야 합니다.", parameterInput, true);
+      draft.fsrsParameters = parsed; return true;
+    });
+    extra.createEl("p", { text: "전체 과목에 같은 설정이 적용됩니다. 이미 예약된 복습일은 유지됩니다. 평가 버튼별 고정 간격을 설정했다면 그 값이 우선합니다.", cls: "setting-item-description" });
+    const actions = container.createDiv({ cls: "mia-learning-settings-actions" });
+    actions.createEl("button", { text: "기본값 불러오기", attr: { type: "button" } }).addEventListener("click", () => render(structuredClone(DEFAULT_STUDY_MANAGEMENT), true));
+    const button = actions.createEl("button", { text: "학습 설정 저장", cls: "mod-cta", attr: { type: "button" } });
+    button.addEventListener("click", async () => {
+      if (!validators.every(validate => validate())) return;
+      button.disabled = true;
+      try {
+        await save(async () => {
+          await plugin.updateSettings({ studyManagement: draft });
+          status.setText("저장했습니다. 다음 학습부터 적용됩니다.");
+          new Notice("학습 설정을 저장했습니다.");
+        });
+      } finally { button.disabled = false; }
     });
   };
-  const toggle = (key: "newCardsIgnoreReviewLimit" | "enableFuzz", label: string, desc: string) => {
-    new Setting(container).setName(label).setDesc(desc).addToggle(control => control.setValue(draft[key]).onChange(value => { draft[key] = value; }));
-  };
-  const choice = <K extends "newCardOrder" | "newReviewOrder" | "reviewOrder">(key: K, label: string, options: Record<StudyManagementSettings[K], string>) => {
-    new Setting(container).setName(label).addDropdown(control => {
-      for (const [value, text] of Object.entries(options)) if (typeof text === "string") control.addOption(value, text);
-      control.setValue(draft[key]).onChange(value => {
-        const selected = (Object.keys(options) as StudyManagementSettings[K][]).find(item => item === value);
-        if (selected) draft[key] = selected;
-      });
-    });
-  };
-  container.createEl("h4", { text: "일일 상한" });
-  number("newCardsPerDay", "하루 새 문제", "Anki 기본값 20개. 0이면 새 문제를 출제하지 않습니다. 하루를 쉬어도 다음 날 상한이 누적되지 않습니다.", 9999);
-  number("reviewsPerDay", "하루 최대 복습", "Anki 기본값 200회. 당일 단기 학습·재학습 반복은 제외하며, 날짜를 넘긴 학습은 포함합니다. 전체 과목에서 사용한 양을 합산합니다.", 9999);
-  toggle("newCardsIgnoreReviewLimit", "새 문제는 복습 상한 무시", "끄면 새 문제도 남은 복습 상한 안에서 출제합니다. 켜면 복습 상한에 도달해도 새 문제를 학습할 수 있습니다.");
-  number("dayStartsAt", "다음 날 시작 시각", "기기 현지 시각 기준. Anki 기본값은 오전 4시입니다. 일일 상한을 이 시각에 초기화합니다.", 23);
-  container.createEl("h4", { text: "새 문제 · 재학습" });
-  for (const [key, label, example] of [["learningSteps", "학습 단계", "1m 10m"], ["relearningSteps", "재학습 단계", "10m"]] as const) {
-    let value = draft[key].join(" ");
-    new Setting(container).setName(label).setDesc(`공백으로 구분: ${example}. m=분, h=시간, d=일. 1분 이상이며 분 단위로 나누어떨어져야 합니다. FSRS는 1일 미만을 권장합니다. 비우면 FSRS가 단기 간격도 계산합니다.`).addText(text => {
-      text.setValue(value).setPlaceholder(example).onChange(input => { value = input; });
-      text.inputEl.setAttribute("aria-label", label);
-    });
-    validators.push(() => {
-      const steps = parseSteps(value);
-      if (!steps) { new Notice(`${label}: 1m 10m처럼 1분 이상·분 단위의 m/h/d 값을 입력하세요.`); return false; }
-      draft[key] = steps; return true;
-    });
-  }
-  container.createEl("h4", { text: "출제 순서" });
-  choice("newCardOrder", "새 문제 순서", { sequential: "문제 목록 순서", random: "무작위" });
-  choice("newReviewOrder", "새 문제 / 복습 순서", { before: "새 문제 먼저", after: "복습 먼저", mix: "복습과 섞기" });
-  choice("reviewOrder", "복습 정렬", { due: "복습일이 빠른 순", retrievability: "기억 확률이 낮은 순", random: "무작위", "interval-ascending": "짧은 간격 먼저", "interval-descending": "긴 간격 먼저" });
-  container.createEl("p", { text: "기한이 된 당일 학습·재학습 단계는 출제 순서나 일일 상한보다 우선합니다.", cls: "setting-item-description" });
-  container.createEl("h4", { text: "FSRS 고급 설정" });
-  toggle("enableFuzz", "복습일 분산", "비슷한 간격의 문제가 같은 날 몰리지 않도록 FSRS 간격에 작은 변화를 줍니다.");
-  let parameters = draft.fsrsParameters.join(", ");
-  new Setting(container).setName("FSRS-6 매개변수").setDesc("Anki에서 복사한 FSRS-6 가중치 21개를 쉼표로 구분해 입력하세요. 비우면 기본값을 사용합니다. 자동 최적화는 제공하지 않습니다.").addTextArea(text => {
-    text.setValue(parameters).setPlaceholder("기본 FSRS-6 매개변수").onChange(value => { parameters = value; });
-    text.inputEl.setAttribute("aria-label", "FSRS-6 매개변수");
-  });
-  validators.push(() => {
-    const value = parameters.trim();
-    const parsed = value ? value.replace(/^\[|\]$/g, "").split(/[\s,]+/).map(Number) : [];
-    if (!validParameters(parsed)) { new Notice("FSRS-6 매개변수는 유효한 가중치 21개여야 합니다."); return false; }
-    draft.fsrsParameters = parsed; return true;
-  });
-  new Setting(container).addButton(button => button.setButtonText("학습관리 설정 저장").setCta().onClick(async () => {
-    if (!validators.every(validate => validate())) return;
-    button.setDisabled(true);
-    try {
-      await save(async () => {
-        await plugin.updateSettings({ studyManagement: draft });
-        new Notice("학습관리 설정을 저장했습니다. 다음 학습과 평가부터 적용됩니다.");
-      });
-    } finally { button.setDisabled(false); }
-  })).addButton(button => button.setButtonText("Anki 기본값 복원").onClick(async () => {
-    await save(async () => {
-      await plugin.updateSettings({ studyManagement: structuredClone(DEFAULT_STUDY_MANAGEMENT) });
-      refresh();
-      new Notice("학습관리 설정을 Anki 기본값으로 복원했습니다.");
-    });
-  }));
-  container.createEl("p", { text: "Anki와의 차이: MIA는 FSRS-6 전용이며 전체 과목에 공통 상한을 적용합니다. 덱별 프리셋·형제 카드 묻기·오디오·타이머·자동 넘김·쉬운 요일·반복 실패 카드 관리·매개변수 자동 최적화·SM-2 전용 설정은 포함하지 않습니다. 단계는 실제 예약 시각에 출제하며 Anki의 날짜 경계 변환과는 다릅니다. 평가별 고정 간격을 별도로 지정하면 FSRS와 학습 단계보다 우선합니다.", cls: "setting-item-description" });
-  container.createEl("a", { text: "Anki 공식 학습관리 설정 설명", href: "https://docs.ankiweb.net/deck-options.html" });
+  render(plugin.store.settings.studyManagement);
 }
