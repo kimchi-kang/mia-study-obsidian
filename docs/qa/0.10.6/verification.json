@@ -1,0 +1,721 @@
+{
+  "version": "0.10.6",
+  "checkedDate": "2026-10-25",
+  "productionMainSha256": "35e3a5f4db3f12e5eb0a3687af8d12dfc97283d1abe354cb60e8aa7cfe2fd775",
+  "testedRepositoryCommit": "af2db8ceb7d1100dff3192979d0785c9d47e45d0",
+  "native": {
+    "host": "macOS / Obsidian 1.14.5",
+    "passed": 24,
+    "failed": 0,
+    "checks": [
+      {
+        "name": "deleted subject only in first root",
+        "pass": true
+      },
+      {
+        "name": "other-root review unchanged",
+        "pass": true
+      },
+      {
+        "name": "nested keyword saved",
+        "pass": true
+      },
+      {
+        "name": "same-name root keyword unchanged",
+        "pass": true
+      },
+      {
+        "name": "move keeps one problem and its ID",
+        "pass": true
+      },
+      {
+        "name": "image and document links rebased",
+        "pass": true
+      },
+      {
+        "name": "inline code unchanged",
+        "pass": true
+      },
+      {
+        "name": "native concurrent-write guard rejects overwrite",
+        "pass": true
+      },
+      {
+        "name": "moved image renders in actual Obsidian preview",
+        "pass": true
+      },
+      {
+        "name": "native UI grade 1 persisted",
+        "pass": true
+      },
+      {
+        "name": "native UI grade 1 undo persisted",
+        "pass": true
+      },
+      {
+        "name": "native UI grade 2 persisted",
+        "pass": true
+      },
+      {
+        "name": "native UI grade 2 undo persisted",
+        "pass": true
+      },
+      {
+        "name": "native UI grade 3 persisted",
+        "pass": true
+      },
+      {
+        "name": "native UI grade 3 undo persisted",
+        "pass": true
+      },
+      {
+        "name": "native UI grade 4 persisted",
+        "pass": true
+      },
+      {
+        "name": "native UI grade 4 undo persisted",
+        "pass": true
+      },
+      {
+        "name": "renderer really reloaded",
+        "pass": true
+      },
+      {
+        "name": "review survives native reload",
+        "pass": true
+      },
+      {
+        "name": "other-root review survives reload",
+        "pass": true
+      },
+      {
+        "name": "resume survives native reload",
+        "pass": true
+      },
+      {
+        "name": "user note survives startup synchronization",
+        "pass": true
+      },
+      {
+        "name": "moved problem indexed in destination after reload",
+        "pass": true
+      },
+      {
+        "name": "native startup reports loaded",
+        "pass": true
+      }
+    ],
+    "scope": "Separate synthetic vault. Real compiled plugin, file APIs, renderer reload and rating button DOM clicks. Concurrent write was deterministically injected using the real Vault API. No actual cloud-concurrency qualification.",
+    "cleanupLimit": "Return to the original window was unverified after computer-control connection failure; personal notes/review/resume preservation was verified independently."
+  },
+  "mobile": {
+    "scope": "IAB responsive browser; Obsidian API/storage/Markdown substitutes",
+    "summary": {
+      "profilesPassed": 6,
+      "profilesTotal": 6,
+      "gradeUndoPairs": 24,
+      "extraChecksPassed": 16,
+      "extraChecksTotal": 16,
+      "focusedAutomatedTestsPassed": 59,
+      "unhandledBrowserErrors": 0
+    },
+    "profiles": [
+      {
+        "id": "phone-320-large",
+        "width": 320,
+        "height": 568,
+        "device": "phone",
+        "font": "large",
+        "theme": "dark",
+        "metrics": {
+          "buttonOverlap": false,
+          "buttons": [
+            {
+              "h": 61.1953125,
+              "text": "못 암기1분1",
+              "w": 64.5,
+              "x": 25,
+              "y": 474.8046875
+            },
+            {
+              "h": 61.1953125,
+              "text": "애매6분2",
+              "w": 64.5,
+              "x": 93.5,
+              "y": 474.8046875
+            },
+            {
+              "h": 61.1953125,
+              "text": "암기10분3",
+              "w": 64.5,
+              "x": 162,
+              "y": 474.8046875
+            },
+            {
+              "h": 61.1953125,
+              "text": "너무 쉬움7일4",
+              "w": 64.5,
+              "x": 230.5,
+              "y": 474.8046875
+            }
+          ],
+          "device": "phone",
+          "documentOverflow": false,
+          "errors": [],
+          "height": 568,
+          "reading": {
+            "h": 234.8046875,
+            "w": 288,
+            "x": 16,
+            "y": 221
+          },
+          "surfaceOverflow": false,
+          "width": 320
+        },
+        "grades": [
+          {
+            "label": "못 암기",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "애매",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "암기",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "너무 쉬움",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          }
+        ],
+        "pass": true
+      },
+      {
+        "id": "phone-360-light",
+        "width": 360,
+        "height": 780,
+        "device": "phone",
+        "font": "normal",
+        "theme": "light",
+        "metrics": {
+          "buttonOverlap": false,
+          "buttons": [
+            {
+              "h": 55.5078125,
+              "text": "못 암기1분1",
+              "w": 74.5,
+              "x": 25,
+              "y": 675.4921875
+            },
+            {
+              "h": 55.5078125,
+              "text": "애매6분2",
+              "w": 74.5,
+              "x": 103.5,
+              "y": 675.4921875
+            },
+            {
+              "h": 55.5078125,
+              "text": "암기10분3",
+              "w": 74.5,
+              "x": 182,
+              "y": 675.4921875
+            },
+            {
+              "h": 55.5078125,
+              "text": "너무 쉬움10일4",
+              "w": 74.5,
+              "x": 260.5,
+              "y": 675.4921875
+            }
+          ],
+          "device": "phone",
+          "documentOverflow": false,
+          "errors": [],
+          "height": 780,
+          "reading": {
+            "h": 429.4921875,
+            "w": 328,
+            "x": 16,
+            "y": 227
+          },
+          "surfaceOverflow": false,
+          "width": 360
+        },
+        "grades": [
+          {
+            "label": "못 암기",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "애매",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "암기",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "너무 쉬움",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          }
+        ],
+        "pass": true
+      },
+      {
+        "id": "phone-390",
+        "width": 390,
+        "height": 844,
+        "device": "phone",
+        "font": "normal",
+        "theme": "dark",
+        "metrics": {
+          "buttonOverlap": false,
+          "buttons": [
+            {
+              "h": 55.5078125,
+              "text": "못 암기1분1",
+              "w": 82,
+              "x": 25,
+              "y": 739.4921875
+            },
+            {
+              "h": 55.5078125,
+              "text": "애매6분2",
+              "w": 82,
+              "x": 111,
+              "y": 739.4921875
+            },
+            {
+              "h": 55.5078125,
+              "text": "암기10분3",
+              "w": 82,
+              "x": 197,
+              "y": 739.4921875
+            },
+            {
+              "h": 55.5078125,
+              "text": "너무 쉬움7일4",
+              "w": 82,
+              "x": 283,
+              "y": 739.4921875
+            }
+          ],
+          "device": "phone",
+          "documentOverflow": false,
+          "errors": [],
+          "height": 844,
+          "reading": {
+            "h": 493.4921875,
+            "w": 358,
+            "x": 16,
+            "y": 227
+          },
+          "surfaceOverflow": false,
+          "width": 390
+        },
+        "grades": [
+          {
+            "label": "못 암기",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "애매",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "암기",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "너무 쉬움",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          }
+        ],
+        "pass": true
+      },
+      {
+        "id": "phone-430-large",
+        "width": 430,
+        "height": 932,
+        "device": "phone",
+        "font": "large",
+        "theme": "light",
+        "metrics": {
+          "buttonOverlap": false,
+          "buttons": [
+            {
+              "h": 61.1953125,
+              "text": "못 암기1분1",
+              "w": 92,
+              "x": 25,
+              "y": 821.8046875
+            },
+            {
+              "h": 61.1953125,
+              "text": "애매6분2",
+              "w": 92,
+              "x": 121,
+              "y": 821.8046875
+            },
+            {
+              "h": 61.1953125,
+              "text": "암기10분3",
+              "w": 92,
+              "x": 217,
+              "y": 821.8046875
+            },
+            {
+              "h": 61.1953125,
+              "text": "너무 쉬움6일4",
+              "w": 92,
+              "x": 313,
+              "y": 821.8046875
+            }
+          ],
+          "device": "phone",
+          "documentOverflow": false,
+          "errors": [],
+          "height": 932,
+          "reading": {
+            "h": 575.8046875,
+            "w": 398,
+            "x": 16,
+            "y": 227
+          },
+          "surfaceOverflow": false,
+          "width": 430
+        },
+        "grades": [
+          {
+            "label": "못 암기",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "애매",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "암기",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "너무 쉬움",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          }
+        ],
+        "pass": true
+      },
+      {
+        "id": "landscape-844-large",
+        "width": 844,
+        "height": 390,
+        "device": "phone",
+        "font": "large",
+        "theme": "dark",
+        "metrics": {
+          "buttonOverlap": false,
+          "buttons": [
+            {
+              "h": 61.1953125,
+              "text": "못 암기1분1",
+              "w": 195.5,
+              "x": 25,
+              "y": 309.09375
+            },
+            {
+              "h": 61.1953125,
+              "text": "애매6분2",
+              "w": 195.5,
+              "x": 224.5,
+              "y": 309.09375
+            },
+            {
+              "h": 61.1953125,
+              "text": "암기10분3",
+              "w": 195.5,
+              "x": 424,
+              "y": 309.09375
+            },
+            {
+              "h": 61.1953125,
+              "text": "너무 쉬움7일4",
+              "w": 195.5,
+              "x": 623.5,
+              "y": 309.09375
+            }
+          ],
+          "device": "phone",
+          "documentOverflow": false,
+          "errors": [],
+          "height": 390,
+          "reading": {
+            "h": 160,
+            "w": 812,
+            "x": 16,
+            "y": 132.09375
+          },
+          "surfaceOverflow": false,
+          "width": 844
+        },
+        "grades": [
+          {
+            "label": "못 암기",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "애매",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "암기",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "너무 쉬움",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          }
+        ],
+        "pass": true
+      },
+      {
+        "id": "tablet-768-large",
+        "width": 768,
+        "height": 1024,
+        "device": "tablet",
+        "font": "large",
+        "theme": "dark",
+        "metrics": {
+          "buttonOverlap": false,
+          "buttons": [
+            {
+              "h": 72.1953125,
+              "text": "못 암기1분1",
+              "w": 166,
+              "x": 37,
+              "y": 893.8046875
+            },
+            {
+              "h": 72.1953125,
+              "text": "애매6분2",
+              "w": 166,
+              "x": 213,
+              "y": 893.8046875
+            },
+            {
+              "h": 72.1953125,
+              "text": "암기10분3",
+              "w": 166,
+              "x": 389,
+              "y": 893.8046875
+            },
+            {
+              "h": 72.1953125,
+              "text": "너무 쉬움10일4",
+              "w": 166,
+              "x": 565,
+              "y": 893.8046875
+            }
+          ],
+          "device": "tablet",
+          "documentOverflow": false,
+          "errors": [],
+          "height": 1024,
+          "reading": {
+            "h": 570.8046875,
+            "w": 736,
+            "x": 16,
+            "y": 290
+          },
+          "surfaceOverflow": false,
+          "width": 768
+        },
+        "grades": [
+          {
+            "label": "못 암기",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "애매",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "암기",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          },
+          {
+            "label": "너무 쉬움",
+            "saved": true,
+            "undone": true,
+            "errors": []
+          }
+        ],
+        "pass": true
+      }
+    ],
+    "checks": [
+      {
+        "name": "390px Again grade and undo",
+        "pass": true
+      },
+      {
+        "name": "mobile fixed intervals save",
+        "pass": true
+      },
+      {
+        "name": "fixed interval fields survive reload",
+        "pass": true
+      },
+      {
+        "name": "invalid mobile interval rejected",
+        "pass": true
+      },
+      {
+        "name": "synthetic vertical touch does not navigate or grade",
+        "pass": true
+      },
+      {
+        "name": "synthetic rating drag compatibility click blocked",
+        "pass": true
+      },
+      {
+        "name": "synthetic touch cancel compatibility click blocked",
+        "pass": true
+      },
+      {
+        "name": "synthetic deliberate edge swipe returns to dashboard",
+        "pass": true
+      },
+      {
+        "name": "mobile fixed interval labels exact",
+        "pass": true
+      },
+      {
+        "name": "fixed 90-minute actual schedule",
+        "pass": true,
+        "deltaMilliseconds": 5400610
+      },
+      {
+        "name": "mobile review persists after reload",
+        "pass": true
+      },
+      {
+        "name": "mobile preview modal stays within width",
+        "pass": true,
+        "metrics": {
+          "height": 713.2578125,
+          "overflow": false,
+          "right": 378,
+          "viewportWidth": 390,
+          "width": 366,
+          "x": 12
+        }
+      },
+      {
+        "name": "mobile resume preserves visible position and answer after reload",
+        "pass": true,
+        "before": {
+          "answer": true,
+          "progress": "시험 모드 · 2 / 12 · 긴 과목 이름과 한글 English 123 혼합 가독성 검증 · 정의형",
+          "title": "6. 검증 질문: 긴 문장과 버튼 글자·수식은 겹치지 않는가?"
+        },
+        "after": {
+          "answer": true,
+          "progress": "시험 모드 · 2 / 12 · 긴 과목 이름과 한글 English 123 혼합 가독성 검증 · 정의형",
+          "title": "6. 검증 질문: 긴 문장과 버튼 글자·수식은 겹치지 않는가?"
+        }
+      },
+      {
+        "name": "browser error log empty",
+        "pass": true
+      },
+      {
+        "name": "reduced-height input dismiss preserves unsaved text",
+        "pass": true,
+        "metrics": {
+          "focused": false,
+          "overflow": false,
+          "value": "125"
+        }
+      },
+      {
+        "name": "320px large-font long interval wraps without horizontal overflow",
+        "pass": true,
+        "metrics": {
+          "buttonHeight": 81.4453125,
+          "label": "52559999분",
+          "overflow": false
+        }
+      }
+    ],
+    "notes": [
+      "Reduced-height keyboard test approximates viewport occlusion, not an actual IME.",
+      "During simulated keyboard/resize, pointer clicks on QA host controls sometimes landed after scrolling; closing the QA settings host was completed by keyboard activation. This was not classified as a production-device bug.",
+      "The hidden diagnostic queue counter can lag the rendered UI; resume was rechecked against visible title/progress/answer DOM."
+    ],
+    "physicalPhoneTested": false,
+    "actualSoftwareKeyboardTested": false,
+    "actualCloudSyncTested": false
+  },
+  "finalTests": {
+    "fullSuitePassed": 1003,
+    "fullSuiteConditionalSkipped": 2,
+    "conditionalSyntheticQuestions": 1000,
+    "conditionalTestTimeoutMs": 30000,
+    "conditionalDefaultTimeoutObservation": "Initial single-file 1000-question round-trip run completed its assertions in 6.3s but exceeded the default 5s test limit. Rerun separately at 30s; see final outcome.",
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "rebuildByteIdenticalToRelease": true,
+    "conditionalSeparatelyPassed": 2,
+    "distinctTestsPassedAcrossRuns": 1005,
+    "failedAtFinalConfiguration": 0
+  }
+}
