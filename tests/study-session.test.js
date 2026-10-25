@@ -46,6 +46,7 @@ function setup({ failSave = false, start = true, linked = false } = {}) {
   const files = new Map();
   const studyApp = { loadLocalStorage: () => null, saveLocalStorage() {}, vault: { adapter: { exists: async path => files.has(path), read: async path => files.get(path), write: async (path, data) => { files.set(path, data); } } } };
   const plugin = {
+    manifest: { version: "1.0.3" },
     studyUi: new StudyUiStore(studyApp, "ui-state.json"),
     openQuestionPreview: vi.fn().mockResolvedValue(undefined),
     listSubjects: () => [],
@@ -883,5 +884,17 @@ describe("resume and related question math headings", () => {
     expect(render.mock.calls.some(c => c[1] === "$F=qvB$" && c[2].tag === "strong" && c[3] === "bank.md")).toBe(true);
     await ui.button("$F=qvB$").click();
     expect(ui.plugin.openQuestionPreview).toHaveBeenCalledWith(expect.objectContaining({ id: "related" }), expect.any(Function));
+  });
+});
+
+
+describe("running plugin version", () => {
+  it("shows the loaded manifest version beside the brand on dashboard and study", () => {
+    const ui = setup({ start: false });
+    ui.plugin.manifest.version = "9.8.7-test";
+    ui.view.showDashboard();
+    expect(ui.content()).toContain("Major Study v9.8.7-test");
+    ui.view.startReview(["q"]);
+    expect(ui.content()).toContain("Major Study v9.8.7-test");
   });
 });

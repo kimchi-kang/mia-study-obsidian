@@ -1,0 +1,98 @@
+[
+  {
+    "profile": {
+      "width": 1280,
+      "height": 900,
+      "device": "tablet"
+    },
+    "brand": "Major Studyv1.0.3",
+    "math": 6,
+    "merror": 0,
+    "overflow": false,
+    "status": {
+      "errors": [],
+      "gradeIntervalsMinutes": {},
+      "history": {},
+      "notices": [],
+      "queueIndex": 0,
+      "registered": 12,
+      "reviewDue": {},
+      "route": "study",
+      "version": "1.0.3"
+    },
+    "version": "v1.0.3",
+    "versionVisible": true
+  },
+  {
+    "profile": {
+      "width": 768,
+      "height": 1024,
+      "device": "tablet"
+    },
+    "brand": "Major Studyv1.0.3",
+    "math": 6,
+    "merror": 0,
+    "overflow": false,
+    "status": {
+      "errors": [],
+      "gradeIntervalsMinutes": {},
+      "history": {},
+      "notices": [],
+      "queueIndex": 0,
+      "registered": 12,
+      "reviewDue": {},
+      "route": "study",
+      "version": "1.0.3"
+    },
+    "version": "v1.0.3",
+    "versionVisible": true
+  },
+  {
+    "profile": {
+      "width": 390,
+      "height": 844,
+      "device": "phone"
+    },
+    "brand": "Major Studyv1.0.3",
+    "math": 6,
+    "merror": 0,
+    "overflow": false,
+    "status": {
+      "errors": [],
+      "gradeIntervalsMinutes": {},
+      "history": {},
+      "notices": [],
+      "queueIndex": 0,
+      "registered": 12,
+      "reviewDue": {},
+      "route": "study",
+      "version": "1.0.3"
+    },
+    "version": "v1.0.3",
+    "versionVisible": true
+  },
+  {
+    "profile": {
+      "width": 320,
+      "height": 568,
+      "device": "phone"
+    },
+    "brand": "Major Studyv1.0.3",
+    "math": 6,
+    "merror": 0,
+    "overflow": false,
+    "status": {
+      "errors": [],
+      "gradeIntervalsMinutes": {},
+      "history": {},
+      "notices": [],
+      "queueIndex": 0,
+      "registered": 12,
+      "reviewDue": {},
+      "route": "study",
+      "version": "1.0.3"
+    },
+    "version": "v1.0.3",
+    "versionVisible": true
+  }
+]
