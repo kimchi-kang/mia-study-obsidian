@@ -1,3 +1,4 @@
+import { renderStudyManagementSettings } from "./study-management-settings";
 import { renderQuestionTitle } from "./question-title";
 import { Component, ItemView, MarkdownRenderer, Notice, Platform, ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { Rating } from "ts-fsrs";
@@ -78,6 +79,7 @@ export class MiaStudyView extends ItemView {
   private renderedPosition = "";
   private gestures: StudyGestureBinding | null = null;
   private hintVisible = false;
+  private dashboardSettingsPanel: { element: HTMLElement; signature: string } | null = null;
   private readingPosition = { key: "", scrollTop: 0, pageScrollTop: 0, conceptsOpen: false };
   private readingRenders: Promise<void>[] = [];
   private readingRestorePending = false;
@@ -166,6 +168,7 @@ export class MiaStudyView extends ItemView {
     this.renderComponent?.unload();
     this.renderComponent = null;
     this.readingRenders = [];
+    this.dashboardSettingsPanel = null;
   }
 
   showDashboard(): void {
@@ -537,6 +540,17 @@ export class MiaStudyView extends ItemView {
     const available = buildReviewQueue(questions, this.plugin.store.reviews, this.plugin.fsrs, { management: this.plugin.store.settings.studyManagement });
     const availableNew = available.filter(question => this.plugin.fsrs.isNew(this.plugin.store.getReview(question.id))).length;
     const availableDue = available.length - availableNew;
+    const action = root.createDiv({ cls: "mia-primary-card" });
+    action.createEl("h3", { text: available.length > 0 ? "오늘 학습을 시작할까요?" : "오늘 학습을 마쳤습니다" });
+    action.createEl("p", { text: `오늘 출제: 복습 ${availableDue}개 · 새 문제 ${availableNew}개 · 전체 대기: 복습 ${due}개 · 새 문제 ${fresh}개` });
+    const actions = action.createDiv({ cls: "mia-inline-actions" });
+    const start = actions.createEl("button", { text: "시험 모드 시작", cls: "mod-cta" });
+    start.disabled = available.length === 0;
+    start.addEventListener("click", () => this.startReview());
+    const browse = actions.createEl("button", { text: "전체 암기 모드" });
+    browse.disabled = due + fresh === 0;
+    browse.addEventListener("click", () => this.startReview(questions.map((question) => question.id), "browse"));
+    this.renderDashboardSettings(root);
     const saved = this.plugin.studyUi.resume;
     if (saved) {
       const current = this.plugin.index.questionById(saved.queue[saved.queueIndex] ?? saved.seed[0] ?? "");
@@ -566,16 +580,6 @@ export class MiaStudyView extends ItemView {
     manage.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () => void this.plugin.openManagedQuestionEditor());
     manage.createEl("button", { text: "키워드 추가" }).addEventListener("click", () => this.plugin.openKeywordEditor());
     manage.createEl("button", { text: "출력" }).addEventListener("click", () => this.plugin.openSubjectExport());
-    const action = root.createDiv({ cls: "mia-primary-card" });
-    action.createEl("h3", { text: available.length > 0 ? "오늘 학습을 시작할까요?" : "오늘 학습을 마쳤습니다" });
-    action.createEl("p", { text: `오늘 출제: 복습 ${availableDue}개 · 새 문제 ${availableNew}개 · 전체 대기: 복습 ${due}개 · 새 문제 ${fresh}개` });
-    const actions = action.createDiv({ cls: "mia-inline-actions" });
-    const start = actions.createEl("button", { text: "시험 모드 시작", cls: "mod-cta" });
-    start.disabled = available.length === 0;
-    start.addEventListener("click", () => this.startReview());
-    const browse = actions.createEl("button", { text: "전체 암기 모드" });
-    browse.disabled = due + fresh === 0;
-    browse.addEventListener("click", () => this.startReview(questions.map((question) => question.id), "browse"));
     if (this.plugin.index.diagnostics.length) {
       root.createEl("p", { text: `검사 필요 ${this.plugin.index.diagnostics.length}건 — 문제 목록에서 확인하세요.`, cls: "mia-warning" });
     }
@@ -614,6 +618,26 @@ export class MiaStudyView extends ItemView {
         });
       }
     }
+  }
+
+  private renderDashboardSettings(root: HTMLElement): void {
+    const signature = JSON.stringify(this.plugin.store.settings.studyManagement);
+    if (this.dashboardSettingsPanel?.signature === signature) {
+      // Keep the same controls and unsaved values during the 30-second refresh.
+      root.appendChild(this.dashboardSettingsPanel.element);
+      return;
+    }
+    const panel = root.createDiv({ cls: "mia-dashboard-settings mia-keyboard-settings" });
+    this.dashboardSettingsPanel = { element: panel, signature };
+    renderStudyManagementSettings(panel, this.plugin, async action => {
+      try {
+        await action();
+        this.dashboardSettingsPanel = null;
+        this.render();
+      } catch (error) {
+        new Notice(`학습관리 설정 저장 실패: ${errorMessage(error)}`);
+      }
+    }, () => { this.dashboardSettingsPanel = null; this.render(); });
   }
 
   private renderProgress(root: HTMLElement): void {

@@ -13,6 +13,8 @@ vi.mock("obsidian", () => {
     createDiv(options) { return this.createEl("div", options); }
     createSpan(options) { return this.createEl("span", options); }
     empty() { this.children = []; }
+    appendChild(child) { child.remove(); child.parent=this; this.children.push(child); return child; }
+    setAttribute(name,value) { this.attrs[name]=value; }
     setText(text) { this.text = text; }
     addClass() {} removeClass() {} setAttr(name,value) { this.attrs[name]=value; } focus() {}
     querySelector(selector) {
@@ -25,7 +27,29 @@ vi.mock("obsidian", () => {
     find(text, exact = false) { return this.children.flatMap(child => [child, child.find(text, exact)]).find(child => child && child.tag === "button" && (exact ? child.content.trim() === text : child.content.trim().startsWith(text))); }
     async click() { if (!this.disabled) await this.handlers.get("click")?.(); }
   }
+  class Control {
+    constructor(root,tag) { this.inputEl=root.createEl(tag); this.selectEl=this.inputEl; this.inputEl.validity={valid:true}; }
+    setValue(value) { this.inputEl.value=value; return this; }
+    setPlaceholder(value) { this.inputEl.placeholder=value; return this; }
+    onChange(fn) { this.inputEl.handlers.set("input", fn); return this; }
+    addOption() { return this; }
+  }
+  class Setting {
+    constructor(root) { this.settingEl=root.createDiv({cls:"setting-item"}); this.control=this.settingEl.createDiv(); }
+    setName(value) { this.settingEl.createEl("label",{text:value}); return this; }
+    setDesc(value) { this.settingEl.createEl("p",{text:value}); return this; }
+    addText(fn) { fn(new Control(this.control,"input")); return this; }
+    addTextArea(fn) { fn(new Control(this.control,"textarea")); return this; }
+    addDropdown(fn) { fn(new Control(this.control,"select")); return this; }
+    addToggle(fn) { fn(new Control(this.control,"input")); return this; }
+    addButton(fn) {
+      const button=this.control.createEl("button");
+      const control={setButtonText(value){button.text=value;return this;},setCta(){return this;},setDisabled(value){button.disabled=value;return this;},onClick(fn){button.handlers.set("click",fn);return this;}};
+      fn(control); return this;
+    }
+  }
   return {
+    Setting,
     ItemView: class { constructor(leaf) { this.leaf = leaf; this.app = leaf.app; this.contentEl = new Element(); } },
     Component: class { load() {} unload() {} },
     Modal: class { setTitle() {} open = vi.fn(); close = vi.fn(); }, Notice: class {}, Platform: { isMobile: false },
@@ -74,6 +98,45 @@ beforeEach(() => {
   vi.stubGlobal("window", { setTimeout, clearTimeout });
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+describe("dashboard learning settings", () => {
+  const field = (ui, label) => {
+    const visit = element => element.attrs["aria-label"] === label ? element : element.children.map(visit).find(Boolean);
+    return visit(ui.view.contentEl);
+  };
+  const dashboard = async () => {
+    const ui = setup({ start: false });
+    ui.plugin.updateSettings = vi.fn(async patch => { Object.assign(ui.plugin.store.settings, structuredClone(patch)); });
+    await ui.view.setState({ route: "dashboard", queue: [], queueIndex: 0, answerVisible: false, sessionMode: "recall" }, {});
+    return ui;
+  };
+  it("shows every learning setting directly before the stats without another settings screen", async () => {
+    const ui = await dashboard();
+    for (const label of ["상세 학습관리 · Anki 방식", "하루 새 문제", "학습 단계", "재학습 단계", "새 문제 순서", "복습 정렬", "FSRS-6 매개변수", "학습관리 설정 저장"]) expect(ui.content()).toContain(label);
+    expect(ui.content().indexOf("상세 학습관리")).toBeLessThan(ui.content().indexOf("등록 문제"));
+  });
+  it("preserves an unsaved field across dashboard refreshes and saves it from home", async () => {
+    const ui = await dashboard(); const input = field(ui, "하루 새 문제");
+    input.value = "7"; input.handlers.get("input")("7");
+    ui.view.render();
+    expect(field(ui, "하루 새 문제")).toBe(input);
+    expect(field(ui, "하루 새 문제").value).toBe("7");
+    await ui.exactButton("학습관리 설정 저장").click();
+    expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(7);
+    expect(field(ui, "하루 새 문제").value).toBe("7");
+  });
+  it("keeps the draft and allows retry after a rejected save", async () => {
+    const ui = await dashboard(); const input = field(ui, "하루 새 문제");
+    input.value = "9"; input.handlers.get("input")("9");
+    ui.plugin.updateSettings.mockRejectedValueOnce(new Error("disk full"));
+    await ui.exactButton("학습관리 설정 저장").click();
+    expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(20);
+    expect(field(ui, "하루 새 문제").value).toBe("9");
+    expect(ui.exactButton("학습관리 설정 저장").disabled).toBe(false);
+    await ui.exactButton("학습관리 설정 저장").click();
+    expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(9);
+  });
+});
 
 describe("study view scheduling integration", () => {
   it("disables global and subject recall at the daily limit while leaving browse available", async () => {
