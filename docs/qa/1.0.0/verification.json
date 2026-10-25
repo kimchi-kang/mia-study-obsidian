@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "typecheck": "PASS",
+  "productionBuild": "PASS",
+  "fullSuitePassed": 1003,
+  "fullSuiteConditionalSkipped": 2,
+  "conditionalSeparatelyPassed": 2,
+  "conditionalQuestions": 1000,
+  "conditionalTimeoutMs": 30000,
+  "distinctPassedAcrossRuns": 1005,
+  "productSourceUnchangedFrom": "0.10.6",
+  "mainJsByteIdenticalTo": "0.10.6",
+  "cssByteIdenticalTo": "0.10.6",
+  "mainSha256": "35e3a5f4db3f12e5eb0a3687af8d12dfc97283d1abe354cb60e8aa7cfe2fd775"
+}
