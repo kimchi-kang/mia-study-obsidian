@@ -1,4 +1,5 @@
-import { App, Notice, Setting } from "obsidian";
+import { renderQuestionTitle } from "./question-title";
+import { App, Component, Notice, Setting } from "obsidian";
 import { QUESTION_TYPES, QuestionRecord, QuestionType } from "../core/models";
 import { keywordReferencesFromInput } from "../core/keyword-path";
 import { QuestionMetadataInput } from "../core/question-writer";
@@ -7,6 +8,7 @@ import { KeyboardAwareModal } from "./mobile-keyboard";
 import { MAX_FOLLOW_UPS } from "../core/follow-up";
 
 export class QuestionMetadataModal extends KeyboardAwareModal {
+  private readonly titleRenderer = new Component();
   private type: QuestionType;
   private core: string;
   private sub: string;
@@ -27,8 +29,9 @@ export class QuestionMetadataModal extends KeyboardAwareModal {
   }
 
   onOpen(): void {
+    this.titleRenderer.load();
     this.titleEl.setText(this.question.id ? "문제 학습 정보 편집" : "MIA 문제로 등록");
-    this.contentEl.createEl("p", { text: this.question.heading, cls: "mia-muted" });
+    void renderQuestionTitle(this.app, this.question.heading, this.contentEl.createDiv({ cls: "mia-muted" }), this.question.filePath, this.titleRenderer);
     new Setting(this.contentEl).setName("문제 유형").addDropdown((dropdown) => {
       QUESTION_TYPES.forEach((type) => dropdown.addOption(type, type));
       dropdown.setValue(this.type).onChange((value) => { this.type = value as QuestionType; });
@@ -72,6 +75,7 @@ export class QuestionMetadataModal extends KeyboardAwareModal {
   }
 
   onClose(): void {
+    this.titleRenderer.unload();
     this.contentEl.empty();
   }
 }

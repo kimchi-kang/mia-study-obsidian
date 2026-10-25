@@ -1,4 +1,5 @@
-import { App, Modal, Notice, Setting } from "obsidian";
+import { renderQuestionTitle } from "./question-title";
+import { App, Component, Modal, Notice, Setting } from "obsidian";
 import { keywordReferencesFromInput } from "../core/keyword-path";
 import { ManagedQuestionInput } from "../core/managed-question";
 import { QUESTION_TYPES, QuestionRecord, QuestionType } from "../core/models";
@@ -88,6 +89,7 @@ export class SubjectEditorModal extends KeyboardAwareModal {
 }
 
 export class ManagedQuestionModal extends KeyboardAwareModal {
+  private readonly titleRenderer = new Component();
   private subject: string;
   private newSubject = "";
   private question: string;
@@ -121,6 +123,7 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
   }
 
   onOpen(): void {
+    this.titleRenderer.load();
     new Setting(this.contentEl).setName("과목").addDropdown((dropdown) => {
       this.subjects.forEach((subject) => dropdown.addOption(subject, subject));
       dropdown.setValue(this.subject).onChange((value) => { this.subject = value; });
@@ -200,7 +203,9 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
       selected.empty();
       selected.createEl("p", { text: `선택 ${this.selectedFollowUps.size} / ${MAX_FOLLOW_UPS}` });
       for (const question of this.selectedFollowUps.values()) {
-        selected.createEl("button", { text: `${question.subject} · ${question.heading} · 선택 해제` }).addEventListener("click", () => {
+        const button = selected.createEl("button");
+        void renderQuestionTitle(this.app, `${question.subject} · ${question.heading} · 선택 해제`, button, question.filePath, this.titleRenderer);
+        button.addEventListener("click", () => {
           this.selectedFollowUps.delete(question.id); render();
         });
       }
@@ -209,7 +214,8 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
         && `${question.subject} ${question.heading} ${question.questionMarkdown}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
       if (!matches.length) results.createEl("p", { text: "선택할 문제가 없습니다.", cls: "mia-muted" });
       for (const question of matches.slice(0, 50)) {
-        const button = results.createEl("button", { text: `${question.subject} · ${question.heading}` });
+        const button = results.createEl("button");
+        void renderQuestionTitle(this.app, `${question.subject} · ${question.heading}`, button, question.filePath, this.titleRenderer);
         button.disabled = this.selectedFollowUps.size >= MAX_FOLLOW_UPS;
         button.addEventListener("click", () => {
           if (this.selectedFollowUps.size >= MAX_FOLLOW_UPS) return;
@@ -224,7 +230,7 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
     render();
   }
 
-  onClose(): void { this.contentEl.empty(); }
+  onClose(): void { this.titleRenderer.unload(); this.contentEl.empty(); }
 }
 
 export class KeywordEditorModal extends KeyboardAwareModal {

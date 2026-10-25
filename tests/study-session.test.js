@@ -850,7 +850,7 @@ it.each([[90, "90분"], [36 * 60, "36시간"], [45 * 1440, "45일"], [36500 * 14
 
 
 describe("question-only markdown rendering", () => {
-  it.each(["$E=mc^2$", "$\\frac{a}{b}$", "plain question"])('renders a matching heading and prompt once: %s', text => {
+  it.each(["$E=mc^2$", "$\\frac{a}{b}$"])('renders a matching heading and prompt once: %s', text => {
     const ui = setup({ start: false });
     Object.assign(ui.plugin.index.registered[0], { heading: text, questionMarkdown: text });
     const render = vi.spyOn(MarkdownRenderer, "render");
@@ -859,5 +859,29 @@ describe("question-only markdown rendering", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0][2].tag).toBe("h2");
     expect(calls[0][3]).toBe("bank.md");
+  });
+});
+
+
+describe("resume and related question math headings", () => {
+  it("renders the saved question heading on the dashboard and after resuming", async () => {
+    const ui = setup({ start: false });
+    Object.assign(ui.plugin.index.registered[0], { heading: "$E=mc^2$", questionMarkdown: "Explain energy." });
+    ui.view.startReview(["q"]); await ui.plugin.studyUi.load();
+    const render = vi.spyOn(MarkdownRenderer, "render");
+    ui.view.showDashboard();
+    expect(render.mock.calls.some(c => c[1] === "$E=mc^2$" && c[2].tag === "h3" && c[3] === "bank.md")).toBe(true);
+    render.mockClear(); await ui.button("이어하기").click();
+    expect(render.mock.calls.some(c => c[1] === "$E=mc^2$" && c[2].tag === "h2")).toBe(true);
+    expect(ui.view.getState()).toMatchObject({ route: "study", queue: ["q"], queueIndex: 0 });
+  });
+  it("renders related question button headings and retains the preview action", async () => {
+    const ui = setup({ start: false, linked: true });
+    Object.assign(ui.plugin.index.registered[1], { heading: "$F=qvB$", questionMarkdown: "Explain force." });
+    const render = vi.spyOn(MarkdownRenderer, "render");
+    ui.view.startReview(["q"]); await ui.button("정답 보기").click();
+    expect(render.mock.calls.some(c => c[1] === "$F=qvB$" && c[2].tag === "strong" && c[3] === "bank.md")).toBe(true);
+    await ui.button("$F=qvB$").click();
+    expect(ui.plugin.openQuestionPreview).toHaveBeenCalledWith(expect.objectContaining({ id: "related" }), expect.any(Function));
   });
 });

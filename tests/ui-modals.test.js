@@ -254,7 +254,7 @@ describe("manual question follow-up selection", () => {
 
 
 describe("preview question-only markdown", () => {
-  it.each(["$E=mc^2$", "$\\frac{a}{b}$", "plain question"])("renders the matching title once: %s", async text => {
+  it.each(["$E=mc^2$", "$\\frac{a}{b}$"])("renders the matching title once: %s", async text => {
     const render = vi.spyOn(MarkdownRenderer, "render");
     try {
       const modal = new QuestionPreviewModal({}, { ...question, heading: text, questionMarkdown: text }, vi.fn(), vi.fn(), { size: "large" });

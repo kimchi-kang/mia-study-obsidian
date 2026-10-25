@@ -1,3 +1,4 @@
+import { renderQuestionTitle } from "./question-title";
 import { App, Component, MarkdownRenderer, Modal } from "obsidian";
 import { QuestionRecord } from "../core/models";
 import { StudyAppearance } from "../services/study-ui-store";
@@ -13,7 +14,7 @@ export class QuestionPreviewModal extends Modal {
     this.renderer = new Component(); this.renderer.load();
     this.contentEl.createEl("p", { text: `${this.question.subject} · ${this.question.questionType}`, cls: "mia-muted" });
     const headingIsPrompt = this.question.questionMarkdown.trim() === this.question.heading.trim();
-    const heading = this.contentEl.createEl("h3", headingIsPrompt ? {} : { text: this.question.heading });
+    const heading = this.contentEl.createEl("h3", { cls: "mia-question-heading" });
     const prompt = headingIsPrompt ? heading : this.contentEl.createDiv({ cls: "mia-markdown" });
     this.contentEl.createEl("h4", { text: "모범 답안" });
     const answer = this.contentEl.createDiv({ cls: "mia-markdown mia-answer" });
@@ -21,7 +22,8 @@ export class QuestionPreviewModal extends Modal {
     actions.createEl("button", { text: "전체 상세" }).addEventListener("click", () => { this.close(); this.details(); });
     actions.createEl("button", { text: "닫기", cls: "mod-cta" }).addEventListener("click", () => this.close());
     await Promise.all([
-      MarkdownRenderer.render(this.app, this.question.questionMarkdown, prompt, this.question.filePath, this.renderer),
+      renderQuestionTitle(this.app, this.question.heading, heading, this.question.filePath, this.renderer),
+      ...(!headingIsPrompt ? [MarkdownRenderer.render(this.app, this.question.questionMarkdown, prompt, this.question.filePath, this.renderer)] : []),
       MarkdownRenderer.render(this.app, this.question.answerMarkdown, answer, this.question.filePath, this.renderer),
     ]);
   }

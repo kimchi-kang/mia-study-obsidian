@@ -1,3 +1,4 @@
+import { renderQuestionTitle } from "./question-title";
 import { App, Component, MarkdownRenderer, Modal, Notice } from "obsidian";
 import { Rating } from "ts-fsrs";
 import { StudyGrade } from "../core/fsrs-service";
@@ -51,6 +52,7 @@ export class QuestionDetailModal extends Modal {
     this.modalEl.addClass("mia-detail-modal");
     this.renderer = new Component();
     this.renderer.load();
+    const titleRender = renderQuestionTitle(this.app, this.question.heading, this.titleEl, this.question.filePath, this.renderer);
     const metadata = this.contentEl.createDiv({ cls: "mia-detail-meta" });
     metadata.createSpan({ text: this.question.subject });
     metadata.createSpan({ text: this.question.questionType });
@@ -59,7 +61,7 @@ export class QuestionDetailModal extends Modal {
 
     this.contentEl.createEl("h3", { text: "질문" });
     const prompt = this.contentEl.createDiv({ cls: "mia-markdown" });
-    await MarkdownRenderer.render(this.app, this.question.questionMarkdown, prompt, this.question.filePath, this.renderer);
+    await Promise.all([titleRender, MarkdownRenderer.render(this.app, this.question.questionMarkdown, prompt, this.question.filePath, this.renderer)]);
     if (revision !== this.renderRevision) return;
     this.contentEl.createEl("h3", { text: "정답" });
     const answer = this.contentEl.createDiv({ cls: "mia-markdown mia-answer" });
@@ -92,7 +94,10 @@ export class QuestionDetailModal extends Modal {
     this.contentEl.createEl("h3", { text: "관련 질문" });
     const related = this.contentEl.createDiv({ cls: "mia-related" });
     for (const recommendation of this.recommendations) {
-      related.createDiv({ text: `${recommendation.question.heading} — ${recommendation.reasons.join(" · ")} (${recommendation.score}점)` });
+      const row = related.createDiv();
+      const question = recommendation.question;
+      void renderQuestionTitle(this.app, question.heading, row.createSpan(), question.filePath, this.renderer);
+      row.createSpan({ text: ` — ${recommendation.reasons.join(" · ")} (${recommendation.score}점)` });
     }
     if (!this.recommendations.length) related.createEl("p", { text: "추천할 관련 질문이 없습니다.", cls: "mia-muted" });
 

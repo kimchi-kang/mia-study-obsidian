@@ -1,4 +1,5 @@
-import { App, Notice, Setting } from "obsidian";
+import { renderQuestionTitle } from "./question-title";
+import { App, Component, Notice, Setting } from "obsidian";
 import { MAX_FOLLOW_UPS, normalizeFollowUpIds } from "../core/follow-up";
 import { QuestionRecord } from "../core/models";
 import { errorMessage } from "./error-message";
@@ -7,6 +8,7 @@ import { KeyboardAwareModal } from "./mobile-keyboard";
 type RegisteredQuestion = QuestionRecord & { id: string };
 
 export class FollowUpModal extends KeyboardAwareModal {
+  private readonly titleRenderer = new Component();
   private readonly selected: Set<string>;
   private bidirectional = false;
   private query = "";
@@ -24,7 +26,8 @@ export class FollowUpModal extends KeyboardAwareModal {
   }
 
   onOpen(): void {
-    this.contentEl.createEl("p", { text: this.base.heading, cls: "mia-muted" });
+    this.titleRenderer.load();
+    void renderQuestionTitle(this.app, this.base.heading, this.contentEl.createDiv({ cls: "mia-muted" }), this.base.filePath, this.titleRenderer);
     const toolbar = this.contentEl.createDiv({ cls: "mia-toolbar mia-filter-toolbar" });
     const search = toolbar.createEl("input", { type: "search", placeholder: "질문·답·키워드 검색" });
     const subject = toolbar.createEl("select", { attr: { "aria-label": "과목 필터" } });
@@ -67,7 +70,7 @@ export class FollowUpModal extends KeyboardAwareModal {
           counter.setText(`${this.selected.size}/${MAX_FOLLOW_UPS}개 선택`);
         });
         const body = label.createSpan();
-        body.createEl("strong", { text: question.heading });
+        void renderQuestionTitle(this.app, question.heading, body.createEl("strong"), question.filePath, this.titleRenderer);
         body.createEl("small", { text: `${question.subject} · ${question.questionType}` });
       }
       if (matches.length > 300) list.createEl("p", { text: `검색 결과 ${matches.length}개 중 300개만 표시합니다. 검색어를 더 구체적으로 입력하세요.`, cls: "mia-muted" });
@@ -94,5 +97,5 @@ export class FollowUpModal extends KeyboardAwareModal {
       }));
   }
 
-  onClose(): void { this.contentEl.empty(); }
+  onClose(): void { this.titleRenderer.unload(); this.contentEl.empty(); }
 }
