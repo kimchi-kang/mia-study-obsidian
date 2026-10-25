@@ -931,3 +931,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 }
 
 .mia-view .mia-study-dock .mia-ratings small { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+
+/* Markdown-only questions keep their heading spacing after math rendering. */
+.mia-question-section > h2 > p,
+.mia-preview-modal h3 > p { margin: 0; }

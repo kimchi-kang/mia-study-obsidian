@@ -251,3 +251,18 @@ describe("manual question follow-up selection", () => {
     expect(save.mock.calls[0][0].followUpLinks).toBeUndefined();
   });
 });
+
+
+describe("preview question-only markdown", () => {
+  it.each(["$E=mc^2$", "$\\frac{a}{b}$", "plain question"])("renders the matching title once: %s", async text => {
+    const render = vi.spyOn(MarkdownRenderer, "render");
+    try {
+      const modal = new QuestionPreviewModal({}, { ...question, heading: text, questionMarkdown: text }, vi.fn(), vi.fn(), { size: "large" });
+      await modal.onOpen();
+      const calls = render.mock.calls.filter(call => call[1] === text);
+      expect(calls).toHaveLength(1);
+      expect(calls[0][2].tag).toBe("h3");
+      expect(calls[0][3]).toBe(question.filePath);
+    } finally { render.mockRestore(); }
+  });
+});

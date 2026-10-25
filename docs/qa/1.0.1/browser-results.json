@@ -1,0 +1,86 @@
+[
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "math": 2,
+    "merror": 0,
+    "overflow": false,
+    "status": {
+      "errors": [],
+      "gradeIntervalsMinutes": {},
+      "history": {},
+      "notices": [],
+      "queueIndex": 0,
+      "registered": 12,
+      "reviewDue": {},
+      "route": "study",
+      "version": "1.0.1"
+    },
+    "table": "inline-block"
+  },
+  {
+    "size": {
+      "width": 320,
+      "height": 568
+    },
+    "math": 2,
+    "merror": 0,
+    "overflow": false,
+    "status": {
+      "errors": [],
+      "gradeIntervalsMinutes": {},
+      "history": {},
+      "notices": [],
+      "queueIndex": 0,
+      "registered": 12,
+      "reviewDue": {},
+      "route": "study",
+      "version": "1.0.1"
+    },
+    "table": "inline-block"
+  },
+  {
+    "size": {
+      "width": 768,
+      "height": 1024
+    },
+    "math": 2,
+    "merror": 0,
+    "overflow": false,
+    "status": {
+      "errors": [],
+      "gradeIntervalsMinutes": {},
+      "history": {},
+      "notices": [],
+      "queueIndex": 0,
+      "registered": 12,
+      "reviewDue": {},
+      "route": "study",
+      "version": "1.0.1"
+    },
+    "table": "inline-block"
+  },
+  {
+    "size": {
+      "width": 1280,
+      "height": 900
+    },
+    "math": 2,
+    "merror": 0,
+    "overflow": false,
+    "status": {
+      "errors": [],
+      "gradeIntervalsMinutes": {},
+      "history": {},
+      "notices": [],
+      "queueIndex": 0,
+      "registered": 12,
+      "reviewDue": {},
+      "route": "study",
+      "version": "1.0.1"
+    },
+    "table": "inline-block"
+  }
+]

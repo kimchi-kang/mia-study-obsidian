@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<meta name="description" content="MIA Study 1.0.0 정식 릴리스. Obsidian 문제은행, FSRS-6 복습, 키워드 연결과 Word 출력. 최신 변경 사항과 실제 Mac·모바일 모의환경 검증 결과를 확인하세요.">
-<title>MIA Study 1.0.0 · Obsidian 전공 공부 플러그인</title>
+<meta name="description" content="MIA Study 1.0.1 정식 릴리스. Obsidian 문제은행, FSRS-6 복습, 키워드 연결과 Word 출력. 최신 변경 사항과 실제 Mac·모바일 모의환경 검증 결과를 확인하세요.">
+<title>MIA Study 1.0.1 · Obsidian 전공 공부 플러그인</title>
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.7;color:#202b39;background:#f6f8fb;color-scheme:light dark;--panel:#fff;--border:#dce3ed;--muted:#5c697b;--accent:#205bb0}*{box-sizing:border-box}body{margin:0;word-break:keep-all;overflow-wrap:anywhere}main{max-width:1040px;margin:auto;padding:64px 24px}header{max-width:780px;margin-bottom:28px}.eyebrow{color:#386480;font-weight:650;letter-spacing:.06em}h1{font-size:clamp(2.4rem,7vw,4rem);line-height:1.15;letter-spacing:-.04em;margin:12px 0 20px}h2{font-size:1.45rem;line-height:1.4;margin:0 0 14px}h3{font-size:1.05rem;line-height:1.5;margin:0 0 8px}p{margin:12px 0}a{color:#175cad;text-underline-offset:3px;overflow-wrap:anywhere}a:focus-visible,summary:focus-visible{outline:3px solid #a77b00;outline-offset:4px}section{padding:28px;border:1px solid var(--border);border-radius:16px;background:var(--panel);margin:24px 0;scroll-margin-top:20px}.notice{border-left:5px solid #b37714;background:#fff9ed}.actions{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0}.button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:11px 20px;border-radius:10px;background:var(--accent);color:white;text-decoration:none;font-size:1rem;font-weight:650;text-align:center}.secondary{background:#e7eef9;color:#184882}nav{display:flex;flex-wrap:wrap;gap:6px 20px;padding:16px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}nav a{padding:6px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{border:1px solid var(--border);border-radius:12px;padding:20px}.card p{margin:0;color:var(--muted)}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}.metric{border:1px solid var(--border);border-radius:12px;padding:18px}.metric strong{display:block;font-size:1.8rem;line-height:1.3}.metric span{display:block;color:var(--muted);font-size:.9rem;margin-top:6px}.changes{list-style:none;padding:0;margin:0}.changes li{padding:20px 0;border-top:1px solid var(--border)}.changes li:first-child{border-top:0;padding-top:0}.changes li:last-child{padding-bottom:0}.version{display:inline-block;font-weight:700;margin-right:10px}.changes p{margin:6px 0 0}.shots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}figure{margin:0;border:1px solid var(--border);border-radius:12px;overflow:hidden}figure img{display:block;width:100%;height:340px;object-fit:contain;background:#080808}figcaption{padding:12px 14px;font-size:.9rem;color:var(--muted)}ul,ol{padding-left:24px}li+li{margin-top:10px}code{overflow-wrap:anywhere;font-size:.9em}small,.muted,footer{color:var(--muted)}summary{cursor:pointer;font-weight:650;min-height:44px;padding:8px 0}details+details{border-top:1px solid var(--border);margin-top:8px;padding-top:8px}footer{margin-top:32px;font-size:.9rem}.skip{position:absolute;left:12px;top:-80px;background:var(--panel);padding:10px 16px;z-index:5}.skip:focus{top:12px}
 @media(max-width:640px){main{padding:36px 16px}section{padding:20px}.grid,.shots{grid-template-columns:1fr}.metrics{grid-template-columns:1fr}.metric strong{font-size:1.6rem}figure img{height:auto;max-height:440px}.actions{flex-direction:column}.button{width:100%}nav{gap:6px 16px}}
@@ -19,18 +19,18 @@
 <span class="eyebrow">OBSIDIAN · MARKDOWN · FSRS-6</span>
 <h1>MIA Study</h1>
 <p>전공 문제를 모으고, 연결하고, 다음 복습까지 이어가세요. Obsidian 안에서 과목·질문·키워드를 관리하는 공부 플러그인입니다.</p>
-<small>최신 정식 버전 <strong>1.0.0</strong> · 페이지 업데이트 2026년 10월 25일 · 최소 Obsidian 1.8.7</small>
+<small>최신 정식 버전 <strong>1.0.1</strong> · 페이지 업데이트 2026년 10월 25일 · 최소 Obsidian 1.8.7</small>
 <div class="actions">
-<a class="button" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.0.0/mia-study-1.0.0.zip" download>1.0.0 다운로드 · ZIP</a>
-<a class="button secondary" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.0.0">정식 릴리스 보기</a>
+<a class="button" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.0.1/mia-study-1.0.1.zip" download>1.0.1 다운로드 · ZIP</a>
+<a class="button secondary" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.0.1">정식 릴리스 보기</a>
 </div>
 </header>
 <nav aria-label="페이지 안내">
 <a href="#features">주요 기능</a><a href="#changes">업데이트 내역</a><a href="#verification">검증 결과</a><a href="#screens">화면 보기</a><a href="#install">설치·업데이트</a>
 </nav>
 <section class="notice" aria-labelledby="release-title">
-<h2 id="release-title">검증을 마친 코드를 1.0.0 정식 버전으로</h2>
-<p>1.0.0은 최종 검증된 0.10.6의 동일한 제품 코드를 정식 버전으로 승격한 릴리스입니다. 과목 삭제·키워드 편집·노트 보호·문제 이동에서 확인된 네 가지 버그 수정을 포함합니다.</p>
+<h2 id="release-title">수식 표시를 고친 1.0.1 패치</h2>
+<p>수식만 있는 질문이 문자열로 보이던 학습·미리보기 표시를 수정했습니다. 자동 과목 노트에서도 여러 줄 수식과 TeX 주석의 줄 경계를 보존합니다. 기존 자동 생성 노트는 과목 노트 동기화 후 적용됩니다.</p>
 <p>플러그인 ID와 학습 데이터 형식은 유지합니다. 업데이트할 때 기존 문제 노트, 복습 기록과 이어하기 정보를 보존하세요.</p>
 </section>
 <section id="features" aria-labelledby="features-title">
@@ -48,6 +48,7 @@
 <section id="changes" aria-labelledby="changes-title">
 <h2 id="changes-title">최근 업데이트 내역</h2>
 <ol class="changes">
+<li><span class="version">1.0.1</span><strong>수식 표시 수정</strong><p>수식만 있는 질문의 학습·미리보기 렌더링과 자동 과목 노트의 여러 줄 수식 보존을 수정했습니다.</p></li>
 <li><span class="version">1.0.0</span><strong>정식 버전 공개</strong><p>검증된 0.10.6과 같은 실행 코드·CSS를 사용합니다. 버전 정보와 업데이트 매핑, 정식 다운로드·설치 안내를 갱신했습니다.</p></li>
 <li><span class="version">0.10.6</span><strong>자료와 복습 기록을 보호하는 네 가지 수정</strong><ul><li>과목 삭제 범위를 실제 폴더로 제한해 다른 폴더의 동명 과목 복습 기록을 보존합니다.</li><li>하위 폴더의 키워드를 편집할 때 선택한 파일에 저장합니다.</li><li>과목 노트 저장 직전에 최신 내용이 자동 생성 노트인지 다시 확인합니다.</li><li>문제를 다른 과목으로 옮겨도 상대경로 이미지·문서 링크가 원래 대상을 가리키도록 바꿉니다. 코드 예제는 보존합니다.</li></ul></li>
 <li><span class="version">0.10.5</span><strong>직접 지정한 복습 간격을 정확하게 표시</strong><p>90분·36시간·45일 같은 고정 간격을 반올림하지 않고 표시합니다. 긴 값은 좁은 화면에서 줄바꿈합니다.</p></li>
@@ -57,40 +58,40 @@
 </section>
 <section id="verification" aria-labelledby="verification-title">
 <h2 id="verification-title">최종 검증 결과</h2>
-<p>1.0.0 패키지에서 자동 검사와 빌드를 다시 실행했습니다. 같은 실행 코드인 0.10.6의 실제 Mac·모바일 모의환경 기록도 함께 공개합니다.</p>
+<p>1.0.1의 자동 검사와 빌드를 통과했습니다. Obsidian의 MathJax 엔진으로 수식 표시를 확인한 브라우저 모의환경 결과와 이전 버전의 검사 기록을 구분해 공개합니다.</p>
 <div class="metrics">
-<div class="metric"><strong>1,005개</strong>자동 검사 통과<span>기본 1,003개 + 별도 조건부 2개<br>타입 검사·배포 빌드 통과</span></div>
-<div class="metric"><strong>24개</strong>실제 Mac 확인 항목<span>Obsidian 1.14.5 · 더미 보관함<br>평가·취소·파일 처리·재로딩</span></div>
-<div class="metric"><strong>6가지 화면</strong>모바일 모의환경<span>평가·취소 24쌍 + 추가 확인 16개<br>320픽셀·가로 화면·태블릿 포함</span></div>
+<div class="metric"><strong>1,017개</strong>자동 검사 통과<span>기본 1,015개 + 별도 조건부 2개<br>타입 검사·배포 빌드 통과</span></div>
+<div class="metric"><strong>24개</strong>이전 실제 Mac 확인 항목<span>Obsidian 1.14.5 · 더미 보관함<br>평가·취소·파일 처리·재로딩</span></div>
+<div class="metric"><strong>6가지 화면</strong>이전 모바일 모의환경<span>평가·취소 24쌍 + 추가 확인 16개<br>320픽셀·가로 화면·태블릿 포함</span></div>
 </div>
-<ul><li>실제 Mac에서 네 가지 수정 사항, 이동한 이미지 로드, 네 평가 버튼의 저장·취소, 화면 재로딩 후 기록과 이어하기를 확인했습니다.</li><li>모바일 모의환경에서는 큰 글자·밝은/어두운 테마·좁은 화면에서 버튼 겹침과 화면 전체의 가로 넘침이 없었습니다. 설정 유지, 정확한 복습 간격, 이어하기와 합성 터치 이벤트도 확인했습니다.</li><li>1.0.0 배포 파일 7개의 서버 해시와 다운로드 파일을 대조했습니다. ZIP 내부 파일과 CRC도 검증했습니다.</li></ul>
-<p><a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/1.0.0/README.md">1.0.0 검증 기준</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/0.10.6/README.md">실제 Mac·모바일 측정 기록</a></p>
+<ul><li>1.0.1은 320·390·768·1280픽셀에서 수식 오류와 페이지 가로 넘침이 없었습니다. 실제 Mac·실물 휴대폰은 이번 패치에서 새로 검증하지 않았습니다.</li><li>이전 0.10.6의 실제 Mac에서 네 가지 수정 사항, 이동한 이미지 로드, 네 평가 버튼의 저장·취소, 화면 재로딩 후 기록과 이어하기를 확인했습니다.</li><li>이전 0.10.6 모바일 모의환경에서는 큰 글자·밝은/어두운 테마·좁은 화면에서 버튼 겹침과 화면 전체의 가로 넘침이 없었습니다. 설정 유지, 정확한 복습 간격, 이어하기와 합성 터치 이벤트도 확인했습니다.</li><li>1.0.1 배포 파일 7개의 서버 해시와 다운로드 파일을 대조했습니다. ZIP 내부 파일과 CRC도 검증했습니다.</li></ul>
+<p><a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/1.0.1/README.md">1.0.1 검증 기준</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/0.10.6/README.md">실제 Mac·모바일 측정 기록</a></p>
 <details><summary>검증 범위와 알려진 제약</summary><p>모바일은 추출한 Obsidian CSS와 대체 파일·설정·Markdown API를 쓰는 브라우저 모의환경입니다. 터치는 합성 이벤트이며 키보드는 가용 화면 높이 축소로 근사했습니다. 실제 휴대폰의 Obsidian, iOS/Android WebView, 소프트키보드·safe-area·클라우드 동기화는 미검증입니다. 다른 OS와 실제 절전 복귀도 검증하지 않았습니다.</p><p>모의 키보드 전환 직후 검증 호스트의 클릭 위치와 스크롤이 어긋난 사례는 실기기 추가 확인 항목으로 남깁니다. Mac의 화면 재로딩은 프로세스 재시작과 구분합니다. 검증 후 컴퓨터 제어 연결 실패로 원래 창 복귀는 미확인이며, 개인 자료 보존은 별도로 대조했습니다.</p><p>1,000문제 단일 파일의 메타데이터 왕복 검사는 기본 5초 제한에서 약 6.3초가 걸렸고, 해당 검사만 30초 제한으로 재실행해 통과했습니다. 대용량 기록 저장과 복합 Word 출력의 처리 지연 제약은 유지합니다. 모바일 관련 자동 검사 59개는 위 검사 합계에 포함됩니다.</p></details>
 </section>
 <section id="screens" aria-labelledby="screens-title">
 <h2 id="screens-title">화면으로 확인하기</h2>
-<p>같은 실행 코드인 0.10.6을 사용한 더미 자료의 모바일 모의환경 화면입니다. 실제 휴대폰 화면이 아니며, 상단 검증용 도구 모음은 플러그인 기능에 포함되지 않습니다.</p>
+<p>1.0.1과 Obsidian MathJax로 수식만 있는 질문과 여러 줄 답안을 확인한 브라우저 모의환경입니다. 실제 휴대폰 화면이 아니며 상단 도구 모음은 검증용입니다. 파일·Markdown API는 대체 구현입니다.</p>
 <div class="shots">
-<figure><a href="qa/0.10.6/phone-320-large.jpg"><img src="qa/0.10.6/phone-320-large.jpg" alt="320×568 큰 글자 모의환경의 질문 본문과 네 평가 버튼" width="320" height="568" loading="lazy"></a><figcaption>작은 화면 · 320×568 · 큰 글자</figcaption></figure>
-<figure><a href="qa/0.10.6/landscape-844-large.jpg"><img src="qa/0.10.6/landscape-844-large.jpg" alt="844×390 가로 모의환경에서 본문 아래 배치된 평가 버튼" width="844" height="390" loading="lazy"></a><figcaption>가로 화면 · 844×390 · 큰 글자</figcaption></figure>
-<figure><a href="qa/0.10.6/tablet-768-large.jpg"><img src="qa/0.10.6/tablet-768-large.jpg" alt="768×1024 태블릿 모의환경의 질문과 답변, 하단 평가 버튼" width="768" height="1024" loading="lazy"></a><figcaption>태블릿 · 768×1024 · 큰 글자</figcaption></figure>
+<figure><a href="qa/1.0.1/math-390.jpg"><img src="qa/1.0.1/math-390.jpg" alt="390픽셀 화면의 수식 질문과 여러 줄 분수 답안" width="390" height="844" loading="lazy"></a><figcaption>수식 질문·분수·제곱근 · 390×844</figcaption></figure>
+<figure><a href="qa/1.0.1/preview-math.jpg"><img src="qa/1.0.1/preview-math.jpg" alt="미리보기에서 렌더링한 수식" width="390" height="844" loading="lazy"></a><figcaption>이어볼 문제 미리보기 · 수식 표시</figcaption></figure>
+<figure><a href="qa/1.0.1/math-768.jpg"><img src="qa/1.0.1/math-768.jpg" alt="768픽셀 브라우저에서 수식 확인" width="768" height="1024" loading="lazy"></a><figcaption>768×1024 브라우저 모의환경</figcaption></figure>
 </div>
 </section>
 <section id="install" aria-labelledby="install-title">
 <h2 id="install-title">설치·업데이트</h2>
 <h3>BRAT으로 설치</h3>
-<ol><li>Obsidian 커뮤니티 플러그인에서 BRAT을 설치하고 활성화합니다.</li><li>명령 팔레트에서 <code>BRAT: Add a beta plugin for testing</code>을 실행합니다.</li><li>저장소 주소 <a href="https://github.com/kimchi-kang/mia-study-obsidian">kimchi-kang/mia-study-obsidian</a>를 입력합니다. 기존 사용자는 BRAT에서 업데이트합니다.</li><li>설치 후 MIA Study를 활성화하고 버전이 1.0.0인지 확인합니다.</li></ol>
+<ol><li>Obsidian 커뮤니티 플러그인에서 BRAT을 설치하고 활성화합니다.</li><li>명령 팔레트에서 <code>BRAT: Add a beta plugin for testing</code>을 실행합니다.</li><li>저장소 주소 <a href="https://github.com/kimchi-kang/mia-study-obsidian">kimchi-kang/mia-study-obsidian</a>를 입력합니다. 기존 사용자는 BRAT에서 업데이트합니다.</li><li>설치 후 MIA Study를 활성화하고 버전이 1.0.1인지 확인합니다.</li></ol>
 <h3>ZIP으로 수동 업데이트</h3>
-<ol><li>대상 보관함을 백업하고 해당 보관함의 Obsidian을 닫습니다.</li><li>ZIP의 <code>main.js</code>, <code>styles.css</code>, <code>manifest.json</code>을 <code>.obsidian/plugins/mia-study/</code>에 넣습니다.</li><li>기존 <code>data.json</code>, <code>ui-state.json</code>과 학습 자료는 유지합니다.</li><li>사용할 기기를 모두 1.0.0으로 업데이트한 뒤 Obsidian을 다시 열어 버전을 확인합니다.</li></ol>
+<ol><li>대상 보관함을 백업하고 해당 보관함의 Obsidian을 닫습니다.</li><li>ZIP의 <code>main.js</code>, <code>styles.css</code>, <code>manifest.json</code>을 <code>.obsidian/plugins/mia-study/</code>에 넣습니다.</li><li>기존 <code>data.json</code>, <code>ui-state.json</code>과 학습 자료는 유지합니다.</li><li>사용할 기기를 모두 1.0.1으로 업데이트한 뒤 Obsidian을 다시 열어 버전을 확인합니다.</li></ol>
 <p>최소 Obsidian 버전은 1.8.7입니다. 공유 보관함에서는 업데이트를 위해 활성화 스위치를 반복해서 바꾸면 꺼진 상태도 동기화될 수 있으므로, 해당 보관함을 닫고 파일을 교체하는 절차를 따르세요.</p>
-<p><a href="candidate.json">배포 파일 SHA-256과 버전 구성</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.0.0/SHA256SUMS.txt">SHA256SUMS.txt</a></p>
+<p><a href="candidate.json">배포 파일 SHA-256과 버전 구성</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.0.1/SHA256SUMS.txt">SHA256SUMS.txt</a></p>
 </section>
 <section aria-labelledby="credits-title">
 <h2 id="credits-title">라이선스·알고리즘 출처</h2>
 <p>MIA Study 자체 코드는 <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT 라이선스</a>입니다. 라이선스와 외부 코드 고지는 실행 파일 및 배포 파일에 포함됩니다.</p>
 <p>복습에는 Anki에서도 지원하는 FSRS 계열의 FSRS-6을 사용합니다. 구현 라이브러리는 Open Spaced Repetition의 <a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a>입니다. <a href="https://docs.ankiweb.net/manual/deck-options#fsrs">Anki의 FSRS 안내</a></p>
 </section>
-<footer>MIA Study 1.0.0 · <a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases">릴리즈 기록</a> · 2026년 10월 25일 업데이트</footer>
+<footer>MIA Study 1.0.1 · <a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases">릴리즈 기록</a> · 2026년 10월 25일 업데이트</footer>
 </main>
 </body>
 </html>
