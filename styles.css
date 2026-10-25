@@ -1003,3 +1003,8 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   justify-content: flex-end;
 }
 .mia-step-editor [hidden] { display: none !important; }
+/* Obsidian's settings pane can be narrow independently of the study view. */
+.mia-study-management-settings { container: mia-settings / inline-size; }
+@container mia-settings (max-width: 700px) {
+  .mia-settings-basic { grid-template-columns: minmax(0, 1fr); }
+}
