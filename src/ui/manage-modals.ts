@@ -160,17 +160,17 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
     });
     if (!this.existing) this.renderFollowUpPicker();
     new Setting(this.contentEl).addButton((button) => button.setButtonText("저장").setCta().onClick(async () => {
-      const question = this.question.trim();
-      const answer = this.answer.trim();
-      const coreKeywords = keywordReferencesFromInput(this.coreNames, this.keywordFolder);
-      const subKeywords = keywordReferencesFromInput(this.subNames, this.keywordFolder);
-      const subject = this.newSubject.trim() || this.subject;
-      if (!subject || !question || !answer || coreKeywords.length === 0) {
-        new Notice("과목, 질문, 정답, 핵심 키워드를 모두 입력하세요.");
-        return;
-      }
-      button.setDisabled(true);
       try {
+        const question = this.question.trim();
+        const answer = this.answer.trim();
+        const coreKeywords = keywordReferencesFromInput(this.coreNames, this.keywordFolder);
+        const subKeywords = keywordReferencesFromInput(this.subNames, this.keywordFolder);
+        const subject = this.newSubject.trim() || this.subject;
+        if (!subject || !question || !answer || coreKeywords.length === 0) {
+          new Notice("과목, 질문, 정답, 핵심 키워드를 모두 입력하세요.");
+          return;
+        }
+        button.setDisabled(true);
         await this.onSubmit({
           subject,
           questionMarkdown: question,

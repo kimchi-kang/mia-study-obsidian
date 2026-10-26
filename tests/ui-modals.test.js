@@ -268,3 +268,56 @@ describe("preview question-only markdown", () => {
     } finally { render.mockRestore(); }
   });
 });
+
+describe("keyword meaning dialog lifetime", () => {
+  it.each([false, true])("ignores a read completing after close (failure=%s)", async fail => {
+    const { KeywordMeaningModal } = await import("../src/ui/keyword-modal");
+    let finish;
+    const app = { metadataCache: { getFirstLinkpathDest: () => ({ path: "keyword.md" }) }, vault: {
+      cachedRead: () => new Promise((resolve, reject) => { finish = () => fail ? reject(Error("read failed")) : resolve("meaning"); }),
+    } };
+    const render = vi.spyOn(MarkdownRenderer, "render");
+    try {
+      const modal = new KeywordMeaningModal(app, "keyword", "키워드", "source.md", "keywords");
+      const pending = modal.onOpen(); modal.onClose(); finish(); await pending;
+      expect(render).not.toHaveBeenCalled();
+      expect(modal.contentEl.children).toHaveLength(0);
+    } finally { render.mockRestore(); }
+  });
+  it("does not append controls after a closed dialog's slow renderer finishes", async () => {
+    const { KeywordMeaningModal } = await import("../src/ui/keyword-modal");
+    let finish;
+    const app = { metadataCache: { getFirstLinkpathDest: () => ({ path: "keyword.md" }) }, vault: { cachedRead: async () => "meaning" } };
+    const render = vi.spyOn(MarkdownRenderer, "render").mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    try {
+      const modal = new KeywordMeaningModal(app, "keyword", "키워드", "source.md", "keywords");
+      const pending = modal.onOpen(); await Promise.resolve(); modal.onClose(); finish(); await pending;
+      expect(modal.contentEl.children).toHaveLength(0);
+    } finally { render.mockRestore(); }
+  });
+  it("still renders a readable note and reports an active read failure", async () => {
+    const { KeywordMeaningModal } = await import("../src/ui/keyword-modal");
+    const cachedRead = vi.fn().mockResolvedValueOnce("meaning").mockRejectedValueOnce(Error("read failed"));
+    const app = { metadataCache: { getFirstLinkpathDest: () => ({ path: "keyword.md" }) }, vault: { cachedRead } };
+    const modal = new KeywordMeaningModal(app, "keyword", "키워드", "source.md", "keywords");
+    await modal.onOpen(); expect(modal.contentEl.find("키워드 노트 열기")).toBeDefined(); modal.onClose();
+    await modal.onOpen(); expect(modal.contentEl.find("키워드 노트를 읽지 못했습니다: read failed")).toBeDefined();
+  });
+});
+
+it.each([1, 2])("reports invalid keyword input and permits correction without losing the question (field=%s)", async fieldIndex => {
+  const { ManagedQuestionModal } = await import("../src/ui/manage-modals");
+  const save = vi.fn().mockResolvedValue(undefined);
+  const modal = new ManagedQuestionModal({}, ["과목"], "키워드", question, new Map(), save);
+  modal.onOpen();
+  const inputs = modal.contentEl.children.filter(child => child.tag === "input");
+  inputs[fieldIndex].handlers.get("change")("잘못된\u0001키워드");
+  const button = modal.contentEl.find("저장");
+  await expect(button.handlers.get("click")()).resolves.toBeUndefined();
+  expect(save).not.toHaveBeenCalled(); expect(modal.close).not.toHaveBeenCalled(); expect(button.disabled).toBe(false);
+  inputs[fieldIndex].handlers.get("change")("정상키워드");
+  await button.handlers.get("click")();
+  expect(save).toHaveBeenCalledOnce();
+  expect(save.mock.calls[0][0]).toMatchObject({ questionMarkdown: "문제", answerMarkdown: "정답" });
+  expect(modal.close).toHaveBeenCalledOnce();
+});
