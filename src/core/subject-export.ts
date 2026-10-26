@@ -5,6 +5,7 @@ import {
 } from "docx";
 import type { QuestionRecord } from "./models";
 import { fencedCodeLines } from "./markdown-structure";
+import { isSourceAttributionLine } from "./source-attribution";
 
 export interface ExportImage {
   data: ArrayBuffer;
@@ -26,7 +27,7 @@ export function cleanExportMarkdown(markdown: string): string {
     if (metadata && /^>/.test(line)) return false;
     metadata = false;
     if (/^\^mia-q-[A-Za-z0-9-]+\s*$/u.test(line)) return false;
-    if (/^\s*(?:\*\*)?원문(?:\*\*)?\s*[:：]\s*(?:\*\*)?\s*(?:\[\[[^\n]+\]\]|\[[^\]]+\]\([^)]+\))\s*$/u.test(line)) return false;
+    if (isSourceAttributionLine(line)) return false;
     return !/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/u.test(line);
   }).join("\n").trim();
 }

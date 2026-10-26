@@ -1084,3 +1084,16 @@ describe("cross-device record refresh",()=>{
     await ui.exactButton("기록 새로고침").click();expect(ui.plugin.studyUi.resume).toEqual(original);
   });
 });
+
+it.each(["recall", "browse"])("hides generated source attribution in %s without changing the stored answer", async mode => {
+  const ui = setup({ start: false });
+  const question = ui.plugin.index.registered[0];
+  const stored = "답안 본문\n\n원문: [[과목/원본]]";
+  question.answerMarkdown = stored;
+  await ui.view.setState({ route: "study", queue: ["q"], queueIndex: 0, answerVisible: true, sessionMode: mode }, {});
+  expect(ui.content()).toContain("답안 본문");
+  expect(ui.content()).not.toContain("원문:");
+  expect(ui.exactButton("원문 열기")).toBeUndefined();
+  expect(question.answerMarkdown).toBe(stored);
+  expect(ui.button("암기")).toBeDefined();
+});

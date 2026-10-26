@@ -1,3 +1,4 @@
+import { withoutSourceAttribution } from "../core/source-attribution";
 import { StudyManagementModal } from "./study-management-modal";
 import { renderQuestionTitle } from "./question-title";
 import { Component, ItemView, MarkdownRenderer, Notice, Platform, ViewStateResult, WorkspaceLeaf } from "obsidian";
@@ -1145,12 +1146,11 @@ export class MiaStudyView extends ItemView {
     const answerSection = card.createDiv({ cls: "mia-answer-section" });
     answerSection.createDiv({ text: "모범 답안", cls: "mia-card-label" });
     const answer = answerSection.createDiv({ cls: "mia-markdown mia-answer" });
-    this.readingRenders.push(MarkdownRenderer.render(this.app, question.answerMarkdown, answer, question.filePath, this.renderComponent ?? this));
+    this.readingRenders.push(MarkdownRenderer.render(this.app, withoutSourceAttribution(question.answerMarkdown), answer, question.filePath, this.renderComponent ?? this));
     const concepts = card.createEl("details", { cls: "mia-study-concepts" });
     concepts.createEl("summary", { text: `핵심 개념 확인 · ${question.coreKeywords.length + question.subKeywords.length}개` });
     this.renderKeywordSection(concepts, "핵심 키워드", question.coreKeywords, question.filePath);
     this.renderKeywordSection(concepts, "보조 키워드", question.subKeywords, question.filePath);
-    card.createEl("button", { text: "원문 열기", cls: "mia-source" }).addEventListener("click", () => this.plugin.openQuestion(question));
     const recommendations = recommendQuestions(question, this.plugin.index.registered, this.plugin.store.reviews, this.plugin.fsrs);
     if (recommendations.length) {
       const related = layout.createDiv({ cls: "mia-related" });
