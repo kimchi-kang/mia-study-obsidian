@@ -20,15 +20,20 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
   let destroyed = false;
   let dismissButton: HTMLButtonElement | null = null;
   let layoutHeight = Math.max(window.innerHeight, document.documentElement.clientHeight);
-  let wideLayout = window.innerWidth > layoutHeight;
+  let layoutWidth = window.innerWidth;
 
   surface.addClass("mia-keyboard-surface");
+  const keyboardActions = () => surface.hasClass("mia-keyboard-modal-container")
+    ? focusRoot.querySelector<HTMLElement>(".mia-keyboard-actions")
+    : null;
 
   const scrollFocusedControl = () => {
     window.clearTimeout(focusTimer);
     focusTimer = window.setTimeout(() => {
       const active = document.activeElement;
       if (!surface.hasClass("mia-keyboard-open") || !editableTarget(active) || !focusRoot.contains(active)) return;
+      const actions = keyboardActions();
+      if (actions) focusRoot.style.setProperty("--mia-keyboard-actions-height", `${actions.getBoundingClientRect().height}px`);
       active.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
     }, 80);
   };
@@ -38,10 +43,12 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
     const currentLayoutHeight = Math.max(window.innerHeight, document.documentElement.clientHeight);
     const visualHeight = viewport?.height ?? window.innerHeight;
     const offsetTop = viewport?.offsetTop ?? 0;
-    const currentWideLayout = window.innerWidth > currentLayoutHeight;
-    if (currentWideLayout !== wideLayout) {
+    // A keyboard can invert the available aspect ratio without rotating the device.
+    // Reset the baseline only when the layout width actually changes.
+    const currentLayoutWidth = window.innerWidth;
+    if (currentLayoutWidth !== layoutWidth) {
       layoutHeight = currentLayoutHeight;
-      wideLayout = currentWideLayout;
+      layoutWidth = currentLayoutWidth;
     } else {
       layoutHeight = Math.max(layoutHeight, currentLayoutHeight);
     }
@@ -68,9 +75,10 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
       });
       // Keep the field focused until click; otherwise the control can disappear before activation.
       dismissButton.addEventListener("pointerdown", event => event.preventDefault());
-      focusRoot.append(dismissButton);
+      // A modal can opt into one footer so two sticky controls never cover each other.
+      (keyboardActions() ?? focusRoot).append(dismissButton);
     }
-    if (!metrics.keyboardOpen) { dismissButton?.remove(); dismissButton = null; layoutHeight = currentLayoutHeight; }
+    if (!metrics.keyboardOpen) { dismissButton?.remove(); dismissButton = null; focusRoot.style.removeProperty("--mia-keyboard-actions-height"); layoutHeight = currentLayoutHeight; }
     if (metrics.keyboardOpen) scrollFocusedControl();
   };
 
@@ -103,6 +111,7 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
       window.cancelAnimationFrame(frame);
       window.clearTimeout(focusTimer);
       surface.removeClass("mia-keyboard-surface", "mia-keyboard-open");
+      focusRoot.style.removeProperty("--mia-keyboard-actions-height");
       for (const property of [
         "--mia-visible-viewport-height",
         "--mia-viewport-offset-top",
