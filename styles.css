@@ -935,6 +935,9 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 @container mia-view (max-width: 320px) {
   .mia-view[data-device="phone"] .mia-header .mia-badge { display: none; }
 }
+@container mia-view (max-width: 280px) {
+  .mia-route-study .mia-nav { grid-template-columns: repeat(auto-fit, minmax(min(64px, 100%), 1fr)); }
+}
 
 .mia-view .mia-study-dock .mia-ratings small { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 
@@ -956,11 +959,16 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-study-management-settings .mia-settings-basic > .setting-item .setting-item-control { width: 100%; margin: auto 0 0; padding-top: 8px; }
 .mia-settings-basic > .setting-item input { width: 100%; }
 .mia-settings-status { color: var(--text-muted); font-size: var(--font-ui-small); }
-.mia-step-editor { padding: 14px; border: 1px solid var(--background-modifier-border); border-radius: 12px; min-width: 0; }
+.mia-step-editor { container: mia-steps / inline-size; padding: 14px; border: 1px solid var(--background-modifier-border); border-radius: 12px; min-width: 0; }
 .mia-step-editor h5 { font-size: var(--font-ui-medium); margin: 0 0 12px; }
 .mia-step-row { display: grid; grid-template-columns: minmax(48px, 1fr) minmax(76px, 1.3fr) max-content; gap: 6px; align-items: center; margin-bottom: 8px; }
 .mia-step-row > input, .mia-step-row > select { width: 100%; min-width: 0; }
 .mia-step-row > button { min-width: 48px; padding-inline: 10px; white-space: nowrap; }
+/* Stack the action before the input row's intrinsic minimum clips it. */
+@container mia-steps (max-width: 220px) {
+  .mia-step-row { grid-template-columns: repeat(auto-fit, minmax(min(76px, 100%), 1fr)); }
+  .mia-step-row > button { grid-column: 1 / -1; white-space: normal; }
+}
 .mia-step-editor .mia-step-mode { display: block; border: 0; padding-block: 8px; }
 .mia-step-editor .mia-step-mode .setting-item-control { margin: 6px 0 8px; width: 100%; }
 .mia-step-editor .mia-step-mode select { width: 100%; max-width: 100%; }
@@ -1002,3 +1010,8 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 :is(.mia-study-management-modal .mia-learning-settings-actions, .mia-appearance-modal .mia-appearance-actions) { position: sticky; bottom: 0; padding-block: 12px; background: var(--modal-background, var(--background-primary)); }
 .mia-device-sync-settings { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--background-modifier-border); }
 .mia-device-sync-settings > button { max-width: 100%; white-space: normal; }
+/* Closing an overlay needs the same touch target as its other actions. */
+.modal-container > :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) .modal-close-button {
+  min-width: 44px;
+  min-height: 44px;
+}
