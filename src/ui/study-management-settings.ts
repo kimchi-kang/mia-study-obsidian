@@ -5,13 +5,13 @@ import { parseSteps, validParameters } from "../core/study-management";
 
 type Save = (action: () => Promise<void>) => Promise<void>;
 
-/** The dashboard and Obsidian settings share the same draft, validation and save. */
-export function renderStudyManagementSettings(container: HTMLElement, plugin: MiaStudyPlugin, save: Save): void {
+/** The dialog and Obsidian settings share validation and explicit saving. */
+export function renderStudyManagementSettings(container: HTMLElement, plugin: MiaStudyPlugin, save: Save, cancel?: () => void): void {
   const render = (initial: StudyManagementSettings, defaultsLoaded = false) => {
     container.empty();
     const draft = structuredClone(initial);
     const validators: Array<() => boolean> = [];
-    container.createEl("h3", { text: "학습 설정" });
+    if (!cancel) container.createEl("h3", { text: "학습 설정" });
     container.createEl("p", { text: "하루 학습량과 다시 볼 간격을 정하세요. 저장하면 다음 학습부터 적용됩니다.", cls: "setting-item-description" });
     const status = container.createEl("p", { text: defaultsLoaded ? "기본값을 불러왔습니다. 저장하면 적용됩니다." : "현재 저장된 설정입니다.", cls: "mia-settings-status" });
     status.setAttribute("role", "status");
@@ -135,6 +135,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
     extra.createEl("p", { text: "전체 과목에 같은 설정이 적용됩니다. 이미 예약된 복습일은 유지됩니다. 평가 버튼별 고정 간격을 설정했다면 그 값이 우선합니다.", cls: "setting-item-description" });
     const actions = container.createDiv({ cls: "mia-learning-settings-actions" });
     actions.createEl("button", { text: "기본값 불러오기", attr: { type: "button" } }).addEventListener("click", () => render(structuredClone(DEFAULT_STUDY_MANAGEMENT), true));
+    if (cancel) actions.createEl("button", { text: "취소", attr: { type: "button" } }).addEventListener("click", cancel);
     const button = actions.createEl("button", { text: "학습 설정 저장", cls: "mod-cta", attr: { type: "button" } });
     button.addEventListener("click", async () => {
       if (!validators.every(validate => validate())) return;
