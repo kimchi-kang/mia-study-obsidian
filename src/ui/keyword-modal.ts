@@ -4,6 +4,7 @@ import { errorMessage } from "./error-message";
 
 export class KeywordMeaningModal extends Modal {
   private renderer: Component | null = null;
+  private renderRevision = 0;
 
   constructor(
     app: ConstructorParameters<typeof Modal>[0],
@@ -16,14 +17,20 @@ export class KeywordMeaningModal extends Modal {
   }
 
   async onOpen(): Promise<void> {
+    const revision = ++this.renderRevision;
+    this.contentEl.empty();
     this.titleEl.setText(this.label);
-    this.renderer = new Component();
-    this.renderer.load();
+    const renderer = new Component();
+    this.renderer = renderer;
+    renderer.load();
     const file = this.app.metadataCache.getFirstLinkpathDest(this.target, this.sourcePath);
     if (file) {
       try {
         const markdown = await this.app.vault.cachedRead(file);
-        await MarkdownRenderer.render(this.app, markdown, this.contentEl, file.path, this.renderer);
+        if (revision !== this.renderRevision) return;
+        const content = this.contentEl.createDiv();
+        await MarkdownRenderer.render(this.app, markdown, content, file.path, renderer);
+        if (revision !== this.renderRevision) return;
         const open = this.contentEl.createEl("button", { text: "키워드 노트 열기" });
         open.addEventListener("click", async () => {
           try {
@@ -34,6 +41,7 @@ export class KeywordMeaningModal extends Modal {
           }
         });
       } catch (error) {
+        if (revision !== this.renderRevision) return;
         this.contentEl.createEl("p", { text: `키워드 노트를 읽지 못했습니다: ${errorMessage(error)}`, cls: "mia-warning" });
       }
       return;
@@ -59,7 +67,9 @@ export class KeywordMeaningModal extends Modal {
   }
 
   onClose(): void {
+    this.renderRevision++;
     this.renderer?.unload();
+    this.renderer = null;
     this.contentEl.empty();
   }
 }
