@@ -156,6 +156,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-editor-modal-long textarea { resize: vertical; }
 .mia-keyboard-modal .modal-header { flex: 0 0 auto; }
 .mia-keyboard-modal .modal-content {
+  scroll-padding-bottom: calc(var(--mia-keyboard-actions-height, 0px) + 24px);
   flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -429,7 +430,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
     overflow-y: auto;
     overscroll-behavior: contain;
     flex: 0 1 auto;
-    scroll-padding-block: 64px 80px;
+    scroll-padding-block: 64px max(80px, calc(var(--mia-keyboard-actions-height, 0px) + 24px));
     padding-bottom: max(18px, var(--safe-area-inset-bottom, 0px));
   }
 
@@ -878,6 +879,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   scroll-padding-bottom: 72px;
 }
 .mia-keyboard-dismiss { position: sticky; bottom: 0; z-index: 6; display: block; min-height: 44px; height: auto; width: max-content; max-width: 100%; margin: 8px auto 0; padding: 8px 16px; box-shadow: var(--shadow-s); background: var(--background-primary); color: var(--interactive-accent); }
+.mia-keyboard-actions > .mia-keyboard-dismiss { position: static; width: auto; min-width: 0; margin: 0; box-shadow: none; background: var(--interactive-normal); }
 .mia-view:is([data-device="phone"], [data-device="tablet"]) :is(button, input, select) { min-height: 44px; }
 .mia-view .mia-dock-undo { color: var(--interactive-accent); border: 1px solid var(--background-modifier-border); }
 /* Keep the permanent undo button when a toast would squeeze out the question. */
@@ -980,6 +982,8 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 @media (max-width: 480px) {
   .mia-learning-settings-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .mia-learning-settings-actions > button:first-child { grid-column: 1 / -1; }
+  .mia-learning-settings-actions:has(> .mia-keyboard-dismiss) > button:first-child { grid-column: auto; }
+  .mia-learning-settings-actions > .mia-keyboard-dismiss { grid-column: 2; grid-row: 1; }
   .mia-appearance-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 /* State labels need room beside the touch-sized toggle. */

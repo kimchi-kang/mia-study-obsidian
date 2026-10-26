@@ -133,7 +133,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       draft.fsrsParameters = parsed; return true;
     });
     extra.createEl("p", { text: "전체 과목에 같은 설정이 적용됩니다. 이미 예약된 복습일은 유지됩니다. 평가 버튼별 고정 간격을 설정했다면 그 값이 우선합니다.", cls: "setting-item-description" });
-    const actions = container.createDiv({ cls: "mia-learning-settings-actions" });
+    const actions = container.createDiv({ cls: "mia-learning-settings-actions mia-keyboard-actions" });
     actions.createEl("button", { text: "기본값 불러오기", attr: { type: "button" } }).addEventListener("click", () => render(structuredClone(DEFAULT_STUDY_MANAGEMENT), true));
     if (cancel) actions.createEl("button", { text: "취소", attr: { type: "button" } }).addEventListener("click", cancel);
     const button = actions.createEl("button", { text: "학습 설정 저장", cls: "mod-cta", attr: { type: "button" } });
