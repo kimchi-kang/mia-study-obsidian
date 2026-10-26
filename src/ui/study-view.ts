@@ -542,16 +542,27 @@ export class MiaStudyView extends ItemView {
     const available = buildReviewQueue(questions, this.plugin.store.reviews, this.plugin.fsrs, { management: this.plugin.store.settings.studyManagement });
     const availableNew = available.filter(question => this.plugin.fsrs.isNew(this.plugin.store.getReview(question.id))).length;
     const availableDue = available.length - availableNew;
+    const empty = questions.length === 0;
+    const limited = !empty && available.length === 0 && due + fresh > 0;
     const action = root.createDiv({ cls: "mia-primary-card" });
-    action.createEl("h3", { text: available.length > 0 ? "오늘 학습을 시작할까요?" : "오늘 학습을 마쳤습니다" });
-    action.createEl("p", { text: `오늘 출제: 복습 ${availableDue}개 · 새 문제 ${availableNew}개 · 전체 대기: 복습 ${due}개 · 새 문제 ${fresh}개` });
+    action.createEl("h3", { text: empty ? "첫 질문을 추가해 보세요" : available.length > 0 ? "오늘 학습을 시작할까요?" : limited ? "오늘 출제할 문제가 없습니다" : "지금 복습할 문제가 없습니다" });
+    action.createEl("p", { text: empty
+      ? "과목 이름, 질문, 정답, 핵심 키워드를 입력하면 바로 학습할 수 있습니다. 과목과 키워드는 함께 만들어집니다."
+      : `오늘 출제: 복습 ${availableDue}개 · 새 문제 ${availableNew}개 · 전체 대기: 복습 ${due}개 · 새 문제 ${fresh}개` });
+    if (limited) action.createEl("p", { text: "대기 중인 문제는 있지만 하루 학습량 제한으로 시험 모드에 나오지 않습니다. 학습 설정에서 하루 새 문제·하루 최대 복습을 확인하세요.", cls: "mia-muted" });
     const actions = action.createDiv({ cls: "mia-inline-actions" });
-    const start = actions.createEl("button", { text: "시험 모드 시작", cls: "mod-cta" });
-    start.disabled = available.length === 0;
-    start.addEventListener("click", () => this.startReview());
-    const browse = actions.createEl("button", { text: "전체 암기 모드" });
-    browse.disabled = due + fresh === 0;
-    browse.addEventListener("click", () => this.startReview(questions.map((question) => question.id), "browse"));
+    if (empty) {
+      actions.createEl("button", { text: "첫 질문 추가", cls: "mod-cta" }).addEventListener("click", () => void this.plugin.openManagedQuestionEditor());
+      if (this.plugin.index.candidates.length) actions.createEl("button", { text: "등록할 질문 확인" }).addEventListener("click", () => this.navigate("questions"));
+    } else {
+      const start = actions.createEl("button", { text: "시험 모드 시작", cls: "mod-cta" });
+      start.disabled = available.length === 0;
+      start.addEventListener("click", () => this.startReview());
+      const browse = actions.createEl("button", { text: "전체 암기 모드" });
+      browse.disabled = due + fresh === 0;
+      browse.addEventListener("click", () => this.startReview(questions.map((question) => question.id), "browse"));
+    }
+    if (limited) actions.createEl("button", { text: "학습량 확인" }).addEventListener("click", () => new StudyManagementModal(this.app, this.plugin, () => this.render()).open());
     const refresh = actions.createEl("button", { text: "기록 새로고침" });
     refresh.setAttr("title", "다른 기기에서 이 보관함으로 도착한 복습 기록과 이어하기 위치를 확인합니다.");
     refresh.addEventListener("click", async () => {

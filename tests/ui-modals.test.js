@@ -10,6 +10,7 @@ vi.mock("obsidian", () => {
     empty() { this.children = []; }
     addClass() {} removeClass() {} setAttribute() {} setText(text) { this.text = text; }
     addEventListener(name, handler) { this.handlers.set(name, handler); }
+    scrollIntoView() {}
     find(text) { return this.children.flatMap(child => [child, child.find(text)]).find(child => child && child.text === text); }
     click() { if (!this.disabled) this.handlers.get("click")?.(); }
   }
@@ -36,7 +37,7 @@ vi.mock("obsidian", () => {
     addSearch(callback) { return this.addText(callback); }
     addButton(callback) {
       const button = this.parent.createEl("button");
-      callback({ setButtonText(text) { button.text = text; return this; }, setCta() { return this; }, setDisabled(value) { button.disabled = value; return this; }, onClick(handler) { button.addEventListener("click", handler); return this; } });
+      callback({ buttonEl: button, setButtonText(text) { button.text = text; return this; }, setCta() { return this; }, setDisabled(value) { button.disabled = value; return this; }, onClick(handler) { button.addEventListener("click", handler); return this; } });
       return this;
     }
   }
@@ -320,4 +321,43 @@ it.each([1, 2])("reports invalid keyword input and permits correction without lo
   expect(save).toHaveBeenCalledOnce();
   expect(save.mock.calls[0][0]).toMatchObject({ questionMarkdown: "문제", answerMarkdown: "정답" });
   expect(modal.close).toHaveBeenCalledOnce();
+});
+
+it("shows question saving progress, blocks duplicate submission and keeps failure guidance for retry", async () => {
+  const { ManagedQuestionModal } = await import("../src/ui/manage-modals");
+  let fail;
+  const save = vi.fn().mockImplementationOnce(() => new Promise((_resolve, reject) => { fail = reject; })).mockResolvedValue(undefined);
+  const modal = new ManagedQuestionModal({}, ["과목"], "키워드", question, new Map(), save);
+  modal.onOpen();
+  const button = modal.contentEl.find("저장");
+  const pending = button.handlers.get("click")();
+  expect(button.disabled).toBe(true);
+  expect(modal.contentEl.find("질문을 저장하고 있습니다…")).toBeDefined();
+  await button.handlers.get("click")();
+  expect(save).toHaveBeenCalledOnce();
+  fail(Error("쓰기 권한이 없습니다")); await pending;
+  expect(modal.contentEl.find("저장하지 못했습니다: 쓰기 권한이 없습니다. 입력 내용은 유지되었습니다. 원인을 확인한 뒤 다시 저장해 주세요.")).toBeDefined();
+  expect(button.disabled).toBe(false); expect(modal.close).not.toHaveBeenCalled();
+  await button.handlers.get("click")();
+  expect(save).toHaveBeenCalledTimes(2);
+  expect(save.mock.calls[1][0]).toEqual(save.mock.calls[0][0]);
+  expect(modal.close).toHaveBeenCalledOnce();
+});
+
+it("keeps a first-question draft and identifies the missing keyword before submitting its new subject", async () => {
+  const save = vi.fn().mockResolvedValue(undefined);
+  const modal = new ManagedQuestionModal({}, [], "MIA/키워드", null, new Map(), save);
+  modal.onOpen();
+  const inputs = modal.contentEl.children.filter(child => child.tag === "input");
+  const areas = modal.contentEl.children.filter(child => child.tag === "textarea");
+  inputs[0].handlers.get("change")("첫 과목");
+  areas[0].handlers.get("change")("첫 질문");
+  areas[1].handlers.get("change")("첫 정답");
+  const button = modal.contentEl.find("저장");
+  await button.handlers.get("click")();
+  expect(save).not.toHaveBeenCalled();
+  expect(modal.contentEl.find("핵심 키워드를 하나 이상 입력하세요. 입력 내용은 유지됩니다.")).toBeDefined();
+  inputs[1].handlers.get("change")("첫 키워드");
+  await button.handlers.get("click")();
+  expect(save).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ subject: "첫 과목", questionMarkdown: "첫 질문", answerMarkdown: "첫 정답" }));
 });
