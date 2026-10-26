@@ -1,0 +1,861 @@
+{
+  "version": "1.0.3",
+  "date": "2026-10-25",
+  "status": "released",
+  "qualification": "1.0.3 running manifest version label. 1025 default tests and 2 conditional tests passed; typecheck/build passed. Browser synthetic RC example with explicit math delimiters verified at 4 viewport sizes. Plain prose is not automatically converted; no physical-device or cloud propagation qualification.",
+  "files": {
+    "main.js": "1a4e85253bbb3c5c19cdd7cbf538600d77c1967845336aca19209fcac62d606d",
+    "styles.css": "34791fcacb608cb9038daba5ef575dc967eeb32e851aeaf7d8b801f5d43ecc34",
+    "manifest.json": "e7678483a059115a9847aaa01509adea7e62ffa87ce1cacb0aca1771b165382b",
+    "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
+    "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9"
+  },
+  "mobileValidation": "Historical 0.10.6 baseline. Current 1.0.1 math checks are in stableReleaseValidation; not a physical-phone qualification.",
+  "excludedValidation": [
+    "Actual cloud synchronization/transmission and concurrent cloud updates; excluded by author request, not qualified",
+    "Other operating-system execution; excluded by author request, not qualified",
+    "Actual operating-system sleep/wake; excluded by author request, not qualified"
+  ],
+  "license": "MIT",
+  "algorithm": "FSRS-6 via ts-fsrs 5.4.1 (Open Spaced Repetition); FSRS is also supported by Anki",
+  "nativeValidation": {
+    "platform": "macOS",
+    "appVersions": [
+      "1.8.7",
+      "1.14.5"
+    ],
+    "freshProcesses": 6,
+    "fixtureQuestionsPerApp": 3,
+    "scope": "Exact candidate startup, native API persistence/recovery, actual resume/reveal/Good-rating UI and fresh-process restoration; current desktop dark settings/appearance observed",
+    "limits": "Historical three-question core-flow checks; additional native1000/history100 diagnostic below. Not all OS/device/version combinations, endurance, phone memory or actual cloud validation",
+    "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
+  },
+  "nativeLoadValidation": {
+    "app": "1.14.5",
+    "questions": 1000,
+    "initialHistoryEach": 100,
+    "actualUiGrades": 5,
+    "busyDomRangeMs": [
+      1.2,
+      1.7
+    ],
+    "firstRafBusyRangeMs": [
+      2.7,
+      8.7
+    ],
+    "saveCompleteRangeMs": [
+      361.9,
+      400.1
+    ],
+    "saveMedianMs": 381.9,
+    "maxTimerLagMs": 169.7,
+    "integrity": "100005 histories; ungraded records preserved; primary/recovery equal; fresh-process exact reviews and resume restored",
+    "limits": "Five diagnostic clicks; RAF opportunity not OS paint proof. Renderer snapshots not leak/endurance/phone-RAM certification. Synchronous full-history costs remain.",
+    "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
+  },
+  "nativeLifecycleValidation": {
+    "app": "1.14.5",
+    "questions": 1000,
+    "histories": 100005,
+    "disableEnableApiCycles": 20,
+    "unloadedOwnedResourceCounts": {
+      "eventRefs": 0,
+      "refreshTimers": 0,
+      "pluginEvents": 0,
+      "storeListeners": 0,
+      "indexListeners": 0
+    },
+    "activeOwnedResourceCounts": {
+      "eventRefs": 4,
+      "refreshTimers": 0,
+      "pluginEvents": 14,
+      "storeListeners": 2,
+      "indexListeners": 1
+    },
+    "integrity": "Exact reviews/resume and primary/question source bytes preserved each cycle; fresh-process native DOM and exact records restored",
+    "limits": "Manager API, not20 physical settings clicks. About49.5seconds, not one-hour endurance. Renderer snapshots not full leak/phone memory certification. CUA capture failed, no new visual qualification.",
+    "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
+  },
+  "nativeStorageEnduranceValidation": {
+    "app": "1.14.5",
+    "elapsedSeconds": 3600.67,
+    "questions": 1000,
+    "initialFinalHistories": 100005,
+    "apiGradeUndoCycles": 60,
+    "warmupCyclesExcluded": 3,
+    "sampleCount": 120,
+    "maxSampleGapSeconds": 37.3,
+    "integrity": "Whole review/source preservation, expected-state grade+undo, primary/recovery equality, sync, index refresh, resume persistence and fresh-process exact review/resume values passed",
+    "limits": "Native candidate API/store/FSRS/index/resume, not physical UI soak. Renderer snapshots include host+observer, no forced GC or complete leak certificate. Process-tree summed RSS double-counts shared pages and collection started after soak began. UI1hour/100modals NOT_STARTED; not a new UI visual or OS lifecycle certification.",
+    "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
+  },
+  "nativeInterruptionValidation": {
+    "app": "1.14.5",
+    "questions": 1000,
+    "baselineHistories": 100005,
+    "cases": [
+      "before native save",
+      "after native save before verification",
+      "after store commit acknowledgement"
+    ],
+    "freshProcesses": 6,
+    "result": "PASS: old state before write, exact new state after native write and commit; source/settings/quarantine/conflicts preserved",
+    "recovery": "Latest primary restored even when local recovery remained older; explicit synchronize brought primary and recovery equal",
+    "limits": "Controlled native API boundaries and owned root SIGKILL only; not physical UI, arbitrary in-flight write, power loss, OS sleep/resume or other OS qualification",
+    "historicalCandidateMainSha256": "b519192bf33907bb5a00307d1c07e55633866a78bf3455bc447eb9739f929fc1"
+  },
+  "archiveSha256": "552971d9f1816e7a76d68d0489bccd3fb32d755d428971ae719f7bdef6dd023b",
+  "currentFeatureValidation": {
+    "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
+    "automated": {
+      "passed": 924,
+      "failed": 0,
+      "conditionalSkipped": 2,
+      "originalAndIndependentCopy": true,
+      "typecheckBuild": "PASS"
+    },
+    "native": {
+      "apps": [
+        "1.8.7",
+        "1.14.5"
+      ],
+      "freshProcesses": 4,
+      "questions": 1000,
+      "histories": 100005,
+      "scope": "Startup/default random migration/sequential preference persists across restart; grade+restore+sync APIs; exact whole reviews preserved"
+    },
+    "virtualUi": {
+      "widths": [
+        320,
+        390,
+        430,
+        768
+      ],
+      "appearanceModalPairs": 100,
+      "scope": "Real IAB DOM interactions with candidate bundle and simulated Obsidian host; long titles/search/select/save and44px targets; not native UI hour or phone hardware"
+    },
+    "fix": "Follow-up result list collapsed to zero height in flex modal; prevent list/button shrink and wrap long selected labels",
+    "remaining": "Reliable pixel cross-check, OS sleep/resume, other OS and synchronous full-history/XML costs"
+  },
+  "nativeKeyboardUiValidation": {
+    "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
+    "app": "1.14.5",
+    "questions": 1000,
+    "baselineFinalHistories": 100005,
+    "appearanceModalPairs": 100,
+    "domTransitions": 200,
+    "firstOpenToLastCloseSeconds": 131.1134,
+    "physicalKeyboardGrades": 1,
+    "physicalKeyboardUndos": 1,
+    "result": "Every modal opened once/closed to zero and restored focus; owner resources stable; exact reviews/source preserved. Grade changed one question and undo restored all reviews and prior question position.",
+    "method": "CUA key presses only; read-only native observer cross-checks focus/DOM sequence/resource state, backing-file records checked separately",
+    "limits": "Not one-hour mixed use, new reliable pixel/visual or mouse/touch qualification; observer included, no complete leak certificate"
+  },
+  "currentNativeUiEnduranceValidation": {
+    "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
+    "app": "1.14.5",
+    "elapsedSeconds": 3618.379,
+    "fixtureQuestions": 1000,
+    "initialFinalHistories": 100005,
+    "keyboardGradeUndoCycles": 60,
+    "appearanceModalPairs": 60,
+    "explicitNextPreviousMoves": 120,
+    "warmupCyclesExcluded": 1,
+    "sampleCount": 121,
+    "maxSampleGapSeconds": 30.4081,
+    "resources": {
+      "pluginEvents": 14,
+      "storeOwnerListeners": 2,
+      "observerStoreListeners": 1,
+      "indexListeners": 1,
+      "indexEventRefs": 4,
+      "indexRefreshTimers": 0,
+      "viewEvents": 7,
+      "viewUnsubscribers": 2
+    },
+    "rendererMemorySamplesMiB": {
+      "heapUsed": {
+        "firstMiB": 70.83901977539062,
+        "lastMiB": 49.10039138793945,
+        "minMiB": 48.24772262573242,
+        "maxMiB": 150.75201797485352
+      },
+      "rss": {
+        "firstMiB": 342.1875,
+        "lastMiB": 276.6875,
+        "minMiB": 163.34375,
+        "maxMiB": 445.671875
+      }
+    },
+    "restart": "Whole reviews and semantic resume values, native view position and answer visibility restored; initial property-order hash false failure retained and comparator corrected/rechecked",
+    "scope": "Same dummy question and adjacent navigation repeated, not1000 distinct rated questions. Actual CUA keyboard UI; observer reads/asserts only. Final temporal/sample gates cross-checked externally from native60 checkpoints and121 samples after REPL final flag omission.",
+    "limits": "Host/observer included; no forced GC, peak/complete leak/phone memory/CPU profiling, new reliable pixels/mouse/touch/OS sleep/other OS qualification"
+  },
+  "currentPerformanceDiagnosis": {
+    "candidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
+    "method": "Current source synthetic Node;2 warmups+30 unprofiled trials per case; one separate CPU-profile trial per case",
+    "maximumQuestions": 1000,
+    "saveHistoryEach": 100,
+    "saveMedianMs": 371.9,
+    "saveP95Ms": 379.4,
+    "plainDocxMedianMs": 95.2,
+    "plainDocxP95Ms": 99.7,
+    "richDocxMedianMs": 460.4,
+    "richDocxP95Ms": 488.8,
+    "richSynchronousPackMedianMs": 250.0,
+    "richSynchronousPackP95Ms": 268.7,
+    "richTimerLatenessP95Ms": 270.5,
+    "integrity": "PASS_DEFINED_SYNTHETIC_SCOPE",
+    "performanceRemediation": "OPEN",
+    "productChanged": false,
+    "limits": "Not native/mobile speed or paint; CPU sampling overhead excluded from ordinary distributions; no cross-run improvement claim"
+  },
+  "nativeScreenHelpFixValidation": {
+    "candidateMainSha256": "2392bfbc9eba60cd3819ec8f5c3b976811161b9800005caf5831770f02dcb369",
+    "previousCandidateMainSha256": "2633f1d5283bcf099973cf269b6629322c0fd4460d0b0602d709f221610b5615",
+    "scope": "Native1.14.5 Mac dark, main1024x800/settings900x700; current-run screenshots cross-checked with state; help fix reopened in fresh process",
+    "screens": "Study/reveal/appearance/dashboard observed before text fix; corrected help and plugin settings observed on fixed bundle",
+    "reproducedFix": "Outdated swipe navigation instructions conflicted with implemented left-edge back gesture",
+    "tests": {
+      "passed": 924,
+      "failed": 0,
+      "conditionalSkipped": 2,
+      "typeBuild": "PASS_COPY_AND_SOURCE",
+      "sourceFullSuite": "Not duplicated; full suite on source-identical copy with corrected tracked fixtures"
+    },
+    "runtimeDelta": "Exactly two help strings; executable logic and CSS byte-identical after replacing those strings",
+    "priorEnduranceEvidence": "65/66 on previous SHA retained, not rerun on new SHA",
+    "rejectedScreens": "Progress route returned stale dashboard pixels/AX; not accepted",
+    "remaining": "Further screen states/widths/themes, OS sleep/other OS, full-history/Word latency; cloud excluded, virtual mobile scope passed"
+  },
+  "guideFontValidation": {
+    "mainSha256Unchanged": "2392bfbc9eba60cd3819ec8f5c3b976811161b9800005caf5831770f02dcb369",
+    "stylesSha256": "d1e3339247152bdde6ee84a37a2316f0da8e9a70c51bf8cc66083182cccc4924",
+    "previousStylesSha256": "b3e8cbc5956039bcd7dfbe6ddc66960fdb340761b379477004a54e2570bcbf43",
+    "fix": "Guide paragraphs/headings follow host font tokens instead of fixed13/15px",
+    "virtualCases": [
+      {
+        "width": 320,
+        "height": 568,
+        "theme": "light",
+        "paragraphPx": 17,
+        "confirmClosed": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "paragraphPx": 17,
+        "confirmClosed": true
+      },
+      {
+        "width": 844,
+        "height": 390,
+        "theme": "light",
+        "paragraphPx": 17,
+        "confirmClosed": true
+      },
+      {
+        "width": 320,
+        "height": 568,
+        "theme": "dark",
+        "paragraphPx": 17,
+        "confirmClosed": true
+      },
+      {
+        "width": 768,
+        "height": 1024,
+        "theme": "light",
+        "paragraphPx": 17,
+        "confirmClosed": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "paragraphPx": 14.992,
+        "fontMode": "standard",
+        "hostTokenMatchesExistingButton": true,
+        "confirmClosed": true
+      }
+    ],
+    "nativeScope": "Actual Mac1.14.5 light plugin settings and study before CSS change; CSS fix only virtual verified",
+    "nativeNarrow": "NOT_COMPLETED_MAC_LOCKED",
+    "testResults": {
+      "passed": 924,
+      "failed": 0,
+      "conditionalSkipped": 2,
+      "copyAndSourceTypeBuild": "PASS"
+    },
+    "runtimeDelta": "Two guide-only CSS font-size declarations; main.js and other assets unchanged",
+    "cleanup": "Owned app/server stopped, dummy host settings/theme/assets/data/ui restored, image detached, browser viewport reset/tab closed",
+    "remaining": "Native narrower states and further screens, OS sleep/other OS, full-history/Word latency; cloud excluded"
+  },
+  "compactReadingValidation": {
+    "status": "PASS_DEFINED_NATIVE_AND_VIRTUAL_SCOPE",
+    "mainSha256": "2392bfbc9eba60cd3819ec8f5c3b976811161b9800005caf5831770f02dcb369",
+    "stylesSha256": "a305bba4a962e56d35ec60b502f1432f67f83f530070f4bd9bee143daa79527c",
+    "fix": "Compact/short study panes retain160px reading area; outer scroll exposes wrapped dock",
+    "nativeApp": "1.14.5",
+    "nativePaneCssPx": [
+      [
+        367.1115,
+        478.6404
+      ],
+      [
+        305.157,
+        430.5331
+      ]
+    ],
+    "nativeReadingHeightPx": 160,
+    "nativeInteractions": "CUA answer reveal, reading scroll, dock focus, guide/appearance open-close, next/previous; no grades saved",
+    "additionalScreens": "Dashboard/progress/questions upper visible range; weak/keywords empty states",
+    "virtualCases": [
+      {
+        "viewport": {
+          "height": 568,
+          "width": 320
+        },
+        "theme": "dark",
+        "kind": "compact",
+        "readingHeightPx": 160,
+        "nextPreviousPassed": true
+      },
+      {
+        "viewport": {
+          "height": 844,
+          "width": 390
+        },
+        "theme": "light",
+        "kind": "regular",
+        "readingHeightPx": 348.421875,
+        "nextPreviousPassed": true
+      },
+      {
+        "viewport": {
+          "height": 390,
+          "width": 844
+        },
+        "theme": "light",
+        "kind": "short",
+        "readingHeightPx": 160,
+        "nextPreviousPassed": true
+      },
+      {
+        "viewport": {
+          "height": 320,
+          "width": 844
+        },
+        "theme": "dark",
+        "kind": "short",
+        "readingHeightPx": 160,
+        "nextPreviousPassed": true
+      },
+      {
+        "viewport": {
+          "height": 512,
+          "width": 768
+        },
+        "theme": "light",
+        "kind": "compact",
+        "readingHeightPx": 160,
+        "nextPreviousPassed": true
+      },
+      {
+        "viewport": {
+          "height": 900,
+          "width": 1280
+        },
+        "theme": "dark",
+        "kind": "regular",
+        "readingHeightPx": 484.265625,
+        "nextPreviousPassed": true
+      }
+    ],
+    "tests": {
+      "passed": 924,
+      "failed": 0,
+      "conditionalSkipped": 2,
+      "typeBuild": "PASS_COPY_AND_SOURCE"
+    },
+    "limits": "Native Mac zoomed content, not physical phone; virtual host boundary simulation. Small panes require scrolling. Not all screen states/assistive technologies/OS sleep/other OS. Prior endurance retained on historical SHA, not rerun.",
+    "cleanup": "Owned apps/server stopped, dummy files byte-restored, mounted image detached, browser tab closed and viewport reset"
+  },
+  "wordTableScanValidation": {
+    "status": "PASS_ADOPT_FORWARD_ONLY_TABLE_SCAN",
+    "candidateMainSha256": "2218efd46f2aa85ce031814bb356f96fbfb2578d81b34a5fe093c8aaf0f09b42",
+    "previousMainSha256": "2392bfbc9eba60cd3819ec8f5c3b976811161b9800005caf5831770f02dcb369",
+    "change": "Start Markdown table closing-token search immediately after table_open, avoiding rescans of preceding tokens",
+    "method": "Synthetic Node exporter;2 warmups+30 measured trials per side per case; second stress comparison with after-before order; same source except search loop",
+    "comparisons": [
+      {
+        "case": "many-tables",
+        "beforeMedian": 165.9294789999999,
+        "afterMedian": 117.47162500000002,
+        "improvementPercent": 29.20388486243599,
+        "beforeP95": 169.28087499999992,
+        "afterP95": 119.39741600000025
+      },
+      {
+        "case": "plain",
+        "beforeMedian": 95.42285449999974,
+        "afterMedian": 94.81804149999994,
+        "improvementPercent": 0.6338240489334845,
+        "beforeP95": 100.20600000000013,
+        "afterP95": 99.775667
+      },
+      {
+        "case": "rich",
+        "beforeMedian": 451.4699580000006,
+        "afterMedian": 457.0393545000006,
+        "improvementPercent": -1.233613976148562,
+        "beforeP95": 468.1845839999987,
+        "afterP95": 474.1284999999998
+      }
+    ],
+    "stressConfirmation": {
+      "beforeMedianMs": 172.5847915000004,
+      "afterMedianMs": 119.8415,
+      "reductionPercent": 30.560799153615037,
+      "beforeP95Ms": 176.38037499999996,
+      "afterP95Ms": 123.546292
+    },
+    "integrity": "1000 distinct table headers retained; entire stress document.xml byte-identical before/after; all benchmark ZIP CRC/question-answer markers/source inputs/images/table counts/exclusive writes checked",
+    "tests": {
+      "passed": 925,
+      "failed": 0,
+      "conditionalSkipped": 2,
+      "typeBuild": "PASS_COPY_AND_SOURCE"
+    },
+    "limits": "Benefit specific to many tables in one Markdown body. Typical1000-question rich case1.2% slower, no measured benefit. Node timings not native/mobile paint; docx synchronous XML and full-history storage latency remain OPEN. Historical UI/endurance evidence is not rerun on new main SHA."
+  },
+  "reservedKeyValidation": {
+    "status": "PASS_DEFINED_RESERVED_KEY_PRESERVATION_SCOPE",
+    "candidateMainSha256": "45223cd8f10a86d0c1d2d0ae3094dea5089231cbee07691f5ce324a089c2197d",
+    "previousMainSha256": "2218efd46f2aa85ce031814bb356f96fbfb2578d81b34a5fe093c8aaf0f09b42",
+    "reproducedBug": "Valid external JSON own reviews.__proto__ silently disappears after ordinary updateSettings on previous candidate",
+    "fix": "Reject own __proto__ in reviews/reviewVersions/reviewConflicts/quarantinedReviews before constructing record maps; preserve existing safe recovery fallback and block unsafe primary writes",
+    "newBoundaryCases": 20,
+    "targetedPassed": 76,
+    "tests": {
+      "passed": 945,
+      "failed": 0,
+      "conditionalSkipped": 2,
+      "typeBuild": "PASS_COPY_AND_SOURCE"
+    },
+    "normalLoadRegression": {
+      "questions": 1000,
+      "initialHistories": 100000,
+      "savesPerSide": 32,
+      "warmupsPerSide": 2,
+      "measuredTrialsPerSide": 30,
+      "statisticsMs": {
+        "before": {
+          "medianMs": 376.1243340000001,
+          "p95Ms": 384.12041699999827,
+          "maxMs": 457.101584
+        },
+        "after": {
+          "medianMs": 374.04341699999895,
+          "p95Ms": 382.75074999999924,
+          "maxMs": 385.7835420000001
+        }
+      },
+      "integrity": "Every save preserves all999 unrelated question histories, whole primary/recovery value equality, expected graded history growth, no conflicts or warnings"
+    },
+    "limits": "Own-key malformed external data boundary, not normally generated mia-q IDs or demonstrated global Object.prototype pollution. Synthetic Node storage, not native host/mobile/cloud/OS sleep. No storage speed improvement claim. Native/endurance evidence retained on historical SHA."
+  },
+  "reservedApiMobileValidation": {
+    "status": "PASS_SCOPED_RESERVED_API_AND_MOBILE_BUNDLE_BOUNDARIES",
+    "candidateMainSha256": "bbc317fbbcadb0eec8801de49721b2221446c397ab6f5ad40b030a6d73733e66",
+    "previousMainSha256": "45223cd8f10a86d0c1d2d0ae3094dea5089231cbee07691f5ce324a089c2197d",
+    "negativeControls": "19 new API/inherited/external-map cases fail on previous candidate",
+    "change": "Reject Object.prototype property names at map parsing and direct set/remove entry; read only own review/version properties; batch rejection before first mutation",
+    "newTests": 21,
+    "tests": {
+      "passed": 966,
+      "failed": 0,
+      "conditionalSkipped": 2,
+      "typeBuild": "PASS_COPY_AND_SOURCE"
+    },
+    "mobileProductionBundle": {
+      "engine": "Node VM with browser globals and substituted Obsidian boundary; not WebKit/native iOS",
+      "providedDesktopModules": false,
+      "providedNodeBuffer": false,
+      "startupSuitePassed": 6,
+      "flows": [
+        "grade persistence with exact disk value",
+        "reserved direct/batch request leaves disk unchanged",
+        "review reset retains revision tombstone",
+        "Word table vault output with ZIP CRC and content checks"
+      ],
+      "optionalUnavailableModuleProbe": "stream; JSZip support detection catches thrown unavailable-module error; no module provided",
+      "harnessCorrections": "Provide standard performance and window/self aliases; folder root boundary. Not a product polyfill change."
+    },
+    "normalLoad": {
+      "questions": 1000,
+      "initialHistories": 100000,
+      "saves": 3,
+      "warmups": 2,
+      "timedSamples": 1,
+      "integrity": "All999 unrelated question histories and whole primary/recovery values exact; expected changed history growth; no conflicts or warnings",
+      "performanceClaim": "NONE_ONE_SAMPLE_IS_NOT_DISTRIBUTION"
+    },
+    "limits": "No new visual/touch/real phone or other OS/sleep qualification. Prior UI/endurance retained on historical SHA. Normal parser-generated mia-q IDs unaffected; no demonstrated global prototype pollution."
+  },
+  "followupListLayoutValidation": {
+    "status": "PASS_SCOPED_VIRTUAL_FOLLOWUP_LIST_FIX",
+    "mainSha256Unchanged": "bbc317fbbcadb0eec8801de49721b2221446c397ab6f5ad40b030a6d73733e66",
+    "stylesSha256": "2aa84915b35e658aea1f4a00b6c6ba370577ecc87a553fd7074e5ac7b0504dbb",
+    "reproduced": "320x568 large-font follow-up management list shrinks to12px; subject filter wastes half its narrow row",
+    "fix": "List min-height min(128px,42dvh), retain normal flex shrink; editor filter uses one column at widths<=640px",
+    "beforeListHeightPx": 12,
+    "final320ListHeightPx": 128,
+    "virtualLayoutCases": [
+      {
+        "name": "final-320-dark",
+        "viewport": {
+          "height": 568,
+          "width": 320
+        },
+        "theme": "theme-dark is-mobile is-touch mod-ios is-phone",
+        "listHeightPx": 128,
+        "modalHorizontalOverflow": false,
+        "actionFontPx": "17px",
+        "actionHeightPx": 44
+      },
+      {
+        "name": "final-390-light",
+        "viewport": {
+          "height": 844,
+          "width": 390
+        },
+        "theme": "is-mobile is-touch mod-ios is-phone theme-light",
+        "listHeightPx": 302.0078125,
+        "modalHorizontalOverflow": false,
+        "actionFontPx": "17px",
+        "actionHeightPx": 44
+      },
+      {
+        "name": "final-landscape-light",
+        "viewport": {
+          "height": 390,
+          "width": 844
+        },
+        "theme": "is-mobile is-touch mod-ios is-phone theme-light",
+        "listHeightPx": 128,
+        "modalHorizontalOverflow": false,
+        "actionFontPx": "17px",
+        "actionHeightPx": 44
+      },
+      {
+        "name": "final-tablet-dark",
+        "viewport": {
+          "height": 1024,
+          "width": 768
+        },
+        "theme": "theme-dark is-mobile is-touch mod-ios is-tablet",
+        "listHeightPx": 520,
+        "modalHorizontalOverflow": false,
+        "actionFontPx": "17px",
+        "actionHeightPx": 44
+      },
+      {
+        "name": "final-desktop-footer",
+        "viewport": {
+          "height": 900,
+          "width": 1280
+        },
+        "theme": "theme-light mod-macos",
+        "listHeightPx": 468,
+        "modalHorizontalOverflow": false,
+        "actionFontPx": "17px",
+        "actionHeightPx": 44
+      }
+    ],
+    "flows": "CUA dummy question creation12->13, one link selected on creation, select second and save bidirectionally, reopen two links, reverse question checked, no-match search/subject filter/cancel and keyboard footer access",
+    "tests": {
+      "passed": 966,
+      "failed": 0,
+      "conditionalSkipped": 2,
+      "typeBuild": "PASS_COPY_AND_SOURCE"
+    },
+    "limits": "In-app browser with substituted Obsidian host/extracted host CSS; no new native Mac/iPhone/WebKit/OS-sleep or accessibility compliance claim. Scroll required in smaller/long-content states. Historical native hour retained on old asset SHA.",
+    "cleanup": "Owned server terminated143, viewport reset, browser tab closed; no real vault/install touched"
+  },
+  "releaseReadiness": "READY_WITH_ACCEPTED_LIMITATIONS",
+  "finalValidation": {
+    "status": "COMPLETE_AGREED_SCOPE_WITH_ACCEPTED_LIMITATIONS",
+    "candidateMainSha256": "bbc317fbbcadb0eec8801de49721b2221446c397ab6f5ad40b030a6d73733e66",
+    "candidateStylesSha256": "2aa84915b35e658aea1f4a00b6c6ba370577ecc87a553fd7074e5ac7b0504dbb",
+    "fiveZipAssetsAndCrc": "PASS",
+    "tests": {
+      "baselinePassed": 966,
+      "baselineConditionalSkipped": 2,
+      "conditionalSeparatelyPassed": 2,
+      "conditionalVaultQuestions": 1000,
+      "distinctCasesPassedAcrossTwoInvocations": 968,
+      "failed": 0,
+      "lastFullSuite": "75th run exact same product assets",
+      "typeBuild": "PASS_75TH_IDENTICAL_ASSETS"
+    },
+    "dependencyAudit": {
+      "reportedVulnerabilities": 0,
+      "method": "npm audit --package-lock-only, production+development declared dependency graph",
+      "limits": "Known advisory report only, not all bundled code or complete security certification"
+    },
+    "currentNativeSmoke": {
+      "app": "1.14.5",
+      "freshProcesses": 2,
+      "cuaGrades": 1,
+      "cuaUndos": 1,
+      "initialFinalHistories": 100005,
+      "other999QuestionReviewsPreserved": true,
+      "primaryEqualsPostUndoCheckpointAfterFreshStart": true,
+      "restoredQueueIndex": 9,
+      "restoredQueueId": "mia-q-load-9",
+      "answerVisible": true,
+      "method": "CUA click/keyboard; read-only observer; actual backing file values cross-checked"
+    },
+    "excludedValidation": {
+      "actualCloudSynchronization": "EXCLUDED_BY_USER_NOT_PASS",
+      "actualCloudConcurrentUpdates": "EXCLUDED_BY_USER_NOT_PASS",
+      "otherOperatingSystems": "EXCLUDED_BY_USER_NOT_PASS",
+      "actualOsSleepWake": "EXCLUDED_BY_USER_NOT_PASS"
+    },
+    "performanceDisposition": {
+      "status": "ACCEPTED_KNOWN_LIMITATION_BY_USER",
+      "scope": "Maximum1000question validation workload",
+      "userInstruction": "알려진 제약으로 기록하고 최종 검증",
+      "basis": "Current before synthetic save median368.3/376.2ms,p95374.4/383.0ms; prior rich Word about0.46s; processing feedback and record preservation have passed within defined tests",
+      "notAClaim": "Not faster code, removal of safety checks, a universal device timing guarantee or retroactive adoption of rejected experiment"
+    },
+    "productionChange": "NONE; rejected date cache not included; five downloadable assets unchanged from75th run",
+    "limits": "Passed defined scenarios, not a guarantee for every device/theme/third-party combination. Virtual mobile is the author-approved scope.65/66 hour/modal evidence remains historical; not rerun on this SHA. Historical baseline; current0.10.3 CSS patch has separate scoped validation.",
+    "cleanup": "Both owned apps stopped, all QA assets/data/ui/workspace/activation/observer restored byte-identically, image detached, real vault/install untouched",
+    "baselineVersion": "0.10.2"
+  },
+  "knownLimitations": [
+    {
+      "name": "Large-history save and rich Word generation latency",
+      "disposition": "ACCEPTED_BY_AUTHOR",
+      "basis": "Synthetic save about0.37-0.39s; prior rich Word about0.46s, not a universal device budget"
+    }
+  ],
+  "release": {
+    "version": "1.0.3",
+    "tag": "1.0.3",
+    "url": "https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.0.3",
+    "zipUrl": "https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.0.3/mia-study-1.0.3.zip",
+    "assetHashes": {
+      "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
+      "mia-study-1.0.3.zip": "552971d9f1816e7a76d68d0489bccd3fb32d755d428971ae719f7bdef6dd023b",
+      "styles.css": "34791fcacb608cb9038daba5ef575dc967eeb32e851aeaf7d8b801f5d43ecc34",
+      "main.js": "1a4e85253bbb3c5c19cdd7cbf538600d77c1967845336aca19209fcac62d606d",
+      "manifest.json": "e7678483a059115a9847aaa01509adea7e62ffa87ce1cacb0aca1771b165382b",
+      "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9",
+      "SHA256SUMS.txt": "1245ba32e64e9b3e8a8ca4b2edd9d1c45d1ec05b522d3a5b1997d6faf2541367"
+    }
+  },
+  "phoneRatingLayoutValidation": {
+    "status": "PASS_SCOPED_VIRTUAL_PHONE_RATING_LAYOUT",
+    "version": "0.10.3",
+    "mainJsUnchangedFrom": "0.10.2",
+    "cssScope": "mia-view[data-device=phone] rating dock only",
+    "gradeUndoPairs": 4,
+    "uiErrors": 0,
+    "typeBuild": "PASS_WORK_COPY_AND_SOURCE",
+    "fullTestSuite": "NOT_RERUN_FOR_CSS_ONLY_PATCH; historical 0.10.2 baseline966 +2 conditional cases retained",
+    "limits": "In-app browser with substituted Obsidian APIs and extracted host CSS; not physical iPhone/WebKit qualification. QA toolbar occupies40px beyond simulated plugin full-height sizing. Short panes retain outer scrolling.",
+    "beforeRatingHeightPx": 137.015625,
+    "afterRatingHeightPx": 55.5078125,
+    "readingAreaGainPx": 89.51,
+    "virtualProfiles": [
+      "320x568 large",
+      "390x844",
+      "430x932",
+      "844x390 large",
+      "768x1024 large",
+      "1280x900"
+    ]
+  },
+  "evidenceScope": {
+    "currentVersion": "1.0.3",
+    "currentValidationField": "stableReleaseValidation",
+    "historicalValidationFields": [
+      "compactReadingValidation",
+      "currentFeatureValidation",
+      "currentNativeUiEnduranceValidation",
+      "currentPerformanceDiagnosis",
+      "customGradeIntervalsValidation",
+      "exactCustomIntervalValidation",
+      "finalValidation",
+      "followupListLayoutValidation",
+      "guideFontValidation",
+      "nativeInterruptionValidation",
+      "nativeKeyboardUiValidation",
+      "nativeLifecycleValidation",
+      "nativeLoadValidation",
+      "nativeScreenHelpFixValidation",
+      "nativeStorageEnduranceValidation",
+      "nativeValidation",
+      "phoneRatingLayoutValidation",
+      "releaseReadiness",
+      "reservedApiMobileValidation",
+      "reservedKeyValidation",
+      "wordTableScanValidation",
+      "codeBugFixValidation",
+      "finalValidation20261025"
+    ],
+    "currentValidationFields": [
+      "stableReleaseValidation"
+    ]
+  },
+  "customGradeIntervalsValidation": {
+    "version": "0.10.4",
+    "status": "PASS_SCOPED_CUSTOM_INTERVAL_AND_UI",
+    "tests": {
+      "fullSuitePassed": 974,
+      "fullSuiteConditionalSkipped": 2,
+      "conditionalSeparatelyPassed": 2,
+      "conditionalDummyQuestions": 1000,
+      "distinctPassedAcrossTwoRuns": 976,
+      "failed": 0
+    },
+    "typeBuild": "PASS_WORK_AND_SOURCE",
+    "virtualProfiles": 6,
+    "gradeUndoPairs": 4,
+    "fourActualDueTimesMatchSettings": true,
+    "negativeInputRejectedWithoutSettingsWrite": true,
+    "blankGradeReturnsToAutomatic": true,
+    "settingsSurviveBrowserRestart": true,
+    "existingReviewScheduleUnchangedBySettingsSave": true,
+    "reviewStatesTested": [
+      "new",
+      "learning",
+      "review",
+      "relearning"
+    ],
+    "mixedAutomaticAndFixed": "PASS",
+    "maximumIntervalCap": "PASS",
+    "heading": "Major Study",
+    "ratingGuidanceRemoved": true,
+    "narrow320Header": "Badge hidden; heading/settings same y56; reading height221.8px",
+    "limits": "Virtual in-app browser with extracted ObsidianCSS/substituted APIs; no physical phone/cloud/otherOS/sleep claim. Native current Mac startup/configuration display verified; no real grades/settings values modified."
+  },
+  "exactCustomIntervalValidation": {
+    "version": "0.10.5",
+    "status": "PASS_EXACT_FIXED_INTERVAL_DISPLAY",
+    "fullSuitePassed": 979,
+    "fullSuiteConditionalSkipped": 2,
+    "conditionalSeparatelyPassed": 2,
+    "conditionalDummyQuestions": 1000,
+    "distinctPassedAcrossTwoRuns": 981,
+    "failed": 0,
+    "typeBuild": "PASS_COPY_AND_SOURCE",
+    "exactLabels": [
+      "90분",
+      "36시간",
+      "45일",
+      "52559999분",
+      "1일"
+    ],
+    "virtualProfiles": 6,
+    "fourActualDueTimesMatchConfigured": true,
+    "gradeUndoPairs": 4,
+    "guidanceRemoved": true,
+    "heading": "Major Study",
+    "longValueWrap": "PASS320largefont; no horizontal overflow; row grows tofit",
+    "baseFeatureEvidence": "80th settings persistence/validation/automatic fallback and native settings display; settings/models/data-store files byte-identical",
+    "limits": "In-app browser with extracted host CSS/substituted APIs. Native final Mac startup/assets/data preservation verified. No physical phone/cloud/other OS/actual sleep or rerun of old native endurance claim."
+  },
+  "codeBugFixValidation": {
+    "version": "0.10.6",
+    "status": "PASS_SCOPED_CODE_REGRESSIONS_AND_NATIVE_STARTUP",
+    "passed": 1003,
+    "conditionalSkipped": 2,
+    "failed": 0,
+    "reproducedBugRegressions": 5,
+    "markdownLinkCases": 19,
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "nativeMacStartup": "PASS",
+    "existingReviewAndResumePreserved": "PASS",
+    "liveDeletionOrRatingPerformed": false,
+    "limits": "Vault boundary tests use in-memory Obsidian substitutes; no current physical-phone, cloud-concurrency, other-OS, sleep/wake or endurance qualification."
+  },
+  "finalValidation20261025": {
+    "fullSuitePassed": 1003,
+    "fullSuiteConditionalSkipped": 2,
+    "conditionalSyntheticQuestions": 1000,
+    "conditionalTestTimeoutMs": 30000,
+    "conditionalDefaultTimeoutObservation": "Initial single-file 1000-question round-trip run completed its assertions in 6.3s but exceeded the default 5s test limit. Rerun separately at 30s; see final outcome.",
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "rebuildByteIdenticalToRelease": true,
+    "conditionalSeparatelyPassed": 2,
+    "distinctTestsPassedAcrossRuns": 1005,
+    "failedAtFinalConfiguration": 0,
+    "nativeMacPassed": 24,
+    "mobileProfilesPassed": 6,
+    "mobileGradeUndoPairs": 24,
+    "mobileAdditionalChecksPassed": 16,
+    "publicEvidenceUrl": "https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/0.10.6/README.md",
+    "bundleUnchanged": true
+  },
+  "stableReleaseValidation": {
+    "version": "1.0.3",
+    "defaultPassed": 1025,
+    "separateConditionalPassed": 2,
+    "conditionalSyntheticQuestions": 1000,
+    "typecheck": "passed",
+    "productionBuild": "passed",
+    "browserViewports": [
+      320,
+      390,
+      768,
+      1280
+    ],
+    "runningVersionVisible": true,
+    "syntheticMathCount": 6,
+    "nativeDeviceTested": false,
+    "cloudPropagationVerified": false,
+    "details": "qa/1.0.3/README.md"
+  },
+  "previousStableRelease": {
+    "release": {
+      "version": "1.0.0",
+      "tag": "1.0.0",
+      "url": "https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.0.0",
+      "zipUrl": "https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.0.0/mia-study-1.0.0.zip",
+      "publishedAt": "2026-10-25T03:12:05Z",
+      "targetCommit": "d07e6a5128cc8864c24a3e1466131bcd2a0bf866",
+      "all7AssetDigestsAndDownloadsVerified": true,
+      "assetHashes": {
+        "mia-study-1.0.0.zip": "2ca986eb23b8f5ed9d555a77d826483c71a7c5b68386aa5c1b8455fce1f85c12",
+        "LICENSE": "b33a8629dcdc2c242132ad2053b2d3534f837881a8a5f0bbfc6a61781b82f8d0",
+        "styles.css": "f6c6110a856accf195aa17253d802e5cd3204c027bdda072a0d82f3292606808",
+        "main.js": "35e3a5f4db3f12e5eb0a3687af8d12dfc97283d1abe354cb60e8aa7cfe2fd775",
+        "manifest.json": "96662ccffa0ba8f71be15d2db776fa3545b80a1c04e0ddd35e8dbf1fe8bb5b88",
+        "THIRD-PARTY-NOTICES.txt": "1847c903deb4bae28a3a2884c90d012be95e47aaf528c1833c1313e9732da1f9",
+        "SHA256SUMS.txt": "e7648f637b7d04b6a9e139db9fb9d9a9842cafd7362d659547d24768b6a5f1a9"
+      }
+    },
+    "validation": {
+      "version": "1.0.0",
+      "typecheck": "PASS",
+      "productionBuild": "PASS",
+      "fullSuitePassed": 1003,
+      "fullSuiteConditionalSkipped": 2,
+      "conditionalSeparatelyPassed": 2,
+      "conditionalQuestions": 1000,
+      "conditionalTimeoutMs": 30000,
+      "distinctPassedAcrossRuns": 1005,
+      "productSourceUnchangedFrom": "0.10.6",
+      "mainJsByteIdenticalTo": "0.10.6",
+      "cssByteIdenticalTo": "0.10.6",
+      "mainSha256": "35e3a5f4db3f12e5eb0a3687af8d12dfc97283d1abe354cb60e8aa7cfe2fd775"
+    }
+  },
+  "baseRevision": "0c5c1ba074477b2b63887744ea27ba4cf0093023"
+}
