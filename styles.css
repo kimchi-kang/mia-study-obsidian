@@ -19,7 +19,7 @@
 .mia-nav { display: flex; max-width: 100%; min-width: 0; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .mia-nav button { min-width: 0; height: auto; white-space: normal; line-height: 1.25; overflow-wrap: anywhere; }
 .mia-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr)); gap: 12px; margin-bottom: 20px; }
-.mia-stat, .mia-primary-card, .mia-study-card, .mia-row, .mia-keyword { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-l); background: var(--background-primary-alt); }
+.mia-stat, .mia-primary-card, .mia-row, .mia-keyword { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-l); background: var(--background-primary-alt); }
 .mia-view .mia-stat { font-size: max(13px, var(--font-ui-small)); background: var(--background-primary-alt); box-shadow: none; box-sizing: border-box; width: 100%; min-width: 0; min-height: 88px; height: auto !important; padding: 16px; display: flex; flex-direction: column; justify-content: center; gap: 4px; white-space: normal; }
 .mia-stat strong { display: block; max-width: 100%; font-size: 1.8em; line-height: 1.12; overflow-wrap: anywhere; }
 .mia-stat span { display: block; max-width: 100%; line-height: 1.3; overflow-wrap: anywhere; }
@@ -95,7 +95,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-keyword-questions button { width: 100%; text-align: left; margin-top: 4px; overflow-wrap: anywhere; }
 .mia-progress { margin-bottom: 10px; }
 .mia-undo { float: right; margin-top: -38px; }
-.mia-study-card { max-width: 860px; margin: 0 auto; padding: 24px; }
+.mia-study-card { max-width: 860px; margin: 0 auto; padding: 0; }
 .mia-study-card .mia-question-section > h2 { margin-top: 0; }
 .mia-markdown { font-size: 1.05em; }
 .mia-answer { padding-top: 8px; }
@@ -108,7 +108,6 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 24px; }
 .mia-ratings button { display: flex; flex-direction: column; gap: 3px; align-items: center; padding: 10px 5px; }
 .mia-ratings small { color: var(--text-muted); }
-.mia-source { display: block; margin: 12px auto 0; }
 .mia-skip { display: block; margin: 8px auto 0; }
 .mia-related { max-width: 860px; margin: 20px auto 0; display: grid; gap: 6px; }
 .mia-related button { text-align: left; }
@@ -290,7 +289,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   .mia-study-navigation .mia-progress { grid-column: 1 / -1; grid-row: 1; font-size: 11px; }
   .mia-study-navigation button { min-width: 0; }
   .mia-undo { float: none; width: 100%; margin: 0 0 8px; }
-  .mia-study-card { width: 100%; box-sizing: border-box; padding: 14px; border-radius: var(--radius-m); }
+  .mia-study-card { width: 100%; box-sizing: border-box; padding: 0; }
   .mia-study-card .mia-question-section > h2 { font-size: clamp(1.16em, 5vw, 1.38em); line-height: 1.3; }
   .mia-markdown { font-size: 1em; overflow-wrap: anywhere; }
   .mia-study-actions { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); margin-top: 18px; }
@@ -484,7 +483,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-session-meter { max-width: var(--mia-study-width); height: 3px; margin: 0 auto 24px; border-radius: 3px; background: var(--background-modifier-border); overflow: hidden; }
 .mia-session-meter-fill { height: 100%; background: var(--interactive-accent); border-radius: inherit; }
 .mia-study-layout { max-width: var(--mia-study-width); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
-.mia-study-card { box-sizing: border-box; width: 100%; max-width: none; margin: 0; padding: 30px 34px; background: var(--background-primary); border-radius: 18px; box-shadow: 0 8px 28px rgb(0 0 0 / .05); }
+.mia-study-card { box-sizing: border-box; width: 100%; max-width: none; margin: 0; padding: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
 .mia-card-context { color: var(--text-muted); font-size: 12px; margin-bottom: 26px; }
 .mia-card-label { color: var(--text-faint); font-size: 11px; font-weight: 600; letter-spacing: .08em; margin-bottom: 10px; }
 .mia-study-card .mia-question-section > h2 { font-size: clamp(21px, 2.2vw, 27px); font-weight: 650; line-height: 1.5; letter-spacing: -.6px; margin: 0 0 20px; overflow-wrap: anywhere; }
@@ -493,17 +492,16 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-study-card .mia-markdown > :last-child { margin-bottom: 0; }
 .mia-study-card .mia-markdown img { max-width: 100%; height: auto; }
 .mia-study-card .mia-markdown pre, .mia-study-card .mia-markdown .math-block { max-width: 100%; overflow-x: auto; }
-.mia-answer-section { border-top: 1px solid var(--background-modifier-border); padding-top: 24px; margin-top: 24px; }
+.mia-answer-section { padding-top: 24px; margin-top: 24px; }
 .mia-answer-section .mia-card-label { color: var(--interactive-accent); }
 .mia-answer-section .mia-answer { padding: 0; }
 .mia-recall-prompt { color: var(--text-muted); font-size: 13px; line-height: 1.6; margin: 32px 0 4px; }
-.mia-study-concepts { border-top: 1px solid var(--background-modifier-border); margin-top: 26px; padding-top: 12px; }
+.mia-study-concepts { margin-top: 26px; padding-top: 12px; }
 .mia-study-concepts summary { cursor: pointer; color: var(--text-muted); font-size: 12px; min-height: 36px; align-content: center; }
 .mia-study-concepts .mia-keyword-section { margin-top: 12px; }
 .mia-study-concepts h3 { font-size: 12px; color: var(--text-muted); font-weight: 500; }
 .mia-keyword-chips button { border-radius: 20px; box-shadow: none; font-size: 12px; padding: 5px 11px; height: auto; }
-.mia-study-card .mia-source { margin: 12px 0 0; font-size: 12px; color: var(--text-muted); background: transparent; box-shadow: none; padding: 4px 0; }
-.mia-study-layout .mia-related { width: 100%; max-width: none; margin: 0; padding: 20px; background: var(--background-primary-alt); border: 1px solid var(--background-modifier-border); border-radius: 16px; gap: 10px; box-sizing: border-box; }
+.mia-study-layout .mia-related { width: 100%; max-width: none; margin: 0; padding: 0; background: transparent; border: 0; border-radius: 0; gap: 10px; box-sizing: border-box; }
 .mia-related h3 { font-size: 14px; margin: 0; }
 .mia-related > p { font-size: 11px; line-height: 1.6; margin: 0 0 4px; }
 .mia-related-item { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--background-modifier-border); }
@@ -513,7 +511,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-related-open small { font-size: 10px; line-height: 1.5; color: var(--text-muted); text-align: left; }
 .mia-related-item > button:not(.mia-related-open) { min-height: 28px; height: auto; font-size: 10px; padding: 5px 8px; box-shadow: none; border-radius: 6px; }
 .mia-related-item .mia-related-open:hover strong { color: var(--interactive-accent); text-decoration: underline; text-underline-offset: 3px; }
-.mia-study-dock { box-sizing: border-box; position: sticky; bottom: 0; z-index: 3; max-width: var(--mia-study-width); margin: 24px auto 0; padding: 16px 20px 10px; border: 1px solid var(--background-modifier-border); border-radius: 16px; background: var(--background-primary); box-shadow: 0 -8px 24px rgb(0 0 0 / .06); }
+.mia-study-dock { box-sizing: border-box; position: sticky; bottom: 0; z-index: 3; max-width: var(--mia-study-width); margin: 24px auto 0; padding: 16px 0 10px; border: 0; border-radius: 0; background: var(--background-primary); box-shadow: none; }
 .mia-study-dock .mia-grade-guidance { margin: 0 0 12px; text-align: center; font-size: 11px; line-height: 1.6; }
 .mia-study-dock .mia-ratings { margin: 0; gap: 10px; }
 .mia-study-dock .mia-ratings button { --mia-rating-color: var(--text-muted); position: relative; border: 1px solid color-mix(in srgb, var(--mia-rating-color) 34%, var(--background-modifier-border)); border-top: 3px solid var(--mia-rating-color); background: color-mix(in srgb, var(--mia-rating-color) 7%, var(--background-primary)); border-radius: 10px; box-shadow: none; min-height: 66px; padding: 11px 24px; height: auto; }
@@ -540,12 +538,12 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   .mia-study-navigation { grid-template-columns: 1fr 1fr; gap: 4px; }
   .mia-study-navigation .mia-progress { grid-column: 1 / -1; grid-row: 1; font-size: 10px; }
   .mia-session-meter { margin-bottom: 14px; }
-  .mia-study-card { padding: 20px 18px; border-radius: 14px; }
+  .mia-study-card { padding: 0; }
   .mia-study-card .mia-question-section > h2 { font-size: 21px; }
   .mia-card-context { margin-bottom: 20px; }
   .mia-study-layout { gap: 14px; }
-  .mia-study-layout .mia-related { padding: 16px; }
-  .mia-study-dock { padding: 12px 10px 8px; margin-top: 14px; border-radius: 14px; }
+  .mia-study-layout .mia-related { padding: 0; }
+  .mia-study-dock { padding: 12px 0 8px; margin-top: 14px; }
   .mia-study-dock .mia-ratings { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
   .mia-study-dock .mia-ratings button { min-height: 64px; padding: 10px 2px; }
   .mia-study-dock .mia-ratings strong { font-size: 11px; }
@@ -653,8 +651,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-view .mia-study-card .mia-markdown { font-size: var(--mia-reading-body); }
 .mia-view .mia-study-card .mia-question-section > h2 { font-size: var(--mia-reading-title); }
 .mia-view[data-density="compact"] .mia-study-concepts,
-.mia-view[data-density="compact"] .mia-study-layout .mia-related,
-.mia-view[data-density="compact"] .mia-study-card > .mia-source { display: none; }
+.mia-view[data-density="compact"] .mia-study-layout .mia-related { display: none; }
 .mia-view[data-density="compact"] .mia-study-layout { grid-template-columns: minmax(0, 1fr); }
 .mia-preview-modal { width: min(600px, calc(100vw - 28px)); max-height: min(80dvh, 760px); display: flex; flex-direction: column; }
 .mia-preview-modal .modal-content { min-height: 0; overflow-y: auto; line-height: 1.75; }
@@ -690,9 +687,8 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   .mia-view[data-answer-layout="split"] .mia-study-layout { grid-template-columns: minmax(0, 1fr); }
   .mia-view[data-answer-layout="split"] .mia-study-card:has(.mia-answer-section) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px; }
   .mia-view[data-answer-layout="split"] .mia-study-card .mia-card-context { grid-column: 1 / -1; }
-  .mia-view[data-answer-layout="split"] .mia-answer-section { min-width: 0; border-top: 0; border-left: 1px solid var(--background-modifier-border); margin: 0; padding: 0 0 0 28px; }
-  .mia-view[data-answer-layout="split"] .mia-study-concepts,
-  .mia-view[data-answer-layout="split"] .mia-study-card > .mia-source { grid-column: 1 / -1; }
+  .mia-view[data-answer-layout="split"] .mia-answer-section { min-width: 0; border: 0; margin: 0; padding: 0; }
+  .mia-view[data-answer-layout="split"] .mia-study-concepts { grid-column: 1 / -1; }
 }
 @media (max-height: 520px) and (pointer: coarse) {
   .mia-route-study[data-focus="true"] .mia-header > div:first-child { display: flex; }
@@ -776,7 +772,6 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-view[data-viewport-height="short"] .mia-session-meter { margin-bottom: 8px; }
 .mia-view:is([data-viewport-height="compact"], [data-viewport-height="short"]) .mia-grade-guidance,
 .mia-view:is([data-viewport-height="compact"], [data-viewport-height="short"]) .mia-touch-hint { display: none; }
-.mia-view:is([data-viewport-height="compact"], [data-viewport-height="short"]) .mia-study-card { padding: 16px; }
 .mia-view:is([data-viewport-height="compact"], [data-viewport-height="short"]) .mia-card-context { margin-bottom: 12px; }
 /* Very short panes scroll as a whole instead of collapsing the question to zero. */
 .mia-view.mia-route-study[data-viewport-height="minimal"] { overflow-y: auto; }
@@ -851,7 +846,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   margin-top: var(--toggle-border-width);
   left: 0;
 }
-.is-mobile .mia-view .mia-source, .is-mobile .mia-view .mia-keyword-chips button { min-height: 44px; }
+.is-mobile .mia-view .mia-keyword-chips button { min-height: 44px; }
 @media (prefers-reduced-motion: reduce) {
   .mia-view *, .mia-view *::before, .mia-view *::after { scroll-behavior: auto !important; transition: none !important; }
 }
@@ -931,7 +926,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-view.mia-route-study:is([data-viewport-height="compact"], [data-viewport-height="short"]) .mia-study-layout { flex: 1 0 160px; min-height: 160px; }
 
 /* Phone ratings share one row so the answer keeps the available reading space. */
-.mia-view[data-device="phone"] .mia-study-dock { padding: 8px 8px 6px; }
+.mia-view[data-device="phone"] .mia-study-dock { padding: 8px 0 6px; }
 .mia-view[data-device="phone"] .mia-study-dock .mia-ratings { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
 .mia-view[data-device="phone"] .mia-study-dock .mia-ratings button { display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center; gap: 2px; min-height: 52px; padding: 6px 2px; }
 .mia-view[data-device="phone"] .mia-study-dock .mia-ratings strong { word-break: keep-all; overflow-wrap: normal; }
