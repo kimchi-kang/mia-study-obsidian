@@ -35,7 +35,7 @@ import { StudyAppearanceModal } from "../src/ui/study-appearance-modal";
 import { StudyUiStore } from "../src/services/study-ui-store";
 const setup = (appearance={}) => {
   const local=new Map([["mia-study:appearance:ui.json",appearance]]);
-  const app={loadLocalStorage:key=>local.get(key),saveLocalStorage:vi.fn((key,value)=>local.set(key,structuredClone(value)))};
+  const app={vault:{adapter:{exists:async()=>false,read:async()=>{throw Error("unexpected file read");},write:async()=>{throw Error("unexpected file write");}}},loadLocalStorage:key=>local.get(key),saveLocalStorage:vi.fn((key,value)=>local.set(key,structuredClone(value)))};
   const store=new StudyUiStore(app,"ui.json");const changed=vi.fn();const modal=new StudyAppearanceModal(app,store,changed);
   modal.open();return {app,store,modal,changed};
 };

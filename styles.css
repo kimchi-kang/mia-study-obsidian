@@ -987,3 +987,5 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-view .mia-header .mia-settings-buttons .mia-appearance-button { margin-inline-start: 0; }
 .mia-study-management-modal:focus { outline: none; }
 .mia-study-management-modal .mia-learning-settings-actions { position: sticky; bottom: 0; padding-block: 12px; background: var(--background-primary); }
+.mia-device-sync-settings { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--background-modifier-border); }
+.mia-device-sync-settings > button { min-height: 44px; max-width: 100%; white-space: normal; }

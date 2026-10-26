@@ -18,12 +18,15 @@ describe('plugin deferred startup cancellation',()=>{
   const env=host();await env.plugin.onload();env.plugin.onunload();env.callbacks[0]();await flush();expect(env.vault.on).not.toHaveBeenCalled();expect(env.vault.getMarkdownFiles).not.toHaveBeenCalled();
  });
  it('does not register UI or layout callbacks if unloaded during initial data loading',async()=>{
-  const env=host();let finish;env.plugin.loadData=()=>new Promise(resolve=>{finish=()=>resolve(null);});const loading=env.plugin.onload();env.plugin.onunload();finish();await loading;
+  const env=host();let finish;env.plugin.loadData=()=>new Promise(resolve=>{finish=()=>resolve(null);});const loading=env.plugin.onload();await flush();expect(finish).toBeTypeOf("function");env.plugin.onunload();finish();await loading;
   expect(env.callbacks).toEqual([]);expect(env.local.get('mia-study:startup-diagnostics:v1').at(-1).phase).toBe('unloaded');
  });
  it('does not continue subject synchronization when unloaded during the first index read',async()=>{
   const env=host();await env.plugin.onload();let finish;env.vault.getMarkdownFiles.mockReturnValue([{path:'MIA/과목/a.md',extension:'md'}]);env.vault.cachedRead=()=>new Promise(resolve=>{finish=()=>resolve('');});
   env.callbacks[0]();await flush();env.plugin.onunload();finish();await flush();expect(env.events.size).toBe(0);expect(env.vault.getAbstractFileByPath).not.toHaveBeenCalled();
+ });
+ it('does not begin legacy loading after unload during portable mode detection',async()=>{
+  const env=host();let finish;env.vault.adapter.exists=()=>new Promise(resolve=>{finish=()=>resolve(false);});const loading=env.plugin.onload();env.plugin.onunload();finish();await loading;expect(env.plugin.loadData).not.toHaveBeenCalled();expect(env.callbacks).toEqual([]);
  });
  it('ignores external settings notifications after unload',async()=>{
   const env=host();await env.plugin.onload();env.plugin.onunload();const calls=env.plugin.loadData.mock.calls.length;await env.plugin.onExternalSettingsChange();expect(env.plugin.loadData).toHaveBeenCalledTimes(calls);
@@ -45,7 +48,7 @@ describe('index start and stop resources',()=>{
 
 describe('additional startup boundaries',()=>{
  it('does not publish loaded state if unloaded during the resume read',async()=>{
-  const env=host();let finish;env.vault.adapter.exists=vi.fn().mockResolvedValueOnce(false).mockImplementationOnce(()=>new Promise(resolve=>{finish=()=>resolve(false);}));
+  const env=host();let finish;env.vault.adapter.exists=vi.fn(path=>path.endsWith('/ui-state.json')?new Promise(resolve=>{finish=()=>resolve(false);}):Promise.resolve(false));
   const loading=env.plugin.onload();await flush();env.plugin.onunload();finish();await loading;expect(env.callbacks).toEqual([]);expect(env.local.get('mia-study:startup-diagnostics:v1').at(-1).phase).toBe('unloaded');
  });
  it('cleans up registrations after a failed index start and permits retry',async()=>{
