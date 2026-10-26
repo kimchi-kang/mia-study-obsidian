@@ -3,6 +3,8 @@ import { Rating } from "ts-fsrs";
 import { FsrsService } from "../src/core/fsrs-service";
 import { QuestionIndex } from "../src/services/question-index";
 
+const modalBoundary = vi.hoisted(() => ({ instances: [] }));
+
 // Only Obsidian's UI boundary is replaced; the view, timers and FSRS are real.
 vi.mock("obsidian", () => {
   class Element {
@@ -54,7 +56,7 @@ vi.mock("obsidian", () => {
     PluginSettingTab: class { constructor(app) { this.app=app; this.containerEl=new Element(); this.containerEl.ownerDocument={defaultView:null}; } hide() {} },
     ItemView: class { constructor(leaf) { this.leaf = leaf; this.app = leaf.app; this.contentEl = new Element(); } },
     Component: class { load() {} unload() {} },
-    Modal: class { setTitle() {} open = vi.fn(); close = vi.fn(); }, Notice: class {}, Platform: { isMobile: false },
+    Modal: class { constructor(app) { this.app=app; this.contentEl=new Element(); this.modalEl=new Element(); this.containerEl=new Element(); modalBoundary.instances.push(this); } setTitle() {} open = vi.fn(); close = vi.fn(); }, Notice: class {}, Platform: { isMobile: false },
     MarkdownRenderer: { render: async (_app, text, element) => { element.text = text; } },
   };
 });
@@ -62,6 +64,7 @@ import { MarkdownRenderer } from "obsidian";
 import { StudyUiStore } from "../src/services/study-ui-store";
 import { MiaStudyView } from "../src/ui/study-view";
 import { MiaSettingTab } from "../src/ui/settings-tab";
+import { StudyManagementModal } from "../src/ui/study-management-modal";
 import { MiaDataStore } from "../src/services/data-store";
 import { buildReviewQueue } from "../src/core/recommendation-engine";
 import { DEFAULT_SETTINGS } from "../src/core/models";
@@ -102,23 +105,35 @@ beforeEach(() => {
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-describe("dashboard learning settings", () => {
+describe("learning settings dialog", () => {
   const field = (ui, label) => {
     const visit = element => element.attrs["aria-label"] === label ? element : element.children.map(visit).find(Boolean);
-    return visit(ui.view.contentEl);
+    return visit(ui.modal.contentEl);
   };
   const dashboard = async () => {
     const ui = setup({ start: false });
     ui.plugin.updateSettings = vi.fn(async patch => { Object.assign(ui.plugin.store.settings, structuredClone(patch)); });
     await ui.view.setState({ route: "dashboard", queue: [], queueIndex: 0, answerVisible: false, sessionMode: "recall" }, {});
-    return ui;
+    const modal=new StudyManagementModal(ui.view.app,ui.plugin,()=>ui.view.render());modal.onOpen();
+    return {...ui,modal,exactButton:text=>modal.contentEl.find(text,true),content:()=>modal.contentEl.content};
   };
-  it("shows every learning setting directly before the stats without another settings screen", async () => {
-    const ui = await dashboard();
-    for (const label of ["학습 설정", "하루 새 문제", "처음 배우는 문제", "틀린 문제", "새 문제 순서", "복습 순서", "FSRS-6 매개변수", "학습 설정 저장"]) expect(ui.content()).toContain(label);
-    expect(ui.content().indexOf("학습 설정")).toBeLessThan(ui.content().indexOf("등록 문제"));
+  it("opens learning settings from a header button without a full settings form on home", async () => {
+    const ui=setup({start:false});ui.view.showDashboard();
+    expect(ui.exactButton("보기 설정")).toBeDefined();
+    expect(ui.content()).not.toContain("하루 새 문제");expect(ui.content()).not.toContain("학습 설정 저장");
+    await ui.exactButton("학습 설정").click();
+    const modal=modalBoundary.instances.at(-1);expect(modal).toBeInstanceOf(StudyManagementModal);expect(modal.open).toHaveBeenCalledOnce();
   });
-  it("preserves an unsaved field across dashboard refreshes and saves it from home", async () => {
+  it("shows the learning fields and cancellation in the dialog",async()=>{
+    const ui=await dashboard();
+    for(const label of ["하루 새 문제","처음 배우는 문제","틀린 문제","복습 순서","FSRS-6 매개변수","학습 설정 저장","취소"])expect(ui.content()).toContain(label);
+  });
+  it("discards changes when cancelled and reopens with saved values",async()=>{
+    const ui=await dashboard();const input=field(ui,"하루 새 문제");input.value="9";input.handlers.get("input")("9");
+    await ui.exactButton("취소").click();expect(ui.modal.close).toHaveBeenCalledOnce();expect(ui.plugin.updateSettings).not.toHaveBeenCalled();
+    ui.modal.onOpen();expect(field(ui,"하루 새 문제").value).toBe("20");
+  });
+  it("preserves an unsaved dialog field across dashboard refreshes and closes after saving", async () => {
     const ui = await dashboard(); const input = field(ui, "하루 새 문제");
     input.value = "7"; input.handlers.get("input")("7");
     ui.view.render();
@@ -126,7 +141,7 @@ describe("dashboard learning settings", () => {
     expect(field(ui, "하루 새 문제").value).toBe("7");
     await ui.exactButton("학습 설정 저장").click();
     expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(7);
-    expect(field(ui, "하루 새 문제").value).toBe("7");
+    expect(ui.modal.close).toHaveBeenCalledOnce();
   });
   it("saves numeric step amounts and units without requiring Anki syntax", async () => {
     const ui = await dashboard();
@@ -136,7 +151,7 @@ describe("dashboard learning settings", () => {
     expect(ui.plugin.store.settings.studyManagement.learningSteps).toEqual(["90m", "10m"]);
   });
   it("loads defaults into the draft without silently saving them", async () => {
-    const ui = await dashboard();ui.plugin.store.settings.studyManagement.newCardsPerDay = 7;ui.view.render();
+    const ui = await dashboard();ui.plugin.store.settings.studyManagement.newCardsPerDay = 7;ui.modal.onOpen();
     await ui.exactButton("기본값 불러오기").click();
     expect(field(ui, "하루 새 문제").value).toBe("20");expect(ui.plugin.updateSettings).not.toHaveBeenCalled();expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(7);
     await ui.exactButton("학습 설정 저장").click();expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(20);
@@ -154,7 +169,7 @@ describe("dashboard learning settings", () => {
     const ui = await dashboard();const parameters = field(ui, "FSRS-6 매개변수");parameters.handlers.get("input")("1, 2");
     await ui.exactButton("학습 설정 저장").click();expect(ui.plugin.updateSettings).not.toHaveBeenCalled();
     const visit = el => el.tag === "details" ? el : el.children.map(visit).find(Boolean);
-    expect(visit(ui.view.contentEl).open).toBe(true);
+    expect(visit(ui.modal.contentEl).open).toBe(true);
   });
   it("keeps the draft and allows retry after a rejected save", async () => {
     const ui = await dashboard(); const input = field(ui, "하루 새 문제");
@@ -164,6 +179,7 @@ describe("dashboard learning settings", () => {
     expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(20);
     expect(field(ui, "하루 새 문제").value).toBe("9");
     expect(ui.exactButton("학습 설정 저장").disabled).toBe(false);
+    expect(ui.modal.close).not.toHaveBeenCalled();
     await ui.exactButton("학습 설정 저장").click();
     expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(9);
   });
