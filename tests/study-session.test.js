@@ -1097,3 +1097,28 @@ it.each(["recall", "browse"])("hides generated source attribution in %s without 
   expect(question.answerMarkdown).toBe(stored);
   expect(ui.button("암기")).toBeDefined();
 });
+
+describe("dashboard task guidance", () => {
+  it("offers first-question entry instead of reporting a finished study day in an empty vault", async () => {
+    const ui = setup({ start: false });
+    ui.plugin.index.registered.splice(0);
+    ui.plugin.openManagedQuestionEditor = vi.fn();
+    ui.view.showDashboard();
+    expect(ui.content()).toContain("첫 질문을 추가해 보세요");
+    expect(ui.content()).not.toContain("오늘 학습을 마쳤습니다");
+    await ui.exactButton("첫 질문 추가").click();
+    expect(ui.plugin.openManagedQuestionEditor).toHaveBeenCalledOnce();
+  });
+  it("explains a daily limit and provides direct access to the existing learning settings", async () => {
+    const ui = setup({ start: false });
+    ui.plugin.store.settings.studyManagement.newCardsPerDay = 0;
+    ui.view.showDashboard();
+    expect(ui.content()).toContain("하루 학습량 제한");
+    expect(ui.content()).not.toContain("오늘 학습을 마쳤습니다");
+    expect(ui.exactButton("시험 모드 시작").disabled).toBe(true);
+    const before = modalBoundary.instances.length;
+    await ui.exactButton("학습량 확인").click();
+    expect(modalBoundary.instances.length).toBe(before + 1);
+    expect(modalBoundary.instances.at(-1)).toBeInstanceOf(StudyManagementModal);
+  });
+});

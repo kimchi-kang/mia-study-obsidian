@@ -124,13 +124,14 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
 
   onOpen(): void {
     this.titleRenderer.load();
-    new Setting(this.contentEl).setName("과목").addDropdown((dropdown) => {
+    if (this.subjects.length) new Setting(this.contentEl).setName("과목").addDropdown((dropdown) => {
       this.subjects.forEach((subject) => dropdown.addOption(subject, subject));
       dropdown.setValue(this.subject).onChange((value) => { this.subject = value; });
       dropdown.setDisabled(this.subjects.length <= 1);
     });
-    new Setting(this.contentEl).setName("새 과목 이름").setDesc("입력하면 위에서 선택한 과목 대신 새 과목을 만들고 질문을 저장합니다.").addText((text) => {
-      text.setPlaceholder("새 과목을 바로 추가할 때만 입력").onChange((value) => { this.newSubject = value; });
+    new Setting(this.contentEl).setName(this.subjects.length ? "새 과목 이름" : "과목 이름")
+      .setDesc(this.subjects.length ? "입력하면 위에서 선택한 과목 대신 새 과목을 만들고 질문을 저장합니다." : "질문과 함께 새 과목을 만듭니다. 과목을 따로 추가할 필요가 없습니다.").addText((text) => {
+      text.setPlaceholder(this.subjects.length ? "새 과목을 바로 추가할 때만 입력" : "예: 전자기학").onChange((value) => { this.newSubject = value; });
     });
     new Setting(this.contentEl).setName("질문").setDesc("Markdown과 수식을 사용할 수 있습니다.").addTextArea((text) => {
       text.setPlaceholder("질문을 입력하세요.").setValue(this.question).onChange((value) => { this.question = value; });
@@ -147,30 +148,41 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
     new Setting(this.contentEl).setName("핵심 키워드").setDesc("쉼표로 구분합니다. 하나 이상 필요합니다.").addText((text) => {
       text.setPlaceholder("가우스 법칙, 전기 선속").setValue(this.coreNames).onChange((value) => { this.coreNames = value; });
     });
-    new Setting(this.contentEl).setName("핵심 키워드 의미").setDesc("키워드 순서대로 한 줄에 하나씩 입력합니다.").addTextArea((text) => {
+    const meaningDescription = this.existing ? "키워드 순서대로 한 줄에 하나씩 입력합니다." : "선택 사항입니다. 기존 키워드는 비워 두면 의미를 유지합니다. 의미를 바꾸려면 키워드 순서대로 한 줄에 하나씩 입력하세요.";
+    new Setting(this.contentEl).setName("핵심 키워드 의미").setDesc(meaningDescription).addTextArea((text) => {
       text.setValue(this.coreMeanings).onChange((value) => { this.coreMeanings = value; });
       text.inputEl.rows = 4;
     });
     new Setting(this.contentEl).setName("보조 키워드").setDesc("쉼표로 구분합니다.").addText((text) => {
       text.setPlaceholder("대칭성, 폐곡면").setValue(this.subNames).onChange((value) => { this.subNames = value; });
     });
-    new Setting(this.contentEl).setName("보조 키워드 의미").setDesc("키워드 순서대로 한 줄에 하나씩 입력합니다.").addTextArea((text) => {
+    new Setting(this.contentEl).setName("보조 키워드 의미").setDesc(meaningDescription).addTextArea((text) => {
       text.setValue(this.subMeanings).onChange((value) => { this.subMeanings = value; });
       text.inputEl.rows = 4;
     });
-    if (!this.existing) this.renderFollowUpPicker();
+    if (!this.existing && this.availableQuestions.length) this.renderFollowUpPicker();
+    const status = this.contentEl.createEl("p", { cls: "mia-muted", attr: { role: "status", "aria-live": "polite" } });
+    let saving = false;
     new Setting(this.contentEl).addButton((button) => button.setButtonText("저장").setCta().onClick(async () => {
+      if (saving) return;
+      status.removeClass("mia-warning");
+      status.setText("");
       try {
         const question = this.question.trim();
         const answer = this.answer.trim();
         const coreKeywords = keywordReferencesFromInput(this.coreNames, this.keywordFolder);
         const subKeywords = keywordReferencesFromInput(this.subNames, this.keywordFolder);
         const subject = this.newSubject.trim() || this.subject;
-        if (!subject || !question || !answer || coreKeywords.length === 0) {
-          new Notice("과목, 질문, 정답, 핵심 키워드를 모두 입력하세요.");
+        const missing = !subject ? "과목 이름을 입력하세요." : !question ? "질문을 입력하세요." : !answer ? "정답을 입력하세요." : coreKeywords.length === 0 ? "핵심 키워드를 하나 이상 입력하세요." : "";
+        if (missing) {
+          status.addClass("mia-warning");
+          status.setText(`${missing} 입력 내용은 유지됩니다.`);
           return;
         }
-        button.setDisabled(true);
+        saving = true;
+        button.setDisabled(true).setButtonText("저장 중…");
+        status.setText("질문을 저장하고 있습니다…");
+        button.buttonEl.scrollIntoView({ block: "nearest" });
         await this.onSubmit({
           subject,
           questionMarkdown: question,
@@ -186,8 +198,12 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
         });
         this.close();
       } catch (error) {
-        new Notice(`질문 저장 실패: ${errorMessage(error)}`);
-        button.setDisabled(false);
+        status.addClass("mia-warning");
+        status.setText(`저장하지 못했습니다: ${errorMessage(error).replace(/[.!?。]+$/u, "")}. 입력 내용은 유지되었습니다. 원인을 확인한 뒤 다시 저장해 주세요.`);
+      } finally {
+        saving = false;
+        button.setDisabled(false).setButtonText("저장");
+        button.buttonEl.scrollIntoView({ block: "nearest" });
       }
     }));
   }

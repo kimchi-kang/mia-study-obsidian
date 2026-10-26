@@ -335,3 +335,27 @@ describe("late reverse-link conflicts",()=>{
     await expect(env.plugin.refreshIncomingFollowUpLinks(["mia-q-two"])).rejects.toThrow();expect(env.contents.get(oldPath)).toBe(before);
   });
 });
+
+describe("reusing keywords while adding a question", () => {
+  it.each(["", "   "])("preserves the existing meaning when the new question leaves it blank (%j)", async meaning => {
+    const env = await environment();
+    env.add("MIA/키워드", new TFolder());
+    const path = "MIA/키워드/전자기장.md";
+    env.add(path, new TFile());
+    const original = "# 전자기장\r\n\r\n## 의미\r\n\r\n기존 의미를 보존합니다.\r\n\r\n## 연결\r\n\r\n사용자 연결과 메모\r\n";
+    env.contents.set(path, original);
+    const keyword = { target: "MIA/키워드/전자기장", label: "전자기장", raw: "[[MIA/키워드/전자기장|전자기장]]" };
+    await env.plugin.createManagedQuestion({ ...env.draft, coreKeywords: [keyword], keywordMeanings: [{ ...keyword, meaning }] });
+    expect(parseQuestionFile(nextPath, env.contents.get(nextPath)).questions).toHaveLength(1);
+    expect(env.contents.get(path)).toBe(original);
+  });
+  it("creates a new keyword note with an empty meaning and applies an explicitly supplied meaning to an existing keyword", async () => {
+    const env = await environment();
+    const keyword = { target: "MIA/키워드/새키워드", label: "새키워드", raw: "[[MIA/키워드/새키워드|새키워드]]" };
+    const draft = { ...env.draft, coreKeywords: [keyword], keywordMeanings: [{ ...keyword, meaning: "" }] };
+    await env.plugin.createManagedQuestion(draft);
+    expect(env.contents.get("MIA/키워드/새키워드.md")).toContain("## 의미");
+    await env.plugin.createManagedQuestion({ ...draft, questionMarkdown: "다른 질문", keywordMeanings: [{ ...keyword, meaning: "명시적으로 입력한 의미" }] });
+    expect(env.contents.get("MIA/키워드/새키워드.md")).toContain("명시적으로 입력한 의미");
+  });
+});

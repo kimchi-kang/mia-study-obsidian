@@ -358,11 +358,6 @@ export default class MiaStudyPlugin extends Plugin {
 
   async openManagedQuestionEditor(question: QuestionRecord | null = null): Promise<void> {
     const subjects = [...new Set([...(question ? [question.subject] : []), ...this.listSubjects()])];
-    if (subjects.length === 0) {
-      new Notice("질문을 추가하기 전에 과목을 먼저 만들어 주세요.");
-      this.openSubjectEditor();
-      return;
-    }
     const meanings = question ? await this.loadKeywordMeanings(question) : new Map<string, string>();
     new ManagedQuestionModal(
       this.app,
@@ -577,7 +572,7 @@ export default class MiaStudyPlugin extends Plugin {
     await this.assertSubjectNoteWritable(subject);
     const id = createQuestionId();
     const now = new Date().toISOString();
-    await this.saveDraftKeywordMeanings(draft);
+    await this.saveDraftKeywordMeanings(draft, true);
     let updatedContent = "";
     await this.app.vault.process(file, (content) => {
       updatedContent = appendManagedQuestion(content, { ...draft, createdAt: now, updatedAt: now }, id);
@@ -746,9 +741,9 @@ export default class MiaStudyPlugin extends Plugin {
     new Notice("질문을 문제은행과 과목 노트에서 삭제했습니다.");
   }
 
-  private async saveDraftKeywordMeanings(draft: ManagedQuestionDraft): Promise<void> {
+  private async saveDraftKeywordMeanings(draft: ManagedQuestionDraft, preserveExistingWhenEmpty = false): Promise<void> {
     for (const item of draft.keywordMeanings) {
-      await this.saveKeywordReferenceMeaning(item.target, item.label, item.meaning);
+      await this.saveKeywordReferenceMeaning(item.target, item.label, item.meaning, preserveExistingWhenEmpty);
     }
   }
 
@@ -760,7 +755,7 @@ export default class MiaStudyPlugin extends Plugin {
     }
   }
 
-  private async saveKeywordReferenceMeaning(target: string, label: string, meaning: string): Promise<void> {
+  private async saveKeywordReferenceMeaning(target: string, label: string, meaning: string, preserveExistingWhenEmpty = false): Promise<void> {
     validateKeywordMeaning(meaning);
     const path = keywordNotePath(target, label, this.store.settings.keywordFolder);
     this.assertPortablePath(path);
@@ -769,6 +764,7 @@ export default class MiaStudyPlugin extends Plugin {
     const existing = this.app.vault.getAbstractFileByPath(path);
     if (existing instanceof TFolder) throw new Error("키워드 노트 경로가 폴더와 겹칩니다.");
     if (existing instanceof TFile) {
+      if (preserveExistingWhenEmpty && !meaning.trim()) return;
       await this.app.vault.process(existing, (content) => updateKeywordMeaning(content, label, meaning));
     } else {
       await this.app.vault.create(path, createKeywordNote(label, meaning));
