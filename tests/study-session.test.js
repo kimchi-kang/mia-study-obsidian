@@ -1059,3 +1059,28 @@ describe("running plugin version", () => {
     expect(ui.content()).toContain("Major Study v9.8.7-test");
   });
 });
+
+describe("cross-device record refresh",()=>{
+  it("loads another device's grades, study settings and resume together from home",async()=>{
+    const ui=await persistentSession();ui.view.showDashboard();await ui.plugin.studyUi.load();
+    const appearance=ui.plugin.studyUi.appearance;
+    await ui.remote.updateSettings({studyManagement:{...structuredClone(DEFAULT_SETTINGS.studyManagement),newCardsPerDay:7}});
+    const grade=ui.plugin.fsrs.rate(undefined,Rating.Easy,new Date(),"q");await ui.remote.setReview("q",grade);
+    // A second device has its own local checkpoint and receives the same vault files.
+    const otherApp={...ui.studyApp,loadLocalStorage:()=>null,saveLocalStorage(){}};
+    const otherUi=new StudyUiStore(otherApp,"ui-state.json");await otherUi.load();
+    await otherUi.saveResume({...ui.plugin.studyUi.resume,answerVisible:false,updatedAt:new Date(Date.now()+1000).toISOString()});
+    expect(ui.store.getReview("q")).toBeUndefined();expect(ui.store.settings.studyManagement.newCardsPerDay).toBe(20);
+    await ui.exactButton("기록 새로고침").click();
+    expect(ui.store.getReview("q")).toEqual(grade);expect(ui.store.settings.studyManagement.newCardsPerDay).toBe(7);
+    expect(ui.plugin.studyUi.resume.answerVisible).toBe(false);expect(ui.plugin.studyUi.appearance).toEqual(appearance);
+  });
+  it("allows retry after a read failure without changing existing reviews or resume",async()=>{
+    const ui=await persistentSession();ui.view.showDashboard();await ui.plugin.studyUi.load();
+    const original=ui.plugin.studyUi.resume;
+    vi.spyOn(ui.native,"loadData").mockRejectedValueOnce(Error("unavailable"));
+    await ui.exactButton("기록 새로고침").click();
+    expect(ui.exactButton("기록 새로고침").disabled).toBe(false);expect(ui.plugin.studyUi.resume).toEqual(original);expect(ui.store.reviews).toEqual({});
+    await ui.exactButton("기록 새로고침").click();expect(ui.plugin.studyUi.resume).toEqual(original);
+  });
+});
