@@ -1,0 +1,20 @@
+{
+  "version": "1.3.5",
+  "minAppVersion": "1.8.7",
+  "zipFiles": [
+    "main.js",
+    "styles.css",
+    "manifest.json"
+  ],
+  "sha256": {
+    "main.js": "89702c8369d9beef49bd28746583491c7a6efefac34921421a724639c00fa818",
+    "styles.css": "b111650165f0c20d644bb2821538dcaf95acda8af9bb50796d3bd697d40e268b",
+    "manifest.json": "847bf7590bc5a032bf8ff4c3c9c0722aefed18b53a17525f435df898f2b61dab",
+    "mia-study-1.3.5.zip": "c92d1d8424ee9b8150f256b307ccc0d68abc5e91194959c17fa8c5f08fc1eb48"
+  },
+  "threeNativeVaultsMatchZip": true,
+  "updateBeforeInteractionBytePreservedFiles": 11,
+  "previousReviewAndSettingsRetainedAfterNewGrade": true,
+  "previousCandidateUnchanged": true,
+  "newVaultActivationObservation": "One initial off-state observed; explicit activation + reopen succeeded; independent second clean activation and reopen succeeded; cause of initial state unconfirmed."
+}
