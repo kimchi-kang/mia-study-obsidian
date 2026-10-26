@@ -90,7 +90,7 @@ describe("modal interaction regressions", () => {
   });
   it("applies device appearance settings only after saving", () => {
     const saved = new Map(), change = vi.fn();
-    const store = new StudyUiStore({ loadLocalStorage: key => saved.get(key), saveLocalStorage: (key, value) => saved.set(key, value) }, "ui.json");
+    const store = new StudyUiStore({ vault: { adapter: { exists: async()=>false, read: async()=>{throw Error("unexpected file read");}, write: async()=>{throw Error("unexpected file write");} } }, loadLocalStorage: key => saved.get(key), saveLocalStorage: (key, value) => saved.set(key, value) }, "ui.json");
     const modal = new StudyAppearanceModal({}, store, change); modal.onOpen();
     const selects = modal.contentEl.children.filter(item => item.tag === "select");
     const toggles = modal.contentEl.children.filter(item => item.tag === "input");

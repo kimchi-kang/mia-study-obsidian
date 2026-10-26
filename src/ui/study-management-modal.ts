@@ -1,5 +1,6 @@
 import { App, Notice } from "obsidian";
 import type MiaStudyPlugin from "../main";
+import { renderDeviceSyncSettings } from "./device-sync-settings";
 import { errorMessage } from "./error-message";
 import { KeyboardAwareModal } from "./mobile-keyboard";
 import { renderStudyManagementSettings } from "./study-management-settings";
@@ -30,6 +31,7 @@ export class StudyManagementModal extends KeyboardAwareModal {
         new Notice(`학습 설정 저장 실패: ${errorMessage(error)}`);
       }
     }, () => this.close());
+    renderDeviceSyncSettings(this.contentEl, this.plugin);
   }
 
   onClose(): void { this.contentEl.empty(); }

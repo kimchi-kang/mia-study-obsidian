@@ -1,4 +1,4 @@
-import type { App } from "obsidian";
+import type { App, DataAdapter } from "obsidian";
 import { SwipeSensitivity } from "../core/study-swipe";
 import { MiaSessionMode, ReviewCheckpoint, parseReviewCheckpoint } from "../core/navigation";
 
@@ -57,12 +57,14 @@ export function parseStudyAppearance(value: unknown): StudyAppearance {
   };
 }
 
+type StudyUiHost = Pick<App, "loadLocalStorage" | "saveLocalStorage"> & { vault: { adapter: Pick<DataAdapter, "exists" | "read" | "write"> } };
+
 // Keep in-flight ordering across plugin module reloads in the same Obsidian App.
 const RESUME_WRITES = Symbol.for("mia-study:resume-writes:v1");
 interface ResumeWrites { pending: Promise<void>; checkpointRevision: number }
 interface ResumeWriteHost { [RESUME_WRITES]?: Map<string, ResumeWrites> }
-function resumeWrites(app: App, path: string): ResumeWrites {
-  const host: App & ResumeWriteHost = app;
+function resumeWrites(app: StudyUiHost, path: string): ResumeWrites {
+  const host: StudyUiHost & ResumeWriteHost = app;
   let paths = host[RESUME_WRITES];
   if (!paths) {
     paths = new Map();
@@ -86,13 +88,20 @@ export class StudyUiStore {
   private readonly preferenceKey: string;
   private readonly sharedWrites: ResumeWrites;
 
-  constructor(private readonly app: App, private readonly path: string) {
+  private readonly adapter: Pick<DataAdapter, "exists" | "read" | "write">;
+
+  constructor(private readonly app: StudyUiHost, private readonly path: string, options: { localStatePath?: string; adapter?: Pick<DataAdapter, "exists" | "read" | "write"> } = {}) {
     this.sharedWrites = resumeWrites(app, path);
-    this.preferenceKey = `mia-study:appearance:${path}`;
-    this.resumeKey = `mia-study:resume-checkpoint:${path}`;
+    const localPath = options.localStatePath ?? path;
+    this.adapter = options.adapter ?? app.vault.adapter;
+    this.preferenceKey = `mia-study:appearance:${localPath}`;
+    this.resumeKey = `mia-study:resume-checkpoint:${localPath}`;
     this.currentAppearance = parseStudyAppearance(app.loadLocalStorage(this.preferenceKey));
   }
   get resume(): StudyResume | null { return this.currentResume ? structuredClone(this.currentResume) : null; }
+  get sharedSnapshot(): { version: 1; resume: StudyResume | null; updatedAt: string } {
+    return { version: 1, resume: this.resume, updatedAt: this.committedUpdatedAt };
+  }
   get appearance(): StudyAppearance { return { ...this.currentAppearance }; }
   get hasResumeFile(): boolean { return this.filePresent; }
   get resumeRevision(): number { return this.sharedWrites.checkpointRevision; }
@@ -101,7 +110,7 @@ export class StudyUiStore {
     const revision = this.revision;
     // A local move still being saved must finish before checking the synced file.
     await this.writes;
-    const adapter = this.app.vault.adapter;
+    const adapter = this.adapter;
     const exists = await adapter.exists(this.path);
     const raw: unknown = exists ? JSON.parse(await adapter.read(this.path)) : { version: 1, resume: null };
     if (!raw || typeof raw !== "object" || !("version" in raw) || raw.version !== 1 || !("resume" in raw)) throw new Error("이어하기 파일 형식을 확인하세요.");
@@ -129,7 +138,7 @@ export class StudyUiStore {
     const checkpointRevision = ++this.sharedWrites.checkpointRevision;
     const payload = JSON.stringify(checkpoint, null, 2);
     const write = this.sharedWrites.pending.then(async () => {
-      const adapter = this.app.vault.adapter;
+      const adapter = this.adapter;
       if (await adapter.exists(this.path)) {
         const raw: unknown = JSON.parse(await adapter.read(this.path));
         if (!raw || typeof raw !== "object" || !("version" in raw) || raw.version !== 1 || !("resume" in raw)) throw new Error("이어하기 파일 형식을 확인하세요.");

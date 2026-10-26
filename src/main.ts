@@ -47,7 +47,8 @@ import {
 } from "./core/question-writer";
 import { MiaDataStore } from "./services/data-store";
 import { applyFileChanges, FileChange } from "./services/file-change-batch";
-import { VerifiedPluginStorage } from "./services/verified-plugin-storage";
+import { VerifiedPluginStorage, type PluginDataStorage } from "./services/verified-plugin-storage";
+import { PORTABLE_RESUME_PATH, preparePortableStudyStorage, selectPortableStudyStorage } from "./services/portable-study-storage";
 import { QuestionIndex } from "./services/question-index";
 import { QuestionMetadataModal } from "./ui/metadata-modal";
 import { MiaSettingTab } from "./ui/settings-tab";
@@ -75,6 +76,11 @@ export default class MiaStudyPlugin extends Plugin {
   index!: QuestionIndex;
   fsrs!: FsrsService;
   studyUi!: StudyUiStore;
+  portableSyncActive = false;
+  private legacyStudyStorage!: VerifiedPluginStorage;
+  private activeStudyStorage!: PluginDataStorage;
+  private legacyResumePath = "";
+  private portableSyncKey = "";
   private startupDiagnostics: StartupDiagnostics | null = null;
   private unloadRequested = false;
 
@@ -95,7 +101,18 @@ export default class MiaStudyPlugin extends Plugin {
   private async loadMia(): Promise<void> {
     const recoveryKey = `mia-study:review-recovery:${this.app.vault.getName()}:${this.app.vault.configDir}`;
     const dataDirectory = this.manifest.dir ?? `${this.app.vault.configDir}/plugins/${this.manifest.id}`;
-    const storage = new VerifiedPluginStorage(this, this.app.vault.adapter, normalizePath(`${dataDirectory}/data.json`));
+    this.legacyStudyStorage = new VerifiedPluginStorage(this, this.app.vault.adapter, normalizePath(`${dataDirectory}/data.json`));
+    this.legacyResumePath = normalizePath(`${this.app.vault.configDir}/plugins/${this.manifest.id}/ui-state.json`);
+    this.portableSyncKey = `mia-study:portable-sync:${this.app.vault.getName()}:${this.app.vault.configDir}`;
+    const portable = await selectPortableStudyStorage(this.app.vault.adapter, this.app.loadLocalStorage(this.portableSyncKey) === true);
+    if (this.unloadRequested) return;
+    this.activeStudyStorage = portable ?? this.legacyStudyStorage;
+    this.portableSyncActive = portable !== null;
+    if (portable) this.app.saveLocalStorage(this.portableSyncKey, true);
+    const storage: PluginDataStorage = {
+      loadData: () => this.activeStudyStorage.loadData(),
+      saveData: data => this.activeStudyStorage.saveData(data),
+    };
     this.store = new MiaDataStore(storage, {
       read: () => this.app.loadLocalStorage(recoveryKey),
       write: (data) => this.app.saveLocalStorage(recoveryKey, data),
@@ -103,7 +120,9 @@ export default class MiaStudyPlugin extends Plugin {
     });
     await this.store.load();
     if (this.unloadRequested) return;
-    this.studyUi = new StudyUiStore(this.app, normalizePath(`${this.app.vault.configDir}/plugins/${this.manifest.id}/ui-state.json`));
+    this.studyUi = portable
+      ? new StudyUiStore(this.app, PORTABLE_RESUME_PATH, { localStatePath: this.legacyResumePath, adapter: portable.resumeAdapter })
+      : new StudyUiStore(this.app, this.legacyResumePath);
     try { await this.studyUi.load(); }
     catch (error) { new Notice(`이어하기 정보 불러오기 실패: ${errorMessage(error)}`); }
     if (this.unloadRequested) return;
@@ -172,6 +191,21 @@ export default class MiaStudyPlugin extends Plugin {
     this.unloadRequested = true;
     this.startupDiagnostics?.record("unloaded");
     this.index?.stop();
+  }
+
+  async enablePortableSync(): Promise<void> {
+    if (this.portableSyncActive) return;
+    await this.store.synchronize();
+    await this.studyUi.load();
+    await preparePortableStudyStorage(this.app.vault.adapter, this.legacyStudyStorage, this.studyUi.sharedSnapshot);
+    const portable = await selectPortableStudyStorage(this.app.vault.adapter, true);
+    if (!portable) throw new Error("공유 폴더를 확인하지 못했습니다.");
+    this.activeStudyStorage = portable;
+    await this.store.synchronize();
+    this.studyUi = new StudyUiStore(this.app, PORTABLE_RESUME_PATH, { localStatePath: this.legacyResumePath, adapter: portable.resumeAdapter });
+    await this.studyUi.load();
+    this.app.saveLocalStorage(this.portableSyncKey, true);
+    this.portableSyncActive = true;
   }
 
   async updateSettings(patch: Partial<MiaSettings>): Promise<void> {

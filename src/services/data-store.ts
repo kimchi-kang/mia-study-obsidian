@@ -172,7 +172,7 @@ function assertReviewKey(id: string): void {
 }
 class UnsupportedReviewDataVersionError extends InvalidReviewDataError {}
 
-function parseData(raw: unknown): MiaPluginData {
+export function parsePluginData(raw: unknown): MiaPluginData {
   if (raw === null || raw === undefined) return structuredClone(DEFAULT_PLUGIN_DATA);
   if (!isRecord(raw)) throw new InvalidReviewDataError("복습 기록의 저장 형식이 손상되었습니다. 원본을 덮어쓰지 않았습니다.");
   const record = raw;
@@ -237,7 +237,7 @@ export class MiaDataStore {
     try {
       const raw = await this.plugin.loadData();
       diskMissing = raw === null || raw === undefined;
-      disk = parseData(raw);
+      disk = parsePluginData(raw);
     } catch (error) {
       if (error instanceof UnsupportedReviewDataVersionError) throw error;
       diskError = error;
@@ -245,7 +245,7 @@ export class MiaDataStore {
     let recovered: MiaPluginData | undefined;
     try {
       const raw = this.recovery?.read();
-      if (raw !== null && raw !== undefined) recovered = parseData(raw);
+      if (raw !== null && raw !== undefined) recovered = parsePluginData(raw);
     }
     catch {
       this.recoveryReadFailed = true;
@@ -267,7 +267,7 @@ export class MiaDataStore {
 
   synchronize(): Promise<void> {
     return this.enqueue(async () => {
-      const incoming = parseData(await this.plugin.loadData());
+      const incoming = parsePluginData(await this.plugin.loadData());
       const merged = mergeReviewData(this.data, incoming);
       let mergedText = JSON.stringify(merged);
       if (mergedText !== JSON.stringify(incoming)) {
@@ -343,7 +343,7 @@ export class MiaDataStore {
   private commit(change: (next: MiaPluginData) => void): Promise<void> {
     return this.enqueue(async () => {
       // Re-read immediately before a write; another device may have updated a different question.
-      const next = mergeIntoOwnedIncoming(this.data, parseData(await this.plugin.loadData()));
+      const next = mergeIntoOwnedIncoming(this.data, parsePluginData(await this.plugin.loadData()));
       try { change(next); }
       catch (error) {
         if (error instanceof ReviewChangedError) { this.data = next; this.emit(); }
@@ -361,7 +361,7 @@ export class MiaDataStore {
     catch (error) {
       // A rejected write may already have reached disk; confirm before reporting failure.
       let persisted: MiaPluginData;
-      try { persisted = parseData(await this.plugin.loadData()); }
+      try { persisted = parsePluginData(await this.plugin.loadData()); }
       catch { throw error; }
       if (JSON.stringify(persisted) !== JSON.stringify(data)) throw error;
     }
