@@ -1088,7 +1088,7 @@ describe("cross-device record refresh",()=>{
 it.each(["recall", "browse"])("hides generated source attribution in %s without changing the stored answer", async mode => {
   const ui = setup({ start: false });
   const question = ui.plugin.index.registered[0];
-  const stored = "답안 본문\n\n원문: [[과목/원본]]";
+  const stored = "답안 본문\n\n---\n원문: [[회로이론 면접 154]] · <09. 정현파와 페이저>";
   question.answerMarkdown = stored;
   await ui.view.setState({ route: "study", queue: ["q"], queueIndex: 0, answerVisible: true, sessionMode: mode }, {});
   expect(ui.content()).toContain("답안 본문");

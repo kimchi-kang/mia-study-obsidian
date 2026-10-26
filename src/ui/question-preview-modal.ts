@@ -1,3 +1,4 @@
+import { withoutSourceAttribution } from "../core/source-attribution";
 import { renderQuestionTitle } from "./question-title";
 import { App, Component, MarkdownRenderer, Modal } from "obsidian";
 import { QuestionRecord } from "../core/models";
@@ -23,8 +24,8 @@ export class QuestionPreviewModal extends Modal {
     actions.createEl("button", { text: "닫기", cls: "mod-cta" }).addEventListener("click", () => this.close());
     await Promise.all([
       renderQuestionTitle(this.app, this.question.heading, heading, this.question.filePath, this.renderer),
-      ...(!headingIsPrompt ? [MarkdownRenderer.render(this.app, this.question.questionMarkdown, prompt, this.question.filePath, this.renderer)] : []),
-      MarkdownRenderer.render(this.app, this.question.answerMarkdown, answer, this.question.filePath, this.renderer),
+      ...(!headingIsPrompt ? [MarkdownRenderer.render(this.app, withoutSourceAttribution(this.question.questionMarkdown), prompt, this.question.filePath, this.renderer)] : []),
+      MarkdownRenderer.render(this.app, withoutSourceAttribution(this.question.answerMarkdown), answer, this.question.filePath, this.renderer),
     ]);
   }
   onClose(): void { this.renderer?.unload(); this.renderer = null; this.contentEl.empty(); this.restore(); }

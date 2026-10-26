@@ -361,3 +361,21 @@ it("keeps a first-question draft and identifies the missing keyword before submi
   await button.handlers.get("click")();
   expect(save).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ subject: "첫 과목", questionMarkdown: "첫 질문", answerMarkdown: "첫 정답" }));
 });
+
+describe("source-free reading surfaces", () => {
+  it.each(["preview", "detail"])("hides attributed footers in %s while keeping saved content", async surface => {
+    const source = "\n\n---\n원문: [[회로이론 면접 154]] · <09. 정현파와 페이저>";
+    const record = { ...question, questionMarkdown: "검증 질문" + source, answerMarkdown: "검증 답안" + source };
+    const before = structuredClone(record);
+    const modal = surface === "preview"
+      ? new QuestionPreviewModal({}, record, vi.fn(), vi.fn(), { size: "large" })
+      : new QuestionDetailModal({}, record, undefined, [], new Map(), {});
+    await modal.onOpen();
+    const content = element => [element.text, ...element.children.map(content)].join("\n");
+    expect(content(modal.contentEl)).toContain("검증 질문");
+    expect(content(modal.contentEl)).toContain("검증 답안");
+    expect(content(modal.contentEl)).not.toContain("원문");
+    expect(content(modal.contentEl)).not.toContain("회로이론 면접 154");
+    expect(record).toEqual(before);
+  });
+});
