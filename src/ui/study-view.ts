@@ -899,7 +899,7 @@ export class MiaStudyView extends ItemView {
     const body = row.createDiv({ cls: "mia-row-body" });
     this.renderQuestionHeading(body.createEl("strong"), question);
     const prompt = body.createDiv({ cls: "mia-row-prompt mia-markdown" });
-    this.readingRenders.push(MarkdownRenderer.render(this.app, question.questionMarkdown, prompt, question.filePath, this.renderComponent ?? this));
+    this.readingRenders.push(MarkdownRenderer.render(this.app, withoutSourceAttribution(question.questionMarkdown), prompt, question.filePath, this.renderComponent ?? this));
     body.createEl("small", { text: `${question.subject} · ${question.questionType} · 핵심 ${question.coreKeywords.map((item) => item.label).join(", ") || "없음"} · 보조 ${question.subKeywords.map((item) => item.label).join(", ") || "없음"}` });
     const actions = row.createDiv({ cls: "mia-row-actions" });
     actions.createEl("button", { text: "학습" }).addEventListener("click", () => this.startReview([question.id]));
@@ -1128,7 +1128,7 @@ export class MiaStudyView extends ItemView {
     if (sessionGrade) questionSection.createEl("p", { text: `이번 학습 평가: ${GRADE_LABELS[sessionGrade]} · 다른 평가를 누르면 기존 기록을 대체합니다.`, cls: "mia-session-rating" });
     if (!headingIsPrompt) {
       const prompt = questionSection.createDiv({ cls: "mia-markdown" });
-      this.readingRenders.push(MarkdownRenderer.render(this.app, question.questionMarkdown, prompt, question.filePath, this.renderComponent ?? this));
+      this.readingRenders.push(MarkdownRenderer.render(this.app, withoutSourceAttribution(question.questionMarkdown), prompt, question.filePath, this.renderComponent ?? this));
     }
     if (!this.answerVisible) {
       questionSection.createEl("p", { text: "답을 먼저 떠올린 뒤 정답을 확인해 보세요.", cls: "mia-recall-prompt" });

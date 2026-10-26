@@ -953,7 +953,6 @@ export default class MiaStudyPlugin extends Plugin {
       edit: () => { void this.openManagedQuestionEditor(current); },
       connections: () => this.openFollowUpEditor(current),
       remove: () => this.confirmDeleteQuestion(current),
-      openSource: () => { void this.openQuestion(current); },
       showKeyword: (target, label) => this.showKeywordMeaning(target, label, current.filePath),
       rate: (grade) => this.rateQuestionDirectly(current.id, grade, review),
       resetReview: () => this.store.removeReview(current.id, { state: review }),

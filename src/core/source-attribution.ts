@@ -2,7 +2,7 @@ import { fencedCodeLines } from "./markdown-structure";
 
 /** Recognize generated standalone source links, not prose mentioning a source. */
 export function isSourceAttributionLine(line: string): boolean {
-  return /^\s*(?:\*\*)?원문(?:\*\*)?\s*[:：]\s*(?:\*\*)?\s*(?:\[\[[^\n]+\]\]|\[[^\]]+\]\([^)]+\))\s*$/u.test(line);
+  return /^\s*(?:\*\*)?원문(?:\*\*)?\s*[:：]\s*(?:\*\*)?\s*(?:\[\[[^\n]+\]\]|\[[^\]]+\]\([^)]+\))(?:\s*(?:[·•|—–-]\s*)?[<〈《][^\n<>〈〉《》]+[>〉》])?\s*$/u.test(line);
 }
 
 /** Presentation only: retain the stored answer and source note for editing. */

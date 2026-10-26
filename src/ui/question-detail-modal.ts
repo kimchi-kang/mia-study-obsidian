@@ -1,3 +1,4 @@
+import { withoutSourceAttribution } from "../core/source-attribution";
 import { renderQuestionTitle } from "./question-title";
 import { App, Component, MarkdownRenderer, Modal, Notice } from "obsidian";
 import { Rating } from "ts-fsrs";
@@ -21,7 +22,6 @@ export interface QuestionDetailActions {
   edit: () => void;
   connections: () => void;
   remove: () => void;
-  openSource: () => void;
   showKeyword: (target: string, label: string) => void;
   rate: (grade: StudyGrade) => Promise<void>;
   resetReview: () => Promise<void>;
@@ -61,11 +61,11 @@ export class QuestionDetailModal extends Modal {
 
     this.contentEl.createEl("h3", { text: "질문" });
     const prompt = this.contentEl.createDiv({ cls: "mia-markdown" });
-    await Promise.all([titleRender, MarkdownRenderer.render(this.app, this.question.questionMarkdown, prompt, this.question.filePath, this.renderer)]);
+    await Promise.all([titleRender, MarkdownRenderer.render(this.app, withoutSourceAttribution(this.question.questionMarkdown), prompt, this.question.filePath, this.renderer)]);
     if (revision !== this.renderRevision) return;
     this.contentEl.createEl("h3", { text: "정답" });
     const answer = this.contentEl.createDiv({ cls: "mia-markdown mia-answer" });
-    await MarkdownRenderer.render(this.app, this.question.answerMarkdown, answer, this.question.filePath, this.renderer);
+    await MarkdownRenderer.render(this.app, withoutSourceAttribution(this.question.answerMarkdown), answer, this.question.filePath, this.renderer);
     if (revision !== this.renderRevision) return;
 
     this.renderKeywords("핵심 키워드", this.question.coreKeywords);
@@ -105,7 +105,6 @@ export class QuestionDetailModal extends Modal {
     this.actionButton(controls, "학습", this.actions.study);
     this.actionButton(controls, "질문 수정", this.actions.edit);
     this.actionButton(controls, "연결 관리", this.actions.connections);
-    this.actionButton(controls, "원문", this.actions.openSource);
     this.actionButton(controls, "삭제", this.actions.remove, "mod-warning");
   }
 
