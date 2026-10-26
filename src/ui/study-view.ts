@@ -137,7 +137,7 @@ export class MiaStudyView extends ItemView {
     this.registerDomEvent(window, "focus", () => void this.refreshAfterReturn(false));
     this.registerDomEvent(window, "pagehide", () => this.flushReadingPosition());
     this.registerInterval(window.setInterval(() => {
-      if (this.route === "dashboard" || this.route === "progress") this.render();
+      if (!this.contentEl.ownerDocument.hidden && (this.route === "dashboard" || this.route === "progress")) void this.refreshAfterReturn();
     }, 30_000));
   }
 
@@ -309,7 +309,7 @@ export class MiaStudyView extends ItemView {
     this.readingTimer = window.setTimeout(() => this.flushReadingPosition(), 400);
   }
 
-  private async refreshAfterReturn(refreshTime = true): Promise<void> {
+  private async refreshAfterReturn(refreshTime = true, notify = false): Promise<void> {
     if (this.closed || this.refreshingAfterReturn || this.isMutatingReview) return;
     this.refreshingAfterReturn = true;
     const previousResume = JSON.stringify(this.plugin.studyUi.resume);
@@ -320,9 +320,10 @@ export class MiaStudyView extends ItemView {
       // A focus event can occur between pointerdown and click. Replacing unchanged
       // controls here drops that first tap; visibility changes still refresh timers.
       const resumeChanged = previousResume !== JSON.stringify(this.plugin.studyUi.resume);
-      if (!this.closed && ((refreshTime && (this.route === "study" || this.route === "dashboard"))
+      if (!this.closed && ((refreshTime && (this.route === "study" || this.route === "dashboard" || this.route === "progress"))
         || (resumeChanged && this.route === "dashboard"))) this.render();
-    } catch (error) { new Notice(`앱 복귀 후 기록 확인 실패: ${errorMessage(error)}`); }
+      if (!this.closed && notify) new Notice("보관함에 도착한 학습 기록과 이어하기 위치를 확인했습니다.");
+    } catch (error) { new Notice(`학습 기록 확인 실패: ${errorMessage(error)}`); }
     finally { this.refreshingAfterReturn = false; }
   }
 
@@ -550,6 +551,14 @@ export class MiaStudyView extends ItemView {
     const browse = actions.createEl("button", { text: "전체 암기 모드" });
     browse.disabled = due + fresh === 0;
     browse.addEventListener("click", () => this.startReview(questions.map((question) => question.id), "browse"));
+    const refresh = actions.createEl("button", { text: "기록 새로고침" });
+    refresh.setAttr("title", "다른 기기에서 이 보관함으로 도착한 복습 기록과 이어하기 위치를 확인합니다.");
+    refresh.addEventListener("click", async () => {
+      refresh.disabled = true;
+      try { await this.refreshAfterReturn(true, true); }
+      finally { refresh.disabled = false; }
+    });
+    action.createEl("p", { text: "같은 보관함을 동기화하면 내 기기 사이에서 복습 기록·학습 설정·이어하기를 함께 씁니다.", cls: "mia-muted mia-device-sync-hint" });
     const saved = this.plugin.studyUi.resume;
     if (saved) {
       const current = this.plugin.index.questionById(saved.queue[saved.queueIndex] ?? saved.seed[0] ?? "");
