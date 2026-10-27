@@ -90,6 +90,8 @@ export class SubjectEditorModal extends KeyboardAwareModal {
 
 export class ManagedQuestionModal extends KeyboardAwareModal {
   private readonly titleRenderer = new Component();
+  private saving = false;
+  private questionInput: HTMLTextAreaElement | null = null;
   private subject: string;
   private newSubject = "";
   private question: string;
@@ -109,6 +111,7 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
     meanings: ReadonlyMap<string, string>,
     private readonly onSubmit: (draft: ManagedQuestionDraft) => Promise<void>,
     private readonly availableQuestions: ReadonlyArray<QuestionRecord & { id: string }> = [],
+    private readonly onClosed?: () => void,
   ) {
     super(app, "long");
     this.subject = existing?.subject ?? subjects[0] ?? "";
@@ -134,6 +137,7 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
       text.setPlaceholder(this.subjects.length ? "새 과목을 바로 추가할 때만 입력" : "예: 전자기학").onChange((value) => { this.newSubject = value; });
     });
     new Setting(this.contentEl).setName("질문").setDesc("Markdown과 수식을 사용할 수 있습니다.").addTextArea((text) => {
+      this.questionInput = text.inputEl;
       text.setPlaceholder("질문을 입력하세요.").setValue(this.question).onChange((value) => { this.question = value; });
       text.inputEl.rows = 5;
     });
@@ -161,12 +165,13 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
       text.inputEl.rows = 4;
     });
     if (!this.existing && this.availableQuestions.length) this.renderFollowUpPicker();
+    new Setting(this.contentEl).addButton((button) => button.setButtonText(this.onClosed ? "취소하고 학습으로 돌아가기" : "취소").onClick(() => this.close()));
     const status = this.contentEl.createEl("p", { cls: "mia-muted", attr: { role: "status", "aria-live": "polite" } });
-    let saving = false;
     new Setting(this.contentEl).addButton((button) => button.setButtonText("저장").setCta().onClick(async () => {
-      if (saving) return;
+      if (this.saving) return;
       status.removeClass("mia-warning");
       status.setText("");
+      let controls: Array<{ element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLButtonElement; disabled: boolean }> = [];
       try {
         const question = this.question.trim();
         const answer = this.answer.trim();
@@ -179,7 +184,10 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
           status.setText(`${missing} 입력 내용은 유지됩니다.`);
           return;
         }
-        saving = true;
+        this.saving = true;
+        controls = [...this.contentEl.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLButtonElement>("input, textarea, select, button")]
+          .map((element) => ({ element, disabled: element.disabled }));
+        for (const { element } of controls) element.disabled = true;
         button.setDisabled(true).setButtonText("저장 중…");
         status.setText("질문을 저장하고 있습니다…");
         button.buttonEl.scrollIntoView({ block: "nearest" });
@@ -196,16 +204,27 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
             ...keywordMeanings(subKeywords, this.subMeanings),
           ],
         });
+        this.saving = false;
         this.close();
       } catch (error) {
         status.addClass("mia-warning");
         status.setText(`저장하지 못했습니다: ${errorMessage(error).replace(/[.!?。]+$/u, "")}. 입력 내용은 유지되었습니다. 원인을 확인한 뒤 다시 저장해 주세요.`);
       } finally {
-        saving = false;
+        this.saving = false;
+        for (const { element, disabled } of controls) element.disabled = disabled;
         button.setDisabled(false).setButtonText("저장");
         button.buttonEl.scrollIntoView({ block: "nearest" });
       }
     }));
+  }
+
+  open(): void {
+    super.open();
+    // Obsidian focuses the first control after onOpen; focus the question afterwards.
+    if (this.onClosed && this.questionInput) {
+      this.questionInput.focus({ preventScroll: true });
+      this.questionInput.scrollIntoView({ block: "nearest" });
+    }
   }
 
   private renderFollowUpPicker(): void {
@@ -246,7 +265,15 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
     render();
   }
 
-  onClose(): void { this.titleRenderer.unload(); this.contentEl.empty(); }
+  close(): void { if (!this.saving) super.close(); }
+
+  onClose(): void {
+    this.titleRenderer.unload();
+    this.contentEl.empty();
+    this.questionInput = null;
+    // Return after Obsidian finishes restoring the old modal focus.
+    if (this.onClosed) queueMicrotask(this.onClosed);
+  }
 }
 
 export class KeywordEditorModal extends KeyboardAwareModal {

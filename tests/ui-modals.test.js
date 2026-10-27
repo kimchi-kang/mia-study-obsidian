@@ -11,6 +11,8 @@ vi.mock("obsidian", () => {
     addClass() {} removeClass() {} setAttribute() {} setText(text) { this.text = text; }
     addEventListener(name, handler) { this.handlers.set(name, handler); }
     scrollIntoView() {}
+    focus() { this.focused = true; }
+    querySelectorAll(selector) { const tags=selector.split(",").map(tag=>tag.trim()); return this.children.flatMap(child=>[...(tags.includes(child.tag)?[child]:[]),...child.querySelectorAll(selector)]); }
     find(text) { return this.children.flatMap(child => [child, child.find(text)]).find(child => child && child.text === text); }
     click() { if (!this.disabled) this.handlers.get("click")?.(); }
   }
@@ -364,7 +366,7 @@ it("keeps a first-question draft and identifies the missing keyword before submi
 
 describe("source-free reading surfaces", () => {
   it.each(["preview", "detail"])("hides attributed footers in %s while keeping saved content", async surface => {
-    const source = "\n\n---\n원문: [[회로이론 면접 154]] · <09. 정현파와 페이저>";
+    const source = "\n\n---\n원문: [[과목/원본|링크]] · &lt;09. 단원명&gt;";
     const record = { ...question, questionMarkdown: "검증 질문" + source, answerMarkdown: "검증 답안" + source };
     const before = structuredClone(record);
     const modal = surface === "preview"
@@ -375,7 +377,29 @@ describe("source-free reading surfaces", () => {
     expect(content(modal.contentEl)).toContain("검증 질문");
     expect(content(modal.contentEl)).toContain("검증 답안");
     expect(content(modal.contentEl)).not.toContain("원문");
-    expect(content(modal.contentEl)).not.toContain("회로이론 면접 154");
+    expect(content(modal.contentEl)).not.toContain("단원명");
     expect(record).toEqual(before);
   });
+});
+
+
+it("cancels a session edit without submitting and invokes the return callback after modal focus restoration", async () => {
+  const save=vi.fn(), returned=vi.fn();
+  const modal=new ManagedQuestionModal({},["과목"],"키워드",question,new Map(),save,[],returned);
+  modal.onOpen();
+  modal.contentEl.children.filter(child=>child.tag==="textarea")[0].handlers.get("change")("버릴 초안");
+  modal.contentEl.find("취소하고 학습으로 돌아가기").click();
+  expect(save).not.toHaveBeenCalled();expect(modal.close).toHaveBeenCalledOnce();
+  modal.onClose();expect(returned).not.toHaveBeenCalled();await Promise.resolve();expect(returned).toHaveBeenCalledOnce();
+});
+
+it("locks draft inputs during a pending save and restores them after failure for retry",async()=>{
+  let reject;const save=vi.fn(()=>new Promise((_resolve,r)=>{reject=r;}));
+  const modal=new ManagedQuestionModal({},["과목"],"키워드",question,new Map(),save,[],()=>{});modal.onOpen();
+  const fields=modal.contentEl.querySelectorAll("input, textarea, select"), original=fields.map(f=>f.disabled);
+  const saveButton=modal.contentEl.find("저장"),pending=saveButton.handlers.get("click")();
+  expect(fields.every(f=>f.disabled)).toBe(true);expect(modal.contentEl.find("취소하고 학습으로 돌아가기").disabled).toBe(true);
+  ManagedQuestionModal.prototype.close.call(modal);expect(modal.close).not.toHaveBeenCalled();
+  reject(Error("disk full"));await pending;
+  expect(fields.map(f=>f.disabled)).toEqual(original);expect(modal.contentEl.find("취소하고 학습으로 돌아가기").disabled).toBe(false);
 });

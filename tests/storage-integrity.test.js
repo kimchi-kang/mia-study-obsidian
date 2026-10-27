@@ -261,3 +261,52 @@ describe("review-key API and inherited-property safety", () => {
     }
   });
 });
+
+describe("external delivery while a native write is pending",()=>{
+ it("merges a delivered other-question record after a queued change event without duplicating the local grade",async()=>{
+  const env=environment();await env.store.load();
+  let finish;env.plugin.saveData.mockImplementationOnce(async next=>{env.overwrite(next);await new Promise(resolve=>{finish=resolve;});});
+  const local=grade(Rating.Good),saving=env.store.setReview('local',local,{state:undefined});
+  await vi.waitFor(()=>expect(finish).toBeTypeOf('function'));
+  const delivered=structuredClone(env.disk());delivered.reviews.remote=grade(Rating.Easy);delivered.reviewVersions.remote='2026-10-21T00:00:00.000Z:other';
+  env.overwrite(delivered);const notification=env.store.synchronize();finish();await saving;await notification;
+  const restarted=new MiaDataStore(env.plugin,env.recovery);await restarted.load();
+  expect(restarted.getReview('local')).toEqual(local);expect(restarted.getReview('remote')).toEqual(delivered.reviews.remote);
+  expect(restarted.getReview('local').history).toHaveLength(1);expect(JSON.parse(JSON.stringify(env.disk())).reviews).toEqual(restarted.reviews);
+ });
+ it("preserves competing same-question histories instead of combining two ratings into one FSRS trajectory",async()=>{
+  const env=environment();await env.store.load();
+  let finish;env.plugin.saveData.mockImplementationOnce(async next=>{env.overwrite(next);await new Promise(resolve=>{finish=resolve;});});
+  const left=grade(Rating.Again),right=grade(Rating.Easy),saving=env.store.setReview('q',left,{state:undefined});
+  await vi.waitFor(()=>expect(finish).toBeTypeOf('function'));
+  const delivered=data({q:right},{q:'9999-10-21T00:00:00.000Z:other'});env.overwrite(delivered);
+  const notification=env.store.synchronize();finish();await saving;await notification;
+  expect(env.store.getReview('q')).toEqual(right);expect(env.store.conflicts.q).toContainEqual(left);
+  expect(env.store.getReview('q').history).toHaveLength(1);
+ });
+});
+
+it("retains a valid external file observed during a delayed write before that write replaces the file",async()=>{
+ const env=environment();await env.store.load();
+ let finish;env.plugin.saveData.mockImplementationOnce(async next=>{await new Promise(resolve=>{finish=resolve;});env.overwrite(next);});
+ const local=grade(Rating.Good),saving=env.store.setReview('local',local,{state:undefined});
+ await vi.waitFor(()=>expect(finish).toBeTypeOf('function'));
+ const delivered=data({remote:grade(Rating.Easy)},{remote:'2026-10-21T00:00:00.000Z:other'});env.overwrite(delivered);
+ const notification=env.store.synchronize();
+ await Promise.resolve();finish();await saving;await notification;
+ expect(env.disk().reviews.remote).toEqual(delivered.reviews.remote);
+ expect(env.disk().reviews.local).toEqual(local);
+ const restarted=new MiaDataStore(env.plugin,env.recovery);await restarted.load();expect(restarted.reviews).toEqual(env.disk().reviews);
+});
+
+it("reports a failed observation during a write and allows a later refresh to retry",async()=>{
+ const env=environment();await env.store.load();let finish;
+ env.plugin.saveData.mockImplementationOnce(async next=>{await new Promise(resolve=>finish=resolve);env.overwrite(next);});
+ const local=grade(Rating.Good),saving=env.store.setReview('q',local);
+ await vi.waitFor(()=>expect(finish).toBeTypeOf('function'));
+ env.plugin.loadData.mockRejectedValueOnce(Error('external file incomplete'));
+ const refresh=env.store.synchronize();const failed=expect(refresh).rejects.toThrow('external file incomplete');
+ finish();await saving;await failed;
+ expect(env.store.getReview('q')).toEqual(local);await expect(env.store.synchronize()).resolves.toBeUndefined();
+ expect(env.disk().reviews.q.history).toHaveLength(1);
+});

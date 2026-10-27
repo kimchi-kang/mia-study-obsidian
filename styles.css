@@ -1015,3 +1015,29 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   min-width: 44px;
   min-height: 44px;
 }
+
+/* Session editing uses the existing list and modal without changing its filters. */
+.mia-session-edit-target { border: 2px solid var(--interactive-accent); border-radius: var(--radius-m); padding: 12px; margin-bottom: 12px; scroll-margin-top: 12px; }
+.mia-session-edit-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.mia-session-edit-actions button, .mia-session-edit-target > button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; min-height: 44px; }
+
+/* Simple and advanced settings share one draft and explicit save action. */
+.mia-study-management-settings [hidden] { display: none !important; }
+.mia-settings-modes { display: flex; gap: 8px; margin-block: 12px; flex-wrap: wrap; }
+.mia-settings-modes button { flex: 1 1 100px; min-height: 44px; }
+.mia-settings-modes button[aria-pressed="true"] { background: var(--interactive-accent); color: var(--text-on-accent); }
+.mia-settings-summary { font-weight: 600; padding: 12px; border-radius: 10px; background: var(--background-secondary); overflow-wrap: anywhere; }
+.mia-settings-simple h4 { margin-block: 20px 8px; }
+.mia-settings-changes { font-size: var(--font-ui-small); color: var(--text-muted); overflow-wrap: anywhere; }
+.mia-settings-expert .mia-step-editor { margin-block: 12px; }
+@container mia-settings (max-width: 480px) {
+  .mia-settings-basic { grid-template-columns: minmax(0, 1fr); }
+  :is(.mia-settings-simple, .mia-settings-expert) .setting-item { flex-direction: column; align-items: stretch; gap: 8px; }
+  :is(.mia-settings-simple, .mia-settings-expert) .setting-item-control { width: 100%; padding: 0; }
+  :is(.mia-settings-simple, .mia-settings-expert) :is(select, textarea) { max-width: 100%; width: 100%; min-width: 0; }
+}
+
+/* Optional policy detail stays readable in narrow study panes. */
+.mia-stat-guidance { margin: 12px 0; }
+.mia-stat-guidance > summary { min-height: 32px; padding: 6px 0; cursor: pointer; }
+.mia-stat-guidance p, .mia-step-guidance { overflow-wrap: anywhere; line-height: 1.6; }

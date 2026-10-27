@@ -1,7 +1,9 @@
+import { SettingsConflictModal } from "./settings-conflict-modal";
+import { progressGuidance } from "./study-policy";
 import { withoutSourceAttribution } from "../core/source-attribution";
 import { StudyManagementModal } from "./study-management-modal";
 import { renderQuestionTitle } from "./question-title";
-import { Component, ItemView, MarkdownRenderer, Notice, Platform, ViewStateResult, WorkspaceLeaf } from "obsidian";
+import { Component, ItemView, MarkdownRenderer, Modal, Notice, Platform, ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { Rating } from "ts-fsrs";
 import type MiaStudyPlugin from "../main";
 import { StudyGrade } from "../core/fsrs-service";
@@ -45,6 +47,11 @@ function keywordKey(keyword: KeywordReference): string {
 
 export class MiaStudyView extends ItemView {
   private route: MiaRoute = "dashboard";
+  private editingSessionQuestion: string | null = null;
+  private sessionEditGeneration = 0;
+  private editedSessionQuestion: string | null = null;
+  private focusEditTarget = false;
+  private readonly changedGradedAnswers = new Set<string>();
   private queue: string[] = [];
   private queueIndex = 0;
   private answerVisible = false;
@@ -147,6 +154,8 @@ export class MiaStudyView extends ItemView {
     this.flushReadingPosition();
     if (this.undoFeedbackTimer !== null) window.clearTimeout(this.undoFeedbackTimer);
     this.closed = true;
+    this.sessionEditGeneration += 1;
+    this.editingSessionQuestion = null;
     this.contentEl.setAttr("aria-busy", "false");
     this.contentEl.querySelector(".mia-save-status")?.remove();
     this.undoFeedbackTimer = null;
@@ -179,6 +188,10 @@ export class MiaStudyView extends ItemView {
     this.clearResultPopup();
     if (this.readingTimer !== null) { window.clearTimeout(this.readingTimer); this.readingTimer = null; }
     this.sessionSavedStates.clear();
+    this.editingSessionQuestion = null;
+    this.sessionEditGeneration += 1;
+    this.editedSessionQuestion = null;
+    this.changedGradedAnswers.clear();
     this.readingPosition = { key: "", scrollTop: 0, pageScrollTop: 0, conceptsOpen: false };
     this.undoFeedback = "";
     this.stateRestored = true;
@@ -221,6 +234,11 @@ export class MiaStudyView extends ItemView {
     if (this.reviewSavePending()) return;
     this.flushReadingPosition();
     const next = parseMiaNavigationState(state);
+    // Workspace navigation supersedes any editor that is still loading.
+    if (this.editingSessionQuestion) {
+      this.editingSessionQuestion = null;
+      this.sessionEditGeneration += 1;
+    }
     if (!this.stateRestored && next.route === "study") {
       const index = this.restoredQueueIndex(next.queue, next.queueIndex, next.reviewCheckpoint);
       if (index !== next.queueIndex) next.answerVisible = next.sessionMode === "browse";
@@ -315,7 +333,7 @@ export class MiaStudyView extends ItemView {
     this.refreshingAfterReturn = true;
     const previousResume = JSON.stringify(this.plugin.studyUi.resume);
     try {
-      await this.plugin.store.synchronize();
+      await this.plugin.synchronizeStudyData();
       if (this.closed) return;
       await this.plugin.studyUi.load();
       // A focus event can occur between pointerdown and click. Replacing unchanged
@@ -437,6 +455,7 @@ export class MiaStudyView extends ItemView {
     const sameRoute = this.renderedPosition.startsWith(`${this.route}:`);
     const filtersOpen = sameRoute ? root.querySelector<HTMLDetailsElement>(".mia-filter-panel")?.open : undefined;
     const active = root.ownerDocument?.activeElement;
+    const restoreEditFocus = this.renderedPosition === this.readingKey() && active && active === root.querySelector(".mia-session-edit-actions button");
     const editing = active && root.contains(active) && (active.tagName === "INPUT" || active.tagName === "TEXTAREA") ? active as HTMLInputElement | HTMLTextAreaElement : null;
     const editingLabel = sameRoute ? editing?.getAttribute("aria-label") : null;
     const selection = editing ? [editing.selectionStart, editing.selectionEnd] : null;
@@ -468,7 +487,7 @@ export class MiaStudyView extends ItemView {
     if (this.route === "study") {
       this.renderStudy(root);
       const current = this.plugin.index.questionById(this.queue[this.queueIndex] ?? "");
-      const announcement = root.createEl("span", { cls: "mia-sr-only", text: current ? `${this.queueIndex + 1}번 문제, ${current.heading}. ${this.answerVisible ? "정답 표시됨" : "정답 숨김"}` : "학습 결과" });
+      const announcement = root.createEl("span", { cls: "mia-sr-only", text: current ? `${this.queueIndex + 1}번 문제, ${current.heading}. ${this.answerVisible ? "정답 표시됨" : "정답 숨김"}` : this.editedSessionQuestion === this.queue[this.queueIndex] ? "원본 문제를 찾을 수 없습니다. 현재 위치는 유지됩니다." : "학습 결과" });
       announcement.setAttr("role", "status"); announcement.setAttr("aria-live", "polite"); announcement.setAttr("aria-atomic", "true");
       const component = this.renderComponent, key = this.readingKey();
       const layout = root.querySelector<HTMLElement>(".mia-study-layout");
@@ -487,6 +506,8 @@ export class MiaStudyView extends ItemView {
       replacement?.focus({ preventScroll: true });
       if (replacement && selection?.[0] !== null && selection?.[1] !== null && selection?.[0] !== undefined && selection?.[1] !== undefined) replacement.setSelectionRange(selection[0], selection[1]);
       this.keyboardViewport?.refresh();
+    } else if (restoreEditFocus) {
+      root.querySelector<HTMLButtonElement>(".mia-session-edit-actions button")?.focus({ preventScroll: true });
     }
   }
 
@@ -529,6 +550,37 @@ export class MiaStudyView extends ItemView {
   }
 
   private renderDashboard(root: HTMLElement): void {
+    const pendingRecovery = this.plugin.store.pendingRecovery;
+    if (pendingRecovery) {
+      const warning = root.createDiv({ cls: "mia-storage-warning" });
+      warning.createEl("p", { text: "완료를 확인하지 못한 저장 사본이 있습니다. 새 평가 전에 확인하세요." });
+      warning.createEl("button", { text: "미완료 저장 확인" }).addEventListener("click", () => {
+        const modal = new Modal(this.app);
+        modal.setTitle("미완료 저장 확인");
+        modal.contentEl.createEl("p", { text: "이 사본은 저장 완료가 확인되지 않은 요청입니다. 아래 원본을 복사해 별도로 보관할 수 있습니다. 재시도는 최신 파일과 사본을 기존 충돌 규칙으로 비교하며, 평가를 다시 계산하거나 이력을 합산하지 않습니다. 설정·평가 차이가 있으면 별도 보관됩니다." });
+        const original = modal.contentEl.createEl("textarea", { attr: { readonly: "true", rows: "10", "aria-label": "미완료 저장 복구용 JSON" } });
+        original.value = JSON.stringify(pendingRecovery, null, 2);
+        original.style.width = "100%";
+        const retry = modal.contentEl.createEl("button", { text: "최신 파일과 확인 후 저장 재시도" });
+        retry.addEventListener("click", async () => {
+          retry.disabled = true;
+          try { await this.plugin.store.retryPending(); await this.plugin.index.rebuild(); modal.close(); this.showDashboard(); }
+          catch (error) { new Notice(`저장 재시도 실패: ${errorMessage(error)}`); retry.disabled = false; }
+        });
+        modal.contentEl.createEl("button", { text: "닫기" }).addEventListener("click", () => modal.close());
+        modal.open();
+      });
+    }
+    const settingsConflicts = this.plugin.store.settingsConflicts;
+    if (settingsConflicts?.length) {
+      const warning = root.createDiv({ cls: "mia-storage-warning" });
+      warning.createEl("p", { text: `기기 간 설정 차이 ${settingsConflicts.length}개를 보관했습니다. 현재 설정은 학습 설정에서 확인하세요.` });
+      warning.createEl("button", { text: "보관된 설정 확인" }).addEventListener("click", () => new SettingsConflictModal(this.app, this.plugin.store.settings, settingsConflicts, async id => {
+        await this.plugin.store.restoreSettingsConflict(id);
+        await this.plugin.index.rebuild();
+        this.showDashboard();
+      }).open());
+    }
     const conflicts = this.plugin.store.conflicts;
     if (conflicts && Object.keys(conflicts).length) {
       const warning = root.createDiv({ cls: "mia-sync-warning" });
@@ -549,7 +601,9 @@ export class MiaStudyView extends ItemView {
     action.createEl("p", { text: empty
       ? "과목 이름, 질문, 정답, 핵심 키워드를 입력하면 바로 학습할 수 있습니다. 과목과 키워드는 함께 만들어집니다."
       : `오늘 출제: 복습 ${availableDue}개 · 새 문제 ${availableNew}개 · 전체 대기: 복습 ${due}개 · 새 문제 ${fresh}개` });
-    if (limited) action.createEl("p", { text: "대기 중인 문제는 있지만 하루 학습량 제한으로 시험 모드에 나오지 않습니다. 학습 설정에서 하루 새 문제·하루 최대 복습을 확인하세요.", cls: "mia-muted" });
+    const deferredDue = Math.max(0, due - availableDue);
+    if (deferredDue > 0) action.createEl("p", { text: `하루 상한으로 복습 ${deferredDue}개를 이번 출제에서 제외했습니다. 문제와 복습일은 유지되며 이후 학습에서 다시 확인할 수 있습니다.`, cls: "mia-muted mia-deferred-reviews" });
+    if (limited) action.createEl("p", { text: "대기 중인 문제는 있지만 하루 학습량 제한으로 시험 모드에 나오지 않습니다. 학습 설정에서 하루에 새로 배울 문제 수·하루 복습량을 확인하세요.", cls: "mia-muted" });
     const actions = action.createDiv({ cls: "mia-inline-actions" });
     if (empty) {
       actions.createEl("button", { text: "첫 질문 추가", cls: "mod-cta" }).addEventListener("click", () => void this.plugin.openManagedQuestionEditor());
@@ -595,6 +649,7 @@ export class MiaStudyView extends ItemView {
     this.progressStat(grid, "오늘 평가", progress.today, "today");
     this.progressStat(grid, "오늘 복습", due, "due");
     this.progressStat(grid, "개선 필요", progress.again + progress.hard, "weak");
+    this.renderProgressGuidance(root);
     const manage = root.createDiv({ cls: "mia-manage-actions" });
     manage.createEl("button", { text: "과목 추가" }).addEventListener("click", () => this.plugin.openSubjectEditor());
     manage.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () => void this.plugin.openManagedQuestionEditor());
@@ -651,6 +706,7 @@ export class MiaStudyView extends ItemView {
     this.progressStat(totals, "1회 이상 학습", progress.studied, null);
     this.progressStat(totals, "기억 안정", progress.stable, "stable");
     this.progressStat(totals, "오늘 평가", progress.today, "today");
+    this.renderProgressGuidance(root);
 
     root.createEl("h3", { text: "최근 평가", cls: "mia-section-title" });
     const ratings = root.createDiv({ cls: "mia-progress-ratings" });
@@ -691,6 +747,12 @@ export class MiaStudyView extends ItemView {
     if (subjectProgress.size === 0) root.createEl("p", { text: "과목과 질문을 추가하면 학습현황이 표시됩니다.", cls: "mia-empty" });
   }
 
+  private renderProgressGuidance(root: HTMLElement): void {
+    const help = root.createEl("details", { cls: "mia-stat-guidance" });
+    help.createEl("summary", { text: "통계와 출제량 안내" });
+    help.createEl("p", { text: progressGuidance(this.plugin.store.settings.studyManagement.dayStartsAt), cls: "mia-muted" });
+  }
+
   private progressStat(
     parent: HTMLElement,
     label: string,
@@ -727,6 +789,23 @@ export class MiaStudyView extends ItemView {
   }
 
   private renderQuestions(root: HTMLElement): void {
+    if (this.editingSessionQuestion) {
+      const selected = root.createDiv({ cls: "mia-session-edit-target" });
+      selected.dataset.questionId = this.editingSessionQuestion;
+      selected.setAttr("role", "region");
+      selected.setAttr("aria-label", "학습 중인 원본 문제 편집");
+      selected.createEl("p", { text: "현재 학습 문제 · 기존 검색·필터·정렬은 유지됩니다. 이 항목만 필터와 관계없이 표시합니다." });
+      selected.createEl("button", { text: "진행 중인 학습으로 돌아가기" }).addEventListener("click", () => this.returnFromQuestionEditor());
+      const current = this.plugin.index.questionById(this.editingSessionQuestion);
+      if (current) this.renderQuestionRow(selected, current);
+      else selected.createEl("p", { text: "원본 문제를 찾을 수 없습니다. 삭제 또는 ID 충돌 여부를 확인하세요.", cls: "mia-warning" });
+      selected.tabIndex = -1;
+      if (this.focusEditTarget) {
+        this.focusEditTarget = false;
+        selected.scrollIntoView({ block: "start" });
+        selected.focus({ preventScroll: true });
+      }
+    }
     const pageActions = root.createDiv({ cls: "mia-page-actions" });
     pageActions.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () => {
       void this.plugin.openManagedQuestionEditor();
@@ -1044,7 +1123,54 @@ export class MiaStudyView extends ItemView {
     renderGrid();
   }
 
+  private returnFromQuestionEditor(): void {
+    if (!this.editingSessionQuestion) return;
+    this.editingSessionQuestion = null;
+    this.sessionEditGeneration += 1;
+    if (this.closed) return;
+    this.route = "study";
+    this.render();
+    const editButton = this.contentEl.querySelector<HTMLButtonElement>(".mia-session-edit-actions button");
+    (editButton ?? this.contentEl).focus({ preventScroll: true });
+  }
+
+  private async editSessionQuestion(id: string): Promise<void> {
+    if (this.isMutatingReview || this.editingSessionQuestion) return;
+    const current = this.plugin.index.questionById(id);
+    if (!current) { new Notice("원본 문제를 찾을 수 없습니다. 삭제 또는 ID 충돌 여부를 확인하세요."); return; }
+    this.flushReadingPosition();
+    const generation = ++this.sessionEditGeneration;
+    const active = () => !this.closed && generation === this.sessionEditGeneration && this.editingSessionQuestion === id;
+    this.editingSessionQuestion = id;
+    this.editedSessionQuestion = id;
+    this.focusEditTarget = true;
+    this.route = "questions";
+    this.render();
+    try {
+      await this.plugin.openManagedQuestionEditor(current, () => { if (active()) this.returnFromQuestionEditor(); }, () => {
+        if (!active()) return;
+        const updated = this.plugin.index.questionById(id);
+        if (updated && updated.answerMarkdown !== current.answerMarkdown && (this.plugin.store.getReview(id) || [...this.sessionAttempts.values()].some(attempt => attempt.id === id))) {
+          this.changedGradedAnswers.add(id);
+          new Notice("정답이 수정되었습니다. 기존 평가는 유지됩니다. 자동 재채점하지 않으므로 답안을 확인한 뒤 필요하면 직접 다시 평가하세요.");
+        }
+      }, active);
+    } catch (error) {
+      if (!active()) return;
+      new Notice(`문제 편집 열기 실패: ${errorMessage(error)}`);
+      this.returnFromQuestionEditor();
+    }
+  }
+
   private renderStudy(root: HTMLElement): void {
+    if (this.editedSessionQuestion === this.queue[this.queueIndex] && !this.plugin.index.questionById(this.editedSessionQuestion)) {
+      const missing = root.createDiv({ cls: "mia-primary-card" });
+      missing.createEl("p", { text: "편집하던 원본 문제가 삭제되었거나 찾을 수 없습니다. 현재 위치는 유지됩니다.", cls: "mia-warning" });
+      missing.createEl("button", { text: "다음 문제로 이동" }).addEventListener("click", () => this.moveToQuestion(this.queueIndex + 1));
+      missing.createEl("button", { text: "학습 전 화면으로" }).addEventListener("click", () => this.returnToSessionOrigin());
+      return;
+    }
+
     // A deleted current question must reach the learning check before completion.
     while (this.queueIndex < this.queue.length && !this.plugin.index.questionById(this.queue[this.queueIndex]!)) {
       this.queueIndex += 1;
@@ -1124,6 +1250,11 @@ export class MiaStudyView extends ItemView {
     const heading = questionSection.createEl("h2");
     const headingIsPrompt = question.questionMarkdown.trim() === question.heading.trim();
     this.renderQuestionHeading(heading, question);
+    const editActions = questionSection.createDiv({ cls: "mia-session-edit-actions" });
+    const edit = editActions.createEl("button", { text: "문제 편집" });
+    edit.disabled = this.isMutatingReview;
+    edit.addEventListener("click", () => void this.editSessionQuestion(question.id));
+    if (this.changedGradedAnswers.has(question.id)) questionSection.createEl("p", { text: "정답 수정 후에도 기존 평가는 유지됩니다. 자동 재채점되지 않습니다. 확인 후 필요하면 직접 다시 평가하세요.", cls: "mia-warning" });
     const sessionGrade = this.sessionAttempts.get(this.queueIndex)?.grade;
     if (sessionGrade) questionSection.createEl("p", { text: `이번 학습 평가: ${GRADE_LABELS[sessionGrade]} · 다른 평가를 누르면 기존 기록을 대체합니다.`, cls: "mia-session-rating" });
     if (!headingIsPrompt) {
@@ -1359,6 +1490,7 @@ export class MiaStudyView extends ItemView {
           await this.plugin.store.setReview(question.id, state, { state: expected });
           if (!this.sessionBaselines.has(ratedIndex)) this.sessionBaselines.set(ratedIndex, baseline);
           this.sessionSavedStates.set(question.id, state);
+          this.changedGradedAnswers.delete(question.id);
           this.sessionGrades.set(question.id, preview.grade);
           this.sessionAttempts.set(ratedIndex, { id: question.id, grade: preview.grade });
           this.sessionSkipped.delete(question.id);

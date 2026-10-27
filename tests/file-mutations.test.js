@@ -359,3 +359,76 @@ describe("reusing keywords while adding a question", () => {
     expect(env.contents.get("MIA/키워드/새키워드.md")).toContain("명시적으로 입력한 의미");
   });
 });
+
+
+describe("editing a saved question from a session", () => {
+  async function editEnvironment(options) {
+    const env = await environment(options);
+    env.plugin.assertSubjectNoteWritable = vi.fn().mockResolvedValue(undefined);
+    env.plugin.saveDraftKeywordMeanings = vi.fn().mockResolvedValue(undefined);
+    env.plugin.syncSubjectNote = vi.fn().mockResolvedValue(undefined);
+    env.plugin.refreshIncomingFollowUpLinks = vi.fn().mockResolvedValue(undefined);
+    env.plugin.store.reviews[env.question.id] = { marker: "existing FSRS record" };
+    const duplicate = appendManagedQuestion(env.contents.get(oldPath), input, "mia-q-duplicate");
+    env.contents.set(oldPath, duplicate);
+    await env.plugin.index.refreshFile(env.files.get(oldPath));
+    env.question = env.plugin.index.questionById("mia-q-one");
+    env.draft = { ...env.draft, subject: "수학", questionMarkdown: "수정 질문", answerMarkdown: "수정 답변" };
+    return env;
+  }
+  it("persists only the requested ID and refreshes the index without replacing review history", async () => {
+    const env=await editEnvironment(); const reviews=structuredClone(env.plugin.store.reviews);
+    await env.plugin.updateManagedQuestion(env.question,env.draft);
+    const persisted=parseQuestionFile(oldPath,env.contents.get(oldPath)).questions;
+    expect(persisted.find(q=>q.id==="mia-q-one")).toMatchObject({questionMarkdown:"수정 질문",answerMarkdown:"수정 답변"});
+    expect(persisted.find(q=>q.id==="mia-q-duplicate")).toMatchObject(input);
+    expect(env.plugin.index.questionById("mia-q-one")).toMatchObject({questionMarkdown:"수정 질문",answerMarkdown:"수정 답변"});
+    expect(env.plugin.store.reviews).toEqual(reviews);
+    expect(env.contents.get(oldPath)).toContain("사용자 메모: 이동해도 보존");
+  });
+  it("does not change persisted content or the index on write failure, and permits retry",async()=>{
+    const env=await editEnvironment();const before=env.contents.get(oldPath);
+    env.vault.process.mockRejectedValueOnce(Error("disk full"));
+    await expect(env.plugin.updateManagedQuestion(env.question,env.draft)).rejects.toThrow("disk full");
+    expect(env.contents.get(oldPath)).toBe(before);
+    expect(env.plugin.index.questionById("mia-q-one").answerMarkdown).toBe("원래 정답");
+    await env.plugin.updateManagedQuestion(env.question,env.draft);
+    expect(env.plugin.index.questionById("mia-q-one").answerMarkdown).toBe("수정 답변");
+  });
+  it.each(["question", "answer", "both"])("persists %s edits with Markdown and retains the ID across a new index instance",async(kind)=>{
+    const env=await editEnvironment();const beforeReviews=structuredClone(env.plugin.store.reviews);
+    const prompt="한글 · & < > \"특수\" $a_1 + b^2$\n둘째 줄\n\n셋째 줄 "+"긴 질문 ".repeat(150);
+    const answer="#### 설명\n\n**굵게** · [링크](https://example.org) · $x_1$\n\n```ts\nconst x = '<&>';\n```\n\n| 가 | 나 |\n| --- | --- |\n| 1 | 2 |\n"+"긴 답변 ".repeat(200);
+    const draft={...env.draft,questionMarkdown:kind==="answer"?env.question.questionMarkdown:prompt.trim(),answerMarkdown:kind==="question"?env.question.answerMarkdown:answer.trim()};
+    await env.plugin.updateManagedQuestion(env.question,draft);
+    const restarted=new QuestionIndex(env.plugin.app,()=>["MIA"]);await restarted.rebuild();
+    expect(restarted.questionById(env.question.id)).toMatchObject({id:env.question.id,questionMarkdown:draft.questionMarkdown,answerMarkdown:draft.answerMarkdown});
+    expect(restarted.questionById("mia-q-duplicate")).toMatchObject(input);expect(env.plugin.store.reviews).toEqual(beforeReviews);
+  });
+  it("recognizes a completed source write even if the storage callback rejects afterwards",async()=>{
+    const env=await editEnvironment({sourceFailure:"after"});let snapshot;
+    await expect(env.plugin.updateManagedQuestion(env.question,env.draft,q=>{snapshot=q;})).resolves.toBeUndefined();
+    expect(snapshot.answerMarkdown).toBe("수정 답변");expect(env.plugin.index.questionById("mia-q-one").answerMarkdown).toBe("수정 답변");
+  });
+  it("rechecks external question changes inside the atomic write and preserves them",async()=>{
+    const env=await editEnvironment(); const process=env.vault.process;let external;
+    env.vault.process=vi.fn(async(file,update)=>{ external=env.contents.get(oldPath).replaceAll("원래 정답","외부에서 바꾼 정답");env.contents.set(oldPath,external);return process(file,update); });
+    await expect(env.plugin.updateManagedQuestion(env.question,env.draft)).rejects.toThrow(/변경/);
+    expect(env.contents.get(oldPath)).toBe(external);
+  });
+  it("reports a partial derived-note failure and exposes the committed snapshot for safe retry",async()=>{
+    const env=await editEnvironment();let snapshot=env.question;
+    env.plugin.syncSubjectNote.mockRejectedValueOnce(Error("note locked"));
+    await expect(env.plugin.updateManagedQuestion(snapshot,env.draft,q=>{snapshot=q;})).rejects.toThrow("원본 문제는 저장됐지만");
+    expect(snapshot.answerMarkdown).toBe("수정 답변");
+    expect(env.plugin.index.questionById("mia-q-one").answerMarkdown).toBe("수정 답변");
+    await expect(env.plugin.updateManagedQuestion(snapshot,env.draft)).resolves.toBeUndefined();
+  });
+  it("refuses to edit a different duplicate after the source disappears",async()=>{
+    const env=await editEnvironment();
+    env.contents.set(oldPath,appendManagedQuestion(createSubjectBank("수학"),input,"mia-q-duplicate"));
+    const before=env.contents.get(oldPath);
+    await expect(env.plugin.updateManagedQuestion(env.question,env.draft)).rejects.toThrow(/찾지/);
+    expect(env.contents.get(oldPath)).toBe(before);
+  });
+});

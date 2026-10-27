@@ -122,9 +122,22 @@ export interface MiaSettings {
   keywordFolder: string;
 }
 
+export interface SettingsSnapshot {
+  id: string;
+  ancestors: string[];
+  settings: MiaSettings;
+}
+
+export interface SettingsSync {
+  id: string;
+  ancestors: string[];
+  conflicts: SettingsSnapshot[];
+}
+
 export interface MiaPluginData {
   version: 1;
   settings: MiaSettings;
+  settingsSync?: SettingsSync;
   reviews: Record<string, QuestionReviewState>;
   quarantinedReviews: Record<string, unknown>;
   reviewVersions: Record<string, string>;

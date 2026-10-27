@@ -1,3 +1,4 @@
+import { mergeSettings } from "./settings-sync";
 import { MiaPluginData, QuestionReviewState } from "./models";
 
 const same = (left: unknown, right: unknown): boolean => JSON.stringify(left) === JSON.stringify(right);
@@ -96,6 +97,7 @@ function merge(local: MiaPluginData, incoming: MiaPluginData, consume: boolean):
     const unique = new Map(alternatives.map(review => [JSON.stringify(review), review]));
     if (unique.size) next.reviewConflicts[id] = [...unique.keys()].sort().map(key => structuredClone(unique.get(key)!));
   }
+  mergeSettings(local, incoming, next);
   next.quarantinedReviews = quarantine;
   return next;
 }
