@@ -1,3 +1,4 @@
+import { rebaseSettings, reviseSettings, settingsKey, settingsSnapshot } from "../core/settings-sync";
 import { parseStudyManagement } from "../core/study-management";
 import { mergeIntoOwnedIncoming, mergeReviewData, nextReviewVersion } from "../core/review-sync";
 import type { PluginDataStorage } from "./verified-plugin-storage";
@@ -207,12 +208,25 @@ export function parsePluginData(raw: unknown): MiaPluginData {
     }
     if (states.length) reviewConflicts[id] = states;
   }
-  return { version: 1, settings: parseSettings(record.settings), reviews: parsed.reviews, quarantinedReviews: parsed.quarantined, reviewVersions, reviewConflicts };
+  const result: MiaPluginData = { version: 1, settings: parseSettings(record.settings), reviews: parsed.reviews, quarantinedReviews: parsed.quarantined, reviewVersions, reviewConflicts };
+  if (record.settingsSync !== undefined) {
+    const meta = record.settingsSync;
+    const validIdentity = (item: unknown): item is Record<string, unknown> & { id: string; ancestors: string[] } => isRecord(item) && typeof item.id === "string" && item.id.length > 0 && Array.isArray(item.ancestors) && item.ancestors.every(id => typeof id === "string" && id.length > 0) && !item.ancestors.includes(item.id);
+    if (!validIdentity(meta) || !isRecord(meta) || !Array.isArray(meta.conflicts)) throw new InvalidReviewDataError("설정 변경 보관 정보가 손상되어 저장을 중단했습니다.");
+    const conflicts = meta.conflicts.map((item: unknown) => {
+      if (!validIdentity(item) || !isRecord(item) || !isRecord(item.settings) || settingsKey(parseSettings(item.settings)) !== settingsKey(item.settings)) throw new InvalidReviewDataError("보관된 설정이 손상되어 저장을 중단했습니다.");
+      return { id: item.id, ancestors: [...item.ancestors], settings: parseSettings(item.settings) };
+    });
+    result.settingsSync = { id: meta.id, ancestors: [...meta.ancestors], conflicts };
+  }
+  return result;
 }
 
 class ReviewChangedError extends Error {}
 
 export interface ReviewRecovery {
+  readPending?(): unknown;
+  writePending?(data: MiaPluginData | null): void;
   read(): unknown;
   write(data: MiaPluginData): void;
   onWarning?(message: string): void;
@@ -221,6 +235,9 @@ export interface ReviewRecovery {
 export class MiaDataStore {
   private data: MiaPluginData = structuredClone(DEFAULT_PLUGIN_DATA);
   private saveChain: Promise<void> = Promise.resolve();
+  private writePending = false;
+  private pending: MiaPluginData | null = null;
+  private pendingReadFailed = false;
   private listeners = new Set<() => void>();
   private recoveryWriteFailed = false;
   private recoveryReadFailed = false;
@@ -259,18 +276,53 @@ export class MiaDataStore {
       // Both states were freshly parsed above and are owned by this load.
       this.data = recovered ? (diskMissing ? recovered : mergeIntoOwnedIncoming(recovered, disk)) : disk;
     }
+    try {
+      const pending = this.recovery?.readPending?.();
+      this.pending = pending === null || pending === undefined ? null : parsePluginData(pending);
+      this.pendingReadFailed = false;
+      if (this.pending) this.loadWarnings.push("완료를 확인하지 못한 저장 사본이 있습니다. 시작 화면에서 미완료 저장 확인을 선택하세요. 자동 재평가는 하지 않았습니다.");
+    } catch {
+      this.pendingReadFailed = true;
+      this.loadWarnings.push("미완료 저장 사본을 읽지 못해 새 저장을 중단합니다. 기기 로컬 저장소를 백업한 뒤 확인하세요.");
+    }
     const quarantinedCount = Object.keys(this.data.quarantinedReviews).length;
     if (quarantinedCount) this.loadWarnings.push(`손상되었거나 호환되지 않는 복습 기록 ${quarantinedCount}개를 격리했습니다.`);
   }
 
+  get pendingRecovery(): MiaPluginData | null { return this.pending ? structuredClone(this.pending) : null; }
+
+  async retryPending(): Promise<void> {
+    await this.enqueue(async () => {
+      if (this.pendingReadFailed) throw new Error("미완료 사본을 읽을 수 없습니다. 로컬 저장소를 보존하세요.");
+      if (!this.pending) return;
+      const merged = mergeReviewData(this.pending, mergeReviewData(this.data, parsePluginData(await this.plugin.loadData())));
+      await this.persist(merged);
+      this.data = merged;
+      this.writeRecovery(merged);
+      this.emit();
+    });
+  }
+
+  get settingsConflicts() { return this.data.settingsSync?.conflicts ?? []; }
+
   get conflicts(): Readonly<Record<string, QuestionReviewState[]>> { return this.data.reviewConflicts; }
 
   synchronize(): Promise<void> {
+    // A delivered file can disappear before the queued refresh runs if our host
+    // write is still pending. Observe it now; merge using the existing rules only
+    // after that write completes. Keep errors observable rather than invent data.
+    const observed = this.writePending
+      ? this.plugin.loadData().then(raw => ({ value: parsePluginData(raw) })).catch((error: unknown) => ({ error }))
+      : null;
     return this.enqueue(async () => {
+      const observation = await observed;
+      if (observation && "error" in observation) throw observation.error;
       const incoming = parsePluginData(await this.plugin.loadData());
-      const merged = mergeReviewData(this.data, incoming);
+      const delivered = observation ? mergeReviewData(observation.value, incoming) : incoming;
+      const merged = mergeReviewData(this.data, delivered);
       let mergedText = JSON.stringify(merged);
       if (mergedText !== JSON.stringify(incoming)) {
+        if (this.pending || this.pendingReadFailed) throw new Error("미완료 저장을 먼저 확인·재시도하세요. 외부 파일과 사본은 유지했습니다.");
         // Release the large snapshot across I/O and compare the post-write value.
         mergedText = "";
         await this.persist(merged);
@@ -297,9 +349,43 @@ export class MiaDataStore {
 
   getReviewVersion(questionId: string): string | null { return Object.hasOwn(this.data.reviewVersions, questionId) ? this.data.reviewVersions[questionId]! : null; }
 
-  async updateSettings(patch: Partial<MiaSettings>): Promise<void> {
-    const settings = structuredClone(patch);
-    await this.commit((next) => { next.settings = parseSettings({ ...next.settings, ...settings }); });
+  async updateSettings(patch: Partial<MiaSettings>, expectedBase?: MiaSettings): Promise<void> {
+    const baseData = structuredClone(this.data);
+    const baseline = structuredClone(expectedBase ?? baseData.settings);
+    const intended = parseSettings({ ...baseline, ...structuredClone(patch) });
+    let conflicts: string[] = [];
+    await this.commit((next) => {
+      const result = rebaseSettings(baseline, intended, next.settings);
+      conflicts = result.conflicts;
+      if (conflicts.length) {
+        // Keep the current settings active and archive the complete attempted
+        // branch. No timestamp or guessed per-field history chooses a winner.
+        const candidate = { id: crypto.randomUUID(), ancestors: [] as string[], settings: intended };
+        const current = settingsSnapshot(next);
+        next.settingsSync = { id: current.id, ancestors: current.ancestors,
+          conflicts: [...(next.settingsSync?.conflicts ?? []), candidate] };
+        return;
+      }
+      const settings = parseSettings(result.value);
+      if (JSON.stringify(settings) !== JSON.stringify(next.settings)) {
+        reviseSettings(next);
+        next.settings = settings;
+      }
+    });
+    if (conflicts.length) throw new Error(`다른 기기와 같은 설정을 다르게 수정했습니다 (${conflicts.join(", ")}). 현재 설정은 유지하고 입력한 설정도 보관했습니다. 시작 화면의 보관된 설정 확인에서 비교·적용하세요.`);
+  }
+
+  async restoreSettingsConflict(id: string): Promise<void> {
+    await this.commit(next => {
+      const chosen = next.settingsSync?.conflicts.find(item => item.id === id);
+      if (!chosen) throw new Error("보관된 설정이 달라졌습니다. 다시 확인하세요.");
+      const previous = settingsSnapshot(next);
+      const alternatives = next.settingsSync!.conflicts.filter(item => item.id !== id);
+      reviseSettings(next);
+      next.settingsSync!.ancestors = [...new Set([...next.settingsSync!.ancestors, chosen.id, ...chosen.ancestors])].sort();
+      next.settingsSync!.conflicts = [...alternatives, previous];
+      next.settings = structuredClone(chosen.settings);
+    });
   }
 
   async setReview(questionId: string, state: QuestionReviewState, expected?: { state: QuestionReviewState | undefined }): Promise<void> {
@@ -342,6 +428,7 @@ export class MiaDataStore {
 
   private commit(change: (next: MiaPluginData) => void): Promise<void> {
     return this.enqueue(async () => {
+      if (this.pendingReadFailed || this.pending) throw new Error("미완료 저장 사본이 있어 새 변경을 중단했습니다. 시작 화면의 미완료 저장 확인에서 확인·재시도하세요.");
       // Re-read immediately before a write; another device may have updated a different question.
       const next = mergeIntoOwnedIncoming(this.data, parsePluginData(await this.plugin.loadData()));
       try { change(next); }
@@ -357,14 +444,25 @@ export class MiaDataStore {
   }
 
   private async persist(data: MiaPluginData): Promise<void> {
-    try { await this.plugin.saveData(data); }
-    catch (error) {
-      // A rejected write may already have reached disk; confirm before reporting failure.
-      let persisted: MiaPluginData;
-      try { persisted = parsePluginData(await this.plugin.loadData()); }
-      catch { throw error; }
-      if (JSON.stringify(persisted) !== JSON.stringify(data)) throw error;
+    if (this.recovery?.writePending) {
+      this.recovery.writePending(data);
+      this.pending = structuredClone(data);
     }
+    this.writePending = true;
+    try {
+      try { await this.plugin.saveData(data); }
+      catch (error) {
+        // A rejected write may already have reached disk; confirm before reporting failure.
+        let persisted: MiaPluginData;
+        try { persisted = parsePluginData(await this.plugin.loadData()); }
+        catch { throw error; }
+        if (JSON.stringify(persisted) !== JSON.stringify(data)) throw error;
+      }
+      if (this.recovery?.writePending) {
+        this.recovery.writePending(null);
+        this.pending = null;
+      }
+    } finally { this.writePending = false; }
   }
 
   private writeRecovery(data: MiaPluginData): void {

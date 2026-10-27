@@ -2,7 +2,10 @@ import { fencedCodeLines } from "./markdown-structure";
 
 /** Recognize generated standalone source links, not prose mentioning a source. */
 export function isSourceAttributionLine(line: string): boolean {
-  return /^\s*(?:\*\*)?원문(?:\*\*)?\s*[:：]\s*(?:\*\*)?\s*(?:\[\[[^\n]+\]\]|\[[^\]]+\]\([^)]+\))(?:\s*(?:[·•|—–-]\s*)?[<〈《][^\n<>〈〉《》]+[>〉》])?\s*$/u.test(line);
+  // Markdown renders escaped chapter brackets like literal ones. Normalize only
+  // this comparison so the saved Markdown and unrelated answer text stay intact.
+  const sourceLine = line.replace(/&(?:lt|#0*60|#x0*3c);/giu, "<").replace(/&(?:gt|#0*62|#x0*3e);/giu, ">");
+  return /^\s*(?:\*\*)?원문(?:\*\*)?\s*[:：]\s*(?:\*\*)?\s*(?:\[\[[^\n]+\]\]|\[[^\]]+\]\([^)]+\))(?:\s*(?:[·•|—–-]\s*)?[<〈《][^\n<>〈〉《》]+[>〉》])?\s*$/u.test(sourceLine);
 }
 
 /** Presentation only: retain the stored answer and source note for editing. */

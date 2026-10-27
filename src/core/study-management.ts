@@ -84,9 +84,12 @@ export function orderManagedQueue<T extends QuestionRecord & { id: string }>(
     }
   };
   const start = studyDayStart(now, settings.dayStartsAt).getTime();
+  // ReviewLog.due stores the preceding last_review, not the scheduled due.
+  // Match that accounting: a step started before today consumes review budget
+  // even when its scheduled due falls within today (e.g. 03:55 -> 04:05).
   const intraday = (item: T) => {
     const card = reviews[item.id]!.card;
-    return (card.state === State.Learning || card.state === State.Relearning) && Date.parse(card.due) >= start;
+    return (card.state === State.Learning || card.state === State.Relearning) && Date.parse(card.last_review ?? card.due) >= start;
   };
   const learning = due.filter(intraday).sort((a, b) => Date.parse(reviews[a.id]!.card.due) - Date.parse(reviews[b.id]!.card.due));
   const scheduled = due.filter(item => !intraday(item));

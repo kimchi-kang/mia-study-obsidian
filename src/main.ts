@@ -114,6 +114,8 @@ export default class MiaStudyPlugin extends Plugin {
       saveData: data => this.activeStudyStorage.saveData(data),
     };
     this.store = new MiaDataStore(storage, {
+      readPending: () => this.app.loadLocalStorage(`${recoveryKey}:pending`),
+      writePending: data => this.app.saveLocalStorage(`${recoveryKey}:pending`, data),
       read: () => this.app.loadLocalStorage(recoveryKey),
       write: (data) => this.app.saveLocalStorage(recoveryKey, data),
       onWarning: (message) => { new Notice(`MIA Study: ${message}`, 12000); },
@@ -181,9 +183,19 @@ export default class MiaStudyPlugin extends Plugin {
     });
   }
 
+  async synchronizeStudyData(): Promise<void> {
+    const roots = JSON.stringify(this.store.settings.sourceRoots);
+    const keywordFolder = this.store.settings.keywordFolder;
+    await this.store.synchronize();
+    if (this.unloadRequested) return;
+    if (roots !== JSON.stringify(this.store.settings.sourceRoots) || keywordFolder !== this.store.settings.keywordFolder) {
+      await this.index.rebuild();
+    }
+  }
+
   async onExternalSettingsChange(): Promise<void> {
     if (this.unloadRequested || !this.store) return;
-    try { await this.store.synchronize(); }
+    try { await this.synchronizeStudyData(); }
     catch (error) { new Notice(`기기 간 복습 기록 확인 실패: ${errorMessage(error)}`); }
   }
 
@@ -208,10 +220,12 @@ export default class MiaStudyPlugin extends Plugin {
     this.portableSyncActive = true;
   }
 
-  async updateSettings(patch: Partial<MiaSettings>): Promise<void> {
-    await this.store.updateSettings(patch);
+  async updateSettings(patch: Partial<MiaSettings>, expectedBase?: MiaSettings): Promise<void> {
+    await this.store.updateSettings(patch, expectedBase);
     this.fsrs = new FsrsService(this.store.settings);
-    await this.index.rebuild();
+    // Scheduling options do not change indexed questions. A scan failure after a
+    // successful write must not report that these settings failed to save.
+    if (patch.sourceRoots !== undefined || patch.keywordFolder !== undefined) await this.index.rebuild();
   }
 
   async activateView(questionIds?: string[]): Promise<void> {
@@ -356,9 +370,20 @@ export default class MiaStudyPlugin extends Plugin {
     ).open();
   }
 
-  async openManagedQuestionEditor(question: QuestionRecord | null = null): Promise<void> {
+  async openManagedQuestionEditor(question: QuestionRecord | null = null, onClosed?: () => void, onSaved?: () => void, isActive?: () => boolean): Promise<void> {
+    if (question) {
+      const current = question.id ? this.index.questionById(question.id) : undefined;
+      if (!current) throw new Error("원본 문제를 찾을 수 없습니다. 삭제 또는 ID 충돌 여부를 확인하세요.");
+      question = current;
+    }
     const subjects = [...new Set([...(question ? [question.subject] : []), ...this.listSubjects()])];
     const meanings = question ? await this.loadKeywordMeanings(question) : new Map<string, string>();
+    if (isActive && !isActive()) return;
+    if (question) {
+      const current = question.id ? this.index.questionById(question.id) : undefined;
+      if (!current) throw new Error("원본 문제를 찾을 수 없습니다. 삭제 또는 ID 충돌 여부를 확인하세요.");
+      assertQuestionUnchanged(question, current);
+    }
     new ManagedQuestionModal(
       this.app,
       subjects,
@@ -366,10 +391,12 @@ export default class MiaStudyPlugin extends Plugin {
       question,
       meanings,
       async (draft) => {
-        if (question) await this.updateManagedQuestion(question, draft);
+        if (question) await this.updateManagedQuestion(question, draft, (persisted) => { question = persisted; });
         else await this.createManagedQuestion(draft);
+        onSaved?.();
       },
       this.index.registered,
+      onClosed,
     ).open();
   }
 
@@ -583,7 +610,7 @@ export default class MiaStudyPlugin extends Plugin {
     new Notice("질문을 문제은행에 추가했습니다.");
   }
 
-  private async updateManagedQuestion(question: QuestionRecord, draft: ManagedQuestionDraft): Promise<void> {
+  private async updateManagedQuestion(question: QuestionRecord, draft: ManagedQuestionDraft, onPersisted?: (question: QuestionRecord) => void): Promise<void> {
     if (!question.id) throw new Error("등록되지 않은 질문은 GUI에서 전체 수정할 수 없습니다.");
     const nextSubject = validateSubjectName(draft.subject);
     this.validateManagedDraft(draft);
@@ -602,21 +629,32 @@ export default class MiaStudyPlugin extends Plugin {
       return;
     }
     let updatedContent = "";
-    await this.app.vault.process(file, (content) => {
-      updatedContent = replaceCurrentManagedQuestion(
-        content,
-        question,
-        (latest) => parseQuestionFile(question.filePath, latest).questions,
-        { ...draft, createdAt: question.createdAt ?? new Date().toISOString(), updatedAt: new Date().toISOString() },
-      );
-      return updatedContent;
-    });
-    await this.index.refreshFile(file);
-    await this.syncSubjectNote(
-      question.subject,
-      parseQuestionFile(question.filePath, updatedContent, { subject: question.subject }).questions,
-    );
-    await this.refreshIncomingFollowUpLinks([question.id]);
+    try {
+      await this.app.vault.process(file, (content) => {
+        updatedContent = replaceCurrentManagedQuestion(
+          content,
+          question,
+          (latest) => parseQuestionFile(question.filePath, latest).questions,
+          { ...draft, createdAt: question.createdAt ?? new Date().toISOString(), updatedAt: new Date().toISOString() },
+        );
+        return updatedContent;
+      });
+    } catch (error) {
+      // Some adapters reject after committing. Only an exact read-back proves this write completed.
+      if (!updatedContent || await this.app.vault.read(file) !== updatedContent) throw error;
+    }
+    const persisted = parseQuestionFile(question.filePath, updatedContent, { subject: question.subject }).questions;
+    const saved = persisted.find((item) => item.id === question.id);
+    if (!saved) throw new Error("저장한 원본 문제를 확인하지 못했습니다.");
+    // Keep the editor's optimistic-concurrency baseline current even if a derived note fails.
+    onPersisted?.(saved);
+    try {
+      await this.index.refreshFile(file);
+      await this.syncSubjectNote(question.subject, persisted);
+      await this.refreshIncomingFollowUpLinks([question.id]);
+    } catch (error) {
+      throw new Error(`원본 문제는 저장됐지만 화면·연결 노트 갱신을 완료하지 못했습니다. 입력 내용은 유지됩니다. 다시 저장해 갱신을 재시도하세요. (${error instanceof Error ? error.message : String(error)})`, { cause: error });
+    }
     new Notice("질문과 학습 정보를 수정했습니다.");
   }
 

@@ -60,3 +60,22 @@ describe('additional startup boundaries',()=>{
   const old=index.start();index.stop();const latest=index.start();await expect(old).rejects.toThrow('old lifetime');await latest;expect(env.events.size).toBe(4);index.stop();
  });
 });
+
+describe('external source configuration delivery',()=>{
+ it('rebuilds the question index when another device changes source roots',async()=>{
+  const env=host();
+  const files=[{path:'MIA/A/문제은행.md',extension:'md'},{path:'Remote/B/문제은행.md',extension:'md'}];
+  env.vault.getMarkdownFiles.mockReturnValue(files);
+  env.vault.cachedRead=async file=>`### 질문\n\n> [!question] 문제\n> 검증 질문\n^mia-q-${file.path.startsWith('MIA/')?'local':'remote'}\n\n#### 정답\n\n답\n`;
+  await env.plugin.onload();await env.plugin.index.start();
+  expect(env.plugin.index.registered.map(q=>q.id)).toEqual(['mia-q-local']);
+  const {MiaDataStore}=await import('../src/services/data-store');
+  let remoteData=null;const remote=new MiaDataStore({loadData:async()=>remoteData,saveData:async data=>{remoteData=structuredClone(data);}});
+  await remote.load();await remote.updateSettings({sourceRoots:['Remote']});
+  env.plugin.loadData.mockResolvedValue(remoteData);
+  await env.plugin.onExternalSettingsChange();
+  expect(env.plugin.store.settings.sourceRoots).toEqual(['Remote']);
+  expect(env.plugin.index.registered.map(q=>q.id)).toEqual(['mia-q-remote']);
+  env.plugin.onunload();
+ });
+});

@@ -114,3 +114,29 @@ describe("Anki study management", () => {
     expect(restarted.getReview("q")?.card.state).toBe(State.Review);
   });
 });
+
+
+describe("interday learning selection matches daily accounting", () => {
+  it.each([Rating.Again, Rating.Good] as const)("charges a scheduled next-day learning step (%s) before selecting it", grade => {
+    const settings = { ...DEFAULT_SETTINGS, studyManagement: manage({ learningSteps: ["12h", "13h"], reviewsPerDay: 0 }) };
+    const scheduler = new FsrsService(settings);
+    const yesterday = new Date(2026, 9, 24, 18);
+    const learning = scheduler.rate(undefined, grade, yesterday, "q");
+    const due = new Date(learning.card.due);
+    expect(learning.card.state).toBe(State.Learning);
+    expect(buildReviewQueue([question("q")], {q:learning}, scheduler, {now:due, management:settings.studyManagement})).toEqual([]);
+    const allowed = {...settings.studyManagement, reviewsPerDay:1};
+    expect(buildReviewQueue([question("q")], {q:learning}, scheduler, {now:due, management:allowed}).map(q=>q.id)).toEqual(["q"]);
+    const repeated = scheduler.rate(learning, Rating.Again, due, "q");
+    expect(dailyStudyCounts({q:repeated}, allowed, due)).toEqual({fresh:0,review:1});
+  });
+  it("limits cross-boundary relearning but continues repeats begun in this study day", () => {
+    const settings = manage({reviewsPerDay:0});
+    const beforeBoundary = new Date(2026,9,25,3,55);
+    const lapse = fsrs.rate(old, Rating.Again, beforeBoundary, "q");
+    const due = new Date(2026,9,25,4,5);
+    expect(buildReviewQueue([question("q")], {q:lapse}, fsrs, {now:due,management:settings})).toEqual([]);
+    const today = fsrs.rate(old, Rating.Again, new Date(2026,9,25,4), "q");
+    expect(buildReviewQueue([question("q")], {q:today}, fsrs, {now:new Date(2026,9,25,4,10),management:settings}).map(q=>q.id)).toEqual(["q"]);
+  });
+});
