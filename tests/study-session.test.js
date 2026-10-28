@@ -30,11 +30,12 @@ vi.mock("obsidian", () => {
       const visit=element=>{for(const child of element.children){if(child.cls.split(" ").includes("mia-save-status"))return child;const found=visit(child);if(found)return found;}return null;};return visit(this);
     }
     scrollIntoView() {}
+    scrollTo() {}
     remove(){if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this);}
     addEventListener(name, handler) { this.handlers.set(name, handler); }
     get content() { return [this.text, ...this.children.map(child => child.content)].join(" "); }
     find(text, exact = false) { return this.children.flatMap(child => [child, child.find(text, exact)]).find(child => child && child.tag === "button" && (exact ? child.content.trim() === text : child.content.trim().startsWith(text))); }
-    async click() { if (!this.disabled) await this.handlers.get("click")?.(); }
+    async click() { if (!this.disabled) await (this.onclick ?? this.handlers.get("click"))?.(); }
   }
   class Control {
     constructor(root,tag) { this.inputEl=root.createEl(tag); this.selectEl=this.inputEl; this.inputEl.validity={valid:true}; }
@@ -61,7 +62,13 @@ vi.mock("obsidian", () => {
     Setting,
     PluginSettingTab: class { constructor(app) { this.app=app; this.containerEl=new Element(); this.containerEl.ownerDocument={defaultView:null}; } hide() {} },
     ItemView: class { constructor(leaf) { this.leaf = leaf; this.app = leaf.app; this.contentEl = new Element(); } },
-    Component: class { load() {} unload() {} },
+    Component: class {
+      children = [];
+      load() {}
+      unload() { for (const child of this.children) child.unload(); this.children = []; }
+      addChild(child) { this.children.push(child); child.load(); return child; }
+      removeChild(child) { child.unload(); this.children = this.children.filter(item => item !== child); return child; }
+    },
     Modal: class { constructor(app) { this.app=app; this.contentEl=new Element(); this.modalEl=new Element(); this.containerEl=new Element(); modalBoundary.instances.push(this); } setTitle() {} open = vi.fn(); close = vi.fn(); }, Notice: class {}, Platform: { isMobile: false },
     MarkdownRenderer: { render: async (_app, text, element) => { element.text = text; } },
   };
@@ -1405,4 +1412,158 @@ it("explains dashboard and progress counts without changing the selected queue o
  expect(ui.content()).toContain('통계와 출제량 안내');expect(ui.content()).toContain('기기 시간 7시');expect(ui.content()).toContain('한도 적용 전');
  await ui.view.setState({...ui.view.getState(),route:'progress'},{});
  expect(ui.content()).toContain('자정 기준');expect(ui.reviews).toEqual(before);
+});
+
+describe("bounded question results and Markdown resource lifetime", () => {
+  function library() {
+    const ui = setup({ start: false });
+    const base = ui.plugin.index.registered[0];
+    ui.plugin.index.registered = Array.from({ length: 121 }, (_, i) => ({
+      ...base, id: `q-${i}`, heading: `문제 ${String(i).padStart(3, "0")}`,
+      questionMarkdown: `내용 ${i}`, answerMarkdown: i === 120 ? "마지막 정답 검색" : "답변",
+    }));
+    ui.view.questionSort = "title";
+    ui.view.navigate("questions");
+    const rows = () => {
+      const visit = node => node.children.flatMap(child => [child, ...visit(child)]);
+      return visit(ui.view.contentEl).filter(node => node.cls === "mia-row");
+    };
+    const input = label => ui.view.contentEl.querySelectorAll("input").find(node => node.attrs["aria-label"] === label);
+    const search = value => { const node = input("질문 검색"); node.value = value; node.handlers.get("input")(); };
+    return { ...ui, rows, search };
+  }
+  it("paginates every result in order, searches the last page and selects the entire result set", async () => {
+    const ui = library(), seen = [];
+    for (const count of [50, 50, 21]) {
+      expect(ui.rows()).toHaveLength(count);
+      seen.push(...ui.rows().map(row => row.children[0].children[0].text));
+      if (count === 50) await ui.exactButton("다음 50개").click();
+    }
+    expect(seen).toEqual(ui.plugin.index.registered.map(q => q.heading));
+    expect(ui.exactButton("다음 50개").disabled).toBe(true);
+    ui.search("마지막 정답 검색");
+    expect(ui.rows()).toHaveLength(1);
+    expect(ui.rows()[0].content).toContain("문제 120");
+    expect(ui.view.questionPage).toBe(0);
+    ui.search("");
+    const start = vi.spyOn(ui.view, "startReview").mockImplementation(() => {});
+    await ui.exactButton("검색 결과 암기").click();
+    expect(start).toHaveBeenCalledWith(ui.plugin.index.registered.map(q => q.id), "browse");
+  });
+  it("releases replaced page renderers, bounds pending references, and unloads the final page on close", async () => {
+    const unloaded = [];
+    const render = vi.spyOn(MarkdownRenderer, "render").mockImplementation(async (_app, text, element, _path, owner) => {
+      owner.addChild({ load() {}, unload() { unloaded.push(text); } });
+      element.text = text;
+    });
+    try {
+      const ui = library(), rootRenderer = ui.view.renderComponent;
+      for (let i = 0; i < 12; i++) {
+        ui.search(i % 2 ? "" : "내용");
+        expect(ui.view.readingRenders).toHaveLength(100);
+        expect(rootRenderer.children).toHaveLength(1);
+      }
+      expect(unloaded).toHaveLength(12 * 50);
+      await ui.view.onClose();
+      expect(unloaded).toHaveLength(13 * 50);
+      expect(rootRenderer.children).toHaveLength(0);
+      expect(ui.view.readingRenders).toHaveLength(0);
+    } finally { render.mockRestore(); }
+  });
+  it("refreshes a narrowed last page after edits and keeps IME composition from publishing intermediate results", async () => {
+    const ui = library();
+    await ui.exactButton("다음 50개").click();
+    await ui.exactButton("다음 50개").click();
+    ui.plugin.index.registered[120] = { ...ui.plugin.index.registered[120], answerMarkdown: "새로운 정답" };
+    ui.view.render();
+    expect(ui.rows()).toHaveLength(21);
+    const search = ui.view.contentEl.querySelectorAll("input").find(node => node.attrs["aria-label"] === "질문 검색");
+    search.handlers.get("compositionstart")(); search.value = "새로운"; search.handlers.get("input")();
+    expect(ui.rows()).toHaveLength(21);
+    search.handlers.get("compositionend")();
+    expect(ui.rows()).toHaveLength(1);
+    expect(ui.rows()[0].content).toContain("문제 120");
+    search.value = "마지막 정답 검색"; search.handlers.get("input")();
+    expect(ui.rows()).toHaveLength(0);
+  });
+  it("keeps the newest result when older Markdown work finishes after a new search", async () => {
+    const pending = [];
+    const render = vi.spyOn(MarkdownRenderer, "render").mockImplementation((_app, text, element) =>
+      new Promise(resolve => pending.push(() => { element.text = text; resolve(); })),
+    );
+    try {
+      const ui = library();
+      ui.search("마지막 정답 검색");
+      expect(ui.view.readingRenders).toHaveLength(2);
+      for (const finish of pending.reverse()) finish();
+      await Promise.all(ui.view.readingRenders);
+      expect(ui.rows()).toHaveLength(1);
+      expect(ui.rows()[0].content).toContain("문제 120");
+      expect(ui.rows()[0].content).not.toContain("내용 0");
+      await ui.view.onClose();
+    } finally { render.mockRestore(); }
+  });
+
+});
+
+it("preserves elapsed session time and result counts across a fresh view without restoring an unsafe undo baseline", async () => {
+  const first = setup({ linked: true });
+  first.view.startReview(["q", "related"]);
+  const startedAt = Date.now();
+  await first.button("정답 보기").click();
+  await first.button("너무 쉬움").click();
+  await first.plugin.studyUi.load();
+  const reviewBefore = structuredClone(first.reviews.q);
+  vi.setSystemTime(startedAt + 90_000);
+  const next = setup({ linked: true, start: false });
+  Object.assign(next.reviews, structuredClone(first.reviews));
+  next.plugin.studyUi = new StudyUiStore(first.studyApp, "ui-state.json");
+  await next.plugin.studyUi.load();
+  next.view.showDashboard();
+  await next.button("이어하기").click();
+  expect(next.view.getState()).toMatchObject({ queue: ["q", "related"], queueIndex: 1, answerVisible: false });
+  expect(next.view.studyResult()).toMatchObject({ total: 2, easy: 1, durationSeconds: 90 });
+  expect(next.button("직전 평가 취소")).toBeUndefined();
+  expect(next.reviews.q).toEqual(reviewBefore);
+  await next.button("정답 보기").click();
+  await next.button("너무 쉬움").click();
+  expect(next.view.studyResult()).toMatchObject({ total: 2, easy: 2, durationSeconds: 90 });
+  expect(next.reviews.q).toEqual(reviewBefore);
+  expect(next.reviews.related.history).toHaveLength(1);
+});
+
+it("restores a matching workspace session summary, and resets it when explicitly starting a new session", async () => {
+  const first = setup({ linked: true }); first.view.startReview(["q", "related"]);
+  await first.button("정답 보기").click(); await first.button("너무 쉬움").click();
+  await first.plugin.studyUi.load(); const state = first.view.getState();
+  vi.setSystemTime(Date.now() + 60_000);
+  const next = setup({ linked: true, start: false }); Object.assign(next.reviews, structuredClone(first.reviews));
+  next.plugin.studyUi = new StudyUiStore(first.studyApp, "ui-state.json"); await next.plugin.studyUi.load();
+  await next.view.setState(state, {});
+  expect(next.view.studyResult()).toMatchObject({ easy: 1, durationSeconds: 60 });
+  next.view.startReview(["related"]);
+  expect(next.view.studyResult()).toMatchObject({ easy: 0, durationSeconds: 0 });
+});
+
+describe('configured step duration is not rounded in rating buttons',()=>{
+ it.each([['90m','1시간 30분',90],['1584m','1일 2시간 24분',1584]])('shows and saves %s exactly',async(step,label,minutes)=>{
+  const ui=setup({start:false});
+  ui.plugin.store.settings.studyManagement.learningSteps=[step];
+  ui.plugin.store.settings.studyManagement.enableFuzz=false;
+  ui.plugin.fsrs=new FsrsService(ui.plugin.store.settings);
+  ui.view.startReview(['q']); await ui.button('정답 보기').click();
+  expect(ui.button('못 암기').attrs['aria-label']).toContain(`다음 복습 ${label}`);
+  await ui.button('못 암기').click();
+  const saved=ui.reviews.q;
+  expect(Date.parse(saved.card.due)-Date.parse(saved.history.at(-1).review)).toBe(minutes*60_000);
+ });
+ it('shows an independently specified two-day automatic interval for a fresh Good rating at 90% with no steps or fuzz',async()=>{
+  const ui=setup({start:false});
+  ui.plugin.store.settings.studyManagement.learningSteps=[];
+  ui.plugin.store.settings.studyManagement.enableFuzz=false;
+  ui.plugin.fsrs=new FsrsService(ui.plugin.store.settings);ui.view.startReview(['q']);
+  await ui.button('정답 보기').click();expect(ui.button('암기').attrs['aria-label']).toContain('다음 복습 2일');
+  await ui.button('암기').click();expect(ui.reviews.q.card.scheduled_days).toBe(2);
+  expect(Date.parse(ui.reviews.q.card.due)-Date.parse(ui.reviews.q.card.last_review)).toBe(2*86_400_000);
+ });
 });

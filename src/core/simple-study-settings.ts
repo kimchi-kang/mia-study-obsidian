@@ -1,4 +1,5 @@
-import { DEFAULT_SETTINGS, DEFAULT_STUDY_MANAGEMENT, type MiaSettings, type StudyManagementSettings } from "./models";
+import { DEFAULT_SETTINGS, DEFAULT_STUDY_MANAGEMENT, type MiaSettings, type StudyManagementSettings, type SavedStudyProfile } from "./models";
+import { parseSteps } from "./study-management";
 
 // Presets are views over the existing settings; no preset ID is persisted.
 export const WORKLOAD_PRESETS = {
@@ -31,4 +32,27 @@ export function studySettingsPatch(initial: MiaSettings, draft: StudyManagementS
     ...(Object.keys(changed).length ? { studyManagement: { ...structuredClone(latest.studyManagement), ...changed } } : {}),
     ...(retention !== initial.targetRetention ? { targetRetention: retention } : {}),
   };
+}
+
+export function captureStudyProfile(name: string, draft: StudyManagementSettings, targetRetention: number): SavedStudyProfile {
+  return { id: crypto.randomUUID(), name: name.trim(), newCardsPerDay: draft.newCardsPerDay, reviewsPerDay: draft.reviewsPerDay,
+    learningSteps: [...draft.learningSteps], relearningSteps: [...draft.relearningSteps], targetRetention };
+}
+
+/** Do not silently replace damaged saved combinations with defaults. */
+export function parseStudyProfiles(value: unknown): SavedStudyProfile[] {
+  if (!Array.isArray(value)) throw new Error("내 설정 목록이 손상되었습니다. 원본을 보존하세요.");
+  const ids = new Set<string>();
+  return value.map(item => {
+    if (!item || typeof item !== "object") throw new Error("내 설정 항목을 읽을 수 없습니다.");
+    const raw: Record<string, unknown> = Object.fromEntries(Object.entries(item));
+    const count = (v: unknown): v is number => typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= 9999;
+    const steps = (v: unknown) => Array.isArray(v) && v.every(s => typeof s === "string") ? parseSteps(v.join(" ")) : null;
+    const learningSteps = steps(raw.learningSteps), relearningSteps = steps(raw.relearningSteps);
+    if (typeof raw.id !== "string" || !raw.id || ids.has(raw.id) || typeof raw.name !== "string" || !raw.name.trim() || raw.name.length > 80
+      || !count(raw.newCardsPerDay) || !count(raw.reviewsPerDay) || !learningSteps || !relearningSteps
+      || typeof raw.targetRetention !== "number" || !Number.isFinite(raw.targetRetention) || raw.targetRetention < .7 || raw.targetRetention > .99) throw new Error("내 설정에 잘못된 이름·공부량·간격이 있습니다. 원본을 보존하세요.");
+    ids.add(raw.id);
+    return { id: raw.id, name: raw.name, newCardsPerDay: raw.newCardsPerDay, reviewsPerDay: raw.reviewsPerDay, learningSteps, relearningSteps, targetRetention: raw.targetRetention };
+  });
 }

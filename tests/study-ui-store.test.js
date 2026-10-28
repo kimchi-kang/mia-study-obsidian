@@ -135,3 +135,17 @@ describe("reload and multiple-instance resume ordering", () => {
 it.each([null, {id:"one"}, {id:"one",version:42}, {id:"",version:null}])("refuses a malformed review checkpoint instead of silently removing its replay guard: %j", reviewCheckpoint => {
   expect(parseStudyResume({...saved,reviewCheckpoint})).toBeNull();
 });
+
+it("round-trips optional session summaries and ignores malformed summaries without losing legacy resume positions", async () => {
+  const ui = device();
+  const summary = { startedAt: 1792022400000, grades: [{ id: "one", grade: 3 }] };
+  await ui.store.saveResume({ ...saved, sessionSummary: summary });
+  const next = device(ui.files); await next.store.load();
+  expect(next.store.resume.sessionSummary).toEqual(summary);
+  for (const sessionSummary of [{ ...summary, startedAt: -1 }, { ...summary, grades: [{ id: "missing", grade: 3 }] }, { ...summary, grades: [{ id: "one", grade: 5 }] }, { ...summary, grades: [...summary.grades, ...summary.grades] }]) {
+    const parsed = parseStudyResume({ ...saved, sessionSummary });
+    expect(parsed.queueIndex).toBe(saved.queueIndex);
+    expect(parsed.sessionSummary).toBeUndefined();
+  }
+  expect(parseStudyResume(saved)).toEqual(saved);
+});

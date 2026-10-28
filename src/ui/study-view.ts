@@ -23,8 +23,10 @@ import { bindRatingTapGuard } from "./rating-tap-guard";
 import { StudyControlsModal } from "./study-controls-modal";
 import { ReviewConflictModal } from "./review-conflict-modal";
 import { StudyAppearanceModal } from "./study-appearance-modal";
+import type { StudySessionSummary } from "../services/study-ui-store";
 
 export const MIA_VIEW_TYPE = "mia-study-view";
+const QUESTION_PAGE_SIZE = 50;
 
 function formatInterval(due: Date, days: number, fixedMinutes?: number, now = new Date()): string {
   if (fixedMinutes !== undefined) {
@@ -33,11 +35,12 @@ function formatInterval(due: Date, days: number, fixedMinutes?: number, now = ne
     return `${fixedMinutes}분`;
   }
   const minutes = Math.max(1, Math.round((due.getTime() - now.getTime()) / 60_000));
-  if (days === 0 && minutes < 60) return `${minutes}분`;
-  if (days === 0) return `${Math.max(1, Math.round(minutes / 60))}시간`;
+  if (days === 0 || minutes !== days * 1440) {
+    return [Math.floor(minutes / 1440) ? `${Math.floor(minutes / 1440)}일` : "", Math.floor(minutes % 1440 / 60) ? `${Math.floor(minutes % 1440 / 60)}시간` : "", minutes % 60 ? `${minutes % 60}분` : ""].filter(Boolean).join(" ");
+  }
   if (days < 30) return `${days}일`;
-  if (days < 365) return `${Math.round(days / 30)}개월`;
-  return `${(days / 365).toFixed(1)}년`;
+  if (days < 365) return `약 ${Math.round(days / 30)}개월`;
+  return `약 ${(days / 365).toFixed(1)}년`;
 }
 
 function keywordKey(keyword: KeywordReference): string {
@@ -259,6 +262,9 @@ export class MiaStudyView extends ItemView {
       this.sessionSkipped.clear();
       this.sessionSeed = [...new Set(next.queue)];
       this.sessionStartedAt = Date.now();
+      const saved = this.plugin.studyUi.resume;
+      if (saved?.sessionMode === next.sessionMode && saved.queue.length === next.queue.length
+        && saved.queue.every((id, index) => id === next.queue[index])) this.restoreSessionSummary(saved.sessionSummary, next.queue);
       this.resultShown = false;
       this.hintVisible = false;
     }
@@ -393,6 +399,7 @@ export class MiaStudyView extends ItemView {
       queue: [...this.queue], seed: [...this.sessionSeed], skipped: [...this.sessionSkipped], queueIndex: this.queueIndex,
       answerVisible: this.answerVisible, sessionMode: this.sessionMode, updatedAt: new Date().toISOString(),
       scrollTop: reading.scrollTop, pageScrollTop: reading.pageScrollTop, conceptsOpen: reading.conceptsOpen,
+      sessionSummary: { startedAt: this.sessionStartedAt, grades: [...this.sessionGrades].map(([id, grade]) => ({ id, grade })) },
       ...this.reviewCheckpoint(),
     }).catch((error: unknown) => new Notice(`이어하기 위치 저장 실패: ${errorMessage(error)}`));
   }
@@ -416,6 +423,7 @@ export class MiaStudyView extends ItemView {
       if (!sameSession) {
         this.lastRated = null; this.sessionBaselines.clear(); this.sessionAttempts.clear();
         this.sessionGrades.clear(); this.sessionSkipped.clear(); this.sessionStartedAt = Date.now();
+        this.restoreSessionSummary(saved.sessionSummary, queue);
         this.sessionSkipped = new Set(saved.skipped.filter(exists));
       }
       this.queue = queue; this.queueIndex = index; this.sessionSeed = saved.seed.filter(exists);
@@ -425,6 +433,15 @@ export class MiaStudyView extends ItemView {
       if (advanced) this.saveStudyPosition();
       this.navigate("study");
     } catch (error) { new Notice(`이어하기 실패: ${errorMessage(error)}`); }
+  }
+
+  private restoreSessionSummary(summary: StudySessionSummary | undefined, queue: string[]): void {
+    if (!summary) return;
+    // These values describe the result only. Undo/regrading baselines stay local
+    // so a resumed snapshot cannot overwrite a newer durable review.
+    this.sessionStartedAt = summary.startedAt;
+    const scope = new Set(queue);
+    this.sessionGrades = new Map(summary.grades.filter(item => scope.has(item.id)).map(item => [item.id, item.grade]));
   }
 
   private refreshAppearance(): void {
@@ -876,7 +893,14 @@ export class MiaStudyView extends ItemView {
         });
       }
     };
+    const listOwner = this.renderComponent ?? this;
+    const fixedRenderCount = this.readingRenders.length;
+    let listComponent: Component | null = null;
     const renderList = () => {
+      // Results own their Markdown resources; replacing a page must release the old ones.
+      if (listComponent) listOwner.removeChild(listComponent);
+      listComponent = listOwner.addChild(new Component());
+      this.readingRenders.length = fixedRenderCount;
       list.empty();
       pagination.empty();
       const questions = queryQuestions(this.plugin.index.registered, this.plugin.store.reviews, this.plugin.fsrs, {
@@ -892,16 +916,16 @@ export class MiaStudyView extends ItemView {
       browseResults.disabled = questions.length === 0;
       testResults.onclick = () => this.startReview(questions.map((question) => question.id));
       browseResults.onclick = () => this.startReview(questions.map((question) => question.id), "browse");
-      const pageCount = Math.max(1, Math.ceil(questions.length / 300));
+      const pageCount = Math.max(1, Math.ceil(questions.length / QUESTION_PAGE_SIZE));
       this.questionPage = Math.min(this.questionPage, pageCount - 1);
-      const visible = questions.slice(this.questionPage * 300, (this.questionPage + 1) * 300);
-      for (const question of visible) this.renderQuestionRow(list, question);
+      const visible = questions.slice(this.questionPage * QUESTION_PAGE_SIZE, (this.questionPage + 1) * QUESTION_PAGE_SIZE);
+      for (const question of visible) this.renderQuestionRow(list, question, listComponent);
       if (pageCount > 1) {
-        const previous = pagination.createEl("button", { text: "이전 300개" });
+        const previous = pagination.createEl("button", { text: `이전 ${QUESTION_PAGE_SIZE}개` });
         previous.disabled = this.questionPage === 0;
         previous.addEventListener("click", () => { this.questionPage -= 1; renderList(); root.scrollTo({ top: 0, behavior: "smooth" }); });
         pagination.createSpan({ text: `${this.questionPage + 1} / ${pageCount}` });
-        const next = pagination.createEl("button", { text: "다음 300개" });
+        const next = pagination.createEl("button", { text: `다음 ${QUESTION_PAGE_SIZE}개` });
         next.disabled = this.questionPage >= pageCount - 1;
         next.addEventListener("click", () => { this.questionPage += 1; renderList(); root.scrollTo({ top: 0, behavior: "smooth" }); });
       }
@@ -969,16 +993,16 @@ export class MiaStudyView extends ItemView {
     }
   }
 
-  private renderQuestionHeading(element: HTMLElement, question: QuestionRecord): void {
-    this.readingRenders.push(renderQuestionTitle(this.app, question.heading, element, question.filePath, this.renderComponent ?? this));
+  private renderQuestionHeading(element: HTMLElement, question: QuestionRecord, component = this.renderComponent ?? this): void {
+    this.readingRenders.push(renderQuestionTitle(this.app, question.heading, element, question.filePath, component));
   }
 
-  private renderQuestionRow(parent: HTMLElement, question: QuestionRecord & { id: string }): void {
+  private renderQuestionRow(parent: HTMLElement, question: QuestionRecord & { id: string }, component = this.renderComponent ?? this): void {
     const row = parent.createDiv({ cls: "mia-row" });
     const body = row.createDiv({ cls: "mia-row-body" });
-    this.renderQuestionHeading(body.createEl("strong"), question);
+    this.renderQuestionHeading(body.createEl("strong"), question, component);
     const prompt = body.createDiv({ cls: "mia-row-prompt mia-markdown" });
-    this.readingRenders.push(MarkdownRenderer.render(this.app, withoutSourceAttribution(question.questionMarkdown), prompt, question.filePath, this.renderComponent ?? this));
+    this.readingRenders.push(MarkdownRenderer.render(this.app, withoutSourceAttribution(question.questionMarkdown), prompt, question.filePath, component));
     body.createEl("small", { text: `${question.subject} · ${question.questionType} · 핵심 ${question.coreKeywords.map((item) => item.label).join(", ") || "없음"} · 보조 ${question.subKeywords.map((item) => item.label).join(", ") || "없음"}` });
     const actions = row.createDiv({ cls: "mia-row-actions" });
     actions.createEl("button", { text: "학습" }).addEventListener("click", () => this.startReview([question.id]));

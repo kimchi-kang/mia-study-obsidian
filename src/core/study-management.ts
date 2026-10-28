@@ -6,10 +6,16 @@ export function parseSteps(text: string): StepUnit[] | null {
   const result: StepUnit[] = [];
   for (const part of parts) {
     if (!/^(?:\d+(?:\.\d+)?)(?:m|h|d)$/.test(part)) return null;
-    const amount = Number(part.slice(0, -1));
+    const rawAmount = part.slice(0, -1);
+    const amount = Number(rawAmount);
     const unit = part.at(-1);
-    const minutes = amount * (unit === "d" ? 1440 : unit === "h" ? 60 : 1);
-    if (!Number.isSafeInteger(minutes) || minutes < 1 || minutes > MAX_GRADE_INTERVAL_MINUTES) return null;
+    const [whole, fraction = ""] = rawAmount.split(".");
+    const scale = 10n ** BigInt(fraction.length);
+    const scaledMinutes = BigInt(whole! + fraction) * BigInt(unit === "d" ? 1440 : unit === "h" ? 60 : 1);
+    if (scaledMinutes % scale !== 0n) return null;
+    const exactMinutes = scaledMinutes / scale;
+    if (exactMinutes < 1n || exactMinutes > BigInt(MAX_GRADE_INTERVAL_MINUTES)) return null;
+    const minutes = Number(exactMinutes);
     // ts-fsrs parses step amounts with parseInt. Normalize fractional hours/days
     // to whole minutes instead of silently truncating the configured duration.
     if (unit === "m" || unit === "h" || unit === "d") result.push(Number.isInteger(amount) ? `${amount}${unit}` : `${minutes}m`);

@@ -140,3 +140,15 @@ describe("interday learning selection matches daily accounting", () => {
     expect(buildReviewQueue([question("q")], {q:today}, fsrs, {now:new Date(2026,9,25,4,10),management:settings}).map(q=>q.id)).toEqual(["q"]);
   });
 });
+
+describe('exact decimal step input', () => {
+  it('converts decimal days and hours with integer arithmetic, without binary rounding rejections', () => {
+    expect(parseSteps('1.1d 0.1h 0.03125d 0001.5000h')).toEqual(['1584m','6m','45m','90m']);
+    expect(parseStudyManagement({learningSteps:['1.1d']}).learningSteps).toEqual(['1584m']);
+    expect(parseStudyManagement({learningSteps:['1584m']}).learningSteps).toEqual(['1584m']);
+  });
+  it('does not round tiny nonzero remainders into representable whole minutes', () => {
+    for (const input of ['1.0000000000000000001m','0.016666666666666666h','0.07d','36500.00001d','1w']) expect(parseSteps(input)).toBeNull();
+    expect(parseSteps('36500.00000d')).toEqual(['36500d']);
+  });
+});

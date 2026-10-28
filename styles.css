@@ -1041,3 +1041,26 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-stat-guidance { margin: 12px 0; }
 .mia-stat-guidance > summary { min-height: 32px; padding: 6px 0; cursor: pointer; }
 .mia-stat-guidance p, .mia-step-guidance { overflow-wrap: anywhere; line-height: 1.6; }
+
+/* Everyday learning settings share the same inputs in either mode. */
+.mia-settings-help { margin-block: 8px 16px; }
+.mia-settings-help > summary { cursor: pointer; min-height: 44px; align-content: center; font-weight: 600; overflow-wrap: anywhere; }
+.mia-settings-help > summary:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
+.mia-study-management-settings .mia-step-row { grid-template-columns: minmax(60px, 1fr) minmax(80px, 1fr) repeat(3, max-content); }
+.mia-study-management-settings .mia-step-row button { min-height: 44px; }
+.mia-profile-row { border-block-start: 1px solid var(--background-modifier-border); padding-block: 12px; overflow-wrap: anywhere; }
+.mia-profile-row button { margin: 4px; min-height: 44px; white-space: normal; }
+.mia-study-profiles > input { width: 100%; min-height: 44px; }
+.mia-study-profiles > button { white-space: normal; height: auto; min-height: 44px; max-width: 100%; }
+@container mia-settings (max-width: 480px) {
+  .mia-study-management-settings .mia-step-row { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .mia-study-management-settings .mia-step-row > :is(input,select) { grid-column: span 3; min-height: 44px; }
+  .mia-study-management-settings .mia-step-row > button { grid-column: span 2; min-width: 0; padding-inline: 4px; }
+}
+
+/* Keep exact numeric input and its scoped reset usable on narrow screens. */
+.mia-settings-number-control { flex-wrap: wrap; }
+.mia-settings-number-control input { flex: 1 1 5rem; min-width: 0; width: 5rem; }
+.mia-settings-number-control button { min-height: 44px; white-space: normal; }
+.mia-profile-rename { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.mia-profile-rename input { flex: 1 1 10rem; min-width: 0; width: 100%; }

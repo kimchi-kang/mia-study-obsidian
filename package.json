@@ -7,6 +7,7 @@
     "dev": "node esbuild.config.mjs",
     "build": "tsc --noEmit && node esbuild.config.mjs production",
     "test": "vitest run",
+    "verify:full": "node scripts/verify-full.mjs",
     "test:watch": "vitest",
     "install:local": "node scripts/install-local.mjs",
     "package:release": "npm run build && node scripts/package-release.mjs"

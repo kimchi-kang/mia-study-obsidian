@@ -13,11 +13,40 @@ describe('consumed validated incoming merge',()=>{
   const merged=mergeIntoOwnedIncoming(local,incoming);expect(merged).toBe(incoming);expect(merged.reviews.q).toEqual(local.reviews.q);
   merged.reviews.q.history[0].rating=Rating.Easy;expect(local).toEqual(saved);
  });
- it('preserves an incoming winner, other reviews, settings and conflict history',()=>{
+ it('preserves an incoming review winner and both legacy settings branches without inferring edit order',()=>{
   const local=fresh(),incoming=fresh();local.reviews.q=review(Rating.Good);local.reviewVersions.q=revision(20);
   incoming.reviews.q=review(Rating.Again);incoming.reviews.other=review(Rating.Easy);incoming.reviewVersions.q=revision(21);incoming.settings.targetRetention=.8;
-  const merged=mergeIntoOwnedIncoming(local,incoming);expect(merged.reviews.q.lastRating).toBe(Rating.Again);expect(merged.reviews.other.lastRating).toBe(Rating.Easy);expect(merged.settings.targetRetention).toBe(.8);expect(merged.reviewConflicts.q[0].lastRating).toBe(Rating.Good);
+  const before=structuredClone([local,incoming]);
+  const merged=mergeIntoOwnedIncoming(local,incoming);expect(merged).toBe(incoming);expect(merged.reviews.q).toEqual(before[1].reviews.q);expect(merged.reviews.other).toEqual(before[1].reviews.other);
+  // README / MULTI-DEVICE-SYNC-QA: unknown legacy branches retain both complete
+  // settings snapshots; the deterministic active branch is not arrival order.
+  expect(merged.settings).toEqual(before[0].settings);
+  expect(merged.settingsSync.conflicts).toHaveLength(1);
+  expect(merged.settingsSync.conflicts[0].settings).toEqual(before[1].settings);
+  const reversed=mergeIntoOwnedIncoming(structuredClone(before[1]),structuredClone(before[0]));
+  expect(reversed).toEqual(merged);
+  const repeated=mergeIntoOwnedIncoming(merged,structuredClone(before[1]));
+  expect(repeated).toEqual(merged);
+  expect(merged.reviewConflicts.q).toEqual([before[0].reviews.q]);expect(local).toEqual(before[0]);
   merged.reviewConflicts.q[0].card.reps=99;expect(local.reviews.q.card.reps).toBe(1);
+  merged.settings.sourceRoots.push('active-only');
+  merged.settingsSync.conflicts[0].settings.sourceRoots.push('archive-only');
+  expect(local).toEqual(before[0]);
+  expect(reversed.settings).toEqual(before[0].settings);
+  expect(reversed.settingsSync.conflicts[0].settings).toEqual(before[1].settings);
+ });
+ it('applies a known incoming settings descendant even when its id sorts before the ancestor',()=>{
+  const local=fresh(),incoming=fresh();
+  local.settingsSync={id:'z-parent',ancestors:[],conflicts:[]};
+  incoming.settings.targetRetention=.8;
+  incoming.settingsSync={id:'a-child',ancestors:['z-parent'],conflicts:[]};
+  const before=structuredClone([local,incoming]);
+  const merged=mergeIntoOwnedIncoming(local,incoming);
+  expect(merged).toBe(incoming);expect(merged.settings).toEqual(before[1].settings);
+  expect(merged.settingsSync).toEqual(before[1].settingsSync);
+  expect(local).toEqual(before[0]);
+  const reversed=mergeIntoOwnedIncoming(structuredClone(before[1]),structuredClone(before[0]));
+  expect(reversed).toEqual(merged);
  });
  it('keeps the original corrupt-presence winner rule when quarantine is merged',()=>{
   const local=fresh(),incoming=fresh();local.quarantinedReviews.q={raw:'preserve'};local.reviewVersions.q=revision(21);
