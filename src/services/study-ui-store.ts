@@ -1,6 +1,12 @@
 import type { App, DataAdapter } from "obsidian";
 import { SwipeSensitivity } from "../core/study-swipe";
 import { MiaSessionMode, ReviewCheckpoint, parseReviewCheckpoint } from "../core/navigation";
+import type { StudyGrade } from "../core/fsrs-service";
+
+export interface StudySessionSummary {
+  startedAt: number;
+  grades: { id: string; grade: StudyGrade }[];
+}
 
 export interface StudyAppearance {
   size: "small" | "medium" | "large";
@@ -23,6 +29,25 @@ export interface StudyResume {
   pageScrollTop?: number;
   conceptsOpen?: boolean;
   reviewCheckpoint?: ReviewCheckpoint;
+  sessionSummary?: StudySessionSummary;
+}
+
+function parseSessionSummary(value: unknown, queue: string[]): StudySessionSummary | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.startedAt !== "number" || !Number.isFinite(raw.startedAt) || raw.startedAt < 0 || !Array.isArray(raw.grades)) return undefined;
+  const grades: StudySessionSummary["grades"] = [];
+  const ids = new Set<string>();
+  const scope = new Set(queue);
+  for (const entry of raw.grades) {
+    if (!entry || typeof entry !== "object") return undefined;
+    const item = entry as Record<string, unknown>;
+    if (typeof item.id !== "string" || !scope.has(item.id) || ids.has(item.id)
+      || (item.grade !== 1 && item.grade !== 2 && item.grade !== 3 && item.grade !== 4)) return undefined;
+    ids.add(item.id);
+    grades.push({ id: item.id, grade: item.grade });
+  }
+  return { startedAt: raw.startedAt, grades };
 }
 
 export function parseStudyResume(value: unknown): StudyResume | null {
@@ -36,7 +61,9 @@ export function parseStudyResume(value: unknown): StudyResume | null {
   if (checkpoint === null) return null;
   const seed = Array.isArray(raw.seed) && raw.seed.every((id) => typeof id === "string" && id.length > 0) ? raw.seed : raw.queue;
   const skipped = Array.isArray(raw.skipped) ? raw.skipped.filter((id): id is string => typeof id === "string") : [];
+  const sessionSummary = parseSessionSummary(raw.sessionSummary, raw.queue);
   return { queue: [...raw.queue], seed: [...seed], skipped, queueIndex: raw.queueIndex, answerVisible: raw.answerVisible === true, sessionMode: raw.sessionMode, updatedAt: raw.updatedAt,
+    ...(sessionSummary ? { sessionSummary } : {}),
     ...(checkpoint ? { reviewCheckpoint: checkpoint } : {}),
     ...(typeof raw.scrollTop === "number" && Number.isFinite(raw.scrollTop) && raw.scrollTop >= 0 ? { scrollTop: raw.scrollTop } : {}),
     ...(typeof raw.pageScrollTop === "number" && Number.isFinite(raw.pageScrollTop) && raw.pageScrollTop >= 0 ? { pageScrollTop: raw.pageScrollTop } : {}),

@@ -1,5 +1,6 @@
 import { rebaseSettings, reviseSettings, settingsKey, settingsSnapshot } from "../core/settings-sync";
 import { parseStudyManagement } from "../core/study-management";
+import { parseStudyProfiles } from "../core/simple-study-settings";
 import { mergeIntoOwnedIncoming, mergeReviewData, nextReviewVersion } from "../core/review-sync";
 import type { PluginDataStorage } from "./verified-plugin-storage";
 import {
@@ -57,6 +58,7 @@ function parseSettings(value: unknown): MiaSettings {
     }
   }
   return {
+    ...(raw.savedStudyProfiles !== undefined ? { savedStudyProfiles: parseStudyProfiles(raw.savedStudyProfiles) } : {}),
     studyManagement: parseStudyManagement(raw.studyManagement),
     sourceRoots: roots,
     targetRetention: Math.min(0.99, Math.max(0.7, retention)),

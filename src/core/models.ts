@@ -114,12 +114,24 @@ export const DEFAULT_STUDY_MANAGEMENT: StudyManagementSettings = {
 };
 
 export interface MiaSettings {
+  savedStudyProfiles?: SavedStudyProfile[];
   studyManagement: StudyManagementSettings;
   sourceRoots: string[];
   targetRetention: number;
   maximumIntervalDays: number;
   gradeIntervalsMinutes: GradeIntervalsMinutes;
   keywordFolder: string;
+}
+
+/** Only the everyday controls belong to a profile; expert scheduling stays local. */
+export interface SavedStudyProfile {
+  id: string;
+  name: string;
+  newCardsPerDay: number;
+  reviewsPerDay: number;
+  learningSteps: StudyManagementSettings["learningSteps"];
+  relearningSteps: StudyManagementSettings["relearningSteps"];
+  targetRetention: number;
 }
 
 export interface SettingsSnapshot {

@@ -46,7 +46,7 @@ async function setup(settings, seedReviews = {}) {
   let pending;
   renderStudyManagementSettings(root, plugin, action => { pending = action(); return pending.catch(() => {}); });
   const find = label => root.querySelector(`[aria-label="${label}"]`);
-  const edit = (label, value) => { const el = find(label); el.value = String(value); el.dispatchEvent(new dom.window.Event(el.tagName === "SELECT" ? "change" : "input")); };
+  const edit = (label, value) => { const el = find(label); el.value = String(value); el.dispatchEvent(new dom.window.Event(el.tagName === "SELECT" ? "change" : "input", {bubbles:true})); };
   const click = text => [...root.querySelectorAll("button")].find(b => b.textContent === text).click();
   return { dom, root, store, plugin, storage, disk: () => structuredClone(disk), find, edit, click, save: async () => { click("학습 설정 저장"); await pending; }, restart: async () => { const restarted = new MiaDataStore(storage); await restarted.load(); return restarted; } };
 }
@@ -272,4 +272,189 @@ describe("visible configured step policy guidance",()=>{
   expect(ui.root.querySelector('.mia-step-guidance').textContent).toContain('고정 간격이 우선');
   expect(ui.root.querySelector('.mia-step-guidance').textContent).not.toContain('6분');
  });
+});
+
+describe('saved everyday study combinations', () => {
+  it('stages a profile, applies another setup, reloads after restart and preserves expert values and history', async () => {
+    const settings = structuredClone(DEFAULT_SETTINGS), fixture = simpleStudyFixture(new Date(2026,9,28,12));
+    settings.maximumIntervalDays = 3456; settings.gradeIntervalsMinutes = {2:17};
+    settings.studyManagement.newCardsIgnoreReviewLimit = true; settings.studyManagement.reviewOrder = 'random';
+    const ui = await setup(settings, fixture.reviews);
+    ui.edit('하루에 새로 배울 문제 수',13); ui.edit('하루 복습량',87); ui.edit('목표 기억률',.923);
+    ui.edit('처음 배우는 문제 1단계 간격',1.5); ui.edit('처음 배우는 문제 1단계 단위','h');
+    ui.edit('내 설정 이름','평일 짧게'); ui.click('현재 입력을 내 설정으로 보관');
+    expect(ui.disk().settings.savedStudyProfiles).toBeUndefined();
+    await ui.save();
+    expect(ui.disk().settings.savedStudyProfiles[0]).toMatchObject({name:'평일 짧게',newCardsPerDay:13, reviewsPerDay:87, learningSteps:['90m','10m'], targetRetention:.923});
+    ui.edit('공부량 프리셋','more'); ui.edit('다시 보는 빈도','0.85'); await ui.save();
+    ui.find('평일 짧게 불러오기').click();
+    expect(ui.root.textContent).toContain('40 → 13'); expect(ui.disk().settings.studyManagement.newCardsPerDay).toBe(40);
+    ui.click('고급 설정'); ui.click('간편 설정'); await ui.save();
+    const restarted = await ui.restart();
+    expect(restarted.settings.studyManagement).toMatchObject({newCardsPerDay:13, reviewsPerDay:87, learningSteps:['90m','10m'],newCardsIgnoreReviewLimit:true,reviewOrder:'random'});
+    expect(restarted.settings.targetRetention).toBe(.923); expect(restarted.settings.maximumIntervalDays).toBe(3456);
+    expect(restarted.settings.gradeIntervalsMinutes).toEqual({2:17}); expect(restarted.reviews).toEqual(fixture.reviews);
+    expect(restarted.settings.savedStudyProfiles[0].name).toBe('평일 짧게');
+  });
+  it('rename and delete change only the saved library, never the active scheduling values',async()=>{
+    const ui=await setup(DEFAULT_SETTINGS); ui.edit('내 설정 이름','A');ui.click('현재 입력을 내 설정으로 보관');await ui.save();
+    ui.edit('공부량 프리셋','light');await ui.save();const before=structuredClone(ui.store.settings.studyManagement);
+    ui.find('A 이름 변경').click();ui.edit('A 새 이름','이름이 길어도 저장되는 내 공부 조합');await ui.save();
+    expect(ui.store.settings.studyManagement).toEqual(before);
+    ui.find('이름이 길어도 저장되는 내 공부 조합 삭제').click();await ui.save();
+    expect((await ui.restart()).settings.savedStudyProfiles).toEqual([]); expect(ui.store.settings.studyManagement).toEqual(before);
+  });
+  it('retains both the new library draft and inputs after a failed write and can retry', async()=>{
+    const ui=await setup(DEFAULT_SETTINGS), write=ui.storage.saveData;
+    ui.edit('내 설정 이름','실패 후 재시도');ui.click('현재 입력을 내 설정으로 보관');
+    ui.storage.saveData=async()=>{throw Error('disk full');};await expect(ui.save()).rejects.toThrow('disk full');
+    expect(ui.root.textContent).toContain('저장에 실패'); expect(ui.find('실패 후 재시도 불러오기')).toBeTruthy();
+    expect(ui.store.settings.savedStudyProfiles).toBeUndefined();ui.storage.saveData=write;await ui.save();
+    expect((await ui.restart()).settings.savedStudyProfiles).toHaveLength(1);
+  });
+  it('merges an unrelated external change while preserving a pending library edit',async()=>{
+    const ui=await setup(DEFAULT_SETTINGS);ui.edit('내 설정 이름','내 조합');ui.click('현재 입력을 내 설정으로 보관');
+    await ui.store.updateSettings({maximumIntervalDays:77});await ui.save();
+    expect(ui.store.settings.maximumIntervalDays).toBe(77);expect(ui.store.settings.savedStudyProfiles).toHaveLength(1);
+  });
+  it('keeps a concurrent library conflict and the typed name without overwriting external edits',async()=>{
+    const ui=await setup(DEFAULT_SETTINGS);ui.edit('내 설정 이름','이 기기');ui.click('현재 입력을 내 설정으로 보관');
+    const remote={id:'other',name:'다른 기기',newCardsPerDay:8,reviewsPerDay:80,learningSteps:[],relearningSteps:[],targetRetention:.88};
+    await ui.store.updateSettings({savedStudyProfiles:[remote]});
+    await expect(ui.save()).rejects.toThrow();
+    expect(ui.store.settings.savedStudyProfiles).toEqual([remote]);expect(ui.find('내 설정 이름').value).toBe('이 기기');
+    expect(ui.find('이 기기 불러오기')).toBeTruthy();
+  });
+});
+
+for(const bad of ['', '0', '1.5','52560001']) it(`step editor retains unrepresentable input ${JSON.stringify(bad)}`,async()=>{
+  const ui=await setup(DEFAULT_SETTINGS);ui.edit('처음 배우는 문제 1단계 간격',bad);await ui.save();
+  expect(ui.find('처음 배우는 문제 1단계 간격').value).toBe(bad);
+  expect(ui.plugin.updateSettings).not.toHaveBeenCalled();expect(ui.root.textContent).toContain('정확한 분 단위');
+});
+it('step buttons reorder duplicate and descending durations without restricting valid algorithm inputs',async()=>{
+ const ui=await setup(DEFAULT_SETTINGS);ui.find('처음 배우는 문제 2단계 위로').click();
+ expect(ui.find('처음 배우는 문제 1단계 간격').value).toBe('10');ui.click('고급 설정');ui.click('간편 설정');
+ await ui.save();expect(ui.store.settings.studyManagement.learningSteps).toEqual(['10m','1m']);
+ ui.edit('처음 배우는 문제 2단계 간격',10);await ui.save();expect(ui.store.settings.studyManagement.learningSteps).toEqual(['10m','10m']);
+ ui.edit('처음 배우는 문제 간격 결정','auto');await ui.save();expect(ui.store.settings.studyManagement.learningSteps).toEqual([]);
+});
+
+it('the loaded fractional profile drives the actual scheduler without changing any existing review dates',async()=>{
+ const f=simpleStudyFixture(new Date(2026,9,28,12)),ui=await setup(DEFAULT_SETTINGS,f.reviews);
+ ui.edit('처음 배우는 문제 1단계 간격',1.5);ui.edit('처음 배우는 문제 1단계 단위','h');
+ ui.edit('틀린 문제 1단계 간격',2);ui.edit('틀린 문제 1단계 단위','h');
+ ui.edit('내 설정 이름','간격 확인');ui.click('현재 입력을 내 설정으로 보관');await ui.save();
+ const restarted=await ui.restart(), scheduler=new FsrsService(restarted.settings),now=new Date(2026,9,28,12);
+ const first=scheduler.rate(undefined,Rating.Again,now,'fresh');
+ expect(Date.parse(first.card.due)-now.getTime()).toBe(90*60_000);
+ const previous=new FsrsService(DEFAULT_SETTINGS).rate(undefined,Rating.Easy,new Date(2026,8,1,12),'old');
+ const failed=scheduler.rate(previous,Rating.Again,now,'old');
+ expect(Date.parse(failed.card.due)-now.getTime()).toBe(120*60_000);
+ expect(restarted.reviews).toEqual(f.reviews);
+});
+it('a successful correction clears the accessibility error while preserving a fractional exact duration',async()=>{
+ const ui=await setup(DEFAULT_SETTINGS);ui.edit('처음 배우는 문제 1단계 간격',1.5);await ui.save();
+ expect(ui.find('처음 배우는 문제 1단계 간격').getAttribute('aria-invalid')).toBe('true');
+ ui.edit('처음 배우는 문제 1단계 단위','h');ui.edit('처음 배우는 문제 1단계 간격',2.5);
+ expect(ui.find('처음 배우는 문제 1단계 간격').hasAttribute('aria-invalid')).toBe(false);
+ await ui.save();expect(ui.store.settings.studyManagement.learningSteps[0]).toBe('150m');
+});
+
+it('missing profile fields leave old settings snapshots compatible and malformed libraries cannot overwrite data',async()=>{
+ const ui=await setup(DEFAULT_SETTINGS);
+ expect(Object.hasOwn(ui.store.settings,'savedStudyProfiles')).toBe(false);
+ const before=ui.disk();
+ await expect(ui.store.updateSettings({savedStudyProfiles:[{id:'broken',name:'bad'}]})).rejects.toThrow('내 설정');
+ expect(ui.disk()).toEqual(before);
+ expect(ui.store.settings.savedStudyProfiles).toBeUndefined();
+});
+it('reports the exact budget diff and discards stale preset preview after a direct edit',async()=>{
+ const ui=await setup(DEFAULT_SETTINGS);ui.edit('공부량 프리셋','light');
+ expect(ui.root.textContent).toContain('20개 → 10개');ui.edit('하루에 새로 배울 문제 수',12);
+ expect(ui.root.textContent).not.toContain('불러오기 미리보기: 가볍게');expect(ui.root.textContent).toContain('새 문제 상한 20 → 12');
+ expect(ui.find('공부량 프리셋').value).toBe('custom');
+});
+it('clearly distinguishes an uncommitted library edit, a stored combination, and the active values',async()=>{
+ const ui=await setup(DEFAULT_SETTINGS);ui.edit('내 설정 이름','하루 계획');ui.click('현재 입력을 내 설정으로 보관');
+ expect(ui.root.textContent).toContain('보관·수정 준비(미저장)');await ui.save();
+ expect(ui.root.textContent).toContain('저장된 내 설정');expect(ui.root.textContent).toContain('현재 적용된 다섯 값과 같음');
+ ui.edit('공부량 프리셋','light');await ui.save();expect(ui.root.textContent).toContain('현재 적용된 값과 다름');
+});
+
+it('keeps keyboard focus in the step editor after adding and removing rows, including the final row',async()=>{
+ const ui=await setup(DEFAULT_SETTINGS), document=ui.dom.window.document;
+ ui.find('처음 배우는 문제 단계 추가').click();
+ expect(document.activeElement?.getAttribute('aria-label')).toBe('처음 배우는 문제 3단계 간격');
+ ui.find('처음 배우는 문제 3단계 삭제').click();
+ expect(document.activeElement?.getAttribute('aria-label')).toBe('처음 배우는 문제 2단계 간격');
+ ui.find('처음 배우는 문제 1단계 삭제').click();
+ expect(document.activeElement?.getAttribute('aria-label')).toBe('처음 배우는 문제 1단계 간격');
+ ui.find('처음 배우는 문제 1단계 삭제').click();
+ expect(document.activeElement?.getAttribute('aria-label')).toBe('처음 배우는 문제 단계 추가');
+ expect(ui.store.settings.studyManagement.learningSteps).toEqual(['1m','10m']);
+});
+
+describe('beginner settings walkthrough regressions',()=>{
+ it('restores only the requested daily field, step group or memory target, with no implicit save',async()=>{
+  const settings=structuredClone(DEFAULT_SETTINGS);
+  Object.assign(settings.studyManagement,{newCardsPerDay:7,reviewsPerDay:51,learningSteps:['90m'],relearningSteps:['2h'],dayStartsAt:7});
+  settings.targetRetention=.923;settings.maximumIntervalDays=321;settings.gradeIntervalsMinutes={4:120};
+  const ui=await setup(settings);const before=ui.disk();
+  ui.find('하루에 새로 배울 문제 수만 기본값 복원').click();
+  expect(ui.find('하루에 새로 배울 문제 수').value).toBe('20');expect(ui.find('하루 복습량').value).toBe('51');
+  ui.find('틀린 문제 단계만 기본값 복원').click();
+  expect(ui.find('틀린 문제 1단계 간격').value).toBe('10');expect(ui.find('처음 배우는 문제 1단계 간격').value).toBe('90');
+  ui.find('복습 목표만 기본값 복원').click();expect(ui.find('목표 기억률').value).toBe('0.9');
+  expect(ui.disk()).toEqual(before);await ui.save();
+  expect(ui.store.settings.studyManagement).toMatchObject({newCardsPerDay:20,reviewsPerDay:51,learningSteps:['90m'],relearningSteps:['10m'],dayStartsAt:7});
+  expect(ui.store.settings.maximumIntervalDays).toBe(321);expect(ui.store.settings.gradeIntervalsMinutes).toEqual({4:120});
+ });
+ it('opens rename with the existing name, preserves invalid edits and lets the main save finish a valid rename',async()=>{
+  const ui=await setup(DEFAULT_SETTINGS);ui.edit('내 설정 이름','평일');ui.click('현재 입력을 내 설정으로 보관');await ui.save();
+  ui.find('평일 이름 변경').click();expect(ui.find('평일 새 이름').value).toBe('평일');
+  expect(ui.dom.window.document.activeElement).toBe(ui.find('평일 새 이름'));
+  ui.edit('평일 새 이름','  ');await ui.save();expect(ui.root.textContent).toContain('1–80자');
+  expect(ui.find('평일 새 이름').value).toBe('  ');
+  ui.edit('평일 새 이름','주말');await ui.save();expect(ui.disk().settings.savedStudyProfiles[0].name).toBe('주말');
+  expect(ui.store.settings.studyManagement).toEqual(DEFAULT_SETTINGS.studyManagement);
+ });
+ it('keeps duplicate names while distinguishing their visible and accessible controls',async()=>{
+  const ui=await setup(DEFAULT_SETTINGS);ui.edit('내 설정 이름','평일');ui.click('현재 입력을 내 설정으로 보관');ui.click('현재 입력을 내 설정으로 보관');await ui.save();
+  expect(ui.find('평일 (같은 이름 1/2) 불러오기')).toBeTruthy();expect(ui.find('평일 (같은 이름 2/2) 불러오기')).toBeTruthy();
+  ui.find('평일 (같은 이름 1/2) 삭제').click();await ui.save();
+  expect(ui.find('평일 불러오기')).toBeTruthy();expect(ui.disk().settings.savedStudyProfiles.map(x=>x.name)).toEqual(['평일']);
+ });
+ it('retains the last rapid input and ignores a repeated save while the first write is pending',async()=>{
+  const ui=await setup(DEFAULT_SETTINGS),write=ui.storage.saveData;let finish;
+  ui.storage.saveData=data=>new Promise(resolve=>{finish=async()=>{await write(data);resolve();};});
+  for(const value of [9,80,11])ui.edit('하루에 새로 배울 문제 수',value);
+  ui.click('학습 설정 저장');ui.click('학습 설정 저장');await Promise.resolve();await Promise.resolve();
+  expect(ui.plugin.updateSettings).toHaveBeenCalledTimes(1);expect(ui.root.textContent).toContain('저장 중');
+  await finish();await new Promise(resolve=>setTimeout(resolve,0));
+  expect(ui.disk().settings.studyManagement.newCardsPerDay).toBe(11);
+  ui.storage.saveData=write;ui.edit('하루에 새로 배울 문제 수',17);await ui.save();expect((await ui.restart()).settings.studyManagement.newCardsPerDay).toBe(17);
+ });
+});
+
+
+it('cancels an inline rename with focus returned, then keeps an 80-character name across restart',async()=>{
+ const ui=await setup(DEFAULT_SETTINGS);ui.edit('내 설정 이름','기존');ui.click('현재 입력을 내 설정으로 보관');await ui.save();
+ const active=structuredClone(ui.store.settings.studyManagement);
+ ui.find('기존 이름 변경').click();ui.edit('기존 새 이름','취소할 이름');ui.click('이름 변경 취소');
+ expect(ui.dom.window.document.activeElement).toBe(ui.find('기존 이름 변경'));await ui.save();
+ expect(ui.disk().settings.savedStudyProfiles[0].name).toBe('기존');
+ ui.find('기존 이름 변경').click();ui.edit('기존 새 이름','가'.repeat(81));await ui.save();
+ expect(ui.find('기존 새 이름').value).toHaveLength(81);expect(ui.disk().settings.savedStudyProfiles[0].name).toBe('기존');
+ ui.edit('기존 새 이름','가'.repeat(80));ui.find('기존 새 이름').dispatchEvent(new ui.dom.window.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+ expect(ui.dom.window.document.activeElement).toBe(ui.find('가'.repeat(80)+' 이름 변경'));await ui.save();
+ expect((await ui.restart()).settings.savedStudyProfiles[0].name).toHaveLength(80);expect(ui.store.settings.studyManagement).toEqual(active);
+});
+
+it('corrects a rejected minute fraction into exact decimal days without replacing the focused input',async()=>{
+ const ui=await setup(DEFAULT_SETTINGS);const input=ui.find('처음 배우는 문제 1단계 간격');
+ ui.edit('처음 배우는 문제 1단계 간격','1.1');await ui.save();expect(ui.dom.window.document.activeElement).toBe(input);
+ expect(input.value).toBe('1.1');ui.edit('처음 배우는 문제 1단계 단위','d');
+ expect(ui.find('처음 배우는 문제 1단계 간격')).toBe(input);await ui.save();
+ expect((await ui.restart()).settings.studyManagement.learningSteps).toEqual(['1584m','10m']);
 });
