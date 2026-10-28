@@ -1,8 +1,8 @@
 # MIA Study for Obsidian
 
-[1.3.4 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.3.4) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [검증 결과](docs/qa/1.3.4/README.md)
+[1.3.5 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.3.5) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [1.3.5 검증 결과](docs/qa/1.3.5/README.md)
 
-현재 소스와 로컬 정식 설치 패키지는 **1.3.5**입니다. 원격 릴리스는 아직 게시하지 않았으며 위 공개 다운로드는 기존 1.3.4입니다. [1.3.5 변경 내역](docs/releases/1.3.5.md) · [1.3.5 설치·업데이트 검증](docs/qa/1.3.5/README.md) · [설치·업데이트·모바일 점검 안내](INSTALL.md)
+현재 소스 버전은 **1.3.6**입니다. 학습 설정과 내 설정 관리 개선을 포함하며, 공개 릴리스는 1.3.5입니다. [1.3.6 변경 내역](docs/releases/1.3.6.md) · [설치·업데이트·모바일 점검 안내](INSTALL.md)
 
 Major Study 제목 바로 옆에서 현재 실행 중인 버전을 확인할 수 있습니다. 업데이트한 파일을 로드하려면 Obsidian을 다시 시작하세요. 수식은 원문에 `$...$` 또는 `$$...$$` 구분자와 TeX 문법이 있어야 표시됩니다. 예를 들어 `vC(t) = Vs(1 - e^(-t/RC))` 같은 일반 문장은 자동으로 수식으로 바뀌지 않습니다.
 
@@ -77,7 +77,7 @@ Mac에서 발견한 소수 학습 단계 잘림을 수정했다. 1.5h는 90분�
 
 ## 1.1.0 상세 학습관리
 
-현재 소스 버전은 1.3.5이며 최근 원격 공개 버전은 1.3.4다. [1.1.0 검증 결과](STUDY-MANAGEMENT-QA.md)
+현재 소스 버전은 1.3.6이며 최근 원격 공개 버전은 1.3.5다. [1.1.0 검증 결과](STUDY-MANAGEMENT-QA.md)
 
 MIA 첫 화면의 `학습 설정`에서 관리한다. Obsidian 설정 → MIA Study에서도 같은 설정을 변경할 수 있다. 학습관리 설정은 `학습 설정 저장`을 눌러 한 번에 적용한다. 기본값은 새 문제 20개/일, 복습 200회/일, 하루 시작 오전 4시, 학습 `1m 10m`, 재학습 `10m`이다. 설정이 없던 설치는 이 기본값으로 시작한다. 기존 저장 설정과 이미 예약된 복습일·평가 이력은 유지한다.
 
