@@ -3,7 +3,7 @@ import {createRequire} from 'node:module';
 const {JSDOM}=createRequire(import.meta.url)('jsdom');
 const notices=[];
 vi.mock('obsidian',()=>({
- Modal:class {constructor(){this.contentEl=document.createElement('div');}setTitle(t){this.title=t;}close(){this.closed=true;}},
+ Modal:class {constructor(){this.modalEl=document.createElement('div');this.contentEl=document.createElement('div');}setTitle(t){this.title=t;}close(){this.closed=true;}},
  PluginSettingTab:class {}, Setting:class {},
  Notice:class {constructor(message){notices.push(message);}}
 }));

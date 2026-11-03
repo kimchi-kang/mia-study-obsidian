@@ -19,12 +19,16 @@ vi.mock("obsidian", () => {
     insertBefore(child, before) { child.remove(); child.parent=this; const i=this.children.indexOf(before); this.children.splice(i<0?this.children.length:i,0,child); return child; }
     appendChild(child) { child.remove(); child.parent=this; this.children.push(child); return child; }
     setAttribute(name,value) { this.attrs[name]=value; }
+    getAttribute(name) { return this.attrs[name] ?? null; }
+    get parentElement() { return this.parent ?? null; }
+    get tagName() { return this.tag?.toUpperCase(); }
     removeAttribute(name) { delete this.attrs[name]; }
     setText(text) { this.text = text; }
     addClass() {} removeClass() {} setAttr(name,value) { this.attrs[name]=value; } focus() { this.focused=true; }
     contains(element) { return this===element || this.children.some(child=>child.contains(element)); }
     querySelectorAll(selector) { const tags=selector.split(",").map(tag=>tag.trim()); return this.children.flatMap(child=>[...(tags.includes(child.tag)?[child]:[]),...child.querySelectorAll(selector)]); }
     querySelector(selector) {
+      if(selector===".mia-learning-button" || selector===".mia-appearance-button") { const visit=el=>el.cls.split(" ").includes(selector.slice(1))?el:el.children.map(visit).find(Boolean);return visit(this)??null; }
       if(selector===".mia-session-edit-actions button") { const find=el=>el.cls.split(" ").includes("mia-session-edit-actions")?el.children.find(child=>child.tag==="button"):el.children.map(find).find(Boolean);return find(this)??null; }
       if(selector!==".mia-save-status")return null;
       const visit=element=>{for(const child of element.children){if(child.cls.split(" ").includes("mia-save-status"))return child;const found=visit(child);if(found)return found;}return null;};return visit(this);
@@ -69,7 +73,7 @@ vi.mock("obsidian", () => {
       addChild(child) { this.children.push(child); child.load(); return child; }
       removeChild(child) { child.unload(); this.children = this.children.filter(item => item !== child); return child; }
     },
-    Modal: class { constructor(app) { this.app=app; this.contentEl=new Element(); this.modalEl=new Element(); this.containerEl=new Element(); modalBoundary.instances.push(this); } setTitle() {} open = vi.fn(); close = vi.fn(); }, Notice: class {}, Platform: { isMobile: false },
+    Modal: class { constructor(app) { this.app=app; this.contentEl=new Element(); this.modalEl=new Element(); this.containerEl=new Element(); this.close=vi.fn(this.close.bind(this)); modalBoundary.instances.push(this); } setTitle() {} open = vi.fn(); close() {} }, Notice: class {}, Platform: { isMobile: false },
     MarkdownRenderer: { render: async (_app, text, element) => { element.text = text; } },
   };
 });
@@ -138,6 +142,19 @@ describe("learning settings dialog", () => {
     expect(ui.content()).not.toContain("하루에 새로 배울 문제 수");expect(ui.content()).not.toContain("학습 설정 저장");
     await ui.exactButton("학습 설정").click();
     const modal=modalBoundary.instances.at(-1);expect(modal).toBeInstanceOf(StudyManagementModal);expect(modal.open).toHaveBeenCalledOnce();
+  });
+  for (const label of ["학습 설정", "보기 설정"]) it(`returns focus to the current ${label} button after a background render and does not focus a closed view`, async () => {
+    const ui=setup({start:false});ui.view.showDashboard();
+    const original=ui.exactButton(label);await original.click();
+    const modal=modalBoundary.instances.at(-1);ui.view.render();
+    const replacement=ui.exactButton(label);expect(replacement).not.toBe(original);
+    modal.close();expect(replacement.focused).toBe(true);
+    replacement.focused=false;await ui.view.onClose();modal.close();expect(replacement.focused).toBe(false);
+  });
+  for (const [label,selector] of [["학습 설정",".mia-learning-button"],["보기 설정",".mia-appearance-button"]]) it(`preserves the focused ${label} button during an unchanged-route render`, () => {
+    const ui=setup({start:false});ui.view.showDashboard();const original=ui.exactButton(label);
+    ui.view.contentEl.ownerDocument={activeElement:original};ui.view.render();
+    const replacement=ui.view.contentEl.querySelector(selector);expect(replacement).not.toBe(original);expect(replacement.focused).toBe(true);
   });
   it("shows the learning fields and cancellation in the dialog",async()=>{
     const ui=await dashboard();

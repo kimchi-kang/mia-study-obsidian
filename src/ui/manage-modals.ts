@@ -25,6 +25,7 @@ export class ConfirmDeleteModal extends Modal {
   }
 
   onOpen(): void {
+    this.modalEl.classList.add("mia-preview-modal", "mia-confirm-modal");
     this.contentEl.createEl("p", { text: this.description });
     const actions = new Setting(this.contentEl);
     actions.addButton((button) => button.setButtonText("취소").onClick(() => this.close()));

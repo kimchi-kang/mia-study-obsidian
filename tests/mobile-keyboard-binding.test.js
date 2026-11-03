@@ -93,4 +93,19 @@ describe("mobile keyboard action lifecycle", () => {
     expect(ui.content.children.at(-1).hasClass("mia-keyboard-dismiss")).toBe(true);
     ui.binding.destroy();
   });
+  it.each([true, false])("keeps the focused draft visible after width changes without a keyboard (modal: %s)", modal => {
+    const ui = setup(modal, { width: 844, height: 390, visual: 390 });
+    const scroll = vi.spyOn(ui.input, "scrollIntoView");
+    const measure = vi.spyOn(ui.content.style, "setProperty");
+    ui.binding.refresh(); vi.advanceTimersByTime(80);
+    expect(scroll).not.toHaveBeenCalled();
+    ui.window.innerWidth = 280; ui.window.innerHeight = 480;
+    ui.document.documentElement.clientHeight = 480; ui.viewport.height = 480;
+    ui.binding.refresh(); vi.advanceTimersByTime(80);
+    expect(scroll).toHaveBeenCalledOnce();
+    if (modal) expect(measure).toHaveBeenCalledWith("--mia-keyboard-actions-height", "120px");
+    expect(ui.document.activeElement).toBe(ui.input); expect(ui.input.value).toBe("11");
+    expect(ui.surface.hasClass("mia-keyboard-open")).toBe(false);
+    ui.binding.destroy();
+  });
 });

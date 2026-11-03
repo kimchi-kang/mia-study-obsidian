@@ -32,12 +32,24 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
     const status = container.createEl("p", { text: "현재 저장된 설정입니다.", cls: "mia-settings-status" });
     status.setAttribute("role", "status");
     status.id = `mia-settings-status-${crypto.randomUUID()}`;
+    let saveStatus: HTMLElement | undefined;
+    let fieldError: { input: HTMLElement; message: HTMLElement; description: string | null } | undefined;
+    const clearFieldError = () => {
+      if (!fieldError) return;
+      const { input, message, description } = fieldError;
+      input.removeAttribute("aria-invalid");
+      if (description === null) input.removeAttribute("aria-describedby");
+      else input.setAttribute("aria-describedby", description);
+      message.remove();
+      fieldError = undefined;
+    };
     const clearInvalid = (event: Event) => {
+      if (event.target === fieldError?.input) clearFieldError();
       if (event.target instanceof container.ownerDocument.defaultView!.HTMLElement) event.target.removeAttribute("aria-invalid");
     };
     container.oninput = clearInvalid;
     container.onchange = clearInvalid;
-    const changed = (keepPreview = false) => { if (!keepPreview) loadPreview = ""; status.setText("아직 저장하지 않은 변경사항이 있습니다."); refresh(); };
+    const changed = (keepPreview = false) => { clearFieldError(); if (saveStatus) saveStatus.hidden = true; if (!keepPreview) loadPreview = ""; status.setText("아직 저장하지 않은 변경사항이 있습니다."); refresh(); };
     const modes = container.createDiv({ cls: "mia-settings-modes", attr: { role: "group", "aria-label": "학습 설정 화면" } });
     const simpleButton = modes.createEl("button", { text: "간편 설정", attr: { type: "button", "aria-pressed": "true" } });
     const advancedButton = modes.createEl("button", { text: "고급 설정", attr: { type: "button", "aria-pressed": "false" } });
@@ -79,11 +91,16 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
     simpleButton.addEventListener("click", () => showAdvanced(false));
     advancedButton.addEventListener("click", () => showAdvanced(true));
     const fail = (message: string, input: HTMLElement, expert = false) => {
+      clearFieldError();
       if (expert) showAdvanced(true);
       let parent = input.parentElement;
       while (parent && parent !== container) { if (parent.tagName === "DETAILS") parent.setAttribute("open", ""); parent = parent.parentElement; }
       input.setAttribute("aria-invalid", "true");
-      input.setAttribute("aria-describedby", status.id);
+      const description = input.getAttribute("aria-describedby");
+      const inline = input.parentElement!.createEl("p", { text: message, cls: "mia-settings-field-error" });
+      inline.id = `mia-settings-error-${crypto.randomUUID()}`;
+      fieldError = { input, message: inline, description };
+      input.setAttribute("aria-describedby", [description, inline.id].filter(Boolean).join(" "));
       status.setText(message);
       input.focus();
       new Notice(message);
@@ -379,6 +396,8 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
     showProfiles();
     container.createEl("p", { text: "기본값 불러오기는 새 문제 20개·복습 200회·목표 기억률 90%만 준비합니다. 저장 전에는 적용되지 않으며 고급 설정은 유지됩니다.", cls: "setting-item-description" });
     const actions = container.createDiv({ cls: "mia-learning-settings-actions mia-keyboard-actions" });
+    saveStatus = actions.createEl("p", { cls: "mia-settings-save-status", attr: { role: "status" } });
+    saveStatus.hidden = true;
     actions.createEl("button", { text: "공부량·빈도만 기본값 불러오기", attr: { type: "button" } }).addEventListener("click", () => {
       draft.newCardsPerDay = DEFAULT_STUDY_MANAGEMENT.newCardsPerDay;
       draft.reviewsPerDay = DEFAULT_STUDY_MANAGEMENT.reviewsPerDay;
@@ -396,6 +415,9 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       controls.forEach(control => { control.disabled = true; });
       container.setAttribute("aria-busy", "true");
       status.setText("저장 중입니다. 완료될 때까지 기다려 주세요.");
+      saveStatus!.hidden = false;
+      saveStatus!.dataset.state = "saving";
+      saveStatus!.setText("저장 중입니다. 잠시 기다려 주세요.");
       try {
         await save(async () => {
           try {
@@ -408,6 +430,8 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
             new Notice("학습 설정을 저장했습니다.");
           } catch (error) {
             status.setText(`저장에 실패했습니다. 입력을 유지했습니다. 저장하지 않은 변경사항을 확인하고 다시 시도하세요. ${error instanceof Error ? error.message : String(error)}`);
+            saveStatus!.dataset.state = "error";
+            saveStatus!.setText("저장하지 못했습니다. 입력은 유지됩니다.");
             throw error;
           }
         });

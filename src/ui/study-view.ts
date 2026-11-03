@@ -472,6 +472,7 @@ export class MiaStudyView extends ItemView {
     const sameRoute = this.renderedPosition.startsWith(`${this.route}:`);
     const filtersOpen = sameRoute ? root.querySelector<HTMLDetailsElement>(".mia-filter-panel")?.open : undefined;
     const active = root.ownerDocument?.activeElement;
+    const settingsFocus = active && sameRoute ? [".mia-learning-button", ".mia-appearance-button"].find(selector => active === root.querySelector(selector)) : undefined;
     const restoreEditFocus = this.renderedPosition === this.readingKey() && active && active === root.querySelector(".mia-session-edit-actions button");
     const editing = active && root.contains(active) && (active.tagName === "INPUT" || active.tagName === "TEXTAREA") ? active as HTMLInputElement | HTMLTextAreaElement : null;
     const editingLabel = sameRoute ? editing?.getAttribute("aria-label") : null;
@@ -525,7 +526,13 @@ export class MiaStudyView extends ItemView {
       this.keyboardViewport?.refresh();
     } else if (restoreEditFocus) {
       root.querySelector<HTMLButtonElement>(".mia-session-edit-actions button")?.focus({ preventScroll: true });
+    } else if (settingsFocus) {
+      this.restoreSettingsFocus(settingsFocus);
     }
+  }
+
+  private restoreSettingsFocus(selector: string): void {
+    if (!this.closed) this.contentEl.querySelector<HTMLButtonElement>(selector)?.focus({ preventScroll: true });
   }
 
   private renderHeader(root: HTMLElement): void {
@@ -540,9 +547,9 @@ export class MiaStudyView extends ItemView {
     version.setAttr("aria-label", `실행 중인 MIA Study 버전 ${this.plugin.manifest.version}`);
     title.createEl("span", { text: "FSRS-6", cls: "mia-badge" });
     const settingsButtons = title.createDiv({ cls: "mia-settings-buttons" });
-    settingsButtons.createEl("button", { text: "학습 설정", cls: "mia-learning-button" }).addEventListener("click", () => new StudyManagementModal(this.app, this.plugin, () => this.render()).open());
+    settingsButtons.createEl("button", { text: "학습 설정", cls: "mia-learning-button" }).addEventListener("click", () => new StudyManagementModal(this.app, this.plugin, () => this.render(), () => this.restoreSettingsFocus(".mia-learning-button")).open());
     const appearance = settingsButtons.createEl("button", { text: "보기 설정", cls: "mia-appearance-button" });
-    appearance.addEventListener("click", () => new StudyAppearanceModal(this.app, this.plugin.studyUi, () => this.refreshAppearance()).open());
+    appearance.addEventListener("click", () => new StudyAppearanceModal(this.app, this.plugin.studyUi, () => this.refreshAppearance(), () => this.restoreSettingsFocus(".mia-appearance-button")).open());
     if (this.route === "study") title.createEl("button", { text: "학습 나가기", cls: "mia-focus-exit" }).addEventListener("click", () => this.navigate("dashboard"));
     const nav = header.createDiv({ cls: "mia-nav" });
     this.navButton(nav, "대시보드", "dashboard");
@@ -574,6 +581,7 @@ export class MiaStudyView extends ItemView {
       warning.createEl("button", { text: "미완료 저장 확인" }).addEventListener("click", () => {
         const modal = new Modal(this.app);
         modal.setTitle("미완료 저장 확인");
+        modal.modalEl.addClass("mia-preview-modal", "mia-recovery-modal");
         modal.contentEl.createEl("p", { text: "이 사본은 저장 완료가 확인되지 않은 요청입니다. 아래 원본을 복사해 별도로 보관할 수 있습니다. 재시도는 최신 파일과 사본을 기존 충돌 규칙으로 비교하며, 평가를 다시 계산하거나 이력을 합산하지 않습니다. 설정·평가 차이가 있으면 별도 보관됩니다." });
         const original = modal.contentEl.createEl("textarea", { attr: { readonly: "true", rows: "10", "aria-label": "미완료 저장 복구용 JSON" } });
         original.value = JSON.stringify(pendingRecovery, null, 2);
@@ -633,7 +641,7 @@ export class MiaStudyView extends ItemView {
       browse.disabled = due + fresh === 0;
       browse.addEventListener("click", () => this.startReview(questions.map((question) => question.id), "browse"));
     }
-    if (limited) actions.createEl("button", { text: "학습량 확인" }).addEventListener("click", () => new StudyManagementModal(this.app, this.plugin, () => this.render()).open());
+    if (limited) actions.createEl("button", { text: "학습량 확인" }).addEventListener("click", () => new StudyManagementModal(this.app, this.plugin, () => this.render(), () => this.restoreSettingsFocus(".mia-learning-button")).open());
     const refresh = actions.createEl("button", { text: "기록 새로고침" });
     refresh.setAttr("title", "다른 기기에서 이 보관함으로 도착한 복습 기록과 이어하기 위치를 확인합니다.");
     refresh.addEventListener("click", async () => {

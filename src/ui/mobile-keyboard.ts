@@ -27,11 +27,12 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
     ? focusRoot.querySelector<HTMLElement>(".mia-keyboard-actions")
     : null;
 
-  const scrollFocusedControl = () => {
+  const scrollFocusedControl = (layoutChanged = false) => {
     window.clearTimeout(focusTimer);
     focusTimer = window.setTimeout(() => {
       const active = document.activeElement;
-      if (!surface.hasClass("mia-keyboard-open") || !editableTarget(active) || !focusRoot.contains(active)) return;
+      const keyboardOpen = surface.hasClass("mia-keyboard-open");
+      if ((!layoutChanged && !keyboardOpen) || !editableTarget(active) || !focusRoot.contains(active)) return;
       const actions = keyboardActions();
       if (actions) focusRoot.style.setProperty("--mia-keyboard-actions-height", `${actions.getBoundingClientRect().height}px`);
       active.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
@@ -46,7 +47,8 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
     // A keyboard can invert the available aspect ratio without rotating the device.
     // Reset the baseline only when the layout width actually changes.
     const currentLayoutWidth = window.innerWidth;
-    if (currentLayoutWidth !== layoutWidth) {
+    const layoutChanged = currentLayoutWidth !== layoutWidth;
+    if (layoutChanged) {
       layoutHeight = currentLayoutHeight;
       layoutWidth = currentLayoutWidth;
     } else {
@@ -79,7 +81,7 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
       (keyboardActions() ?? focusRoot).append(dismissButton);
     }
     if (!metrics.keyboardOpen) { dismissButton?.remove(); dismissButton = null; focusRoot.style.removeProperty("--mia-keyboard-actions-height"); layoutHeight = currentLayoutHeight; }
-    if (metrics.keyboardOpen) scrollFocusedControl();
+    if (metrics.keyboardOpen || layoutChanged) scrollFocusedControl(layoutChanged);
   };
 
   const scheduleRefresh = () => {

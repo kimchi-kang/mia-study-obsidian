@@ -5,6 +5,7 @@ export class SettingsConflictModal extends Modal {
   constructor(app: App, private readonly active: MiaSettings, private readonly alternatives: readonly SettingsSnapshot[], private readonly apply: (id: string) => Promise<void>) { super(app); }
   onOpen(): void {
     this.setTitle("보관된 설정 확인");
+    this.modalEl.classList.add("mia-preview-modal", "mia-recovery-modal");
     this.contentEl.createEl("p", { text: "서로 다른 변경의 순서를 확인할 수 없어 설정을 자동으로 섞지 않았습니다. 현재 값과 보관 사본을 비교하세요. 선택한 사본은 전체 학습 설정에 적용되며 평가 기록과 이미 예약된 복습일은 바꾸지 않습니다. 적용 전 현재 설정도 보관합니다." });
     this.showSettings("현재 설정", this.active);
     for (const item of this.alternatives) {

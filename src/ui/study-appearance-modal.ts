@@ -15,7 +15,7 @@ export class StudyAppearanceModal extends Modal {
     this.modalEl.focus({ preventScroll: true });
   }
 
-  constructor(app: Modal["app"], private readonly store: StudyUiStore, private readonly onChange: () => void) { super(app); }
+  constructor(app: Modal["app"], private readonly store: StudyUiStore, private readonly onChange: () => void, private readonly onClosed?: () => void) { super(app); }
   onOpen(): void {
     this.contentEl.empty();
     this.draft = this.store.appearance;
@@ -78,4 +78,8 @@ export class StudyAppearanceModal extends Modal {
     this.status?.setText(dirty ? "아직 저장하지 않은 변경사항이 있습니다." : "변경한 내용이 없습니다.");
   }
   onClose(): void { this.saveButton = null; this.status = null; this.contentEl.empty(); }
+  close(): void {
+    super.close();
+    this.onClosed?.();
+  }
 }

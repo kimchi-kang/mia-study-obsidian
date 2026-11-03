@@ -6,7 +6,7 @@ import { KeyboardAwareModal } from "./mobile-keyboard";
 import { renderStudyManagementSettings } from "./study-management-settings";
 
 export class StudyManagementModal extends KeyboardAwareModal {
-  constructor(app: App, private readonly plugin: MiaStudyPlugin, private readonly onSaved: () => void) {
+  constructor(app: App, private readonly plugin: MiaStudyPlugin, private readonly onSaved: () => void, private readonly onClosed?: () => void) {
     super(app, "long");
   }
 
@@ -35,4 +35,9 @@ export class StudyManagementModal extends KeyboardAwareModal {
   }
 
   onClose(): void { this.contentEl.empty(); }
+
+  close(): void {
+    super.close();
+    this.onClosed?.();
+  }
 }
