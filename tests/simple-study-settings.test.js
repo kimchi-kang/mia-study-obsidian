@@ -309,8 +309,11 @@ describe('saved everyday study combinations', () => {
     ui.edit('내 설정 이름','실패 후 재시도');ui.click('현재 입력을 내 설정으로 보관');
     ui.storage.saveData=async()=>{throw Error('disk full');};await expect(ui.save()).rejects.toThrow('disk full');
     expect(ui.root.textContent).toContain('저장에 실패'); expect(ui.find('실패 후 재시도 불러오기')).toBeTruthy();
+    const feedback=ui.root.querySelector('.mia-settings-save-status');
+    expect(feedback.hidden).toBe(false);expect(feedback.textContent).toContain('입력은 유지');
     expect(ui.store.settings.savedStudyProfiles).toBeUndefined();ui.storage.saveData=write;await ui.save();
     expect((await ui.restart()).settings.savedStudyProfiles).toHaveLength(1);
+    expect(ui.root.querySelector('.mia-settings-save-status').hidden).toBe(true);
   });
   it('merges an unrelated external change while preserving a pending library edit',async()=>{
     const ui=await setup(DEFAULT_SETTINGS);ui.edit('내 설정 이름','내 조합');ui.click('현재 입력을 내 설정으로 보관');
@@ -356,8 +359,14 @@ it('the loaded fractional profile drives the actual scheduler without changing a
 it('a successful correction clears the accessibility error while preserving a fractional exact duration',async()=>{
  const ui=await setup(DEFAULT_SETTINGS);ui.edit('처음 배우는 문제 1단계 간격',1.5);await ui.save();
  expect(ui.find('처음 배우는 문제 1단계 간격').getAttribute('aria-invalid')).toBe('true');
+ const input=ui.find('처음 배우는 문제 1단계 간격');
+ const error=ui.dom.window.document.getElementById(input.getAttribute('aria-describedby'));
+ expect(error.textContent).toContain('정확한 분 단위');
+ expect(input.parentElement.contains(error)).toBe(true);
  ui.edit('처음 배우는 문제 1단계 단위','h');ui.edit('처음 배우는 문제 1단계 간격',2.5);
  expect(ui.find('처음 배우는 문제 1단계 간격').hasAttribute('aria-invalid')).toBe(false);
+ expect(error.isConnected).toBe(false);
+ expect(input.hasAttribute('aria-describedby')).toBe(false);
  await ui.save();expect(ui.store.settings.studyManagement.learningSteps[0]).toBe('150m');
 });
 
