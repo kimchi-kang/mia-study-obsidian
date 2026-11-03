@@ -1,0 +1,166 @@
+{
+  "date": "2026-11-03",
+  "version": "1.3.7",
+  "functionalCommit": "dc2328fbe1936eaab0982852cdaf18bcbf75f030",
+  "runtime": "actual macOS Obsidian 1.15.0; no browser mock",
+  "productChanges": false,
+  "checks": [
+    {
+      "name": "settings input visible after 844x440",
+      "pass": true,
+      "source": "native-results-second-attempt.json"
+    },
+    {
+      "name": "settings input visible after 620x560",
+      "pass": true,
+      "source": "native-results-second-attempt.json"
+    },
+    {
+      "name": "settings input visible after 520x440",
+      "pass": true,
+      "source": "native-results-second-attempt.json"
+    },
+    {
+      "name": "settings input visible after 1024x800",
+      "pass": true,
+      "source": "native-results-second-attempt.json"
+    },
+    {
+      "name": "settings cancel restores header focus",
+      "pass": true,
+      "source": "native-results-second-attempt.json"
+    },
+    {
+      "name": "conflict original scroll reaches end",
+      "pass": true,
+      "source": "native-results-second-attempt.json"
+    },
+    {
+      "name": "conflict close visible",
+      "pass": true,
+      "source": "native-results-second-attempt.json"
+    },
+    {
+      "name": "conflict tab remains in modal",
+      "pass": true,
+      "source": "native-results-second-attempt.json"
+    },
+    {
+      "name": "review conflict close visible",
+      "pass": true,
+      "source": "native-results-second-attempt.json"
+    },
+    {
+      "name": "failed save retains draft and failure message",
+      "pass": true,
+      "source": "native-results-second-attempt.json"
+    },
+    {
+      "name": "recovery JSON reaches end",
+      "pass": true,
+      "source": "native-results-second-attempt.json"
+    },
+    {
+      "name": "recovery controls focus contained",
+      "pass": true,
+      "source": "native-results-second-attempt.json"
+    },
+    {
+      "name": "retry succeeds without rating changes",
+      "pass": true,
+      "source": "native-results-second-attempt.json"
+    },
+    {
+      "name": "browse editor draft and focus after 844x440",
+      "pass": true,
+      "source": "native-session-results.json"
+    },
+    {
+      "name": "browse editor draft and focus after 620x600",
+      "pass": true,
+      "source": "native-session-results.json"
+    },
+    {
+      "name": "browse editor draft and focus after 520x500",
+      "pass": true,
+      "source": "native-session-results.json"
+    },
+    {
+      "name": "browse editor returns same session",
+      "pass": true,
+      "source": "native-session-results.json"
+    },
+    {
+      "name": "browse post-grade editor returns session",
+      "pass": true,
+      "source": "native-session-results.json"
+    },
+    {
+      "name": "browse reload resumes same queue and position",
+      "pass": true,
+      "source": "native-session-results.json"
+    },
+    {
+      "name": "browse reload does not duplicate evaluations",
+      "pass": true,
+      "source": "native-session-results.json"
+    },
+    {
+      "name": "recall editor draft and focus after 844x440",
+      "pass": true,
+      "source": "native-session-results.json"
+    },
+    {
+      "name": "recall editor draft and focus after 620x600",
+      "pass": true,
+      "source": "native-session-results.json"
+    },
+    {
+      "name": "recall editor draft and focus after 520x500",
+      "pass": true,
+      "source": "native-session-results.json"
+    },
+    {
+      "name": "recall editor returns same session",
+      "pass": true,
+      "source": "native-session-results.json"
+    },
+    {
+      "name": "recall post-grade editor returns session",
+      "pass": true,
+      "source": "native-session-results.json"
+    },
+    {
+      "name": "recall reload resumes same queue and position",
+      "pass": true,
+      "source": "native-session-results.json"
+    },
+    {
+      "name": "recall reload does not duplicate evaluations",
+      "pass": true,
+      "source": "native-session-results.json"
+    },
+    {
+      "name": "delete confirmation focus contained",
+      "pass": true,
+      "source": "native-delete-results.json"
+    },
+    {
+      "name": "delete canceled and focus restored",
+      "pass": true,
+      "source": "native-delete-results.json"
+    }
+  ],
+  "userPreservation": {
+    "filesCompared": 736,
+    "changed": [],
+    "enabledPluginSetUnchanged": true,
+    "miaEnabled": true
+  },
+  "allBuildFilesMatch": true,
+  "remainingScope": [
+    "mobile hardware",
+    "OS virtual keyboard",
+    "real two-device synchronization"
+  ]
+}
