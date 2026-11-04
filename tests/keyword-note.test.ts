@@ -29,3 +29,27 @@ describe("keyword meaning notes", () => {
     expect(validateKeywordMeaning("```markdown\n## 코드 예시\n```")).toContain("## 코드 예시");
   });
 });
+
+describe("keyword Markdown section boundaries",()=>{
+  const meaning="설명\n\n```markdown\n## 코드 안의 제목\n## 의미\n예시 본문\n```\n\n마지막 의미 문단";
+  it("round-trips valid fenced headings without truncating the stored meaning",()=>{
+    expect(readKeywordMeaning(createKeywordNote("검증",meaning))).toBe(meaning);
+  });
+  it("replaces the entire old meaning without leaving code fragments or touching connections",()=>{
+    const note=createKeywordNote("검증",meaning)+"\n- [[보존할 연결]]\n";
+    const updated=updateKeywordMeaning(note,"검증","새 의미");
+    expect(updated).not.toContain("코드 안의 제목");expect(updated).not.toContain("예시 본문");
+    expect(updated).toContain("- [[보존할 연결]]");expect(readKeywordMeaning(updated)).toBe("새 의미");
+  });
+  it("does not mistake an indented code example for the next managed section",()=>{
+    const text="설명\n\n    ## 코드 제목\n\n마지막 문단";
+    expect(readKeywordMeaning(createKeywordNote("검증",text))).toBe(text);
+  });
+  it("rejects a real Markdown section with up to three leading spaces",()=>{
+    expect(()=>validateKeywordMeaning("설명\n\n  ## 연결\n다른 구역")).toThrow();
+  });
+});
+
+it.each(["```markdown\n## 코드", "~~~\n코드"])("rejects an unclosed fence instead of absorbing the following connection section: %s",text=>{
+  expect(()=>createKeywordNote("검증",text)).toThrow(/코드 블록/);
+});

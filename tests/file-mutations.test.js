@@ -432,3 +432,34 @@ describe("editing a saved question from a session", () => {
     expect(env.contents.get(oldPath)).toBe(before);
   });
 });
+
+describe("new question and move commit boundaries",()=>{
+  it("exposes a created question before a derived-note failure so retry retains its ID",async()=>{
+    const env=await environment();let saved;
+    env.plugin.syncSubjectNote=vi.fn().mockRejectedValueOnce(Error("subject note locked"));
+    await expect(env.plugin.createManagedQuestion(env.draft,q=>{saved=q;})).rejects.toThrow();
+    expect(saved?.id).toBeTruthy();
+    const first=parseQuestionFile(nextPath,env.contents.get(nextPath)).questions;
+    expect(first).toHaveLength(1);expect(saved?.id).toBe(first[0].id);
+    await env.plugin.updateManagedQuestion(saved,env.draft);
+    expect(parseQuestionFile(nextPath,env.contents.get(nextPath)).questions.map(q=>q.id)).toEqual([first[0].id]);
+  });
+  it("exposes the new path after a move even when derived notes fail",async()=>{
+    const env=await environment();let saved=env.question;
+    env.plugin.syncSubjectNote=vi.fn().mockRejectedValueOnce(Error("subject note locked"));
+    await expect(env.plugin.updateManagedQuestion(saved,env.draft,q=>{saved=q;})).rejects.toThrow();
+    expect(env.count(oldPath)).toBe(0);expect(env.count(nextPath)).toBe(1);
+    expect(saved).toMatchObject({id:env.question.id,filePath:nextPath,subject:"물리"});
+    await env.plugin.updateManagedQuestion(saved,env.draft);
+    expect(env.count(nextPath)).toBe(1);
+  });
+});
+
+it("preserves an existing meaning on an empty new-reference retry but still permits an explicit clear",async()=>{
+  const env=await environment();env.add("MIA/키워드",new TFolder());const path="MIA/키워드/기존.md";env.add(path,new TFile());
+  const original="# 기존\n\n## 의미\n\n여러 줄\n기존 의미\n\n## 연결\n";env.contents.set(path,original);
+  const item={target:"MIA/키워드/기존",label:"기존",meaning:"",preserveExistingWhenEmpty:true};
+  await env.plugin.saveDraftKeywordMeanings({...env.draft,keywordMeanings:[item]});expect(env.contents.get(path)).toBe(original);
+  await env.plugin.saveDraftKeywordMeanings({...env.draft,keywordMeanings:[{...item,preserveExistingWhenEmpty:false}]});
+  const {readKeywordMeaning}=await import("../src/core/keyword-note");expect(readKeywordMeaning(env.contents.get(path))).toBe("");
+});

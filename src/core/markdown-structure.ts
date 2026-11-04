@@ -38,7 +38,7 @@ export function hasHeadingAtOrAbove(markdown: string, maximumLevel: number): boo
   const masked = fencedCodeLines(lines);
   return lines.some((line, index) => {
     if (masked[index]) return false;
-    const heading = line.match(/^(#{1,6})\s+/);
+    const heading = line.match(/^ {0,3}(#{1,6})\s+/);
     return Boolean(heading && (heading[1]?.length ?? 7) <= maximumLevel);
   });
 }
