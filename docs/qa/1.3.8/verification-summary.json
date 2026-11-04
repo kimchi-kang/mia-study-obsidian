@@ -1,0 +1,59 @@
+{
+  "date": "2026-11-04",
+  "baselineCommit": "4824fce",
+  "baselineVersion": "1.3.7",
+  "localCandidateVersion": "1.3.8",
+  "fullVerification": {
+    "command": "npm run verify:full",
+    "testFiles": 75,
+    "passed": 1306,
+    "failed": 0,
+    "skipped": 0,
+    "typeCheck": "passed",
+    "productionBuild": "passed",
+    "rawReport": "artifacts/verification/run-aE6KPM/tests.json"
+  },
+  "native": {
+    "application": "Obsidian 1.15.0",
+    "platform": "macOS",
+    "vault": "MIA-Final-UI-Audit",
+    "version": "1.3.8",
+    "newQuestionPartialCommitRetry": "passed: one stable ID",
+    "answerOnlyEdit": "passed: keyword note byte-identical",
+    "movePartialCommitRetry": "passed: one stable ID, both subject summaries repaired",
+    "testMethod": "Native accessibility controls and on-disk read-back; derived test notes temporarily read-only; permissions restored",
+    "testedMainSha256": "c7799ae8cdbf2b575a0e5503e557b0531815ee4266945b2adafd179361a683ec",
+    "finalIndexRetryAddition": "automatic regression passed; final build installed in existing QA vault; native recheck interrupted by control errors after reload",
+    "controlLimit": "AX displayed filtered result while screenshot stayed on unfiltered list; fresh app selection and Raise did not reconcile; elementHasNoFrame and noWindowsAvailable; not classified as product bug"
+  },
+  "preservation": {
+    "userVersion": "1.3.7",
+    "userPluginChangedFiles": [],
+    "testPluginMatchesBuild": {
+      "main.js": true,
+      "styles.css": true,
+      "manifest.json": true
+    },
+    "buildSha256": {
+      "main.js": "105023d4254abefa818a3e5dbc21c581c4c8937598ff5bbbf2d4f75cea2b02e4",
+      "styles.css": "eee23d6b84e8e280a18d644ab2dad5e0da95e53ba682365acbee7ad774e86f6c",
+      "manifest.json": "257b3bb9cb019c5bf7e36ae8a1ab0ecd654d18931603381d68682cc151675483"
+    },
+    "testQuestionOccurrences": 1,
+    "keywordBytesUnchanged": true,
+    "originalSubjectRepaired": true,
+    "currentSubjectLinked": true,
+    "restoredModes": {
+      "MIA/설정점검/설정점검 노트.md": "0o644",
+      "MIA/QA-이동재시도-20261104/QA-이동재시도-20261104 노트.md": "0o644"
+    },
+    "qaDataJsonUnchanged": true
+  },
+  "notPerformed": [
+    "user installation update",
+    "remote push or release",
+    "mobile hardware and OS keyboard",
+    "real two-device cloud transfer",
+    "exhaustive performance profiling"
+  ]
+}

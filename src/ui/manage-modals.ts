@@ -9,7 +9,7 @@ import { KeyboardAwareModal } from "./mobile-keyboard";
 
 export interface ManagedQuestionDraft extends ManagedQuestionInput {
   subject: string;
-  keywordMeanings: Array<{ target: string; label: string; meaning: string }>;
+  keywordMeanings: Array<{ target: string; label: string; meaning: string; preserveExistingWhenEmpty?: boolean }>;
 }
 
 export class ConfirmDeleteModal extends Modal {
@@ -49,10 +49,13 @@ function keywordMeanings(
   value: string,
 ): Array<{ target: string; label: string; meaning: string }> {
   const meanings = value.replaceAll("\r\n", "\n").split("\n");
+  if (keywords.length > 1 && meanings.length > keywords.length) {
+    throw new Error("여러 키워드의 의미는 순서대로 한 줄씩 입력하세요. 여러 줄 의미는 키워드 편집에서 수정할 수 있습니다.");
+  }
   return keywords.map((keyword, index) => ({
     target: keyword.target,
     label: keyword.label,
-    meaning: meanings[index]?.trim() ?? "",
+    meaning: keywords.length === 1 ? value.trim() : meanings[index]?.trim() ?? "",
   }));
 }
 
@@ -102,6 +105,9 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
   private coreMeanings: string;
   private subNames: string;
   private subMeanings: string;
+  private readonly originalMeanings: ReadonlyMap<string, string>;
+  private readonly originalCoreMeanings: string;
+  private readonly originalSubMeanings: string;
   private readonly selectedFollowUps = new Map<string, QuestionRecord & { id: string }>();
 
   constructor(
@@ -123,6 +129,9 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
     this.coreMeanings = existing?.coreKeywords.map((item) => meanings.get(item.target) ?? "").join("\n") ?? "";
     this.subNames = existing?.subKeywords.map((item) => item.raw).join(", ") ?? "";
     this.subMeanings = existing?.subKeywords.map((item) => meanings.get(item.target) ?? "").join("\n") ?? "";
+    this.originalMeanings = new Map(meanings);
+    this.originalCoreMeanings = this.coreMeanings;
+    this.originalSubMeanings = this.subMeanings;
     this.setTitle(existing ? "질문 수정" : "질문 추가");
   }
 
@@ -153,7 +162,7 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
     new Setting(this.contentEl).setName("핵심 키워드").setDesc("쉼표로 구분합니다. 하나 이상 필요합니다.").addText((text) => {
       text.setPlaceholder("가우스 법칙, 전기 선속").setValue(this.coreNames).onChange((value) => { this.coreNames = value; });
     });
-    const meaningDescription = this.existing ? "키워드 순서대로 한 줄에 하나씩 입력합니다." : "선택 사항입니다. 기존 키워드는 비워 두면 의미를 유지합니다. 의미를 바꾸려면 키워드 순서대로 한 줄에 하나씩 입력하세요.";
+    const meaningDescription = "키워드 하나는 여러 줄, 여러 키워드는 순서대로 한 줄씩 입력합니다. 수정하지 않은 기존 의미는 유지합니다. 새로 연결한 키워드의 의미를 비우면 기존 내용을 유지합니다.";
     new Setting(this.contentEl).setName("핵심 키워드 의미").setDesc(meaningDescription).addTextArea((text) => {
       text.setValue(this.coreMeanings).onChange((value) => { this.coreMeanings = value; });
       text.inputEl.rows = 4;
@@ -201,8 +210,8 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
           subKeywords,
           ...(!this.existing ? { followUpLinks: [...this.selectedFollowUps.values()].map(questionBlockLink) } : {}),
           keywordMeanings: [
-            ...keywordMeanings(coreKeywords, this.coreMeanings),
-            ...keywordMeanings(subKeywords, this.subMeanings),
+            ...this.meaningChanges(coreKeywords, this.coreMeanings, this.originalCoreMeanings),
+            ...this.meaningChanges(subKeywords, this.subMeanings, this.originalSubMeanings),
           ],
         });
         this.saving = false;
@@ -226,6 +235,18 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
       this.questionInput.focus({ preventScroll: true });
       this.questionInput.scrollIntoView({ block: "nearest" });
     }
+  }
+
+  private meaningChanges(keywords: ReturnType<typeof keywordReferencesFromInput>, value: string, original: string): ManagedQuestionDraft["keywordMeanings"] {
+    // A flat textarea cannot round-trip several multiline notes. Unedited notes
+    // stay attached to their targets, even if the question's keyword order changes.
+    const changes = this.existing && value === original
+      ? keywords.filter(keyword => !this.originalMeanings.has(keyword.target))
+        .map(keyword => ({ target: keyword.target, label: keyword.label, meaning: "" }))
+      : keywordMeanings(keywords, value).filter(item => !this.originalMeanings.has(item.target)
+        || this.originalMeanings.get(item.target) !== item.meaning);
+    return changes.map(item => !item.meaning && !this.originalMeanings.has(item.target)
+      ? { ...item, preserveExistingWhenEmpty: true } : item);
   }
 
   private renderFollowUpPicker(): void {

@@ -403,3 +403,40 @@ it("locks draft inputs during a pending save and restores them after failure for
   reject(Error("disk full"));await pending;
   expect(fields.map(f=>f.disabled)).toEqual(original);expect(modal.contentEl.find("취소하고 학습으로 돌아가기").disabled).toBe(false);
 });
+
+describe("keyword meaning preservation while editing a question",()=>{
+  const refs=[{target:"키워드/첫째",label:"첫째",raw:"[[키워드/첫째|첫째]]"},{target:"키워드/둘째",label:"둘째",raw:"[[키워드/둘째|둘째]]"}];
+  function editor(keywords=refs){
+    const original=new Map([[refs[0].target,"첫 줄\n둘째 줄\n\n끝 문단"],[refs[1].target,"다른 키워드 의미"]]);
+    const disk=new Map(original);const save=vi.fn(async draft=>{for(const item of draft.keywordMeanings)disk.set(item.target,item.meaning);});
+    const modal=new ManagedQuestionModal({},["과목"],"키워드",{...question,coreKeywords:keywords,subKeywords:[]},original,save);
+    modal.onOpen();return{modal,disk,original,save,submit:()=>modal.contentEl.find("저장").handlers.get("click")()};
+  }
+  it("does not truncate or reassign multiline meanings when only the answer changes",async()=>{
+    const ui=editor();ui.modal.answer="질문의 정답만 수정";await ui.submit();
+    expect(ui.save).toHaveBeenCalledOnce();expect(ui.disk).toEqual(ui.original);
+  });
+  it("preserves a meaning updated externally while the question editor was open",async()=>{
+    const ui=editor([refs[0]]);ui.disk.set(refs[0].target,"외부에서 갱신한 의미");await ui.submit();
+    expect(ui.disk.get(refs[0].target)).toBe("외부에서 갱신한 의미");
+  });
+  it("keeps meanings attached to their targets when keyword order alone changes",async()=>{
+    const ui=editor();ui.modal.coreNames=refs.toReversed().map(x=>x.raw).join(", ");await ui.submit();
+    expect(ui.disk).toEqual(ui.original);
+  });
+  it("saves every line of an explicitly edited single-keyword meaning",async()=>{
+    const ui=editor([refs[0]]);ui.modal.coreMeanings="새 첫 줄\n새 둘째 줄\n\n새 문단";await ui.submit();
+    expect(ui.disk.get(refs[0].target)).toBe("새 첫 줄\n새 둘째 줄\n\n새 문단");
+  });
+  it("does not silently discard extra lines in an edited multi-keyword field",async()=>{
+    const ui=editor();ui.modal.coreMeanings="새 첫째 의미\n새 둘째 의미\n버리면 안 되는 줄";await ui.submit();
+    expect(ui.save).not.toHaveBeenCalled();expect(ui.disk).toEqual(ui.original);expect(ui.modal.close).not.toHaveBeenCalled();
+  });
+});
+
+it("preserves unedited multiline auxiliary keyword meanings and allows an explicit clear",async()=>{
+  const core={target:"키워드/핵심",label:"핵심",raw:"[[키워드/핵심|핵심]]"},sub={target:"키워드/보조",label:"보조",raw:"[[키워드/보조|보조]]"};
+  const save=vi.fn().mockResolvedValue(undefined);const modal=new ManagedQuestionModal({},["과목"],"키워드",{...question,coreKeywords:[core],subKeywords:[sub]},new Map([[core.target,"기존 핵심 의미"],[sub.target,"보조 첫 줄\n보조 둘째 줄"]]),save);
+  modal.onOpen();modal.coreMeanings="";await modal.contentEl.find("저장").handlers.get("click")();
+  expect(save.mock.calls[0][0].keywordMeanings).toEqual([{target:core.target,label:core.label,meaning:""}]);
+});
