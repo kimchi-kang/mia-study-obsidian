@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<meta name="description" content="MIA Study 공개 릴리스·개발·로컬 설치 1.3.7의 상태 안내. Obsidian 문제은행, FSRS-6 복습, 키워드 연결과 Word 출력. 데스크톱 검증과 모바일·실제 동기화 미검증 범위를 구분합니다.">
-<title>MIA Study · 공개·개발 1.3.7 · Obsidian 전공 공부 플러그인</title>
+<meta name="description" content="MIA Study 개발 소스 1.3.8과 정식 다운로드 1.3.7의 상태 안내. Obsidian 문제은행, FSRS-6 복습, 키워드 연결과 Word 출력. 데스크톱 검증과 모바일·실제 동기화 미검증 범위를 구분합니다.">
+<title>MIA Study · 개발 1.3.8 · 정식 1.3.7 · Obsidian 전공 공부 플러그인</title>
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.7;color:#202b39;background:#f6f8fb;color-scheme:light dark;--panel:#fff;--border:#dce3ed;--muted:#5c697b;--accent:#205bb0}*{box-sizing:border-box}body{margin:0;word-break:keep-all;overflow-wrap:anywhere}main{max-width:1040px;margin:auto;padding:64px 24px}header{max-width:780px;margin-bottom:28px}.eyebrow{color:#386480;font-weight:650;letter-spacing:.06em}h1{font-size:clamp(2.4rem,7vw,4rem);line-height:1.15;letter-spacing:-.04em;margin:12px 0 20px}h2{font-size:1.45rem;line-height:1.4;margin:0 0 14px}h3{font-size:1.05rem;line-height:1.5;margin:0 0 8px}p{margin:12px 0}a{color:#175cad;text-underline-offset:3px;overflow-wrap:anywhere}a:focus-visible,summary:focus-visible{outline:3px solid #a77b00;outline-offset:4px}section{padding:28px;border:1px solid var(--border);border-radius:16px;background:var(--panel);margin:24px 0;scroll-margin-top:20px}.notice{border-left:5px solid #b37714;background:#fff9ed}.actions{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0}.button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:11px 20px;border-radius:10px;background:var(--accent);color:white;text-decoration:none;font-size:1rem;font-weight:650;text-align:center}.secondary{background:#e7eef9;color:#184882}nav{display:flex;flex-wrap:wrap;gap:6px 20px;padding:16px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}nav a{padding:6px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{border:1px solid var(--border);border-radius:12px;padding:20px}.card p{margin:0;color:var(--muted)}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}.metric{border:1px solid var(--border);border-radius:12px;padding:18px}.metric strong{display:block;font-size:1.8rem;line-height:1.3}.metric span{display:block;color:var(--muted);font-size:.9rem;margin-top:6px}.changes{list-style:none;padding:0;margin:0}.changes li{padding:20px 0;border-top:1px solid var(--border)}.changes li:first-child{border-top:0;padding-top:0}.changes li:last-child{padding-bottom:0}.version{display:inline-block;font-weight:700;margin-right:10px}.changes p{margin:6px 0 0}.shots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}figure{margin:0;border:1px solid var(--border);border-radius:12px;overflow:hidden}figure img{display:block;width:100%;height:340px;object-fit:contain;background:#080808}figcaption{padding:12px 14px;font-size:.9rem;color:var(--muted)}ul,ol{padding-left:24px}li+li{margin-top:10px}code{overflow-wrap:anywhere;font-size:.9em}small,.muted,footer{color:var(--muted)}summary{cursor:pointer;font-weight:650;min-height:44px;padding:8px 0}details+details{border-top:1px solid var(--border);margin-top:8px;padding-top:8px}footer{margin-top:32px;font-size:.9rem}.skip{position:absolute;left:12px;top:-80px;background:var(--panel);padding:10px 16px;z-index:5}.skip:focus{top:12px}
 @media(max-width:640px){main{padding:36px 16px}section{padding:20px}.grid,.shots{grid-template-columns:1fr}.metrics{grid-template-columns:1fr}.metric strong{font-size:1.6rem}figure img{height:auto;max-height:440px}.actions{flex-direction:column}.button{width:100%}nav{gap:6px 16px}}
@@ -19,9 +19,9 @@
 <span class="eyebrow">OBSIDIAN · MARKDOWN · FSRS-6</span>
 <h1>MIA Study</h1>
 <p>전공 문제를 모으고, 연결하고, 다음 복습까지 이어가세요. Obsidian 안에서 과목·질문·키워드를 관리하는 공부 플러그인입니다.</p>
-<small>공개 정식·개발·로컬 설치 <strong>1.3.7</strong> · 원본 정리 2026년 11월 4일 · 최소 Obsidian 1.8.7</small>
+<small>개발 소스 <strong>1.3.8</strong> · 정식 다운로드 <strong>1.3.7</strong> · 2026년 11월 5일 갱신 · 최소 Obsidian 1.8.7</small>
 <div class="actions">
-<a class="button" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.3.7/mia-study-1.3.7.zip" download>1.3.7 다운로드 · ZIP</a>
+<a class="button" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.3.7/mia-study-1.3.7.zip" download>정식 1.3.7 다운로드 · ZIP</a>
 <a class="button secondary" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.3.7">정식 릴리스 보기</a>
 </div>
 </header>
@@ -29,9 +29,10 @@
 <a href="#features">주요 기능</a><a href="#changes">업데이트 내역</a><a href="#verification">검증 결과</a><a href="#screens">화면 보기</a><a href="#install">설치·업데이트</a>
 </nav>
 <section class="notice" aria-labelledby="release-title">
-<h2 id="release-title">1.3.7 정식 업데이트 · 학습 설정과 마지막 UI 보완</h2>
-<p>공개 릴리스·태그·설치 ZIP과 개별 파일을 모두 1.3.7로 제공합니다. 1.3.5 이후 학습 설정·내 설정 관리·정확한 간격 표시와 입력 오류·저장 상태·확인창·초점·창 크기 변경 UI 보완을 포함합니다.</p>
-<p>1.3.7의 요청된 macOS 실제 앱 검증과 사용자 보관함 정상 재로드는 2026년 11월 3일 완료했습니다. 모바일 실기기·OS 키보드·실제 두 기기 클라우드 전송은 미검증입니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/STATUS.md">현재 작업·검증·배포 상태</a></p>
+<h2 id="release-title">1.3.8 소스 업데이트 · 자료 보존과 저장 재시도 수정</h2>
+<p>GitHub main에 질문 중복 생성, 과목 이동 후 재시도, 키워드 의미 손상·덮어쓰기와 코드 블록 구역 인식 수정을 반영했습니다. 전체 검사 1,306개와 타입 검사·빌드를 통과했습니다.</p>
+<p>기존 격리 macOS Obsidian에서 저장 실패 후 생성·이동 재시도와 의미 보존을 확인했습니다. 마지막 인덱스 복구 보완분의 실제 앱 재검증은 화면 제어 오류로 남아 있습니다. 모바일 실기기·OS 키보드·실제 두 기기 클라우드 전송도 미검증입니다.</p>
+<p>정식 ZIP·태그·릴리스는 <strong>1.3.7</strong>을 유지합니다. 1.3.8 소스 반영은 새 정식 패키지 공개나 기존 사용자 설치 갱신을 뜻하지 않습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/1.3.8/README.md">수정·검증 보고서</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/STATUS.md">현재 상태</a></p>
 </section>
 <section id="features" aria-labelledby="features-title">
 <h2 id="features-title">MIA Study에서 할 수 있는 일</h2>
@@ -48,6 +49,7 @@
 <section id="changes" aria-labelledby="changes-title">
 <h2 id="changes-title">최근 업데이트 내역</h2>
 <ol class="changes">
+<li><span class="version">1.3.8 개발 소스</span><strong>키워드 의미 보존과 저장 실패 재시도</strong><p>답변만 편집할 때 기존 키워드 의미를 덮어쓰지 않고, 여러 줄·코드 블록을 보존합니다. 새 질문의 일부 저장 뒤 중복 생성과 과목 이동 후 재시도·이전 과목 갱신을 수정했습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/releases/1.3.8.md">변경 내역</a></p></li>
 <li><span class="version">1.3.7 공개 정식</span><strong>입력·저장 안내와 화면 제어 UI 보완</strong><p>오류 유지·저장 실패 안내, 충돌/복구/삭제 확인창, 설정 초점 복귀와 창 크기 변경 시 입력 가림을 보완했습니다. ZIP·개별 설치 파일·체크섬을 같은 릴리스에서 제공합니다.</p></li>
 <li><span class="version">1.3.6 포함 변경</span><strong>학습 설정·내 설정 관리와 정확한 간격 표시</strong><p>항목별 기본값·소수 시간/일 입력·내 설정 이름 편집과 표시를 보완했습니다. 이 기능은 현재 1.3.7 소스에 포함됩니다.</p></li>
 <li><span class="version">1.3.5 공개 정식</span><strong>학습 기록·설정 충돌 보관과 저장 복구</strong><p>설정 계보·충돌 사본·미완료 저장 보호를 포함합니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.3.5">공개 릴리스와 설치 파일</a></p></li>
@@ -67,7 +69,9 @@
 </section>
 <section id="verification" aria-labelledby="verification-title">
 <h2 id="verification-title">검증 결과</h2>
-<h3>1.3.7 개발·로컬 설치 · 2026년 11월 3일 검증</h3>
+<h3>1.3.8 개발 소스 · 2026년 11월 4일 검증</h3>
+<p>75개 파일·1,306개 검사에서 실패·생략 0, 타입 검사·프로덕션 빌드 통과. 기존 격리 Obsidian 1.15.0에서 합성 질문의 일부 저장 후 재시도, 이동 양쪽 과목 요약과 키워드 원문 보존을 확인했습니다. 마지막 인덱스 보완분은 자동 검사 통과 후 설치했으나 실제 앱 재검증은 제어 연결 장애로 미완료입니다. 사용자 설치 폴더의 시작 시점 파일 7개는 모두 동일했습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/1.3.8/README.md">재현 조건·검증 범위·한계</a></p>
+<h3>1.3.7 정식·사용자 설치 · 2026년 11월 3일 검증</h3>
 <p>전체 검사 1,289개(실패·생략 0), 타입 검사·빌드와 macOS Obsidian 1.15.0의 요청된 데스크톱 UI 검증을 통과했습니다. 사용자 보관함 정상 재로드와 당시 이어하기 17/84·파일 736개 불변을 확인했습니다. 이 수치는 그날의 결과이며 현재 사용자 데이터를 새로 검사했다는 뜻은 아닙니다. 모바일 실기기·OS 키보드·실제 두 기기 클라우드 전달은 미검증이고, Mac 공유 파일 두 환경 대체 검증은 부분 완료입니다.</p>
 <p>아래는 버전별 과거 검증 기록입니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/STATUS.md">최신 범위와 근거</a></p>
 <h3>1.3.4 정식 릴리스 · 반응형 보강</h3>
@@ -102,7 +106,7 @@
 <section id="install" aria-labelledby="install-title">
 <h2 id="install-title">설치·업데이트</h2>
 <h3>BRAT으로 설치</h3>
-<ol><li>Obsidian 커뮤니티 플러그인에서 BRAT을 설치하고 활성화합니다.</li><li>명령 팔레트에서 <code>BRAT: Add a beta plugin for testing</code>을 실행합니다.</li><li>저장소 주소 <a href="https://github.com/kimchi-kang/mia-study-obsidian">kimchi-kang/mia-study-obsidian</a>를 입력합니다. 기존 사용자는 BRAT에서 업데이트합니다.</li><li>설치 후 MIA Study를 활성화하고 선택한 패키지의 버전과 화면 표시가 일치하는지 확인합니다. 공개 릴리스는 1.3.7이며 BRAT 원격 자동 업데이트는 이번에 재검증하지 않았습니다.</li></ol>
+<ol><li>Obsidian 커뮤니티 플러그인에서 BRAT을 설치하고 활성화합니다.</li><li>명령 팔레트에서 <code>BRAT: Add a beta plugin for testing</code>을 실행합니다.</li><li>저장소 주소 <a href="https://github.com/kimchi-kang/mia-study-obsidian">kimchi-kang/mia-study-obsidian</a>를 입력합니다. 기존 사용자는 BRAT에서 업데이트합니다.</li><li>설치 후 MIA Study를 활성화하고 선택한 패키지의 버전과 화면 표시가 일치하는지 확인합니다. 정식 릴리스는 1.3.7, main의 개발 소스는 1.3.8입니다. BRAT 원격 업데이트가 어느 파일을 받는지는 이번에 재검증하지 않았으므로 설치 후 버전을 확인하세요.</li></ol>
 <h3>ZIP으로 수동 업데이트</h3>
 <ol><li>대상 보관함을 백업하고 해당 보관함의 Obsidian을 닫습니다.</li><li>ZIP의 <code>main.js</code>, <code>styles.css</code>, <code>manifest.json</code>을 <code>.obsidian/plugins/mia-study/</code>에 넣습니다.</li><li>기존 <code>data.json</code>, <code>ui-state.json</code>과 학습 자료는 유지합니다.</li><li>사용할 기기를 모두 같은 패키지 버전으로 맞춘 뒤 Obsidian을 다시 열어 버전을 확인합니다.</li></ol>
 <p>최소 Obsidian 버전은 1.8.7입니다. 공유 보관함에서는 업데이트를 위해 활성화 스위치를 반복해서 바꾸면 꺼진 상태도 동기화될 수 있으므로, 해당 보관함을 닫고 파일을 교체하는 절차를 따르세요.</p>
@@ -113,7 +117,7 @@
 <p>MIA Study 자체 코드는 <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT 라이선스</a>입니다. 라이선스와 외부 코드 고지는 실행 파일 및 배포 파일에 포함됩니다.</p>
 <p>복습에는 Anki에서도 지원하는 FSRS 계열의 FSRS-6을 사용합니다. 구현 라이브러리는 Open Spaced Repetition의 <a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a>입니다. <a href="https://docs.ankiweb.net/manual/deck-options#fsrs">Anki의 FSRS 안내</a></p>
 </section>
-<footer>MIA Study 공개·개발 1.3.7 · <a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases">릴리즈 기록</a> · 2026년 11월 4일 원본 정리</footer>
+<footer>MIA Study 개발 소스 1.3.8 · 정식 다운로드 1.3.7 · <a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases">릴리즈 기록</a> · 2026년 11월 5일 갱신</footer>
 </main>
 </body>
 </html>
