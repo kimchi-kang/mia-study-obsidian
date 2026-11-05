@@ -242,9 +242,13 @@ export class MiaStudyView extends ItemView {
       this.editingSessionQuestion = null;
       this.sessionEditGeneration += 1;
     }
+    let recoveredRatingId: string | undefined;
     if (!this.stateRestored && next.route === "study") {
       const index = this.restoredQueueIndex(next.queue, next.queueIndex, next.reviewCheckpoint);
-      if (index !== next.queueIndex) next.answerVisible = next.sessionMode === "browse";
+      if (index !== next.queueIndex) {
+        recoveredRatingId = next.queue[next.queueIndex];
+        next.answerVisible = next.sessionMode === "browse";
+      }
       next.queueIndex = index;
     }
     this.stateRestored = true;
@@ -268,6 +272,7 @@ export class MiaStudyView extends ItemView {
       this.resultShown = false;
       this.hintVisible = false;
     }
+    if (recoveredRatingId) this.restoreCommittedSessionGrade(recoveredRatingId);
     if (next.route !== "study") this.clearResultPopup();
     result.history = next.route !== this.route;
     this.route = next.route;
@@ -426,6 +431,7 @@ export class MiaStudyView extends ItemView {
         this.restoreSessionSummary(saved.sessionSummary, queue);
         this.sessionSkipped = new Set(saved.skipped.filter(exists));
       }
+      if (advanced) this.restoreCommittedSessionGrade(queue[originalIndex]);
       this.queue = queue; this.queueIndex = index; this.sessionSeed = saved.seed.filter(exists);
       this.readingPosition = { key: `study:${index}:${queue[index] ?? ""}`, scrollTop: advanced ? 0 : saved.scrollTop ?? 0, pageScrollTop: advanced ? 0 : saved.pageScrollTop ?? 0, conceptsOpen: advanced ? false : saved.conceptsOpen ?? false };
       this.answerVisible = advanced ? saved.sessionMode === "browse" : saved.answerVisible; this.sessionMode = saved.sessionMode; this.resultShown = false;
@@ -442,6 +448,20 @@ export class MiaStudyView extends ItemView {
     this.sessionStartedAt = summary.startedAt;
     const scope = new Set(queue);
     this.sessionGrades = new Map(summary.grades.filter(item => scope.has(item.id)).map(item => [item.id, item.grade]));
+  }
+
+  private restoreCommittedSessionGrade(id: string | undefined): void {
+    if (!id) return;
+    const review = this.plugin.store.getReview(id);
+    const reviewedAt = Date.parse(review?.history.at(-1)?.review ?? "");
+    // A version change can also come from an older external/imported record.
+    // Recover only result metadata from this session, never undo/regrade baselines.
+    if (!Number.isFinite(reviewedAt) || reviewedAt < this.sessionStartedAt) return;
+    const grade = review?.lastRating;
+    if (grade === Rating.Again || grade === Rating.Hard || grade === Rating.Good || grade === Rating.Easy) {
+      this.sessionGrades.set(id, grade);
+      this.sessionSkipped.delete(id);
+    }
   }
 
   private refreshAppearance(): void {
