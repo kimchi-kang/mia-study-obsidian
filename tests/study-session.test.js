@@ -1584,3 +1584,30 @@ describe('configured step duration is not rounded in rating buttons',()=>{
   expect(Date.parse(ui.reviews.q.card.due)-Date.parse(ui.reviews.q.card.last_review)).toBe(2*86_400_000);
  });
 });
+
+it.each(["resume", "workspace"])("counts a durable rating once when recovering an older %s position", async source => {
+  const first = await persistentSession(); await first.plugin.studyUi.load();
+  const workspace = first.view.getState(), resume = first.plugin.studyUi.resume;
+  const accepted = first.plugin.fsrs.rate(undefined, Rating.Easy, new Date(), "q");
+  await first.store.setReview("q", accepted);
+  const next = setup({ start: false }); next.plugin.store = new MiaDataStore(first.native); await next.plugin.store.load();
+  const disk = new Map([["ui-state.json", JSON.stringify({ version: 1, resume })]]);
+  const app = { loadLocalStorage: () => null, saveLocalStorage() {}, vault: { adapter: { exists: async p => disk.has(p), read: async p => disk.get(p), write: async (p,v) => { disk.set(p,v); } } } };
+  next.plugin.studyUi = new StudyUiStore(app, "ui-state.json");
+  if (source === "resume") await next.view.resumeStudy(); else await next.view.setState(workspace, {});
+  expect(next.view.studyResult()).toMatchObject({ total: 1, easy: 1, good: 0 });
+  expect(next.view.getState().queueIndex).toBe(1);
+  expect(next.plugin.store.getReview("q")).toEqual(accepted);
+  expect(next.plugin.store.getReview("q").history).toHaveLength(1);
+  expect(next.button("직전 평가 취소")).toBeUndefined();
+});
+
+it("does not credit a pre-session rating when only its durable version changes", async () => {
+  const first = await persistentSession(); await first.plugin.studyUi.load();
+  const resume = first.plugin.studyUi.resume;
+  await first.store.setReview("q",first.plugin.fsrs.rate(undefined,Rating.Easy,new Date(Date.now()-86400000),"q"));
+  const next = setup({start:false});next.plugin.store=new MiaDataStore(first.native);await next.plugin.store.load();
+  await next.plugin.studyUi.saveResume(resume);await next.view.resumeStudy();
+  expect(next.view.getState().queueIndex).toBe(1);
+  expect(next.view.studyResult().easy).toBe(0);
+});

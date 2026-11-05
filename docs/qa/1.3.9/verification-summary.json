@@ -1,0 +1,67 @@
+{
+  "date": "2026-11-05 KST",
+  "baselineCommit": "1468021",
+  "initialVersion": "1.3.8",
+  "fixedLocalVersion": "1.3.9",
+  "remoteMainVersion": "1.3.8",
+  "publicReleaseVersion": "1.3.7",
+  "userVersion": "1.3.7",
+  "environment": {
+    "OS": "macOS 27.2 (26B123)",
+    "Obsidian": "1.15.0",
+    "vault": "MIA-Final-UI-Audit",
+    "methods": [
+      "native AX/mouse/keyboard",
+      "real Obsidian renderer DOM events",
+      "native and actual Electron window captures"
+    ],
+    "simulatedBrowser": false
+  },
+  "verification": {
+    "testFiles": 75,
+    "passed": 1309,
+    "failed": 0,
+    "skipped": 0,
+    "typecheck": "passed",
+    "build": "passed",
+    "report": "artifacts/verification/run-qwCerK/tests.json"
+  },
+  "buildSha256": {
+    "main.js": "d75d4dc96feb8d0405c2a987b03ae28553331659bcc7fde1168b812f1285268e",
+    "styles.css": "eee23d6b84e8e280a18d644ab2dad5e0da95e53ba682365acbee7ad774e86f6c",
+    "manifest.json": "cf205228b9a23980a39666911451544e174bc511d6f4bd0bcb1b537c12ccc270"
+  },
+  "isolatedInstallMatchesBuild": {
+    "main.js": true,
+    "styles.css": true,
+    "manifest.json": true
+  },
+  "userComparedFiles": 736,
+  "userChangedFiles": [],
+  "reopenedReviewsUnchanged": true,
+  "reopenedSettingsUnchanged": true,
+  "reopenedResumeMatches": true,
+  "fixedRecovery": {
+    "expectedGood": 1,
+    "observedGood": 1,
+    "changedReviewIds": 1,
+    "historyIncrements": [
+      1
+    ]
+  },
+  "finalCompletion": {
+    "total": 2,
+    "good": 1,
+    "easy": 1,
+    "skipped": 0
+  },
+  "relatedMovePreservedReviews": true,
+  "productWindowErrors": [],
+  "notVerified": [
+    "mobile hardware and OS keyboard",
+    "real cloud transfer",
+    "whole shared Obsidian process restart",
+    "Word-app page layout",
+    "long-duration memory profiling"
+  ]
+}
