@@ -216,8 +216,16 @@ export function parsePluginData(raw: unknown): MiaPluginData {
     const validIdentity = (item: unknown): item is Record<string, unknown> & { id: string; ancestors: string[] } => isRecord(item) && typeof item.id === "string" && item.id.length > 0 && Array.isArray(item.ancestors) && item.ancestors.every(id => typeof id === "string" && id.length > 0) && !item.ancestors.includes(item.id);
     if (!validIdentity(meta) || !isRecord(meta) || !Array.isArray(meta.conflicts)) throw new InvalidReviewDataError("설정 변경 보관 정보가 손상되어 저장을 중단했습니다.");
     const conflicts = meta.conflicts.map((item: unknown) => {
-      if (!validIdentity(item) || !isRecord(item) || !isRecord(item.settings) || settingsKey(parseSettings(item.settings)) !== settingsKey(item.settings)) throw new InvalidReviewDataError("보관된 설정이 손상되어 저장을 중단했습니다.");
-      return { id: item.id, ancestors: [...item.ancestors], settings: parseSettings(item.settings) };
+      if (!validIdentity(item) || !isRecord(item) || !isRecord(item.settings)) throw new InvalidReviewDataError("보관된 설정이 손상되어 저장을 중단했습니다.");
+      const original = structuredClone(item.settings);
+      // Pre-1.4 archives have the same mixed interday policy implicitly. Migrate
+      // only the absent field; explicit invalid values still fail strict validation.
+      if (isRecord(original.studyManagement) && !Object.hasOwn(original.studyManagement, "interdayLearningOrder")) {
+        original.studyManagement.interdayLearningOrder = DEFAULT_SETTINGS.studyManagement.interdayLearningOrder;
+      }
+      const settings = parseSettings(original);
+      if (settingsKey(settings) !== settingsKey(original)) throw new InvalidReviewDataError("보관된 설정이 손상되어 저장을 중단했습니다.");
+      return { id: item.id, ancestors: [...item.ancestors], settings };
     });
     result.settingsSync = { id: meta.id, ancestors: [...meta.ancestors], conflicts };
   }

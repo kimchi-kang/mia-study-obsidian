@@ -467,3 +467,59 @@ it('corrects a rejected minute fraction into exact decimal days without replacin
  expect(ui.find('처음 배우는 문제 1단계 간격')).toBe(input);await ui.save();
  expect((await ui.restart()).settings.studyManagement.learningSteps).toEqual(['1584m','10m']);
 });
+
+describe('Anki-oriented shared explicit-save controls',()=>{
+ it('shares percent and legacy ratio inputs and preserves the exact stored fraction',async()=>{
+  const ui=await setup({...structuredClone(DEFAULT_SETTINGS),targetRetention:.923});
+  expect(ui.find('목표 기억률(%)').value).toBe('92.3');
+  ui.edit('목표 기억률(%)','94.5');
+  expect(ui.find('목표 기억률').value).toBe('0.945');expect(ui.store.settings.targetRetention).toBe(.923);
+  await ui.save();expect(ui.store.settings.targetRetention).toBe(.945);
+  ui.edit('목표 기억률',.923);expect(ui.find('목표 기억률(%)').value).toBe('92.3');
+  await ui.save();expect(ui.store.settings.targetRetention).toBe(.923);
+ });
+ it('keeps invalid percentage and maximum drafts from saving even after mode switches',async()=>{
+  const ui=await setup();ui.edit('목표 기억률(%)',100);ui.click('고급 설정');await ui.save();expect(ui.plugin.updateSettings).not.toHaveBeenCalled();
+  ui.edit('목표 기억률(%)',90);ui.edit('최대 복습 간격(일)',0);await ui.save();expect(ui.plugin.updateSettings).not.toHaveBeenCalled();
+  expect(ui.find('최대 복습 간격(일)').getAttribute('aria-invalid')).toBe('true');
+ });
+ it('saves maximum and fixed override once with the shared draft, and affects subsequent actual grades',async()=>{
+  const ui=await setup(DEFAULT_SETTINGS);const previous=structuredClone(ui.disk().reviews);ui.click('고급 설정');
+  ui.edit('최대 복습 간격(일)',1);ui.edit('못 암기 고정 간격(분)',1584);
+  expect(ui.store.settings.maximumIntervalDays).toBe(36500);expect(ui.root.textContent).toContain('최대 복습주기');
+  await ui.save();expect(ui.store.settings.maximumIntervalDays).toBe(1);expect(ui.store.settings.gradeIntervalsMinutes[1]).toBe(1584);expect(ui.disk().reviews).toEqual(previous);
+  const now=new Date('2026-11-06T12:00:00Z');const preview=ui.plugin.fsrs.preview(undefined,now,'anki')[0];const saved=ui.plugin.fsrs.rate(undefined,Rating.Again,now,'anki');
+  expect(Date.parse(saved.card.due)-now.getTime()).toBe(86400000);expect(saved.card.due).toBe(preview.due.toISOString());
+ });
+ it('synchronizes row and whitespace steps, rejects fractional minutes and keeps old values until saving',async()=>{
+  const ui=await setup();ui.edit('처음 배우는 문제 단계 공백 입력','1 10 1.5h');
+  expect(ui.find('처음 배우는 문제 3단계 간격').value).toBe('90');expect(ui.store.settings.studyManagement.learningSteps).toEqual(['1m','10m']);
+  await ui.save();expect(ui.store.settings.studyManagement.learningSteps).toEqual(['1m','10m','90m']);
+  ui.edit('처음 배우는 문제 단계 공백 입력','0.5m');await ui.save();expect(ui.find('처음 배우는 문제 단계 공백 입력').getAttribute('aria-invalid')).toBe('true');
+  ui.edit('처음 배우는 문제 단계 공백 입력','');await ui.save();expect(ui.store.settings.studyManagement.learningSteps).toEqual([]);
+ });
+ it('preserves a historically larger maximum on no-op save rather than silently replacing it',async()=>{
+  const ui=await setup({...structuredClone(DEFAULT_SETTINGS),maximumIntervalDays:50000});await ui.save();expect(ui.store.settings.maximumIntervalDays).toBe(50000);
+ });
+});
+
+it('preserves unrelated concurrent settings while maximum save fails and retries with the original draft',async()=>{
+ const ui=await setup(DEFAULT_SETTINGS);ui.edit('최대 복습 간격(일)',30);await ui.store.updateSettings({keywordFolder:'external'});
+ const original=ui.storage.saveData;let fail=true;ui.storage.saveData=async d=>{if(fail)throw Error('injected');return original(d);};
+ await expect(ui.save()).rejects.toThrow('injected');expect(ui.find('최대 복습 간격(일)').value).toBe('30');expect(ui.store.settings.maximumIntervalDays).toBe(36500);
+ fail=false;await ui.save();expect(ui.store.settings.maximumIntervalDays).toBe(30);expect(ui.store.settings.keywordFolder).toBe('external');
+});
+it('keeps fixed interval decimal units exact and clears an override only on explicit save',async()=>{
+ const ui=await setup(DEFAULT_SETTINGS);ui.edit('못 암기 고정 간격 단위','d');ui.edit('못 암기 고정 간격(일)','1.1');await ui.save();expect(ui.store.settings.gradeIntervalsMinutes[1]).toBe(1584);
+ ui.edit('못 암기 고정 간격(분)','');expect(ui.store.settings.gradeIntervalsMinutes[1]).toBe(1584);await ui.save();expect(ui.store.settings.gradeIntervalsMinutes[1]).toBeUndefined();
+});
+
+it.each([[92.3,.923],[92.345,.92345],[70,.7],[99,.99]])('stores percent %s as the exact corresponding decimal ratio %s',async(percent,ratio)=>{
+ const ui=await setup(DEFAULT_SETTINGS);ui.edit('목표 기억률(%)',percent);await ui.save();expect(ui.store.settings.targetRetention).toBe(ratio);
+});
+
+it('updates step guidance immediately when editing the shared Hard override draft',async()=>{
+ const ui=await setup();ui.edit('애매 고정 간격(분)',30);
+ expect(ui.root.querySelector('.mia-step-guidance').textContent).toContain('고정 간격이 우선');
+ ui.edit('애매 고정 간격(분)','');expect(ui.root.querySelector('.mia-step-guidance').textContent).toContain('6분');
+});

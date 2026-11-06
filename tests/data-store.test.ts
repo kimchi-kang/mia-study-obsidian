@@ -123,3 +123,20 @@ describe("overlapping saves", () => {
     expect(writes.at(-1)).toMatchObject({ reviews: { one: latest } });
   });
 });
+
+describe('pre-1.4 archived settings migration',()=>{
+ it('loads and preserves older conflict snapshots without writing or discarding their identities',async()=>{
+  const {DEFAULT_SETTINGS}=await import('../src/core/models');
+  const old=structuredClone(DEFAULT_SETTINGS);delete (old.studyManagement as Partial<typeof old.studyManagement>).interdayLearningOrder;
+  const data={version:1,settings:structuredClone(old),reviews:{},settingsSync:{id:'current',ancestors:[],conflicts:[{id:'old-peer',ancestors:['older'],settings:structuredClone(old)}]}};
+  let writes=0;const store=new MiaDataStore({loadData:async()=>structuredClone(data),saveData:async()=>{writes++;}});
+  await store.load();expect(writes).toBe(0);expect(store.settings.studyManagement.interdayLearningOrder).toBe('mix');expect(store.settingsConflicts).toHaveLength(1);
+  expect(store.settingsConflicts[0]).toMatchObject({id:'old-peer',ancestors:['older'],settings:{studyManagement:{interdayLearningOrder:'mix'}}});
+  const expected=structuredClone(old);Object.assign(expected.studyManagement,{interdayLearningOrder:'mix'});expect(store.settingsConflicts[0]!.settings).toEqual(expected);
+ });
+ it('continues to reject explicitly corrupt new placement values in archived originals',async()=>{
+  const {DEFAULT_SETTINGS}=await import('../src/core/models');const corrupt={...structuredClone(DEFAULT_SETTINGS),studyManagement:{...DEFAULT_SETTINGS.studyManagement,interdayLearningOrder:'invalid'}};
+  const store=new MiaDataStore({loadData:async()=>({version:1,settings:DEFAULT_SETTINGS,reviews:{},settingsSync:{id:'current',ancestors:[],conflicts:[{id:'old-peer',ancestors:[],settings:corrupt}]}}),saveData:async()=>{throw Error('must not write');}});
+  await expect(store.load()).rejects.toThrow('보관된 설정');
+ });
+});
