@@ -440,3 +440,19 @@ it("preserves unedited multiline auxiliary keyword meanings and allows an explic
   modal.onOpen();modal.coreMeanings="";await modal.contentEl.find("저장").handlers.get("click")();
   expect(save.mock.calls[0][0].keywordMeanings).toEqual([{target:core.target,label:core.label,meaning:""}]);
 });
+
+it("does not present the FSRS log's previous-review timestamp as a scheduled due date", async () => {
+  const { FsrsService } = await import("../src/core/fsrs-service");
+  const scheduler = new FsrsService({ targetRetention: .9, maximumIntervalDays: 36500 });
+  const initial = scheduler.rate(undefined, 4, new Date("2026-11-01T00:00:00Z"), "base");
+  const saved = scheduler.rate(initial, 3, new Date("2026-11-09T00:00:00Z"), "base");
+  const before = structuredClone(saved);
+  // Upstream log.due is Nov 1 (last review), not the Nov 9 preceding reservation.
+  expect(saved.history.at(-1).due).toBe("2026-11-01T00:00:00.000Z");
+  const modal = new QuestionDetailModal({}, question, saved, [], new Map(), {});
+  await modal.onOpen();
+  const content = element => [element.text, ...element.children.map(content)].join("\n");
+  expect(content(modal.contentEl)).not.toContain("당시 예정");
+  expect(content(modal.contentEl)).toContain("계산 기준");
+  expect(saved).toEqual(before);
+});

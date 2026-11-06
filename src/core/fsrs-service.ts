@@ -102,6 +102,9 @@ export class FsrsService {
 
   rate(state: QuestionReviewState | undefined, grade: StudyGrade, now = new Date(), questionId = ""): QuestionReviewState {
     const current = state ?? this.createState(now);
+    if (current.card.last_review && Date.parse(current.card.last_review) > now.getTime()) {
+      throw new Error("기기 시간이 직전 평가보다 이전입니다. 날짜와 시간을 확인한 뒤 다시 평가하세요.");
+    }
     const card = { ...deserializeCard(current.card), questionSeed: `${questionId}:` };
     const result = this.scheduler.next(card, now, grade as Grade);
     return {
@@ -158,7 +161,9 @@ export class FsrsService {
 
   private capInterval(card: Card, now: Date): Card {
     // Grade separation in ts-fsrs can add days after its own maximum-interval clamp.
-    if (card.scheduled_days <= this.maximumIntervalDays) return card;
+    // Long learning steps also floor scheduled_days while keeping fractional-day due.
+    if (card.scheduled_days <= this.maximumIntervalDays
+      && card.due.getTime() - now.getTime() <= this.maximumIntervalDays * 86400000) return card;
     return {
       ...card,
       scheduled_days: this.maximumIntervalDays,

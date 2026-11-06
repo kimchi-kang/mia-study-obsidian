@@ -1611,3 +1611,24 @@ it("does not credit a pre-session rating when only its durable version changes",
   expect(next.view.getState().queueIndex).toBe(1);
   expect(next.view.studyResult().easy).toBe(0);
 });
+
+it("refreshes an expired interval at UTC midnight before accepting a changed schedule", async () => {
+  vi.setSystemTime(new Date("2026-11-05T23:59:59.999Z"));
+  const ui = setup({ start: false });
+  ui.plugin.fsrs = new FsrsService({ ...structuredClone(DEFAULT_SETTINGS), gradeIntervalsMinutes: { 4: 120 }, studyManagement: { ...DEFAULT_SETTINGS.studyManagement, enableFuzz: false } });
+  const baseline = ui.plugin.fsrs.rate(undefined, Rating.Easy, new Date("2026-11-04T12:00:00Z"), "q");
+  ui.reviews.q = baseline;
+  expect(baseline.card.due).toBe("2026-11-04T14:00:00.000Z");
+  await ui.view.setState({ route: "study", queue: ["q"], queueIndex: 0, answerVisible: true, sessionMode: "browse" }, {});
+  // Locked upstream 5.4.1 yields Good 13d before midnight and 18d after it.
+  expect(ui.button("암기").attrs["aria-label"]).toContain("다음 복습 13일");
+  const shown = ui.button("암기");
+  vi.setSystemTime(new Date("2026-11-06T00:00:00.000Z"));
+  await shown.click();
+  expect(ui.reviews.q).toEqual(baseline);
+  expect(ui.view.getState().queueIndex).toBe(0);
+  expect(ui.button("암기").attrs["aria-label"]).toContain("다음 복습 18일");
+  await ui.button("암기").click();
+  expect(ui.reviews.q.history).toHaveLength(baseline.history.length + 1);
+  expect(ui.reviews.q.card.due).toBe("2026-11-24T00:00:00.000Z");
+});

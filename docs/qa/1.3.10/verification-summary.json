@@ -1,0 +1,87 @@
+{
+  "date": "2026-11-06",
+  "status": "partial-native-reverification-pending",
+  "baseCommit": "1ea7ae9",
+  "localCandidate": "1.3.10",
+  "candidateBuildSha256": {
+    "main.js": "3608364d44f2b420ee8cea6e12b66312d1456b7fceb95a93af6bb12a339cecf7",
+    "styles.css": "eee23d6b84e8e280a18d644ab2dad5e0da95e53ba682365acbee7ad774e86f6c",
+    "manifest.json": "494d4423e0a2cec7747afde6245c11846145468b2cbd66c0d1abbae1ec37145a"
+  },
+  "qaDiskMatchesBuild": true,
+  "lastNativeRuntime": "1.3.9",
+  "candidateNativeVerified": false,
+  "environment": {
+    "os": "macOS 27.2 (26B123)",
+    "obsidian": "1.15.0",
+    "node": "v26.0.0",
+    "vault": "MIA-Final-UI-Audit"
+  },
+  "realTime": {
+    "kind": "actual Obsidian renderer; real wall-clock; no Date or due overrides",
+    "runtime": "1.3.9",
+    "firstRating": "2026-11-06T01:55:55.225Z",
+    "due": "2026-11-06T01:56:55.225Z",
+    "firstWaitingDeltaMs": -1747,
+    "lastWaitingDeltaMs": -246,
+    "observedReappearanceDeltaMs": 36,
+    "singleGoodHistoryBefore": 1,
+    "singleGoodHistoryAfter": 2,
+    "singleGoodNextDue": "2026-11-07T01:59:37.576Z",
+    "singleGoodAt": "2026-11-06T01:59:37.576Z",
+    "laterDiskMatchesPostGood": false,
+    "laterDiskHistoryCount": 1,
+    "persistenceConclusion": "inconclusive after later input-targeting errors; possible undo, not a confirmed product loss"
+  },
+  "fixes": [
+    "missing-local-day-boundary misclassifies learning budget",
+    "fractional long-step due exceeds max interval",
+    "stale interval crossing UTC day silently saves a different interval",
+    "shared rating path accepts backward timestamps",
+    "log.due mislabeled as historical scheduled due"
+  ],
+  "automaticVerification": {
+    "status": "passed",
+    "startedAt": "2026-11-06T02:23:43.379Z",
+    "node": "v26.0.0",
+    "tests": {
+      "files": 76,
+      "passed": 1368,
+      "failed": 0,
+      "skipped": 0
+    },
+    "typecheck": "passed",
+    "productionBuild": "passed",
+    "finishedAt": "2026-11-06T02:24:20.744Z"
+  },
+  "userVault": {
+    "version": "1.3.7",
+    "comparedFiles": 736,
+    "unchanged": 736,
+    "installUpdated": false
+  },
+  "notPerformed": [
+    "candidate native reload and same-condition revalidation",
+    "full current native user journey",
+    "actual OS sleep/wake",
+    "whole Obsidian process restart",
+    "mobile hardware and OS keyboard",
+    "two physical devices cloud transfer"
+  ],
+  "localEvidence": "artifacts/scheduler-audit-2026-11-06/",
+  "remotePush": false,
+  "publicRelease": false,
+  "qaDataAfterDiskInstall": {
+    "dataJsonUnchanged": true,
+    "uiStateOnlyChangedFields": [
+      "updatedAt",
+      "resume.updatedAt"
+    ],
+    "installerWritesOnlyDeploymentFiles": true
+  },
+  "additionalFocusedVerification": {
+    "tests": 164,
+    "status": "passed",
+    "purpose": "stale-preview fixture strengthened to an already-due review after full verification; no product code changes"
+  }
+}

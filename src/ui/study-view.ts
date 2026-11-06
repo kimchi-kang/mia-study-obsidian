@@ -1511,12 +1511,14 @@ export class MiaStudyView extends ItemView {
       ? this.sessionBaselines.get(this.queueIndex)
       : this.plugin.store.getReview(question.id);
     const hasLaterAttempt = [...this.sessionAttempts].some(([index, attempt]) => index > this.queueIndex && attempt.id === question.id);
-    for (const preview of this.plugin.fsrs.preview(baseline, new Date(), question.id)) {
+    const scheduler = this.plugin.fsrs;
+    const previewAt = new Date();
+    for (const preview of scheduler.preview(baseline, previewAt, question.id)) {
       const button = ratings.createEl("button");
       button.dataset.grade = String(preview.grade);
       button.setAttr("aria-keyshortcuts", String(preview.grade));
       this.studyShortcuts.set(String(preview.grade), button);
-      const interval = formatInterval(preview.due, preview.scheduledDays, preview.fixedIntervalMinutes);
+      const interval = formatInterval(preview.due, preview.scheduledDays, preview.fixedIntervalMinutes, previewAt);
       button.setAttr("aria-label", `${GRADE_LABELS[preview.grade]} · 다음 복습 ${interval} · ${GRADE_HINTS[preview.grade]}`);
       button.setAttr("title", GRADE_HINTS[preview.grade]);
       buttons.push(button);
@@ -1539,6 +1541,15 @@ export class MiaStudyView extends ItemView {
             throw new Error("기기 시간이 직전 평가보다 이전입니다. 날짜와 시간을 확인한 뒤 다시 평가하세요.");
           }
           const state = this.plugin.fsrs.rate(baseline, preview.grade, now, question.id);
+          const due = new Date(state.card.due);
+          const currentInterval = formatInterval(due, state.card.scheduled_days,
+            preview.fixedIntervalMinutes === undefined ? undefined : (due.getTime() - now.getTime()) / 60000, now);
+          if (this.plugin.fsrs === scheduler && currentInterval !== interval) {
+            this.endReviewSave();
+            this.render();
+            new Notice("시간 경과로 다음 복습 간격이 바뀌었습니다. 새 간격을 확인한 뒤 다시 평가해 주세요.");
+            return;
+          }
           await this.plugin.store.setReview(question.id, state, { state: expected });
           if (!this.sessionBaselines.has(ratedIndex)) this.sessionBaselines.set(ratedIndex, baseline);
           this.sessionSavedStates.set(question.id, state);
