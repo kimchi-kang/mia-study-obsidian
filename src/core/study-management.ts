@@ -58,7 +58,17 @@ export function parseStudyManagement(value: unknown): StudyManagementSettings {
 export function studyDayStart(now: Date, hour: number): Date {
   const start = new Date(now);
   start.setHours(hour, 0, 0, 0);
-  if (now < start) start.setDate(start.getDate() - 1);
+  if (now < start) {
+    start.setDate(start.getDate() - 1);
+    // Today's missing DST hour may have normalized forward. Restore the
+    // configured hour on yesterday rather than carrying that adjustment back.
+    start.setHours(hour, 0, 0, 0);
+    // A whole civil date can be skipped (e.g. Pacific/Apia 2011-12-30).
+    while (now < start) {
+      start.setTime(start.getTime() - 86400000);
+      start.setHours(hour, 0, 0, 0);
+    }
+  }
   return start;
 }
 

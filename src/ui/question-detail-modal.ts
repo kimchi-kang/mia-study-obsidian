@@ -87,7 +87,8 @@ export class QuestionDetailModal extends Modal {
     this.contentEl.createEl("h3", { text: `복습 기록 ${this.review?.history.length ?? 0}회` });
     const history = this.contentEl.createDiv({ cls: "mia-history" });
     for (const entry of [...(this.review?.history ?? [])].reverse()) {
-      history.createDiv({ text: `${new Date(entry.review).toLocaleString("ko-KR")} · ${RATING_LABELS[entry.rating] ?? entry.rating} · 당시 예정 ${new Date(entry.due).toLocaleString("ko-KR")}` });
+      // ts-fsrs log.due is last_review || due, not the preceding scheduled due.
+      history.createDiv({ text: `${new Date(entry.review).toLocaleString("ko-KR")} · ${RATING_LABELS[entry.rating] ?? entry.rating} · 계산 기준 ${new Date(entry.due).toLocaleString("ko-KR")}` });
     }
     if (!this.review?.history.length) history.createEl("p", { text: "아직 복습 기록이 없습니다.", cls: "mia-muted" });
 
