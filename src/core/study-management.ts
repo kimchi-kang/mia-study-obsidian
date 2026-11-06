@@ -48,7 +48,8 @@ export function parseStudyManagement(value: unknown): StudyManagementSettings {
     learningSteps: steps("learningSteps"), relearningSteps: steps("relearningSteps"),
     newCardOrder: choice(raw.newCardOrder, ["sequential", "random"], defaults.newCardOrder),
     newReviewOrder: choice(raw.newReviewOrder, ["before", "after", "mix"], defaults.newReviewOrder),
-    reviewOrder: choice(raw.reviewOrder, ["due", "retrievability", "random", "interval-ascending", "interval-descending"], defaults.reviewOrder),
+    interdayLearningOrder: choice(raw.interdayLearningOrder, ["before", "after", "mix"], defaults.interdayLearningOrder),
+    reviewOrder: choice(raw.reviewOrder, ["due", "retrievability", "retrievability-descending", "random", "interval-ascending", "interval-descending"], defaults.reviewOrder),
     enableFuzz: typeof raw.enableFuzz === "boolean" ? raw.enableFuzz : defaults.enableFuzz,
     fsrsParameters: validParameters(raw.fsrsParameters) ? [...raw.fsrsParameters] : [],
   };
@@ -113,6 +114,7 @@ export function orderManagedQueue<T extends QuestionRecord & { id: string }>(
   else scheduled.sort((a, b) => {
     const left = reviews[a.id]!.card; const right = reviews[b.id]!.card;
     if (settings.reviewOrder === "retrievability") return compareRecall(a.id, b.id);
+    if (settings.reviewOrder === "retrievability-descending") return compareRecall(b.id, a.id);
     if (settings.reviewOrder === "interval-ascending") return left.scheduled_days - right.scheduled_days;
     if (settings.reviewOrder === "interval-descending") return right.scheduled_days - left.scheduled_days;
     return Date.parse(left.due) - Date.parse(right.due);
@@ -120,7 +122,15 @@ export function orderManagedQueue<T extends QuestionRecord & { id: string }>(
   if (settings.newCardOrder === "random") shuffle(fresh);
   const counts = dailyStudyCounts(reviews, settings, now);
   const remaining = Math.max(0, settings.reviewsPerDay - counts.review - (settings.newCardsIgnoreReviewLimit ? 0 : counts.fresh));
-  const selectedReviews = scheduled.slice(0, remaining);
+  let orderedScheduled = scheduled;
+  // Intraday steps remain first. Interday learning shares the review budget,
+  // with its explicit placement applied before that budget is selected.
+  if (settings.interdayLearningOrder !== "mix") {
+    const interday = (item: T) => reviews[item.id]!.card.state === State.Learning || reviews[item.id]!.card.state === State.Relearning;
+    const steps = scheduled.filter(interday), regular = scheduled.filter(item => !interday(item));
+    orderedScheduled = settings.interdayLearningOrder === "before" ? [...steps, ...regular] : [...regular, ...steps];
+  }
+  const selectedReviews = orderedScheduled.slice(0, remaining);
   const newBudget = Math.max(0, Math.min(settings.newCardsPerDay - counts.fresh,
     settings.newCardsIgnoreReviewLimit ? 9999 : remaining - selectedReviews.length));
   const selectedNew = fresh.slice(0, newBudget);

@@ -152,3 +152,29 @@ describe('exact decimal step input', () => {
     expect(parseSteps('36500.00000d')).toEqual(['36500d']);
   });
 });
+
+describe('explicit interday placement and compatible legacy defaults', () => {
+  it('defaults old data to the existing mixed scheduled order without touching its steps', () => {
+    expect(parseStudyManagement({learningSteps:['1584m']}).interdayLearningOrder).toBe('mix');
+    expect(parseStudyManagement({interdayLearningOrder:'unknown'}).interdayLearningOrder).toBe('mix');
+    expect(parseStudyManagement({reviewOrder:'retrievability-descending'}).reviewOrder).toBe('retrievability-descending');
+  });
+  it('places due interday learning before or after regular reviews before applying the shared cap', () => {
+    const step=fsrs.rate(undefined,Rating.Again,new Date(2026,9,24,12),'step');
+    const qs=[question('review'),question('step')],reviews={review:old,step};
+    const run=(interdayLearningOrder:'before'|'after'|'mix',cap=20)=>buildReviewQueue(qs,reviews,fsrs,{now,management:manage({newCardsPerDay:0,reviewsPerDay:cap,interdayLearningOrder})}).map(q=>q.id);
+    expect(run('before')).toEqual(['step','review']);
+    expect(run('after')).toEqual(['review','step']);
+    expect(run('before',1)).toEqual(['step']);
+    expect(run('after',1)).toEqual(['review']);
+    expect(run('before',0)).toEqual([]);
+    // Every due ID is available under a sufficient cap; the option never deletes history.
+    expect(new Set(run('mix'))).toEqual(new Set(['review','step']));
+    expect(reviews.step).toEqual(step);
+  });
+  it('reverses recall probability order without changing due eligibility', () => {
+    const qs=[question('review'),question('other')],reviews={review:old,other:{...old,card:{...old.card,stability:old.card.stability*2}}};
+    const run=(reviewOrder:'retrievability'|'retrievability-descending')=>buildReviewQueue(qs,reviews,fsrs,{now,management:manage({reviewOrder})}).map(q=>q.id);
+    expect(run('retrievability-descending')).toEqual([...run('retrievability')].reverse());
+  });
+});

@@ -1070,3 +1070,8 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-settings-number-control button { min-height: 44px; white-space: normal; }
 .mia-profile-rename { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .mia-profile-rename input { flex: 1 1 10rem; min-width: 0; width: 100%; }
+
+/* Shared Anki-oriented settings groups keep the same draft in both entry points. */
+.mia-anki-settings-section { min-width: 0; margin-block: 18px; padding-block-start: 8px; border-top: 1px solid var(--background-modifier-border); }
+.mia-anki-settings-section > h4 { margin-block: 4px 12px; }
+.mia-anki-settings-section .setting-item-control { flex-wrap: wrap; }

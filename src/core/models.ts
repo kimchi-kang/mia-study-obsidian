@@ -94,7 +94,8 @@ export interface StudyManagementSettings {
   relearningSteps: import("ts-fsrs").StepUnit[];
   newCardOrder: "sequential" | "random";
   newReviewOrder: "before" | "after" | "mix";
-  reviewOrder: "due" | "retrievability" | "random" | "interval-ascending" | "interval-descending";
+  interdayLearningOrder: "before" | "after" | "mix";
+  reviewOrder: "due" | "retrievability" | "random" | "interval-ascending" | "interval-descending" | "retrievability-descending";
   enableFuzz: boolean;
   fsrsParameters: number[];
 }
@@ -108,6 +109,7 @@ export const DEFAULT_STUDY_MANAGEMENT: StudyManagementSettings = {
   relearningSteps: ["10m"],
   newCardOrder: "sequential",
   newReviewOrder: "mix",
+  interdayLearningOrder: "mix",
   reviewOrder: "due",
   enableFuzz: true,
   fsrsParameters: [],
