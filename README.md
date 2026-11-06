@@ -1,8 +1,8 @@
 # MIA Study for Obsidian
 
-[1.3.7 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.3.7) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [1.3.7 검증 결과](docs/qa/1.3.7/README.md)
+[1.3.9 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.3.9) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [1.3.9 실사용 검증](docs/qa/1.3.9/README.md)
 
-**2026-11-05 현재: 로컬 소스·격리 검증은 1.3.9, GitHub main은 1.3.8, 사용자 설치·정식 릴리스는 1.3.7입니다.** 실제 사용 중 발견한 저장 복구 후 완료 집계 누락을 로컬에서 수정했습니다. 전체 1,309개 검사와 실제 앱 재검증을 통과했으며 이번 작업은 사용자 설치·원격·릴리스를 변경하지 않습니다. [실사용 검증 결과](docs/qa/1.3.9/README.md) · [변경 내역](docs/releases/1.3.9.md) · [현재 상태](STATUS.md) · [설치·복구](INSTALL.md)
+**2026-11-06 정식 배포: 소스·GitHub main·릴리스는 1.3.9입니다.** 1.3.8의 자료 보존·재시도 수정과 1.3.9의 복구 후 완료 집계 수정을 포함합니다. 전체 1,309개 검사와 실제 앱 재검증을 통과했습니다. 기존 사용자 설치는 1.3.7을 유지하며 자동 교체하지 않았습니다. [실사용 검증과 한계](docs/qa/1.3.9/README.md) · [누적 변경 내역](docs/releases/1.3.9.md) · [현재 상태](STATUS.md) · [설치·복구](INSTALL.md)
 
 1.3.7은 2026-11-03 전체 검사 1,289개·타입 검사·빌드를 통과했고, 실제 macOS Obsidian 1.15.0의 요청된 데스크톱 UI 검증과 사용자 보관함 정상 재로드를 완료했습니다. 이어하기 17/84와 사용자 파일 736개 불변은 **그날의 결과**입니다. 모바일 실기기·OS 키보드·실제 두 기기 클라우드 전달은 미검증이며, 후속 Mac 공유 파일 두 환경 검증은 부분 완료입니다. [데스크톱 결과](docs/qa/1.3.7/README.md) · [대체 검증과 한계](docs/qa/1.3.7/paired-desktop.md)
 
