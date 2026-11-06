@@ -1,8 +1,8 @@
 # MIA Study for Obsidian
 
-[1.3.9 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.3.9) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [1.3.9 실사용 검증](docs/qa/1.3.9/README.md)
+[1.3.11 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.3.11) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [1.3.11 실사용 검증](docs/qa/1.3.11/README.md)
 
-**최신 소스·실제 QA 실행은 1.3.11입니다.** 일정·출제 결함5건과 창 재실행의 읽기/건너뜀 복원을 수정했습니다. 전체1372검사·타입·빌드와 실제 Obsidian 재검증을 완료했습니다. 공개 다운로드는1.3.9이며 사용자 설치를 교체하지 않았습니다. [최종 실사용·시간 경과·제한](docs/qa/1.3.11/README.md) · [변경 내역](docs/releases/1.3.11.md)
+**최신 소스·실제 QA 실행은 1.3.11입니다.** 일정·출제 결함5건과 창 재실행의 읽기/건너뜀 복원을 수정했습니다. 전체1372검사·타입·빌드와 실제 Obsidian 재검증을 완료했습니다. 정식 다운로드도1.3.11입니다. 사용자 설치를 수동 교체하지 않았습니다. [최종 실사용·시간 경과·제한](docs/qa/1.3.11/README.md) · [변경 내역](docs/releases/1.3.11.md)
 
 **2026-11-06 정식 배포 당시: GitHub main·릴리스는 1.3.9였습니다.** 1.3.8의 자료 보존·재시도 수정과 1.3.9의 복구 후 완료 집계 수정을 포함합니다. 전체 1,309개 검사와 실제 앱 재검증을 통과했습니다. 기존 사용자 설치는 1.3.7을 유지하며 자동 교체하지 않았습니다. [실사용 검증과 한계](docs/qa/1.3.9/README.md) · [누적 변경 내역](docs/releases/1.3.9.md) · [현재 상태](STATUS.md) · [설치·복구](INSTALL.md)
 
