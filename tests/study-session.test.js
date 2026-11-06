@@ -8,7 +8,7 @@ const modalBoundary = vi.hoisted(() => ({ instances: [] }));
 // Only Obsidian's UI boundary is replaced; the view, timers and FSRS are real.
 vi.mock("obsidian", () => {
   class Element {
-    children = []; handlers = new Map(); text = ""; disabled = false;
+    children = []; handlers = new Map(); text = ""; disabled = false; scrollTop = 0; open = false;
     style = { setProperty() {} }; dataset = {}; attrs = {};
     constructor(options = {}) { this.text = options.text ?? ""; this.cls=options.cls??""; this.attrs={...options.attr}; this.validity={valid:true}; this.value=options.value??""; }
     createEl(tag, options = {}) { const child = new Element(options); child.tag = tag; child.parent=this; this.children.push(child); return child; }
@@ -28,7 +28,7 @@ vi.mock("obsidian", () => {
     contains(element) { return this===element || this.children.some(child=>child.contains(element)); }
     querySelectorAll(selector) { const tags=selector.split(",").map(tag=>tag.trim()); return this.children.flatMap(child=>[...(tags.includes(child.tag)?[child]:[]),...child.querySelectorAll(selector)]); }
     querySelector(selector) {
-      if(selector===".mia-learning-button" || selector===".mia-appearance-button") { const visit=el=>el.cls.split(" ").includes(selector.slice(1))?el:el.children.map(visit).find(Boolean);return visit(this)??null; }
+      if([".mia-learning-button", ".mia-appearance-button", ".mia-study-layout", ".mia-study-concepts"].includes(selector)) { const visit=el=>el.cls.split(" ").includes(selector.slice(1))?el:el.children.map(visit).find(Boolean);return visit(this)??null; }
       if(selector===".mia-session-edit-actions button") { const find=el=>el.cls.split(" ").includes("mia-session-edit-actions")?el.children.find(child=>child.tag==="button"):el.children.map(find).find(Boolean);return find(this)??null; }
       if(selector!==".mia-save-status")return null;
       const visit=element=>{for(const child of element.children){if(child.cls.split(" ").includes("mia-save-status"))return child;const found=visit(child);if(found)return found;}return null;};return visit(this);
@@ -1631,4 +1631,49 @@ it("refreshes an expired interval at UTC midnight before accepting a changed sch
   await ui.button("암기").click();
   expect(ui.reviews.q.history).toHaveLength(baseline.history.length + 1);
   expect(ui.reviews.q.card.due).toBe("2026-11-24T00:00:00.000Z");
+});
+
+
+describe("initial workspace session restoration", () => {
+  it("restores the saved scroll and expanded concepts when opening the same workspace session", async () => {
+    const ui = setup({ start: false });
+    await ui.plugin.studyUi.saveResume({ queue: ["q"], seed: ["q"], skipped: [], queueIndex: 0, answerVisible: true, sessionMode: "browse", updatedAt: new Date().toISOString(), scrollTop: 345, pageScrollTop: 12, conceptsOpen: true });
+    await ui.view.setState({ route: "study", queue: ["q"], queueIndex: 0, answerVisible: true, sessionMode: "browse" }, {});
+    await vi.waitFor(() => expect(ui.view.contentEl.querySelector(".mia-study-layout").scrollTop).toBe(345));
+    expect(ui.view.contentEl.querySelector(".mia-study-concepts").open).toBe(true);
+    expect(ui.view.contentEl.scrollTop).toBe(12);
+  });
+  it("does not requeue a skipped learning card after the same workspace session reopens", async () => {
+    const ui = setup({ start: false, linked: true });
+    ui.reviews.q = ui.plugin.fsrs.rate(undefined, Rating.Again, new Date(Date.now() - 120000), "q");
+    await ui.plugin.studyUi.saveResume({ queue: ["q", "related"], seed: ["q", "related"], skipped: ["q"], queueIndex: 1, answerVisible: true, sessionMode: "browse", updatedAt: new Date().toISOString() });
+    await ui.view.setState({ route: "study", queue: ["q", "related"], queueIndex: 1, answerVisible: true, sessionMode: "browse" }, {});
+    expect(ui.view.getState().queue).toEqual(["q", "related"]);
+    await ui.button("너무 쉬움").click();
+    expect(ui.content()).toContain("학습 완료");
+    expect(ui.reviews.q.history).toHaveLength(1);
+    expect(ui.reviews.related.history).toHaveLength(1);
+  });
+  it("preserves skipped cards while the startup question index is still loading", async () => {
+    const ui = setup({ start: false, linked: true });
+    ui.reviews.q = ui.plugin.fsrs.rate(undefined, Rating.Again, new Date(Date.now() - 120000), "q");
+    await ui.plugin.studyUi.saveResume({ queue: ["q", "related"], seed: ["q", "related"], skipped: ["q"], queueIndex: 1, answerVisible: true, sessionMode: "browse", updatedAt: new Date().toISOString() });
+    const questions = ui.plugin.index.registered.splice(0);
+    ui.plugin.index.isReady = false;
+    await ui.view.setState({ route: "study", queue: ["q", "related"], queueIndex: 1, answerVisible: true, sessionMode: "browse" }, {});
+    ui.plugin.index.registered.push(...questions);
+    ui.plugin.index.isReady = true;
+    ui.view.render();
+    await ui.button("너무 쉬움").click();
+    expect(ui.content()).toContain("학습 완료");
+    expect(ui.reviews.q.history).toHaveLength(1);
+    expect(ui.view.studyResult()).toMatchObject({ total: 2, skipped: 1, easy: 1 });
+  });
+  it("does not apply another session's saved reading state to a different workspace queue", async () => {
+    const ui = setup({ start: false, linked: true });
+    await ui.plugin.studyUi.saveResume({ queue: ["related"], seed: ["related"], skipped: [], queueIndex: 0, answerVisible: true, sessionMode: "browse", updatedAt: new Date().toISOString(), scrollTop: 345, conceptsOpen: true });
+    await ui.view.setState({ route: "study", queue: ["q"], queueIndex: 0, answerVisible: true, sessionMode: "browse" }, {});
+    await vi.waitFor(() => expect(ui.view.contentEl.querySelector(".mia-study-layout").scrollTop).toBe(0));
+    expect(ui.view.contentEl.querySelector(".mia-study-concepts").open).toBe(false);
+  });
 });

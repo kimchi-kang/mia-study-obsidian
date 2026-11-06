@@ -235,6 +235,7 @@ export class MiaStudyView extends ItemView {
 
   async setState(state: unknown, result: ViewStateResult): Promise<void> {
     if (this.reviewSavePending()) return;
+    const initialRestore = !this.stateRestored;
     this.flushReadingPosition();
     const next = parseMiaNavigationState(state);
     // Workspace navigation supersedes any editor that is still loading.
@@ -268,7 +269,19 @@ export class MiaStudyView extends ItemView {
       this.sessionStartedAt = Date.now();
       const saved = this.plugin.studyUi.resume;
       if (saved?.sessionMode === next.sessionMode && saved.queue.length === next.queue.length
-        && saved.queue.every((id, index) => id === next.queue[index])) this.restoreSessionSummary(saved.sessionSummary, next.queue);
+        && saved.queue.every((id, index) => id === next.queue[index])) {
+        this.restoreSessionSummary(saved.sessionSummary, next.queue);
+        if (initialRestore) {
+          // Workspace hydration can precede the first question-index scan.
+          // Keep persisted IDs until render can reconcile a ready index.
+          this.sessionSeed = [...saved.seed];
+          this.sessionSkipped = new Set(saved.skipped);
+          if (!recoveredRatingId && saved.queueIndex === next.queueIndex) {
+            this.readingPosition = { key: `study:${next.queueIndex}:${next.queue[next.queueIndex] ?? ""}`,
+              scrollTop: saved.scrollTop ?? 0, pageScrollTop: saved.pageScrollTop ?? 0, conceptsOpen: saved.conceptsOpen ?? false };
+          }
+        }
+      }
       this.resultShown = false;
       this.hintVisible = false;
     }

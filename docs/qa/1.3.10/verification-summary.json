@@ -83,5 +83,7 @@
     "tests": 164,
     "status": "passed",
     "purpose": "stale-preview fixture strengthened to an already-due review after full verification; no product code changes"
-  }
+  },
+  "supersededBy": "../1.3.11/verification-summary.json",
+  "historicalSnapshot": true
 }
