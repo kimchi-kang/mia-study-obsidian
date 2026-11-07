@@ -1,0 +1,2049 @@
+[
+  {
+    "screen": "home",
+    "modal": null,
+    "pane": [
+      280,
+      280
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      280,
+      653
+    ],
+    "visual": [
+      280,
+      653,
+      0
+    ]
+  },
+  {
+    "screen": "progress",
+    "modal": null,
+    "pane": [
+      280,
+      280
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-progress",
+    "version": "v1.4.2",
+    "viewport": [
+      280,
+      653
+    ],
+    "visual": [
+      280,
+      653,
+      0
+    ]
+  },
+  {
+    "screen": "questions",
+    "modal": null,
+    "pane": [
+      280,
+      280
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      280,
+      653
+    ],
+    "visual": [
+      280,
+      653,
+      0
+    ]
+  },
+  {
+    "screen": "weak",
+    "modal": null,
+    "pane": [
+      280,
+      280
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-weakness",
+    "version": "v1.4.2",
+    "viewport": [
+      280,
+      653
+    ],
+    "visual": [
+      280,
+      653,
+      0
+    ]
+  },
+  {
+    "screen": "keywords",
+    "modal": null,
+    "pane": [
+      280,
+      280
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      280,
+      653
+    ],
+    "visual": [
+      280,
+      653,
+      0
+    ]
+  },
+  {
+    "screen": "simple",
+    "modal": [
+      256,
+      256
+    ],
+    "pane": [
+      280,
+      280
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      280,
+      653
+    ],
+    "visual": [
+      280,
+      653,
+      0
+    ]
+  },
+  {
+    "screen": "advanced",
+    "modal": [
+      256,
+      256
+    ],
+    "pane": [
+      280,
+      280
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      280,
+      653
+    ],
+    "visual": [
+      280,
+      653,
+      0
+    ]
+  },
+  {
+    "screen": "home",
+    "modal": null,
+    "pane": [
+      320,
+      320
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      320,
+      568
+    ],
+    "visual": [
+      320,
+      568,
+      0
+    ]
+  },
+  {
+    "screen": "progress",
+    "modal": null,
+    "pane": [
+      320,
+      320
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-progress",
+    "version": "v1.4.2",
+    "viewport": [
+      320,
+      568
+    ],
+    "visual": [
+      320,
+      568,
+      0
+    ]
+  },
+  {
+    "screen": "questions",
+    "modal": null,
+    "pane": [
+      320,
+      320
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      320,
+      568
+    ],
+    "visual": [
+      320,
+      568,
+      0
+    ]
+  },
+  {
+    "screen": "weak",
+    "modal": null,
+    "pane": [
+      320,
+      320
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-weakness",
+    "version": "v1.4.2",
+    "viewport": [
+      320,
+      568
+    ],
+    "visual": [
+      320,
+      568,
+      0
+    ]
+  },
+  {
+    "screen": "keywords",
+    "modal": null,
+    "pane": [
+      320,
+      320
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      320,
+      568
+    ],
+    "visual": [
+      320,
+      568,
+      0
+    ]
+  },
+  {
+    "screen": "simple",
+    "modal": [
+      296,
+      296
+    ],
+    "pane": [
+      320,
+      320
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      320,
+      568
+    ],
+    "visual": [
+      320,
+      568,
+      0
+    ]
+  },
+  {
+    "screen": "advanced",
+    "modal": [
+      296,
+      296
+    ],
+    "pane": [
+      320,
+      320
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      320,
+      568
+    ],
+    "visual": [
+      320,
+      568,
+      0
+    ]
+  },
+  {
+    "screen": "home",
+    "modal": null,
+    "pane": [
+      360,
+      360
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      360,
+      640
+    ],
+    "visual": [
+      360,
+      640,
+      0
+    ]
+  },
+  {
+    "screen": "progress",
+    "modal": null,
+    "pane": [
+      360,
+      360
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-progress",
+    "version": "v1.4.2",
+    "viewport": [
+      360,
+      640
+    ],
+    "visual": [
+      360,
+      640,
+      0
+    ]
+  },
+  {
+    "screen": "questions",
+    "modal": null,
+    "pane": [
+      360,
+      360
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      360,
+      640
+    ],
+    "visual": [
+      360,
+      640,
+      0
+    ]
+  },
+  {
+    "screen": "weak",
+    "modal": null,
+    "pane": [
+      360,
+      360
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-weakness",
+    "version": "v1.4.2",
+    "viewport": [
+      360,
+      640
+    ],
+    "visual": [
+      360,
+      640,
+      0
+    ]
+  },
+  {
+    "screen": "keywords",
+    "modal": null,
+    "pane": [
+      360,
+      360
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      360,
+      640
+    ],
+    "visual": [
+      360,
+      640,
+      0
+    ]
+  },
+  {
+    "screen": "simple",
+    "modal": [
+      336,
+      336
+    ],
+    "pane": [
+      360,
+      360
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      360,
+      640
+    ],
+    "visual": [
+      360,
+      640,
+      0
+    ]
+  },
+  {
+    "screen": "advanced",
+    "modal": [
+      336,
+      336
+    ],
+    "pane": [
+      360,
+      360
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      360,
+      640
+    ],
+    "visual": [
+      360,
+      640,
+      0
+    ]
+  },
+  {
+    "screen": "home",
+    "modal": null,
+    "pane": [
+      375,
+      375
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      375,
+      667
+    ],
+    "visual": [
+      375,
+      667,
+      0
+    ]
+  },
+  {
+    "screen": "progress",
+    "modal": null,
+    "pane": [
+      375,
+      375
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-progress",
+    "version": "v1.4.2",
+    "viewport": [
+      375,
+      667
+    ],
+    "visual": [
+      375,
+      667,
+      0
+    ]
+  },
+  {
+    "screen": "questions",
+    "modal": null,
+    "pane": [
+      375,
+      375
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      375,
+      667
+    ],
+    "visual": [
+      375,
+      667,
+      0
+    ]
+  },
+  {
+    "screen": "weak",
+    "modal": null,
+    "pane": [
+      375,
+      375
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-weakness",
+    "version": "v1.4.2",
+    "viewport": [
+      375,
+      667
+    ],
+    "visual": [
+      375,
+      667,
+      0
+    ]
+  },
+  {
+    "screen": "keywords",
+    "modal": null,
+    "pane": [
+      375,
+      375
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      375,
+      667
+    ],
+    "visual": [
+      375,
+      667,
+      0
+    ]
+  },
+  {
+    "screen": "simple",
+    "modal": [
+      351,
+      351
+    ],
+    "pane": [
+      375,
+      375
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      375,
+      667
+    ],
+    "visual": [
+      375,
+      667,
+      0
+    ]
+  },
+  {
+    "screen": "advanced",
+    "modal": [
+      351,
+      351
+    ],
+    "pane": [
+      375,
+      375
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      375,
+      667
+    ],
+    "visual": [
+      375,
+      667,
+      0
+    ]
+  },
+  {
+    "screen": "home",
+    "modal": null,
+    "pane": [
+      390,
+      390
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      390,
+      844
+    ],
+    "visual": [
+      390,
+      844,
+      0
+    ]
+  },
+  {
+    "screen": "progress",
+    "modal": null,
+    "pane": [
+      390,
+      390
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-progress",
+    "version": "v1.4.2",
+    "viewport": [
+      390,
+      844
+    ],
+    "visual": [
+      390,
+      844,
+      0
+    ]
+  },
+  {
+    "screen": "questions",
+    "modal": null,
+    "pane": [
+      390,
+      390
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      390,
+      844
+    ],
+    "visual": [
+      390,
+      844,
+      0
+    ]
+  },
+  {
+    "screen": "weak",
+    "modal": null,
+    "pane": [
+      390,
+      390
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-weakness",
+    "version": "v1.4.2",
+    "viewport": [
+      390,
+      844
+    ],
+    "visual": [
+      390,
+      844,
+      0
+    ]
+  },
+  {
+    "screen": "keywords",
+    "modal": null,
+    "pane": [
+      390,
+      390
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      390,
+      844
+    ],
+    "visual": [
+      390,
+      844,
+      0
+    ]
+  },
+  {
+    "screen": "simple",
+    "modal": [
+      366,
+      366
+    ],
+    "pane": [
+      390,
+      390
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      390,
+      844
+    ],
+    "visual": [
+      390,
+      844,
+      0
+    ]
+  },
+  {
+    "screen": "advanced",
+    "modal": [
+      366,
+      366
+    ],
+    "pane": [
+      390,
+      390
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      390,
+      844
+    ],
+    "visual": [
+      390,
+      844,
+      0
+    ]
+  },
+  {
+    "screen": "home",
+    "modal": null,
+    "pane": [
+      412,
+      412
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      412,
+      915
+    ],
+    "visual": [
+      412,
+      915,
+      0
+    ]
+  },
+  {
+    "screen": "progress",
+    "modal": null,
+    "pane": [
+      412,
+      412
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-progress",
+    "version": "v1.4.2",
+    "viewport": [
+      412,
+      915
+    ],
+    "visual": [
+      412,
+      915,
+      0
+    ]
+  },
+  {
+    "screen": "questions",
+    "modal": null,
+    "pane": [
+      412,
+      412
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      412,
+      915
+    ],
+    "visual": [
+      412,
+      915,
+      0
+    ]
+  },
+  {
+    "screen": "weak",
+    "modal": null,
+    "pane": [
+      412,
+      412
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-weakness",
+    "version": "v1.4.2",
+    "viewport": [
+      412,
+      915
+    ],
+    "visual": [
+      412,
+      915,
+      0
+    ]
+  },
+  {
+    "screen": "keywords",
+    "modal": null,
+    "pane": [
+      412,
+      412
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      412,
+      915
+    ],
+    "visual": [
+      412,
+      915,
+      0
+    ]
+  },
+  {
+    "screen": "simple",
+    "modal": [
+      388,
+      388
+    ],
+    "pane": [
+      412,
+      412
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      412,
+      915
+    ],
+    "visual": [
+      412,
+      915,
+      0
+    ]
+  },
+  {
+    "screen": "advanced",
+    "modal": [
+      388,
+      388
+    ],
+    "pane": [
+      412,
+      412
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      412,
+      915
+    ],
+    "visual": [
+      412,
+      915,
+      0
+    ]
+  },
+  {
+    "screen": "home",
+    "modal": null,
+    "pane": [
+      430,
+      430
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      430,
+      932
+    ],
+    "visual": [
+      430,
+      932,
+      0
+    ]
+  },
+  {
+    "screen": "progress",
+    "modal": null,
+    "pane": [
+      430,
+      430
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-progress",
+    "version": "v1.4.2",
+    "viewport": [
+      430,
+      932
+    ],
+    "visual": [
+      430,
+      932,
+      0
+    ]
+  },
+  {
+    "screen": "questions",
+    "modal": null,
+    "pane": [
+      430,
+      430
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      430,
+      932
+    ],
+    "visual": [
+      430,
+      932,
+      0
+    ]
+  },
+  {
+    "screen": "weak",
+    "modal": null,
+    "pane": [
+      430,
+      430
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-weakness",
+    "version": "v1.4.2",
+    "viewport": [
+      430,
+      932
+    ],
+    "visual": [
+      430,
+      932,
+      0
+    ]
+  },
+  {
+    "screen": "keywords",
+    "modal": null,
+    "pane": [
+      430,
+      430
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      430,
+      932
+    ],
+    "visual": [
+      430,
+      932,
+      0
+    ]
+  },
+  {
+    "screen": "simple",
+    "modal": [
+      406,
+      406
+    ],
+    "pane": [
+      430,
+      430
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      430,
+      932
+    ],
+    "visual": [
+      430,
+      932,
+      0
+    ]
+  },
+  {
+    "screen": "advanced",
+    "modal": [
+      406,
+      406
+    ],
+    "pane": [
+      430,
+      430
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      430,
+      932
+    ],
+    "visual": [
+      430,
+      932,
+      0
+    ]
+  },
+  {
+    "screen": "home",
+    "modal": null,
+    "pane": [
+      344,
+      344
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      344,
+      882
+    ],
+    "visual": [
+      344,
+      882,
+      0
+    ]
+  },
+  {
+    "screen": "progress",
+    "modal": null,
+    "pane": [
+      344,
+      344
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-progress",
+    "version": "v1.4.2",
+    "viewport": [
+      344,
+      882
+    ],
+    "visual": [
+      344,
+      882,
+      0
+    ]
+  },
+  {
+    "screen": "questions",
+    "modal": null,
+    "pane": [
+      344,
+      344
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      344,
+      882
+    ],
+    "visual": [
+      344,
+      882,
+      0
+    ]
+  },
+  {
+    "screen": "weak",
+    "modal": null,
+    "pane": [
+      344,
+      344
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-weakness",
+    "version": "v1.4.2",
+    "viewport": [
+      344,
+      882
+    ],
+    "visual": [
+      344,
+      882,
+      0
+    ]
+  },
+  {
+    "screen": "keywords",
+    "modal": null,
+    "pane": [
+      344,
+      344
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      344,
+      882
+    ],
+    "visual": [
+      344,
+      882,
+      0
+    ]
+  },
+  {
+    "screen": "simple",
+    "modal": [
+      320,
+      320
+    ],
+    "pane": [
+      344,
+      344
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      344,
+      882
+    ],
+    "visual": [
+      344,
+      882,
+      0
+    ]
+  },
+  {
+    "screen": "advanced",
+    "modal": [
+      320,
+      320
+    ],
+    "pane": [
+      344,
+      344
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      344,
+      882
+    ],
+    "visual": [
+      344,
+      882,
+      0
+    ]
+  },
+  {
+    "screen": "home",
+    "modal": null,
+    "pane": [
+      600,
+      600
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      600,
+      800
+    ],
+    "visual": [
+      600,
+      800,
+      0
+    ]
+  },
+  {
+    "screen": "progress",
+    "modal": null,
+    "pane": [
+      600,
+      600
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-progress",
+    "version": "v1.4.2",
+    "viewport": [
+      600,
+      800
+    ],
+    "visual": [
+      600,
+      800,
+      0
+    ]
+  },
+  {
+    "screen": "questions",
+    "modal": null,
+    "pane": [
+      600,
+      600
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      600,
+      800
+    ],
+    "visual": [
+      600,
+      800,
+      0
+    ]
+  },
+  {
+    "screen": "weak",
+    "modal": null,
+    "pane": [
+      600,
+      600
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-weakness",
+    "version": "v1.4.2",
+    "viewport": [
+      600,
+      800
+    ],
+    "visual": [
+      600,
+      800,
+      0
+    ]
+  },
+  {
+    "screen": "keywords",
+    "modal": null,
+    "pane": [
+      600,
+      600
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      600,
+      800
+    ],
+    "visual": [
+      600,
+      800,
+      0
+    ]
+  },
+  {
+    "screen": "simple",
+    "modal": [
+      576,
+      576
+    ],
+    "pane": [
+      600,
+      600
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      600,
+      800
+    ],
+    "visual": [
+      600,
+      800,
+      0
+    ]
+  },
+  {
+    "screen": "advanced",
+    "modal": [
+      576,
+      576
+    ],
+    "pane": [
+      600,
+      600
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      600,
+      800
+    ],
+    "visual": [
+      600,
+      800,
+      0
+    ]
+  },
+  {
+    "screen": "home",
+    "modal": null,
+    "pane": [
+      768,
+      768
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      768,
+      1024
+    ],
+    "visual": [
+      768,
+      1024,
+      0
+    ]
+  },
+  {
+    "screen": "progress",
+    "modal": null,
+    "pane": [
+      768,
+      768
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-progress",
+    "version": "v1.4.2",
+    "viewport": [
+      768,
+      1024
+    ],
+    "visual": [
+      768,
+      1024,
+      0
+    ]
+  },
+  {
+    "screen": "questions",
+    "modal": null,
+    "pane": [
+      768,
+      768
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      768,
+      1024
+    ],
+    "visual": [
+      768,
+      1024,
+      0
+    ]
+  },
+  {
+    "screen": "weak",
+    "modal": null,
+    "pane": [
+      768,
+      768
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-weakness",
+    "version": "v1.4.2",
+    "viewport": [
+      768,
+      1024
+    ],
+    "visual": [
+      768,
+      1024,
+      0
+    ]
+  },
+  {
+    "screen": "keywords",
+    "modal": null,
+    "pane": [
+      768,
+      768
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      768,
+      1024
+    ],
+    "visual": [
+      768,
+      1024,
+      0
+    ]
+  },
+  {
+    "screen": "simple",
+    "modal": [
+      744,
+      744
+    ],
+    "pane": [
+      768,
+      768
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      768,
+      1024
+    ],
+    "visual": [
+      768,
+      1024,
+      0
+    ]
+  },
+  {
+    "screen": "advanced",
+    "modal": [
+      744,
+      744
+    ],
+    "pane": [
+      768,
+      768
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      768,
+      1024
+    ],
+    "visual": [
+      768,
+      1024,
+      0
+    ]
+  },
+  {
+    "screen": "home",
+    "modal": null,
+    "pane": [
+      820,
+      820
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      820,
+      1180
+    ],
+    "visual": [
+      820,
+      1180,
+      0
+    ]
+  },
+  {
+    "screen": "progress",
+    "modal": null,
+    "pane": [
+      820,
+      820
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-progress",
+    "version": "v1.4.2",
+    "viewport": [
+      820,
+      1180
+    ],
+    "visual": [
+      820,
+      1180,
+      0
+    ]
+  },
+  {
+    "screen": "questions",
+    "modal": null,
+    "pane": [
+      820,
+      820
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      820,
+      1180
+    ],
+    "visual": [
+      820,
+      1180,
+      0
+    ]
+  },
+  {
+    "screen": "weak",
+    "modal": null,
+    "pane": [
+      820,
+      820
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-weakness",
+    "version": "v1.4.2",
+    "viewport": [
+      820,
+      1180
+    ],
+    "visual": [
+      820,
+      1180,
+      0
+    ]
+  },
+  {
+    "screen": "keywords",
+    "modal": null,
+    "pane": [
+      820,
+      820
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      820,
+      1180
+    ],
+    "visual": [
+      820,
+      1180,
+      0
+    ]
+  },
+  {
+    "screen": "simple",
+    "modal": [
+      796,
+      796
+    ],
+    "pane": [
+      820,
+      820
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      820,
+      1180
+    ],
+    "visual": [
+      820,
+      1180,
+      0
+    ]
+  },
+  {
+    "screen": "advanced",
+    "modal": [
+      796,
+      796
+    ],
+    "pane": [
+      820,
+      820
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      820,
+      1180
+    ],
+    "visual": [
+      820,
+      1180,
+      0
+    ]
+  },
+  {
+    "screen": "home",
+    "modal": null,
+    "pane": [
+      568,
+      568
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      568,
+      320
+    ],
+    "visual": [
+      568,
+      320,
+      0
+    ]
+  },
+  {
+    "screen": "progress",
+    "modal": null,
+    "pane": [
+      568,
+      568
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-progress",
+    "version": "v1.4.2",
+    "viewport": [
+      568,
+      320
+    ],
+    "visual": [
+      568,
+      320,
+      0
+    ]
+  },
+  {
+    "screen": "questions",
+    "modal": null,
+    "pane": [
+      568,
+      568
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      568,
+      320
+    ],
+    "visual": [
+      568,
+      320,
+      0
+    ]
+  },
+  {
+    "screen": "weak",
+    "modal": null,
+    "pane": [
+      568,
+      568
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-weakness",
+    "version": "v1.4.2",
+    "viewport": [
+      568,
+      320
+    ],
+    "visual": [
+      568,
+      320,
+      0
+    ]
+  },
+  {
+    "screen": "keywords",
+    "modal": null,
+    "pane": [
+      568,
+      568
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      568,
+      320
+    ],
+    "visual": [
+      568,
+      320,
+      0
+    ]
+  },
+  {
+    "screen": "simple",
+    "modal": [
+      544,
+      544
+    ],
+    "pane": [
+      568,
+      568
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      568,
+      320
+    ],
+    "visual": [
+      568,
+      320,
+      0
+    ]
+  },
+  {
+    "screen": "advanced",
+    "modal": [
+      544,
+      544
+    ],
+    "pane": [
+      568,
+      568
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      568,
+      320
+    ],
+    "visual": [
+      568,
+      320,
+      0
+    ]
+  },
+  {
+    "screen": "home",
+    "modal": null,
+    "pane": [
+      844,
+      844
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      844,
+      390
+    ],
+    "visual": [
+      844,
+      390,
+      0
+    ]
+  },
+  {
+    "screen": "progress",
+    "modal": null,
+    "pane": [
+      844,
+      844
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-progress",
+    "version": "v1.4.2",
+    "viewport": [
+      844,
+      390
+    ],
+    "visual": [
+      844,
+      390,
+      0
+    ]
+  },
+  {
+    "screen": "questions",
+    "modal": null,
+    "pane": [
+      844,
+      844
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      844,
+      390
+    ],
+    "visual": [
+      844,
+      390,
+      0
+    ]
+  },
+  {
+    "screen": "weak",
+    "modal": null,
+    "pane": [
+      844,
+      844
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-weakness",
+    "version": "v1.4.2",
+    "viewport": [
+      844,
+      390
+    ],
+    "visual": [
+      844,
+      390,
+      0
+    ]
+  },
+  {
+    "screen": "keywords",
+    "modal": null,
+    "pane": [
+      844,
+      844
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      844,
+      390
+    ],
+    "visual": [
+      844,
+      390,
+      0
+    ]
+  },
+  {
+    "screen": "simple",
+    "modal": [
+      820,
+      820
+    ],
+    "pane": [
+      844,
+      844
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      844,
+      390
+    ],
+    "visual": [
+      844,
+      390,
+      0
+    ]
+  },
+  {
+    "screen": "advanced",
+    "modal": [
+      820,
+      820
+    ],
+    "pane": [
+      844,
+      844
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      844,
+      390
+    ],
+    "visual": [
+      844,
+      390,
+      0
+    ]
+  },
+  {
+    "screen": "home",
+    "modal": null,
+    "pane": [
+      667,
+      667
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      667,
+      260
+    ],
+    "visual": [
+      667,
+      260,
+      0
+    ]
+  },
+  {
+    "screen": "progress",
+    "modal": null,
+    "pane": [
+      667,
+      667
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-progress",
+    "version": "v1.4.2",
+    "viewport": [
+      667,
+      260
+    ],
+    "visual": [
+      667,
+      260,
+      0
+    ]
+  },
+  {
+    "screen": "questions",
+    "modal": null,
+    "pane": [
+      667,
+      667
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      667,
+      260
+    ],
+    "visual": [
+      667,
+      260,
+      0
+    ]
+  },
+  {
+    "screen": "weak",
+    "modal": null,
+    "pane": [
+      667,
+      667
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-weakness",
+    "version": "v1.4.2",
+    "viewport": [
+      667,
+      260
+    ],
+    "visual": [
+      667,
+      260,
+      0
+    ]
+  },
+  {
+    "screen": "keywords",
+    "modal": null,
+    "pane": [
+      667,
+      667
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      667,
+      260
+    ],
+    "visual": [
+      667,
+      260,
+      0
+    ]
+  },
+  {
+    "screen": "simple",
+    "modal": [
+      643,
+      643
+    ],
+    "pane": [
+      667,
+      667
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      667,
+      260
+    ],
+    "visual": [
+      667,
+      260,
+      0
+    ]
+  },
+  {
+    "screen": "advanced",
+    "modal": [
+      643,
+      643
+    ],
+    "pane": [
+      667,
+      667
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-keywords",
+    "version": "v1.4.2",
+    "viewport": [
+      667,
+      260
+    ],
+    "visual": [
+      667,
+      260,
+      0
+    ]
+  },
+  {
+    "screen": "tablet-sidebar-questions",
+    "modal": null,
+    "pane": [
+      620,
+      620
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      820,
+      1180
+    ],
+    "visual": [
+      820,
+      1180,
+      0
+    ]
+  },
+  {
+    "screen": "tablet-split-questions",
+    "modal": null,
+    "pane": [
+      410,
+      410
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      820,
+      1180
+    ],
+    "visual": [
+      820,
+      1180,
+      0
+    ]
+  },
+  {
+    "screen": "tablet-split-settings",
+    "modal": [
+      728,
+      728
+    ],
+    "pane": [
+      410,
+      410
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-dashboard",
+    "version": "v1.4.2",
+    "viewport": [
+      820,
+      1180
+    ],
+    "visual": [
+      820,
+      1180,
+      0
+    ]
+  },
+  {
+    "screen": "desktop-questions",
+    "modal": null,
+    "pane": [
+      1280,
+      1280
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      1280,
+      800
+    ],
+    "visual": [
+      1280,
+      800,
+      0
+    ]
+  },
+  {
+    "screen": "desktop-settings",
+    "modal": [
+      726,
+      726
+    ],
+    "pane": [
+      1280,
+      1280
+    ],
+    "route": "view-content mia-keyboard-surface mia-view mia-route-questions",
+    "version": "v1.4.2",
+    "viewport": [
+      1280,
+      800
+    ],
+    "visual": [
+      1280,
+      800,
+      0
+    ]
+  }
+]
