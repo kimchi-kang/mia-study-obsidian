@@ -1,0 +1,162 @@
+
+> mia-study-obsidian@1.4.1 verify:full
+> node scripts/verify-full.mjs
+
+Verification reports: /Users/choikang/Desktop/전공/study-management-2026-10-25/artifacts/verification/run-W8nfPN
+
+[verify:full] all tests and required synthetic vault audits
+
+> mia-study-obsidian@1.4.1 test
+> vitest run --reporter=default --reporter=json --outputFile=/Users/choikang/Desktop/전공/study-management-2026-10-25/artifacts/verification/run-W8nfPN/tests.json
+
+
+ RUN  v4.1.12 /Users/choikang/Desktop/전공/study-management-2026-10-25
+
+(node:3522) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/scheduling-audit.test.js (57 tests) 1206ms
+ ✓ tests/local-install.test.ts (1 test) 1649ms
+   ✓ updates plugin files without touching activation settings or study data  1648ms
+ ✓ tests/scheduler-audit.test.ts (16 tests) 352ms
+ ✓ tests/export-responsiveness.test.js (6 tests) 2064ms
+     ✓ allows queued input before rendering and between batches without dropping or reordering content  968ms
+   ✓ services queued input inside one inline question with many resolved image reads  302ms
+ ✓ tests/study-session.test.js (168 tests) 707ms
+ ✓ tests/simple-study-settings.test.js (69 tests) 1705ms
+(node:3570) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/storage-integrity.test.js (72 tests) 343ms
+ ✓ tests/subject-export.test.ts (9 tests) 230ms
+ ✓ tests/fsrs-time-boundaries.test.js (13 tests) 398ms
+ ✓ tests/startup-bundle.test.js (6 tests) 196ms
+(node:3585) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/package-release.test.js (10 tests) 152ms
+(node:3586) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/export-small-document.test.js (1 test) 151ms
+ ✓ tests/settings-conflict-ui.test.js (3 tests) 169ms
+ ✓ tests/export-boundaries.test.js (29 tests) 121ms
+ ✓ tests/generated-regression.test.ts (300 tests) 45ms
+ ✓ tests/review-version-scale.test.js (3 tests) 3442ms
+     ✓ advances past 200000 revision markers without an argument-count limit  388ms
+     ✓ commits and reloads a grade when old deleted questions left 200000 markers  3052ms
+ ✓ tests/ui-modals.test.js (36 tests) 43ms
+ ✓ tests/file-mutations.test.js (56 tests) 56ms
+ ✓ tests/release-safety.test.js (36 tests) 37ms
+ ✓ tests/portable-study-storage.test.ts (15 tests) 27ms
+ ✓ tests/multi-device-loss.test.ts (15 tests) 39ms
+ ✓ tests/study-management.test.ts (19 tests) 23ms
+ ✓ tests/data-store.test.ts (11 tests) 25ms
+ ✓ tests/architecture.test.ts (47 tests) 32ms
+ ✓ tests/fsrs-service.test.ts (8 tests) 34ms
+ ✓ tests/grade-intervals.test.ts (8 tests) 21ms
+ ✓ tests/verified-plugin-storage.test.js (18 tests) 21ms
+ ✓ tests/code-audit-0.10.5.test.js (5 tests) 32ms
+ ✓ tests/export-file.test.ts (2 tests) 15ms
+ ✓ tests/bulk-review-removal.test.js (3 tests) 24ms
+ ✓ tests/recommendation-engine.test.ts (6 tests) 13ms
+ ✓ tests/sync-refresh.test.js (5 tests) 20ms
+ ✓ tests/owned-merge.test.js (11 tests) 35ms
+ ✓ tests/review-sync.test.ts (7 tests) 23ms
+ ✓ tests/performance.test.ts (1 test) 28ms
+ ✓ tests/plugin-lifetime.test.js (12 tests) 25ms
+stdout | tests/vault-audit.test.ts > read-only vault compatibility audit > parses every question callout without empty prompts, answers, or diagnostics
+MIA vault audit: 9 questions in 2 notes
+
+stdout | tests/vault-audit.test.ts > read-only vault compatibility audit > round-trips dummy metadata for every question entirely in memory
+MIA vault write audit: 9 in-memory round trips
+
+ ✓ tests/vault-audit.test.ts (2 tests) 23ms
+ ✓ tests/merge-isolation.test.js (8 tests) 22ms
+ ✓ tests/review-equality.test.js (5 tests) 11ms
+ ✓ tests/learning-queue.test.ts (7 tests) 12ms
+ ✓ tests/first-question-entry.test.js (7 tests) 10ms
+ ✓ tests/mobile-keyboard-binding.test.js (8 tests) 11ms
+ ✓ tests/safety-regression.test.ts (4 tests) 12ms
+ ✓ tests/study-ui-store.test.js (20 tests) 9ms
+ ✓ tests/progress.test.ts (1 test) 11ms
+ ✓ tests/question-index.test.ts (11 tests) 12ms
+ ✓ tests/question-writer.test.ts (6 tests) 5ms
+ ✓ tests/feature-completeness.test.ts (5 tests) 7ms
+ ✓ tests/study-gestures.test.js (16 tests) 4ms
+ ✓ tests/study-appearance-modal.test.js (6 tests) 8ms
+ ✓ tests/markdown-links.test.ts (19 tests) 11ms
+ ✓ tests/index-cache.test.js (6 tests) 12ms
+ ✓ tests/file-change-batch.test.js (14 tests) 8ms
+ ✓ tests/rating-tap-guard.test.js (11 tests) 5ms
+ ✓ tests/managed-question.test.ts (10 tests) 7ms
+ ✓ tests/markdown-preservation.test.ts (8 tests) 17ms
+ ✓ tests/source-attribution.test.ts (10 tests) 6ms
+ ✓ tests/adaptive-layout.test.js (3 tests) 3ms
+ ✓ tests/agent-guide.test.ts (1 test) 5ms
+ ✓ tests/managed-workflow.test.ts (1 test) 8ms
+ ✓ tests/test-vault.integration.test.ts (1 test) 8ms
+ ✓ tests/question-query.test.ts (2 tests) 6ms
+ ✓ tests/question-parser.test.ts (4 tests) 5ms
+ ✓ tests/keyword-note.test.ts (9 tests) 4ms
+ ✓ tests/mobile-keyboard.test.ts (3 tests) 7ms
+ ✓ tests/question-title.test.ts (6 tests) 3ms
+ ✓ tests/subject-note.test.ts (2 tests) 3ms
+ ✓ tests/keyword-path.test.ts (4 tests) 4ms
+ ✓ tests/subject-note-math.test.ts (6 tests) 9ms
+ ✓ tests/mobile-ui.test.ts (8 tests) 6ms
+ ✓ tests/study-swipe.test.ts (15 tests) 2ms
+ ✓ tests/keyword-reference.test.ts (3 tests) 2ms
+ ✓ tests/study-policy.test.ts (4 tests) 2ms
+ ✓ tests/navigation.test.ts (5 tests) 2ms
+ ✓ tests/crash-storage.test.js (18 tests) 6533ms
+     ✓ preserves the last complete commit after 'grade' at 'before-primary'  318ms
+     ✓ preserves the last complete commit after 'grade' at 'primary-truncated'  521ms
+     ✓ preserves the last complete commit after 'grade' at 'primary-partial'  495ms
+     ✓ preserves the last complete commit after 'grade' at 'after-primary'  355ms
+     ✓ preserves the last complete commit after 'grade' at 'recovery-partial'  319ms
+     ✓ preserves the last complete commit after 'grade' at 'after-recovery'  361ms
+     ✓ preserves the last complete commit after 'grade' at 'after-ack'  334ms
+     ✓ preserves the last complete commit after 'reset' at 'before-primary'  327ms
+     ✓ preserves the last complete commit after 'reset' at 'primary-truncated'  435ms
+     ✓ preserves the last complete commit after 'reset' at 'primary-partial'  444ms
+     ✓ preserves the last complete commit after 'reset' at 'after-primary'  356ms
+     ✓ preserves the last complete commit after 'reset' at 'recovery-partial'  317ms
+     ✓ preserves the last complete commit after 'reset' at 'after-recovery'  324ms
+     ✓ preserves the last complete commit after 'reset' at 'after-ack'  322ms
+     ✓ refuses to manufacture an empty installation when both stored copies are torn  314ms
+   ✓ preserves the review/checkpoint mismatch across SIGKILL at before-primary  377ms
+ ✓ tests/installer-safety.test.js (30 tests) 33109ms
+   ✓ accepts a config link whose resolved directory remains within the vault  1735ms
+   ✓ accepts an explicitly selected vault alias  1571ms
+   ✓ replaces an asset link itself without overwriting its external target  1733ms
+   ✓ installs, reinstalls, updates and restores older asset fixtures without rewriting any study or activation files  3194ms
+   ✓ preserves complete files and user data after injected error, and repairs the asset set on rerun  1129ms
+   ✓ preserves complete files and user data after injected kill, and repairs the asset set on rerun  1166ms
+   ✓ preserves data and repairs installation after SIGKILL following staging main.js  1174ms
+   ✓ preserves data and repairs installation after SIGKILL following staging styles.css  1105ms
+   ✓ preserves data and repairs installation after SIGKILL following staging manifest.json  1106ms
+   ✓ detects overlapping old then new installs paused after main.js, and repairs on rerun  1260ms
+   ✓ detects overlapping new then old installs paused after main.js, and repairs on rerun  1234ms
+   ✓ detects overlapping old then new installs paused after styles.css, and repairs on rerun  1199ms
+   ✓ detects overlapping new then old installs paused after styles.css, and repairs on rerun  1290ms
+   ✓ detects overlapping old then new installs paused after manifest.json, and repairs on rerun  1176ms
+   ✓ detects overlapping new then old installs paused after manifest.json, and repairs on rerun  1185ms
+   ✓ rejects read-error at install verification and preserves study files through a clean retry  1176ms
+   ✓ rejects changed-content at install verification and preserves study files through a clean retry  1109ms
+   ✓ recovers the complete requested install after SIGKILL following rename styles.css  1120ms
+   ✓ recovers the complete requested install after SIGKILL following rename manifest.json  1174ms
+   ✓ recovers the complete requested install after SIGKILL following readFile main.js  1992ms
+   ✓ recovers the complete requested install after SIGKILL following readFile styles.css  2129ms
+   ✓ recovers the complete requested install after SIGKILL following readFile manifest.json  2055ms
+
+ Test Files  76 passed (76)
+      Tests  1393 passed (1393)
+   Start at  08:56:03
+   Duration  33.35s (transform 1.61s, setup 0ms, import 4.63s, tests 53.44s, environment 5ms)
+
+JSON report written to /Users/choikang/Desktop/전공/study-management-2026-10-25/artifacts/verification/run-W8nfPN/tests.json
+
+[verify:full] type check and production build
+
+> mia-study-obsidian@1.4.1 build
+> tsc --noEmit && node esbuild.config.mjs production
+
+
+Full verification passed: 1393 tests, 0 failed, 0 skipped; type check and production build passed.

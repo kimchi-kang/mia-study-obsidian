@@ -36,7 +36,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
     status.setAttribute("role", "status");
     status.id = `mia-settings-status-${crypto.randomUUID()}`;
     let saveStatus: HTMLElement | undefined;
-    let fieldError: { input: HTMLElement; message: HTMLElement; description: string | null } | undefined;
+    let fieldError: { input: HTMLElement; message: HTMLElement; description: string | null; isValid: () => boolean } | undefined;
     const clearFieldError = () => {
       if (!fieldError) return;
       const { input, message, description } = fieldError;
@@ -46,13 +46,15 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       message.remove();
       fieldError = undefined;
     };
-    const clearInvalid = (event: Event) => {
-      if (event.target === fieldError?.input) clearFieldError();
-      if (event.target instanceof container.ownerDocument.defaultView!.HTMLElement) event.target.removeAttribute("aria-invalid");
+    const refreshFieldError = () => {
+      if (fieldError && (!container.contains(fieldError.input) || fieldError.isValid())) {
+        clearFieldError();
+        status.setText("아직 저장하지 않은 변경사항이 있습니다.");
+      }
     };
-    container.oninput = clearInvalid;
-    container.onchange = clearInvalid;
-    const changed = (keepPreview = false) => { clearFieldError(); if (saveStatus) saveStatus.hidden = true; if (!keepPreview) loadPreview = ""; status.setText("아직 저장하지 않은 변경사항이 있습니다."); refresh(); };
+    container.oninput = refreshFieldError;
+    container.onchange = refreshFieldError;
+    const changed = (keepPreview = false) => { refreshFieldError(); if (saveStatus) saveStatus.hidden = true; if (!keepPreview) loadPreview = ""; status.setText(fieldError?.message.textContent ?? "아직 저장하지 않은 변경사항이 있습니다."); refresh(); };
     const modes = container.createDiv({ cls: "mia-settings-modes", attr: { role: "group", "aria-label": "학습 설정 화면" } });
     const simpleButton = modes.createEl("button", { text: "간편 설정", attr: { type: "button", "aria-pressed": "true" } });
     const advancedButton = modes.createEl("button", { text: "고급 설정", attr: { type: "button", "aria-pressed": "false" } });
@@ -99,7 +101,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
     };
     simpleButton.addEventListener("click", () => showAdvanced(false));
     advancedButton.addEventListener("click", () => showAdvanced(true));
-    const fail = (message: string, input: HTMLElement, expert = false) => {
+    const fail = (message: string, input: HTMLElement, expert = false, isValid: () => boolean = () => false) => {
       clearFieldError();
       if (expert) showAdvanced(true);
       let parent = input.parentElement;
@@ -108,7 +110,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       const description = input.getAttribute("aria-describedby");
       const inline = input.parentElement!.createEl("p", { text: message, cls: "mia-settings-field-error" });
       inline.id = `mia-settings-error-${crypto.randomUUID()}`;
-      fieldError = { input, message: inline, description };
+      fieldError = { input, message: inline, description, isValid };
       input.setAttribute("aria-describedby", [description, inline.id].filter(Boolean).join(" "));
       status.setText(message);
       input.focus();
@@ -132,9 +134,10 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       setting.controlEl.createEl("button", { text: `기본값 ${DEFAULT_STUDY_MANAGEMENT[key]}`, attr: { type: "button", "aria-label": `${name}만 기본값 복원` } }).addEventListener("click", () => {
         draft[key] = DEFAULT_STUDY_MANAGEMENT[key]; input.value = String(draft[key]); changed(); input.focus();
       });
+      const isValid = () => input.validity.valid && Boolean(input.value.trim()) && Number.isInteger(Number(input.value)) && Number(input.value) >= 0 && Number(input.value) <= max;
       validators.push(() => {
         const parsed = Number(input.value);
-        if (!input.validity.valid || !input.value.trim() || !Number.isInteger(parsed) || parsed < 0 || parsed > max) return fail(`${name}: 0–${max} 사이 정수를 입력하세요.`, input, root === extra);
+        if (!isValid()) return fail(`${name}: 0–${max} 사이 정수를 입력하세요.`, input, root === extra, isValid);
         draft[key] = parsed; return true;
       });
     };
@@ -144,7 +147,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
     const budgetNote = budgetHelp.createEl("p", { cls: "setting-item-description" });
     simple.insertBefore(basic, budgetHelp);
 
-    let retentionSelect!: HTMLSelectElement; let retentionInput!: HTMLInputElement; let retentionPercentInput!: HTMLInputElement;
+    let retentionSelect!: HTMLSelectElement; let retentionInput!: HTMLInputElement; let retentionPercentInput!: HTMLInputElement; let retentionEditor: "ratio" | "percent" = "percent";
     new Setting(retentionGroup).setName("다시 보는 빈도").setDesc("문제별 장기 복습 간격을 계산할 때 쓰는 목표입니다. 높일수록 대체로 더 자주 복습합니다.").addDropdown(control => {
       retentionSelect = control.selectEl; control.addOption("custom", "사용자 지정");
       for (const [value, label] of Object.entries(RETENTION_PRESETS)) control.addOption(value, label);
@@ -153,12 +156,13 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
     });
     new Setting(retentionDetails).setName("목표 기억률").setDesc("0.70–0.99(70–99%). 예: 0.923은 92.3% 목표. 실제 시험 정답률이나 기억을 보장하지 않습니다. 낮추면 대체로 복습 간격이 길어집니다. 고정 단계와 별개이며 기존 예약일은 다시 계산하지 않고 다음 평가부터 적용합니다.").addText(control => {
       retentionInput = control.inputEl;
-      control.setValue(String(retention)).onChange(value => { const parsed = Number(value); if (value.trim() && Number.isFinite(parsed) && parsed >= .7 && parsed <= .99) retention = parsed; retentionPercentInput.value = value.trim() && Number.isFinite(parsed) ? String(Number((parsed * 100).toFixed(10))) : ""; changed(); });
+      control.setValue(String(retention)).onChange(value => { retentionEditor = "ratio"; const parsed = Number(value); if (value.trim() && Number.isFinite(parsed) && parsed >= .7 && parsed <= .99) retention = parsed; retentionPercentInput.value = value.trim() && Number.isFinite(parsed) ? String(Number((parsed * 100).toFixed(10))) : ""; changed(); });
       retentionInput.type = "number"; retentionInput.min = "0.7"; retentionInput.max = "0.99"; retentionInput.step = "any"; retentionInput.setAttribute("aria-label", "목표 기억률");
     });
     new Setting(retentionGroup).setName("목표 기억률(%)").setDesc("Anki와 같은 백분율 입력 · 70–99%. 기존 MIA 비율 입력과 같은 값입니다. 기존 예약은 유지되고 다음 평가부터 적용됩니다.").addText(control => {
       retentionPercentInput = control.inputEl;
       control.setValue(String(Number((retention * 100).toFixed(10)))).onChange(value => {
+        retentionEditor = "percent";
         const parsed = Number(value);
         const valid = value.trim() && Number.isFinite(parsed) && parsed >= 70 && parsed <= 99;
         // Shift the two percentage digits as decimal text: 92.3 means 0.923,
@@ -169,7 +173,11 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       });
       retentionPercentInput.type = "number"; retentionPercentInput.min = "70"; retentionPercentInput.max = "99"; retentionPercentInput.step = "any"; retentionPercentInput.setAttribute("aria-label", "목표 기억률(%)");
     });
-    validators.push(() => retentionInput.value.trim() && retentionInput.validity.valid && Number(retentionInput.value) >= .7 && Number(retentionInput.value) <= .99 ? true : fail("목표 기억률: 0.70–0.99 사이 숫자를 입력하세요.", retentionInput));
+    const validRetention = () => Boolean(retentionInput.value.trim()) && retentionInput.validity.valid && Number(retentionInput.value) >= .7 && Number(retentionInput.value) <= .99
+      && Boolean(retentionPercentInput.value.trim()) && retentionPercentInput.validity.valid && Number(retentionPercentInput.value) >= 70 && Number(retentionPercentInput.value) <= 99;
+    validators.push(() => validRetention() || (retentionEditor === "percent"
+      ? fail("목표 기억률: 70–99% 사이 숫자를 입력하세요.", retentionPercentInput, false, validRetention)
+      : fail("목표 기억률: 0.70–0.99 사이 숫자를 입력하세요.", retentionInput, false, validRetention)));
     retentionDetails.createEl("button", { text: "복습 목표만 기본값 90%로 복원", attr: { type: "button", "aria-label": "복습 목표만 기본값 복원" } }).addEventListener("click", () => {
       retention = DEFAULT_SETTINGS.targetRetention; retentionInput.value = String(retention); retentionPercentInput.value = String(Number((retention * 100).toFixed(10))); changed(); retentionInput.focus();
     });
@@ -183,7 +191,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       workloadSelect.value = invalid ? "custom" : workloadPreset(draft);
       const invalidRetention = !retentionInput.value.trim() || !retentionInput.validity.valid || Number(retentionInput.value) < .7 || Number(retentionInput.value) > .99;
       retentionSelect.value = !invalidRetention && Object.hasOwn(RETENTION_PRESETS, String(retention)) ? String(retention) : "custom";
-      retentionError.setText(invalidRetention ? "목표 기억률 입력을 확인하세요. 세부 조정에서 0.70–0.99를 입력하거나 여기서 빈도를 다시 선택하세요. 아직 저장되지 않았습니다." : "");
+      retentionError.setText(invalidRetention ? "목표 기억률 입력을 확인하세요. 70–99%를 입력하거나 빈도를 다시 선택하세요. 세부 조정의 비율 입력은 0.70–0.99입니다. 아직 저장되지 않았습니다." : "");
       retentionError.hidden = !invalidRetention;
       budgetNote.setText(`하루 제한은 기기 시간 기준 ${draft.dayStartsAt < 12 ? "오전" : "오후"} ${draft.dayStartsAt % 12 || 12}시에 새로 계산합니다. 세션을 다시 시작해도 당일 공부한 양은 차감됩니다. 같은 날의 짧은 반복은 상한에 포함되지 않습니다. 상한을 넘은 예정 복습은 이후 학습으로 밀려 쌓일 수 있습니다. ${draft.newCardsIgnoreReviewLimit ? "새 문제는 복습 상한과 별도로 셉니다." : "새 문제도 복습 상한을 함께 사용하므로, 복습이 상한을 채우면 새 문제는 나오지 않습니다."} 이 상한은 시험 모드를 새로 시작할 때의 자동 출제에 적용됩니다. 이어하기와 직접 추가한 문제는 기존 목록을 유지하며, 자유 암기에는 적용되지 않습니다.`);
       advancedNote.setText(`${hasCustomAdvancedSettings({ ...baseline, studyManagement: draft, maximumIntervalDays: maximumInterval, gradeIntervalsMinutes: gradeIntervals }) ? "고급 설정: 사용자 지정. 기존 세부 값을 유지합니다." : "고급 설정: 기본값."} ${Object.keys(gradeIntervals).length ? "평가 버튼에 지정된 고정 간격이 우선하므로 해당 버튼에는 빈도 선택이 적용되지 않습니다." : "기존 복습일은 바뀌지 않고, 다음 평가에서 새 간격을 계산합니다."}`);
@@ -297,13 +305,13 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       });
       stepSummary.setText(draft[key].length ? `고정 단계: ${stepText(draft[key])}. 평가에 따라 다음 단계로 진행하거나 자동 복습으로 넘어갑니다.` : "고정 단계 없이 FSRS가 문제별 간격을 계산합니다.");
       validators.push(() => {
-        if (rawInvalid) return fail(`${title}: 1m 10m처럼 정확한 분 단위 간격을 공백으로 구분하세요.`, rawInput);
+        if (rawInvalid) return fail(`${title}: 1m 10m처럼 정확한 분 단위 간격을 공백으로 구분하세요.`, rawInput, false, () => !rawInvalid);
         if (automatic) { draft[key] = []; return true; }
-        if (!rows.length) return fail(`${title}: 단계를 추가하거나 자동으로 정하기를 선택하세요.`, addButton);
+        if (!rows.length) return fail(`${title}: 단계를 추가하거나 자동으로 정하기를 선택하세요.`, addButton, false, () => automatic || rows.length > 0);
         const steps: StudyManagementSettings[typeof key] = [];
         for (const row of rows) {
           const parsed = row.input.validity.valid && row.value.trim() ? parseSteps(`${row.value}${row.unit}`) : null;
-          if (!parsed) return fail(`${title}: 간격은 1분–36500일 범위에서 정확한 분 단위여야 합니다. 빈 값·0·분 미만 나머지는 저장할 수 없습니다.`, row.input);
+          if (!parsed) return fail(`${title}: 간격은 1분–36500일 범위에서 정확한 분 단위여야 합니다. 빈 값·0·분 미만 나머지는 저장할 수 없습니다.`, row.input, false, () => Boolean(row.input.validity.valid && row.value.trim() && parseSteps(`${row.value}${row.unit}`)));
           steps.push(...parsed);
         }
         draft[key] = steps; return true;
@@ -350,14 +358,15 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
     validators.push(() => {
       const value = parameters.trim();
       const parsed = value ? value.replace(/^\[|\]$/g, "").split(/[\s,]+/).map(Number) : [];
-      if (!validParameters(parsed)) return fail("FSRS-6 매개변수는 유효한 숫자 21개여야 합니다.", parameterInput, true);
+      if (!validParameters(parsed)) return fail("FSRS-6 매개변수는 유효한 숫자 21개여야 합니다.", parameterInput, true, () => validParameters(parameters.trim() ? parameters.trim().replace(/^\[|\]$/g, "").split(/[\s,]+/).map(Number) : []));
       draft.fsrsParameters = parsed; return true;
     });
     extra.createEl("p", { text: "전체 과목에 같은 설정이 적용됩니다. 이미 예약된 복습일은 유지됩니다. 평가 버튼별 고정 간격을 설정했다면 그 값이 우선합니다.", cls: "setting-item-description" });
     const maximum = new Setting(fsrsArea).setName("최대 복습주기 · 최대 복습 간격(일)").setDesc("1–36500일. 다음 평가의 실제 예약 상한입니다. 기존 예약은 유지됩니다.");
     let maximumInput!: HTMLInputElement;
     maximum.addText(control => { maximumInput = control.inputEl; control.setValue(String(maximumInterval)).onChange(value => { const n = Number(value); if (value.trim() && Number.isInteger(n) && n >= 1 && n <= Math.max(36500, baseline.maximumIntervalDays)) maximumInterval = n; changed(); }); maximumInput.type = "number"; maximumInput.min = "1"; maximumInput.max = String(Math.max(36500, baseline.maximumIntervalDays)); maximumInput.step = "1"; maximumInput.setAttribute("aria-label", "최대 복습 간격(일)"); });
-    validators.push(() => maximumInput.value.trim() && maximumInput.validity.valid && Number.isInteger(Number(maximumInput.value)) && Number(maximumInput.value) >= 1 && Number(maximumInput.value) <= Math.max(36500, baseline.maximumIntervalDays) ? true : fail("최대 복습 간격: 1–36500일 사이 정수를 입력하세요.", maximumInput, true));
+    const validMaximum = () => Boolean(maximumInput.value.trim()) && maximumInput.validity.valid && Number.isInteger(Number(maximumInput.value)) && Number(maximumInput.value) >= 1 && Number(maximumInput.value) <= Math.max(36500, baseline.maximumIntervalDays);
+    validators.push(() => validMaximum() || fail("최대 복습 간격: 1–36500일 사이 정수를 입력하세요.", maximumInput, true, validMaximum));
     maximum.controlEl.createEl("button", { text: "기본값 36500일", attr: { type: "button" } }).addEventListener("click", () => { maximumInterval = DEFAULT_SETTINGS.maximumIntervalDays; maximumInput.value = String(maximumInterval); changed(); });
     const fixed = extra.createEl("details", { cls: "mia-settings-help" }); fixed.createEl("summary", { text: "MIA 전용 · 평가 버튼별 고정 간격" });
     fixed.createEl("p", { text: "Anki의 졸업 간격·쉬운 간격과 다릅니다. 지정하면 새 문제·학습·재학습·복습 모두에서 해당 버튼의 FSRS 계산보다 우선하며 최대 간격 상한을 적용합니다. 빈칸은 자동. 저장 전에는 적용되지 않습니다.", cls: "setting-item-description" });
@@ -375,7 +384,8 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       const row = new Setting(fixed).setName(`${label} · 고정 간격`);
       row.addText(control => { input = control.inputEl; control.setValue(minutes === undefined ? "" : String(minutes / (unit === "d" ? 1440 : unit === "h" ? 60 : 1))).onChange(update); input.type = "number"; input.min = "0"; input.step = "any"; input.placeholder = "자동"; input.setAttribute("aria-label", `${label} 고정 간격(${unit === "m" ? "분" : unit === "h" ? "시간" : "일"})`); });
       row.addDropdown(control => { control.addOption("m", "분").addOption("h", "시간").addOption("d", "일").setValue(unit).onChange(value => { unit = value; input.setAttribute("aria-label", `${label} 고정 간격(${value === "m" ? "분" : value === "h" ? "시간" : "일"})`); update(); }); control.selectEl.setAttribute("aria-label", `${label} 고정 간격 단위`); });
-      validators.push(() => !input.value.trim() || parsed() !== null ? true : fail(`${label}: 1분–36500일 범위의 정확한 분 단위 간격 또는 빈칸을 입력하세요.`, input, true));
+      const validFixed = () => !input.value.trim() || parsed() !== null;
+      validators.push(() => validFixed() || fail(`${label}: 1분–36500일 범위의 정확한 분 단위 간격 또는 빈칸을 입력하세요.`, input, true, validFixed));
     }
     help(extra, "Anki와 다른 적용 범위 · 미지원 항목", "일일 한도는 전체 과목 공통이며 시험 모드의 새 시작에 적용됩니다. 덱 계층·오늘만 한도·노트 형제 묻기·자동 실패 카드 중단은 없습니다. 타이머·자동 진행·오디오 제어·쉬운 요일·SM-2도 지원하지 않습니다. 1m 10m의 첫 Hard(애매)는 설치 Anki에서 5분30초, MIA에서 6분입니다. MIA 입력은 분 단위이며 Anki의 초 단계를 지원하지 않습니다. 하루 경계를 넘는 단계는 Anki의 날짜 단위 변환과 달리 절대 예약 시각을 유지하며 24시간 이상 단계는 ts-fsrs의 정규 복습 상태로 전환됩니다. 고정 평가 간격이 있으면 단계/FSRS보다 우선합니다.");
     simple.append(basic, budgetHelp, stepGroups, retentionGroup, advancedNote);
@@ -395,7 +405,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
     const finishRename = () => {
       if (!renameDraft) return true;
       const value = renameDraft.input.value.trim();
-      if (!value || value.length > 80) return fail("이름은 공백을 제외하고 1–80자로 입력하세요.", renameDraft.input);
+      if (!value || value.length > 80) { const input = renameDraft.input; return fail("이름은 공백을 제외하고 1–80자로 입력하세요.", input, false, () => Boolean(input.value.trim()) && input.value.trim().length <= 80); }
       const id = renameDraft.profile.id;
       renameDraft.profile.name = value; renameDraft = undefined; showProfiles(); changed();
       libraryStatus.setText("이름 변경을 준비했습니다. 현재 학습값은 유지됩니다.");

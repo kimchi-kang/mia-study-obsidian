@@ -1,0 +1,52 @@
+{
+  "date": "2026-11-07 KST",
+  "baseCommit": "1b8e1e8b6714d5227b181b2b92c9f4176589862b",
+  "sourceVersion": "1.4.1",
+  "userVersion": "1.3.11",
+  "userFilesUnchanged": {
+    "main.js": true,
+    "manifest.json": true,
+    "styles.css": true,
+    "data.json": true,
+    "ui-state.json": true
+  },
+  "buildHashes": {
+    "main.js": "f02db9761ea93ba1165da95821187e298e765564ee8bc699d0b66cda09a4d7f2",
+    "styles.css": "08490e137d972fc73fe1dd8aa12abf0fe29e5f6541d2602db99bd9a134409d3a",
+    "manifest.json": "bca197d99665f769aca0e21a8887bedf9411c6884ab41317d9853068ce9b9b2d"
+  },
+  "qaMatches": {
+    "main.js": true,
+    "styles.css": true,
+    "manifest.json": true
+  },
+  "runtime": {
+    "version": "1.4.1",
+    "settingsRestored": true,
+    "reviewsAfterUndoRestored": true,
+    "pendingRecovery": false,
+    "diskSettingsMatch": true,
+    "diskReviewsMatch": true,
+    "currentConflicts": 3,
+    "errors": [],
+    "appearance": {
+      "size": "large",
+      "density": "detailed",
+      "focus": false,
+      "answerLayout": "split",
+      "memorizationOrder": "random",
+      "swipeEnabled": true,
+      "swipeSensitivity": "normal"
+    }
+  },
+  "tests": {
+    "files": 76,
+    "passed": 1393,
+    "failed": 0,
+    "skipped": 0,
+    "typecheck": true,
+    "build": true
+  },
+  "nativeEvidence": "/Users/choikang/Desktop/전공/study-management-2026-10-25/artifacts/ui-audit-2026-11-07",
+  "verificationLog": "/tmp/mia-ui-final-full.log"
+}

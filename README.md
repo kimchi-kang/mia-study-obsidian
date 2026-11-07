@@ -2,7 +2,9 @@
 
 [1.3.11 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.3.11) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [1.3.11 실사용 검증](docs/qa/1.3.11/README.md)
 
-**현재 로컬 개발 후보는1.4.0입니다.** 설치된 Anki25.09.4를 기준으로 학습 설정 입력·분류와 실제 출제 옵션을 개선했습니다. 전체1389검사·타입·빌드와 실제 격리Obsidian 설정/학습/시간경과/복구/재로드를 검증했습니다. 정식 다운로드는1.3.11이며 이번에는 사용자 설치 수동 교체·원격푸시·공개릴리스를 하지 않았습니다. [Anki 대응표·차이·사용법](docs/ANKI-SETTINGS.md) · [최종 검증](docs/qa/1.4.0-anki/README.md) · [후보 변경 내역](docs/releases/1.4.0.md)
+**현재 로컬 개발 후보는 1.4.1입니다.** Anki 스타일 학습 설정의 오류 유지·백분율 초점·좁은 화면 입력 배치 결함 4건을 수정했습니다. 76개 파일·1,393개 검사, 타입 검사·빌드와 실제 격리 Obsidian의 수정 전후 검증을 통과했습니다. 사용자 설치는 1.3.11 그대로이며 원격 푸시·공개 릴리스는 하지 않았습니다. [최신 UI 검증·화면·제한](docs/qa/1.4.1-ui/README.md) · [후보 변경 내역](docs/releases/1.4.1.md) · [Anki 대응표·사용법](docs/ANKI-SETTINGS.md)
+
+2026-11-06의 1.4.0 Anki 설정 구현·검증은 [당시 기록](docs/qa/1.4.0-anki/README.md)과 [변경 내역](docs/releases/1.4.0.md)에 보존합니다.
 
 **2026-11-06 정식 배포 당시: GitHub main·릴리스는 1.3.9였습니다.** 1.3.8의 자료 보존·재시도 수정과 1.3.9의 복구 후 완료 집계 수정을 포함합니다. 전체 1,309개 검사와 실제 앱 재검증을 통과했습니다. 기존 사용자 설치는 1.3.7을 유지하며 자동 교체하지 않았습니다. [실사용 검증과 한계](docs/qa/1.3.9/README.md) · [누적 변경 내역](docs/releases/1.3.9.md) · [현재 상태](STATUS.md) · [설치·복구](INSTALL.md)
 
