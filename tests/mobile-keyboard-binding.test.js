@@ -19,7 +19,7 @@ class Element {
   setAttribute() {}
   addEventListener(name, fn) { this.handlers.set(name, fn); }
   removeEventListener(name) { this.handlers.delete(name); }
-  getBoundingClientRect() { return { top: 0, height: 120 }; }
+  getBoundingClientRect() { return { top: 0, height: this.height ?? 120 }; }
 }
 class Input extends Element {
   value = "11";
@@ -35,7 +35,7 @@ function setup(modal = true, size = { width: 390, height: 844, visual: 534 }) {
   const surface = new Element(document); surface.attached = true;
   if (modal) surface.addClass("mia-keyboard-modal-container");
   const content = new Element(document), actions = new Element(document), input = new Input(document);
-  actions.addClass("mia-keyboard-actions"); surface.append(content); content.append(input); content.append(actions); document.activeElement = input;
+  content.height = 400; actions.addClass("mia-keyboard-actions"); surface.append(content); content.append(input); content.append(actions); document.activeElement = input;
   const binding = bindKeyboardViewport(surface, content);
   return { binding, surface, content, actions, input, viewport, document, window };
 }
@@ -108,4 +108,20 @@ describe("mobile keyboard action lifecycle", () => {
     expect(ui.surface.hasClass("mia-keyboard-open")).toBe(false);
     ui.binding.destroy();
   });
+});
+
+
+it.each([true, false])("keeps a usable editor area when a tall action footer exhausts the modal (keyboard: %s)", keyboard => {
+  const ui = setup(true, { width: 280, height: 653, visual: keyboard ? 343 : 653 });
+  ui.content.height = 232; ui.actions.height = 206;
+  const measure = vi.spyOn(ui.content.style, "setProperty"), scroll = vi.spyOn(ui.input, "scrollIntoView");
+  ui.window.innerWidth = 281; // Also exercise orientation/resize without an OS keyboard.
+  ui.binding.refresh(); vi.advanceTimersByTime(80);
+  expect(ui.content.hasClass("mia-keyboard-actions-inline")).toBe(true);
+  expect(measure).toHaveBeenCalledWith("--mia-keyboard-actions-height", "0px");
+  expect(scroll).toHaveBeenCalled(); expect(ui.document.activeElement).toBe(ui.input); expect(ui.input.value).toBe("11");
+  ui.content.height = 480; ui.binding.refresh();
+  expect(ui.content.hasClass("mia-keyboard-actions-inline")).toBe(false);
+  ui.content.height = 232; ui.binding.refresh(); ui.binding.destroy();
+  expect(ui.content.hasClass("mia-keyboard-actions-inline")).toBe(false);
 });

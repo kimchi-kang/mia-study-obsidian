@@ -70,13 +70,13 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .is-mobile .mia-filter-panel > summary { display: flex; }
 .mia-result-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; color: var(--text-muted); }
 .mia-filter-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
-.mia-filter-chips button { border-radius: 999px; font-size: var(--font-ui-smaller); }
+.mia-filter-chips button { min-width: 0; max-width: 100%; height: auto; border-radius: 999px; font-size: var(--font-ui-smaller); text-align: start; white-space: normal; overflow-wrap: anywhere; }
 .mia-pagination { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 16px; }
 .mia-inline-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .mia-inline-actions > button { min-width: 0; height: auto; white-space: normal; overflow-wrap: anywhere; }
-.mia-list { display: grid; gap: 8px; }
+.mia-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .mia-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; }
-.mia-row-body { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.mia-row-body { display: flex; flex-direction: column; gap: 5px; min-width: 0; overflow-wrap: anywhere; }
 .mia-row-prompt { max-height: 7em; overflow: hidden; }
 .mia-row-prompt > :first-child { margin-top: 0; }
 .mia-row-prompt > :last-child { margin-bottom: 0; }
@@ -1076,3 +1076,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-anki-settings-section { min-width: 0; margin-block: 18px; padding-block-start: 8px; border-top: 1px solid var(--background-modifier-border); }
 .mia-anki-settings-section > h4 { margin-block: 4px 12px; }
 .mia-anki-settings-section .setting-item-control { flex-wrap: wrap; }
+
+/* If actions leave no writing space, let the whole sheet scroll instead of covering inputs. */
+.mia-keyboard-modal .modal-content.mia-keyboard-actions-inline { scroll-padding-bottom: 24px; }
+.mia-keyboard-modal .mia-keyboard-actions-inline .mia-keyboard-actions { position: static; }

@@ -2,7 +2,9 @@
 
 [1.3.11 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.3.11) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [1.3.11 실사용 검증](docs/qa/1.3.11/README.md)
 
-**현재 로컬 개발 후보는 1.4.1입니다.** Anki 스타일 학습 설정의 오류 유지·백분율 초점·좁은 화면 입력 배치 결함 4건을 수정했습니다. 76개 파일·1,393개 검사, 타입 검사·빌드와 실제 격리 Obsidian의 수정 전후 검증을 통과했습니다. 사용자 설치는 1.3.11 그대로이며 원격 푸시·공개 릴리스는 하지 않았습니다. [최신 UI 검증·화면·제한](docs/qa/1.4.1-ui/README.md) · [후보 변경 내역](docs/releases/1.4.1.md) · [Anki 대응표·사용법](docs/ANKI-SETTINGS.md)
+**현재 로컬 개발 후보는 1.4.2입니다.** 낮은 창에서 설정 버튼이 입력칸을 가리는 문제, 긴 문제와 검색어가 좁은 화면의 버튼을 가리는 문제를 수정했습니다. 14가지 화면 크기의 브라우저 모바일 모의와 1,395개 자동 검사, 타입 검사·빌드를 통과했습니다. 실제 모바일 기기·OS 키보드는 미검증입니다. 사용자 설치와 공개 배포는 갱신하지 않았습니다. [검증·전후 화면](docs/qa/1.4.2-mobile/README.md) · [후보 변경 내역](docs/releases/1.4.2.md) · [Anki 대응표·사용법](docs/ANKI-SETTINGS.md)
+
+1.4.1의 학습 설정 입력과 초점 개선은 [실제 데스크톱 Obsidian 검증 기록](docs/qa/1.4.1-ui/README.md)에 보존합니다.
 
 2026-11-06의 1.4.0 Anki 설정 구현·검증은 [당시 기록](docs/qa/1.4.0-anki/README.md)과 [변경 내역](docs/releases/1.4.0.md)에 보존합니다.
 

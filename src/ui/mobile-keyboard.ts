@@ -27,6 +27,16 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
     ? focusRoot.querySelector<HTMLElement>(".mia-keyboard-actions")
     : null;
 
+  const actionScrollInset = () => {
+    const actions = keyboardActions();
+    const height = actions?.getBoundingClientRect().height ?? 0;
+    // Keep room for a 44px input and reading/scrolling space above the actions.
+    // Large text and safe-area padding can make a sticky footer consume the sheet.
+    const inline = Boolean(actions) && focusRoot.getBoundingClientRect().height - height < 96;
+    focusRoot.toggleClass("mia-keyboard-actions-inline", inline);
+    return inline ? 0 : height;
+  };
+
   const scrollFocusedControl = (layoutChanged = false) => {
     window.clearTimeout(focusTimer);
     focusTimer = window.setTimeout(() => {
@@ -34,7 +44,7 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
       const keyboardOpen = surface.hasClass("mia-keyboard-open");
       if ((!layoutChanged && !keyboardOpen) || !editableTarget(active) || !focusRoot.contains(active)) return;
       const actions = keyboardActions();
-      if (actions) focusRoot.style.setProperty("--mia-keyboard-actions-height", `${actions.getBoundingClientRect().height}px`);
+      if (actions) focusRoot.style.setProperty("--mia-keyboard-actions-height", `${actionScrollInset()}px`);
       active.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
     }, 80);
   };
@@ -81,6 +91,7 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
       (keyboardActions() ?? focusRoot).append(dismissButton);
     }
     if (!metrics.keyboardOpen) { dismissButton?.remove(); dismissButton = null; focusRoot.style.removeProperty("--mia-keyboard-actions-height"); layoutHeight = currentLayoutHeight; }
+    actionScrollInset();
     if (metrics.keyboardOpen || layoutChanged) scrollFocusedControl(layoutChanged);
   };
 
@@ -114,6 +125,7 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
       window.clearTimeout(focusTimer);
       surface.removeClass("mia-keyboard-surface", "mia-keyboard-open");
       focusRoot.style.removeProperty("--mia-keyboard-actions-height");
+      focusRoot.removeClass("mia-keyboard-actions-inline");
       for (const property of [
         "--mia-visible-viewport-height",
         "--mia-viewport-offset-top",
