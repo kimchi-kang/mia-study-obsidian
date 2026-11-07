@@ -523,3 +523,20 @@ it('updates step guidance immediately when editing the shared Hard override draf
  expect(ui.root.querySelector('.mia-step-guidance').textContent).toContain('고정 간격이 우선');
  ui.edit('애매 고정 간격(분)','');expect(ui.root.querySelector('.mia-step-guidance').textContent).toContain('6분');
 });
+
+it('keeps an invalid field error through unrelated edits and further invalid input until corrected',async()=>{
+ const ui=await setup(DEFAULT_SETTINGS);ui.edit('최대 복습 간격(일)',0);await ui.save();const input=ui.find('최대 복습 간격(일)'),errorId=input.getAttribute('aria-describedby');
+ expect(input.getAttribute('aria-invalid')).toBe('true');ui.edit('하루 복습량',8);
+ expect(input.getAttribute('aria-invalid')).toBe('true');expect(input.getAttribute('aria-describedby')).toBe(errorId);expect(ui.root.querySelector('.mia-settings-field-error')).not.toBeNull();
+ ui.edit('최대 복습 간격(일)',-1);expect(input.getAttribute('aria-invalid')).toBe('true');
+ ui.edit('최대 복습 간격(일)',365);expect(input.hasAttribute('aria-invalid')).toBe(false);expect(ui.root.querySelector('.mia-settings-field-error')).toBeNull();expect(ui.plugin.updateSettings).not.toHaveBeenCalled();
+});
+it.each([['목표 기억률(%)',100,92.3],['목표 기억률',1.1,.923]])('places a retention error beside the %s editor the user actually changed',async(label,bad,good)=>{
+ const ui=await setup(DEFAULT_SETTINGS);ui.edit(label,bad);await ui.save();const input=ui.find(label);
+ expect(ui.dom.window.document.activeElement).toBe(input);expect(input.getAttribute('aria-invalid')).toBe('true');
+ ui.edit('하루 복습량',8);expect(input.getAttribute('aria-invalid')).toBe('true');ui.edit(label,good);expect(input.hasAttribute('aria-invalid')).toBe(false);
+});
+it('keeps raw step validation visible across unrelated edits and clears it after valid syntax',async()=>{
+ const ui=await setup(DEFAULT_SETTINGS);ui.edit('처음 배우는 문제 단계 공백 입력','0m');await ui.save();const input=ui.find('처음 배우는 문제 단계 공백 입력');ui.edit('목표 기억률(%)',94);
+ expect(input.getAttribute('aria-invalid')).toBe('true');ui.edit('처음 배우는 문제 단계 공백 입력','1 10');expect(input.hasAttribute('aria-invalid')).toBe(false);expect(ui.plugin.updateSettings).not.toHaveBeenCalled();
+});

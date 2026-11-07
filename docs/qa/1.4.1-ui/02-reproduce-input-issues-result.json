@@ -1,0 +1,23 @@
+{
+  "status": "passed",
+  "at": "2026-11-06T23:40:17.646Z",
+  "result": {
+    "first": {
+      "input": "true",
+      "errors": 1
+    },
+    "second": {
+      "value": "0",
+      "input": null,
+      "errors": 0
+    },
+    "percent": {
+      "typed": "100",
+      "focused": "목표 기억률",
+      "invalid": [
+        "목표 기억률"
+      ]
+    },
+    "overflow": []
+  }
+}

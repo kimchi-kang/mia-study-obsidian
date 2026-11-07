@@ -1,0 +1,33 @@
+{
+  "status": "passed",
+  "at": "2026-11-06T23:52:22.216Z",
+  "result": {
+    "longAnswerAndFocusPreserved": true,
+    "cancelledWithoutSaving": true,
+    "geometry": {
+      "input": {
+        "x": 57,
+        "y": 310.203125,
+        "width": 286,
+        "height": 44,
+        "top": 310.203125,
+        "right": 343,
+        "bottom": 354.203125,
+        "left": 57
+      },
+      "error": {
+        "x": 57,
+        "y": 366.203125,
+        "width": 286,
+        "height": 20.796875,
+        "top": 366.203125,
+        "right": 343,
+        "bottom": 387,
+        "left": 57
+      },
+      "errorScroll": 286,
+      "errorWidth": 286
+    },
+    "theme": "mod-macos is-frameless is-hidden-frameless obsidian-app show-inline-title is-floating-nav auto-full-screen show-ribbon show-view-header is-focused theme-light"
+  }
+}

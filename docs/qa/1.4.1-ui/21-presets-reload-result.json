@@ -1,0 +1,39 @@
+{
+  "status": "passed",
+  "at": "2026-11-06T23:58:11.107Z",
+  "result": {
+    "settingsUnchanged": true,
+    "reviewsUnchanged": true,
+    "queueUnchanged": true,
+    "index": 0,
+    "state": {
+      "route": "study",
+      "queue": [
+        "mia-q-mw4yncq1-1rbz4g7"
+      ],
+      "queueIndex": 0,
+      "answerVisible": true,
+      "sessionMode": "recall",
+      "reviewCheckpoint": {
+        "id": "mia-q-mw4yncq1-1rbz4g7",
+        "version": "2026-11-06T23:57:24.234Z:dc950689-e1ac-4d6a-82dc-2b7fa3cb662d"
+      }
+    },
+    "ns": {
+      "route": "study",
+      "queue": [
+        "mia-q-mw4yncq1-1rbz4g7"
+      ],
+      "queueIndex": 0,
+      "answerVisible": true,
+      "sessionMode": "recall",
+      "reviewCheckpoint": {
+        "id": "mia-q-mw4yncq1-1rbz4g7",
+        "version": "2026-11-06T23:57:24.234Z:dc950689-e1ac-4d6a-82dc-2b7fa3cb662d"
+      }
+    },
+    "version": "1.4.1",
+    "pending": false,
+    "errors": []
+  }
+}
