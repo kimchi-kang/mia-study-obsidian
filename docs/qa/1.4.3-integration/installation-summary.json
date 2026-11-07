@@ -1,0 +1,18 @@
+{
+  "installed": "1.4.3",
+  "app": "Obsidian 1.15.0",
+  "trackedFiles": 499,
+  "unchangedFiles": 496,
+  "changedFiles": [
+    "main.js",
+    "styles.css",
+    "manifest.json"
+  ],
+  "registeredQuestions": 364,
+  "resume": "17/364",
+  "reviewStates": 3,
+  "settingsUnchanged": true,
+  "resumeFileUnchanged": true,
+  "activationListUnchanged": true,
+  "filesMatchBuild": true
+}
