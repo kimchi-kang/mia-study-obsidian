@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Rating } from "ts-fsrs";
+import { Rating, State } from "ts-fsrs";
 import { FsrsService } from "../src/core/fsrs-service";
 import { QuestionIndex } from "../src/services/question-index";
 
@@ -86,6 +86,7 @@ import { MiaDataStore } from "../src/services/data-store";
 import { buildReviewQueue } from "../src/core/recommendation-engine";
 import { DEFAULT_SETTINGS } from "../src/core/models";
 import { calculateProgress } from "../src/core/progress";
+import { studyDayStart } from "../src/core/study-management";
 
 function setup({ failSave = false, start = true, linked = false } = {}) {
   const question = { id: "q", heading: "질문", questionMarkdown: "질문", answerMarkdown: "정답", subject: "과목", questionType: "정의형", filePath: "bank.md", coreKeywords: [], subKeywords: [], followUpIds: [] };
@@ -1396,8 +1397,10 @@ describe("scheduler audit through rating buttons and durable storage",()=>{
       expect(actual.card.stability).toBe(expected.stability);expect(actual.card.difficulty).toBe(expected.difficulty);
       expect(actual.card.reps).toBe(step+1);expect(actual.history).toHaveLength(step+1);expect(ui.disk().reviews.q).toEqual(actual);
       await ui.reload();expect(ui.plugin.store.getReview("q")).toEqual(actual);
-      ui.view.showDashboard();vi.setSystemTime(new Date(expected.due.getTime()-1));ui.start();expect(ui.view.getState().queue).toEqual([]);
-      vi.setSystemTime(expected.due);ui.start();expect(ui.view.getState().queue).toEqual(["q"]);
+      // Interday reviews are due from the start of their study day (Anki); steps at the exact time.
+      const dueFrom=expected.state===State.Review&&expected.scheduled_days>=1?studyDayStart(expected.due,DEFAULT_SETTINGS.studyManagement.dayStartsAt):expected.due;
+      ui.view.showDashboard();vi.setSystemTime(new Date(dueFrom.getTime()-1));ui.start();expect(ui.view.getState().queue).toEqual([]);
+      vi.setSystemTime(dueFrom);ui.start();expect(ui.view.getState().queue).toEqual(["q"]);
     }
   });
   it.each(["recall","browse"])("%s: revealing and skipping never grade; rating does, with recoverable write failure",async mode=>{

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { Rating } from "ts-fsrs";
+import { Rating, State } from "ts-fsrs";
+import { studyDayStart } from "../src/core/study-management";
 import { DEFAULT_SETTINGS, MAX_GRADE_INTERVAL_MINUTES } from "../src/core/models";
 import { FsrsService } from "../src/core/fsrs-service";
 import { DataStoreInternals, MiaDataStore } from "../src/services/data-store";
@@ -25,8 +26,11 @@ describe("button-specific review intervals", () => {
         expect(rated.history.length).toBe((state?.history.length ?? 0) + 1);
         expect(rated.card.reps).toBe((state?.card.reps ?? 0) + 1);
         expect(DataStoreInternals.parseReviews({ q: rated }).quarantined).toEqual({});
-        expect(custom.isDue(rated, new Date(preview.due.getTime() - 1))).toBe(false);
-        expect(custom.isDue(rated, preview.due)).toBe(true);
+        // Interday reviews are due for their whole study day (Anki); other states at the exact time.
+        const dueFrom = rated.card.state === State.Review && rated.card.scheduled_days >= 1
+          ? studyDayStart(preview.due, DEFAULT_SETTINGS.studyManagement.dayStartsAt) : preview.due;
+        expect(custom.isDue(rated, new Date(dueFrom.getTime() - 1))).toBe(false);
+        expect(custom.isDue(rated, dueFrom)).toBe(true);
       }
       expect(JSON.stringify(state)).toBe(before);
     });

@@ -73,6 +73,20 @@ export function studyDayStart(now: Date, hour: number): Date {
   return start;
 }
 
+/** Start of the study day after the one containing `now` (same local-calendar rules). */
+export function nextStudyDayStart(now: Date, hour: number): Date {
+  const start = studyDayStart(now, hour);
+  const next = new Date(start);
+  next.setDate(next.getDate() + 1);
+  next.setHours(hour, 0, 0, 0);
+  // Guard against a DST normalization landing on or before the current start.
+  while (next.getTime() <= start.getTime()) {
+    next.setTime(next.getTime() + 3600000);
+    next.setHours(hour, 0, 0, 0);
+  }
+  return next;
+}
+
 export function dailyStudyCounts(reviews: Readonly<Record<string, QuestionReviewState>>, settings: StudyManagementSettings, now: Date): { fresh: number; review: number } {
   const start = studyDayStart(now, settings.dayStartsAt).getTime();
   let fresh = 0; let review = 0;

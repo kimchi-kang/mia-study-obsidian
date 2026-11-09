@@ -17,6 +17,7 @@ import {
   SerializedFsrsCard,
   SerializedReviewLog,
 } from "./models";
+import { nextStudyDayStart } from "./study-management";
 
 export type StudyGrade = Rating.Again | Rating.Hard | Rating.Good | Rating.Easy;
 
@@ -67,12 +68,14 @@ export class FsrsService {
   private readonly targetRetention: number;
   private readonly maximumIntervalDays: number;
   private readonly gradeIntervalsMinutes: MiaSettings["gradeIntervalsMinutes"];
+  private readonly dayStartsAt: number;
 
   constructor(settings: Pick<MiaSettings, "targetRetention" | "maximumIntervalDays"> & Partial<Pick<MiaSettings, "gradeIntervalsMinutes" | "studyManagement">>) {
     this.targetRetention = settings.targetRetention;
     this.maximumIntervalDays = settings.maximumIntervalDays;
     this.gradeIntervalsMinutes = { ...settings.gradeIntervalsMinutes };
     const management = settings.studyManagement ?? DEFAULT_STUDY_MANAGEMENT;
+    this.dayStartsAt = management.dayStartsAt;
     this.scheduler = fsrs({
       request_retention: settings.targetRetention,
       maximum_interval: settings.maximumIntervalDays,
@@ -119,9 +122,20 @@ export class FsrsService {
     return this.scheduler.get_retrievability(deserializeCard(state.card), now, false);
   }
 
+  /**
+   * Like Anki, an interday review is due for its whole study day (from the
+   * configured day start), not only after its exact timestamp. Otherwise a
+   * card graded at 09:05 is not due at 09:00 a day later and every review
+   * slips a day for someone who studies at the same time daily. Learning
+   * steps and sub-day fixed intervals keep their exact time.
+   */
   isDue(state: QuestionReviewState | undefined, now = new Date()): boolean {
     if (!state || state.card.state === State.New) return false;
-    return new Date(state.card.due).getTime() <= now.getTime();
+    const due = new Date(state.card.due).getTime();
+    if (state.card.state === State.Review && state.card.scheduled_days >= 1) {
+      return due < nextStudyDayStart(now, this.dayStartsAt).getTime();
+    }
+    return due <= now.getTime();
   }
 
   isNew(state: QuestionReviewState | undefined): boolean {

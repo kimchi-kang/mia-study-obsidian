@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { Rating, State } from "ts-fsrs";
 import { FsrsService } from "../src/core/fsrs-service";
+import { DEFAULT_STUDY_MANAGEMENT } from "../src/core/models";
+import { studyDayStart } from "../src/core/study-management";
 
 const service = new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500 });
 
@@ -101,8 +103,10 @@ describe("FsrsService", () => {
       const prior = JSON.parse(saved);
       const at = new Date(prior.card.due);
       const restored = new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500 });
-      expect(restored.isDue(prior, new Date(at.getTime() - 1))).toBe(false);
-      expect(restored.isDue(prior, at)).toBe(true);
+      // Interday reviews become due at the start of their study day (04:00), like Anki.
+      const dueFrom = prior.card.state === State.Review && prior.card.scheduled_days >= 1 ? studyDayStart(at, 4) : at;
+      expect(restored.isDue(prior, new Date(dueFrom.getTime() - 1))).toBe(false);
+      expect(restored.isDue(prior, dueFrom)).toBe(true);
       const grade = index % 7 === 0 ? Rating.Again : Rating.Good;
       state = restored.rate(prior, grade, at);
       expect(state.history).toHaveLength(prior.history.length + 1);
@@ -112,3 +116,36 @@ describe("FsrsService", () => {
     }
   });
 });
+
+describe("Anki-style study-day due for interday reviews", () => {
+  const local = (day: number, hour: number, minute = 0) => new Date(2026, 10, day, hour, minute);
+  const review = (due: Date, scheduledDays: number) => ({
+    card: { due: due.toISOString(), stability: 3, difficulty: 5, elapsed_days: 1, scheduled_days: scheduledDays, learning_steps: 0, reps: 3, lapses: 0, state: State.Review, last_review: local(1, 9).toISOString() },
+    history: [], lastRating: 3,
+  });
+
+  it("makes a review due from the start of its study day, not its exact minute", () => {
+    const service = new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500 });
+    const state = review(local(10, 9, 5), 1);
+    expect(service.isDue(state, local(10, 3, 59))).toBe(false);
+    expect(service.isDue(state, local(10, 4, 0))).toBe(true);
+    expect(service.isDue(state, local(10, 9, 0))).toBe(true);
+  });
+
+  it("follows the configured day start", () => {
+    const service = new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500, studyManagement: { ...DEFAULT_STUDY_MANAGEMENT, dayStartsAt: 0 } });
+    const state = review(local(10, 9, 5), 1);
+    expect(service.isDue(state, local(9, 23, 59))).toBe(false);
+    expect(service.isDue(state, local(10, 0, 0))).toBe(true);
+  });
+
+  it("keeps the exact time for learning steps and sub-day fixed intervals", () => {
+    const service = new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500 });
+    const subDay = review(local(10, 15, 0), 0);
+    expect(service.isDue(subDay, local(10, 14, 59))).toBe(false);
+    expect(service.isDue(subDay, local(10, 15, 0))).toBe(true);
+    const learning = { ...subDay, card: { ...subDay.card, state: State.Learning } };
+    expect(service.isDue(learning, local(10, 14, 59))).toBe(false);
+  });
+});
+
