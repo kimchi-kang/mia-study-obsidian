@@ -15,6 +15,12 @@ export function keywordReferenceMatches(reference: KeywordReference, targets: re
   return targets.some((target) => normalizeTarget(target) === key);
 }
 
+/** `keywordReferenceMatches` with the targets normalized once, for checking many references. */
+export function keywordTargetMatcher(targets: readonly string[]): (reference: KeywordReference) => boolean {
+  const keys = new Set(targets.map(normalizeTarget));
+  return (reference) => keys.has(normalizeTarget(reference.target));
+}
+
 export function renameKeywordReferences(
   references: readonly KeywordReference[],
   targets: readonly string[],

@@ -107,4 +107,18 @@ describe("keyword links in Obsidian's short form", () => {
     expect(env.keywords()).toEqual(["C","D#의미","MIA/키워드/B"]);
     expect(env.getFirstLinkpathDest.mock.calls.map(([linkpath])=>linkpath).every(linkpath=>linkpath==="A2")).toBe(true);
   });
+
+  it("leaves one destination link when a merged question already had a short link to it", async () => {
+    const env=environment({links:[{target:"MIA/키워드/A2"},{target:"B"}]});
+    await env.plugin.index.rebuild();
+    await env.plugin.saveKeyword(a2,"B","");
+    expect(env.keywords()).toEqual(["MIA/키워드/B"]);
+  });
+
+  it("does not rewrite a short destination link in a question without the merged keyword", async () => {
+    const env=environment({link:{target:"B#의미",label:"내 별칭"}});
+    await env.plugin.index.rebuild();
+    await env.plugin.saveKeyword(a2,"B","");
+    expect(env.raws()).toEqual(["[[B#의미|내 별칭]]"]);
+  });
 });
