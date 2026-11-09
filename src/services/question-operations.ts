@@ -62,10 +62,10 @@ export class QuestionOperations {
   }
 
   async create(draft: ManagedQuestionDraft, onPersisted?: (question: QuestionRecord) => void): Promise<void> {
-    const { app, managedRoot } = this.host;
+    const { app } = this.host;
     const subject = validateSubjectName(draft.subject);
     this.validateDraft(draft);
-    const folderPath = normalizePath(`${managedRoot}/${subject}`);
+    const folderPath = normalizePath(`${this.host.managedRoot}/${subject}`);
     await ensureFolder(app, folderPath);
     const filePath = normalizePath(`${folderPath}/문제은행.md`);
     assertPortablePath(app, filePath);
@@ -158,7 +158,7 @@ export class QuestionOperations {
     draft: ManagedQuestionDraft,
     onPersisted?: (question: QuestionRecord) => void,
   ): Promise<void> {
-    const { app, managedRoot } = this.host;
+    const { app } = this.host;
     const oldFile = app.vault.getAbstractFileByPath(question.filePath);
     if (!(oldFile instanceof TFile)) throw new Error("기존 문제 파일을 찾지 못했습니다.");
     const blockOf = (content: string, record: QuestionRecord): string => content.replaceAll("\r\n", "\n").split("\n")
@@ -175,7 +175,7 @@ export class QuestionOperations {
     const originalQuestion = parseQuestionFile(question.filePath, source).questions.find(item => item.id === question.id);
     if (!originalQuestion) throw new Error("원본 문제를 확인하지 못했습니다.");
     const originalBlock = blockOf(source, originalQuestion);
-    const nextFolder = normalizePath(`${managedRoot}/${draft.subject}`);
+    const nextFolder = normalizePath(`${this.host.managedRoot}/${draft.subject}`);
     await ensureFolder(app, nextFolder);
     const nextPath = normalizePath(`${nextFolder}/문제은행.md`);
     assertPortablePath(app, nextPath);
@@ -256,18 +256,18 @@ export class QuestionOperations {
   }
 
   async delete(question: RegisteredQuestion): Promise<void> {
-    const { app, store } = this.host;
+    const { app } = this.host;
     const file = app.vault.getAbstractFileByPath(question.filePath);
     if (!(file instanceof TFile)) throw new Error("문제 파일을 찾지 못했습니다.");
     await this.notes.assertWritable(question.subject);
-    const review = store.getReview(question.id);
+    const review = this.host.store.getReview(question.id);
     const links = this.followUps.removedChanges([question.id]);
     let updatedContent = "";
     const writes: FileChange[] = [{ file, update: content => {
       updatedContent = deleteCurrentManagedQuestion(content, question, latest => parseQuestionFile(question.filePath, latest).questions);
       return updatedContent;
     } }, ...this.followUps.fileChanges(links)];
-    await applyFileChanges(app.vault, writes, () => store.removeReview(question.id, { state: review }));
+    await applyFileChanges(app.vault, writes, () => this.host.store.removeReview(question.id, { state: review }));
     await this.host.index.rebuild();
     try {
       await this.notes.sync(question.subject, await this.notes.questions(question.subject, new Map([[question.filePath, updatedContent]])));

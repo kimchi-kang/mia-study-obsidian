@@ -7,10 +7,10 @@ import { ensureFolder } from "./vault-files";
 
 /** Writes a subject's questions and answers to a .docx: Downloads on desktop, a vault folder on mobile. */
 export async function exportSubjectWord(host: MiaHost, subject: string): Promise<ExportReceipt> {
-  const { app, index } = host;
-  await index.rebuild();
+  const { app } = host;
+  await host.index.rebuild();
   const { exportSubjectDocx } = await import("../core/subject-export");
-  const result = await exportSubjectDocx(subject, index.registered, (target, source) => readExportImage(app, target, source));
+  const result = await exportSubjectDocx(subject, host.index.registered, (target, source) => readExportImage(app, target, source));
   const safeSubject = subject.replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/gu, "_");
   const stamp = new Date().toISOString().replace(/[:.]/gu, "-");
   const filename = `${safeSubject} 질문 답변 ${stamp}.docx`;

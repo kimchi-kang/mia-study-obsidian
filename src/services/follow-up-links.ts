@@ -37,8 +37,8 @@ export class FollowUpLinks {
     changes: ReadonlyMap<string, readonly string[]>,
     expected?: ReadonlyMap<string, RegisteredQuestion>,
   ): FileChange[] {
-    const { app, index } = this.host;
-    const snapshot = new Map(index.registered.map((question) => [question.id, question]));
+    const { app } = this.host;
+    const snapshot = new Map(this.host.index.registered.map((question) => [question.id, question]));
     const baselines = expected ?? snapshot;
     const byFile = new Map<string, string[]>();
     for (const id of changes.keys()) {
@@ -68,7 +68,7 @@ export class FollowUpLinks {
             throw new Error("질문 연결이 다른 작업에서 변경되었습니다. 최신 화면을 다시 열어 주세요.");
           }
           const links = (changes.get(id) ?? [])
-            .map((targetId) => snapshot.get(targetId) ?? index.questionById(targetId))
+            .map((targetId) => snapshot.get(targetId) ?? this.host.index.questionById(targetId))
             .filter((target): target is RegisteredQuestion => Boolean(target))
             .map(questionBlockLink);
           updated = updateQuestionMetadata(updated, current, {
