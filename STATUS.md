@@ -1,6 +1,8 @@
 # MIA Study 현재 작업·검증·배포 상태
 
-2026-11-08 KST. **현재 정식 배포는 1.4.3**입니다. 76파일·1,395개 검사, 타입 검사와 빌드 통과. 실제 Obsidian 1.15.0에서 364문제와 이어하기 17/364가 유지됐고, 비교 499개 중 배포 파일 3개만 변경됐습니다. [정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.3). [통합 검증·설치·복구](docs/qa/1.4.3-integration/README.md) · [변경 내역](docs/releases/1.4.3.md)
+2026-11-09 KST. **현재 정식 배포는 1.4.4**입니다. 1.4.3에 버그 수정 4건(쉼표가 든 키워드 링크 보존, 과목 폴더 전체를 반영하는 과목 노트, 링크 대상에 저장하는 키워드 의미, 한 문제를 둘로 나누는 줄의 저장 전 안내)을 더했습니다. `verify:full` 전체 검증 77파일·1,477개(실패·생략 0), 타입 검사와 프로덕션 빌드 통과. 고친 버그마다 수정 전 코드에서 실패하는 회귀 검사를 추가했습니다. **실제 Obsidian 앱·모바일 실기기·두 기기 동기화에서는 검증하지 않았습니다.** [정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.4) · [변경 내역](docs/releases/1.4.4.md)
+
+2026-11-08 KST. **당시 정식 배포 1.4.3**입니다. 76파일·1,395개 검사, 타입 검사와 빌드 통과. 실제 Obsidian 1.15.0에서 364문제와 이어하기 17/364가 유지됐고, 비교 499개 중 배포 파일 3개만 변경됐습니다. [정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.3). [통합 검증·설치·복구](docs/qa/1.4.3-integration/README.md) · [변경 내역](docs/releases/1.4.3.md)
 
 ## 이전 작업 이력
 
