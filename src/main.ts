@@ -552,8 +552,7 @@ export default class MiaStudyPlugin extends Plugin {
       if (bank instanceof TFile) writes.push({ file: bank, update: content => renameSubjectBank(content, current, next) });
       const generatedNote = this.app.vault.getAbstractFileByPath(this.subjectNotePath(next));
       if (renameGeneratedNote && generatedNote instanceof TFile) {
-        const questions = bank instanceof TFile
-          ? parseQuestionFile(bank.path, await this.app.vault.read(bank), { subject: next }).questions : [];
+        const questions = await this.subjectQuestions(next);
         writes.push({ file: generatedNote, update: content => {
           if (!isManagedSubjectNote(content)) throw new Error("과목 노트가 사용자 노트로 변경되어 덮어쓰지 않았습니다.");
           return renderSubjectNote(next, questions);
@@ -561,8 +560,7 @@ export default class MiaStudyPlugin extends Plugin {
       }
       await applyFileChanges(this.app.vault, writes, async () => {
         if (!renameGeneratedNote) {
-          const questions = bank instanceof TFile
-            ? parseQuestionFile(bank.path, await this.app.vault.read(bank), { subject: next }).questions : [];
+          const questions = await this.subjectQuestions(next);
           const path = this.subjectNotePath(next);
           if (this.app.vault.getAbstractFileByPath(path)) throw new Error("새 과목 노트 경로에 다른 파일이 생겼습니다.");
           createdNote = { path, content: renderSubjectNote(next, questions) };
@@ -649,7 +647,7 @@ export default class MiaStudyPlugin extends Plugin {
     onPersisted?.(saved);
     try {
       await this.index.refreshFile(file);
-      await this.syncSubjectNote(subject, persisted);
+      await this.syncSubjectNote(subject, await this.subjectQuestions(subject, new Map([[filePath, updatedContent]])));
     } catch (error) {
       throw new Error("원본 질문은 추가됐지만 화면·과목 노트 갱신을 완료하지 못했습니다. 입력을 유지한 채 다시 저장해 갱신을 재시도하세요.", { cause: error });
     }
@@ -696,7 +694,7 @@ export default class MiaStudyPlugin extends Plugin {
     onPersisted?.(saved);
     try {
       await this.index.refreshFile(file);
-      await this.syncSubjectNote(question.subject, persisted);
+      await this.syncSubjectNote(question.subject, await this.subjectQuestions(question.subject, new Map([[question.filePath, updatedContent]])));
       await this.refreshIncomingFollowUpLinks([question.id]);
     } catch (error) {
       throw new Error(`원본 문제는 저장됐지만 화면·연결 노트 갱신을 완료하지 못했습니다. 입력 내용은 유지됩니다. 다시 저장해 갱신을 재시도하세요. (${error instanceof Error ? error.message : String(error)})`, { cause: error });
@@ -799,14 +797,9 @@ export default class MiaStudyPlugin extends Plugin {
     onPersisted?.(inserted);
     await this.index.refreshFile(oldFile);
     await this.index.refreshFile(nextFile);
-    await this.syncSubjectNote(
-      question.subject,
-      parseQuestionFile(question.filePath, oldContent, { subject: question.subject }).questions,
-    );
-    await this.syncSubjectNote(
-      draft.subject,
-      parseQuestionFile(nextPath, nextContent, { subject: draft.subject }).questions,
-    );
+    const written = new Map([[question.filePath, oldContent], [nextPath, nextContent]]);
+    await this.syncSubjectNote(question.subject, await this.subjectQuestions(question.subject, written));
+    await this.syncSubjectNote(draft.subject, await this.subjectQuestions(draft.subject, written));
     await this.refreshIncomingFollowUpLinks([question.id]);
   }
 
@@ -824,7 +817,7 @@ export default class MiaStudyPlugin extends Plugin {
     await applyFileChanges(this.app.vault, writes, () => this.store.removeReview(question.id, { state: review }));
     await this.index.rebuild();
     try {
-      await this.syncSubjectNote(question.subject, parseQuestionFile(question.filePath, updatedContent, { subject: question.subject }).questions);
+      await this.syncSubjectNote(question.subject, await this.subjectQuestions(question.subject, new Map([[question.filePath, updatedContent]])));
     } catch (error) {
       throw new Error("문제와 평가·연결은 삭제했지만 과목 노트 갱신은 완료되지 않았습니다. 과목 노트를 다시 확인하세요.", { cause: error });
     }
@@ -1178,6 +1171,33 @@ export default class MiaStudyPlugin extends Plugin {
     }
   }
 
+  /**
+   * Every question file in the subject folder, not just `문제은행.md`: imported
+   * files live beside the bank. `written` supplies contents this operation just
+   * persisted so the note never reflects a stale read.
+   */
+  private async subjectQuestions(subject: string, written: ReadonlyMap<string, string> = new Map()): Promise<QuestionRecord[]> {
+    const folder = this.app.vault.getAbstractFileByPath(normalizePath(`${this.managedRoot}/${subject}`));
+    if (!(folder instanceof TFolder)) return [];
+    const notePath = this.subjectNotePath(subject);
+    const bankPath = normalizePath(`${folder.path}/문제은행.md`);
+    const files: TFile[] = [];
+    const collect = (entry: TFolder): void => {
+      for (const child of entry.children) {
+        if (child instanceof TFolder) collect(child);
+        else if (child instanceof TFile && child.extension === "md" && child.path !== notePath) files.push(child);
+      }
+    };
+    collect(folder);
+    files.sort((left, right) => Number(right.path === bankPath) - Number(left.path === bankPath) || left.path.localeCompare(right.path, "ko"));
+    const questions: QuestionRecord[] = [];
+    for (const file of files) {
+      const content = written.get(file.path) ?? await this.app.vault.read(file);
+      questions.push(...parseQuestionFile(file.path, content, { subject }).questions);
+    }
+    return questions;
+  }
+
   private async syncSubjectNote(subject: string, questions: QuestionRecord[]): Promise<void> {
     await this.assertSubjectNoteWritable(subject);
     const folderPath = normalizePath(`${this.managedRoot}/${subject}`);
@@ -1199,11 +1219,7 @@ export default class MiaStudyPlugin extends Plugin {
     for (const subject of this.listSubjects()) {
       if (this.unloadRequested) return;
       try {
-        const bankPath = normalizePath(`${this.managedRoot}/${subject}/문제은행.md`);
-        const bank = this.app.vault.getAbstractFileByPath(bankPath);
-        const questions = bank instanceof TFile
-          ? parseQuestionFile(bankPath, await this.app.vault.cachedRead(bank), { subject }).questions
-          : [];
+        const questions = await this.subjectQuestions(subject);
         if (this.unloadRequested) return;
         await this.syncSubjectNote(subject, questions);
         count += 1;

@@ -1,6 +1,7 @@
 import { KeywordReference, QuestionRecord, QuestionType } from "./models";
 import { assertQuestionUnchanged, findCurrentQuestion, questionMetadataLines } from "./question-writer";
-import { assertSingleLine, hasHeadingAtOrAbove } from "./markdown-structure";
+import { assertSingleLine, fencedCodeLines, hasHeadingAtOrAbove } from "./markdown-structure";
+import { MIA_CALLOUT, QUESTION_CALLOUT } from "./question-parser";
 import { validateNoteName } from "./note-name";
 
 export interface ManagedQuestionInput {
@@ -17,6 +18,16 @@ export interface ManagedQuestionInput {
 export function validateManagedQuestionInput(input: ManagedQuestionInput): void {
   if (hasHeadingAtOrAbove(input.answerMarkdown, 3)) {
     throw new Error("정답에서는 #### 이하의 제목만 사용할 수 있습니다. #~### 제목은 문제 구역을 분리합니다.");
+  }
+  // The parser starts a new question at every `> [!question]` outside code and
+  // reads `> [!mia]` inside a question callout as its metadata block.
+  const answerLines = input.answerMarkdown.replaceAll("\r\n", "\n").split("\n");
+  const fenced = fencedCodeLines(answerLines);
+  if (answerLines.some((line, index) => !fenced[index] && QUESTION_CALLOUT.test(line))) {
+    throw new Error("정답에 `> [!question]` 줄이 있으면 별도 문제로 인식됩니다. 코드 블록 안에 넣거나 표기를 바꿔 주세요.");
+  }
+  if (quoteCallout(input.questionMarkdown).some((line) => QUESTION_CALLOUT.test(line) || MIA_CALLOUT.test(line))) {
+    throw new Error("질문 줄을 `[!question]` 또는 `[!mia]`로 시작하면 문제 구역이 분리됩니다. 표기를 바꿔 주세요.");
   }
   for (const keyword of [...input.coreKeywords, ...input.subKeywords]) {
     assertSingleLine(keyword.raw, "키워드");

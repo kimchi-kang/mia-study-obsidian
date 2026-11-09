@@ -8,8 +8,8 @@ import {
 } from "./models";
 import { fencedCodeLines } from "./markdown-structure";
 
-const QUESTION_CALLOUT = /^>\s*\[!question\](?:[+-])?(?:\s+.*)?$/i;
-const MIA_CALLOUT = /^>\s*\[!mia\](?:[+-])?(?:\s+.*)?$/i;
+export const QUESTION_CALLOUT = /^>\s*\[!question\](?:[+-])?(?:\s+.*)?$/i;
+export const MIA_CALLOUT = /^>\s*\[!mia\](?:[+-])?(?:\s+.*)?$/i;
 const BLOCK_ID = /^\^(mia-q-[A-Za-z0-9-]+)\s*$/;
 const HEADING = /^(#{1,6})\s+(.+?)\s*$/;
 const WIKI_LINK = /\[\[([^\]|]+?)(?:\|([^\]]+))?\]\]/g;
