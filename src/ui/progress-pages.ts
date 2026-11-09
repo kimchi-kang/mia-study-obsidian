@@ -1,8 +1,9 @@
 import { Modal, Notice } from "obsidian";
-import { calculateProgress } from "../core/progress";
+import { calculateProgress, type ProgressCounts } from "../core/progress";
 import type { QuestionRecord } from "../core/models";
 import type { ReviewFilter } from "../core/question-query";
 import { buildReviewQueue } from "../core/recommendation-engine";
+import { studyDayStart } from "../core/study-management";
 import { errorMessage } from "./error-message";
 import { renderQuestionHeading } from "./question-row";
 import { ReviewConflictModal } from "./review-conflict-modal";
@@ -60,7 +61,11 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
   const availableDue = available.length - availableNew;
   const empty = questions.length === 0;
   const limited = !empty && available.length === 0 && due + fresh > 0;
-  const action = root.createDiv({ cls: "mia-primary-card" });
+  const hero = root.createDiv({ cls: "mia-primary-card mia-hero" });
+  const action = hero.createDiv({ cls: "mia-hero-main" });
+  // The study day starts at the configured hour, so 02:00 still belongs to yesterday.
+  const studyDay = studyDayStart(new Date(), ctx.plugin.store.settings.studyManagement.dayStartsAt);
+  action.createEl("span", { text: studyDay.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "long" }), cls: "mia-hero-date" });
   action.createEl("h3", { text: empty ? "첫 질문을 추가해 보세요" : available.length > 0 ? "오늘 학습을 시작할까요?" : limited ? "오늘 출제할 문제가 없습니다" : "지금 복습할 문제가 없습니다" });
   action.createEl("p", { text: empty
     ? "과목 이름, 질문, 정답, 핵심 키워드를 입력하면 바로 학습할 수 있습니다. 과목과 키워드는 함께 만들어집니다."
@@ -89,6 +94,11 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
     finally { refresh.disabled = false; }
   });
   action.createEl("p", { text: "같은 보관함을 동기화하면 내 기기 사이에서 복습 기록·학습 설정·이어하기를 함께 씁니다.", cls: "mia-muted mia-device-sync-hint" });
+  if (!empty) {
+    const counts = hero.createDiv({ cls: "mia-hero-counts" });
+    heroCount(counts, "복습", availableDue, `대기 ${due}`, "review");
+    heroCount(counts, "새 문제", availableNew, `대기 ${fresh}`, "new");
+  }
   const saved = ctx.plugin.studyUi.resume;
   if (saved) {
     const current = ctx.plugin.index.questionById(saved.queue[saved.queueIndex] ?? saved.seed[0] ?? "");
@@ -102,17 +112,17 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
     resume.createEl("button", { text: "이어하기", cls: "mod-cta" }).addEventListener("click", () => ctx.resumeStudy());
   }
   const grid = root.createDiv({ cls: "mia-stats" });
-  progressStat(ctx, grid, "등록 문제", questions.length, "all");
+  progressStat(ctx, grid, "등록 문제", questions.length, "all", "total");
   const stableRatio = progress.total ? Math.round((progress.stable / progress.total) * 100) : 0;
   const stable = grid.createEl("button", { cls: "mia-stat mia-progress-stat mia-stability-stat" });
   stable.style.setProperty("--mia-stable-ratio", `${stableRatio * 3.6}deg`);
   stable.createEl("strong", { text: `${stableRatio}%` });
   stable.createEl("span", { text: "기억 안정 비율" });
   stable.addEventListener("click", () => ctx.showQuestions("stable"));
-  progressStat(ctx, grid, "최근 너무 쉬움", progress.easy, "easy");
-  progressStat(ctx, grid, "오늘 평가", progress.today, "today");
-  progressStat(ctx, grid, "오늘 복습", due, "due");
-  progressStat(ctx, grid, "개선 필요", progress.again + progress.hard, "weak");
+  progressStat(ctx, grid, "최근 너무 쉬움", progress.easy, "easy", "easy");
+  progressStat(ctx, grid, "오늘 평가", progress.today, "today", "good");
+  progressStat(ctx, grid, "오늘 복습", due, "due", "review");
+  progressStat(ctx, grid, "개선 필요", progress.again + progress.hard, "weak", "again");
   renderProgressGuidance(ctx, root);
   const manage = root.createDiv({ cls: "mia-manage-actions" });
   manage.createEl("button", { text: "과목 추가" }).addEventListener("click", () => ctx.plugin.openSubjectEditor());
@@ -130,6 +140,7 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
     items.push(question);
     subjects.set(question.subject, items);
   }
+  const subjectCounts = new Map(progress.bySubject.map((item) => [item.subject, item.counts]));
   if (subjects.size) {
     root.createEl("h3", { text: "과목별 학습", cls: "mia-section-title" });
     const subjectGrid = root.createDiv({ cls: "mia-subject-grid" });
@@ -137,8 +148,15 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
       const subjectDue = items.filter((question) => ctx.plugin.fsrs.isDue(ctx.plugin.store.getReview(question.id))).length;
       const subjectNew = items.filter((question) => ctx.plugin.fsrs.isNew(ctx.plugin.store.getReview(question.id))).length;
       const card = subjectGrid.createDiv({ cls: "mia-subject-card" });
-      card.createEl("strong", { text: subject });
-      card.createEl("span", { text: `${items.length}문제 · 복습 ${subjectDue} · 새 문제 ${subjectNew}` });
+      const heading = card.createDiv({ cls: "mia-subject-heading" });
+      heading.createEl("strong", { text: subject });
+      heading.createEl("span", { text: `${items.length}문제`, cls: "mia-subject-total" });
+      renderMeter(card, subjectCounts.get(subject)?.studied ?? 0, items.length, "학습");
+      const chips = card.createDiv({ cls: "mia-subject-chips" });
+      const dueChip = chips.createEl("span", { text: `복습 ${subjectDue}`, cls: "mia-count-chip" });
+      dueChip.dataset.tone = subjectDue > 0 ? "review" : "idle";
+      const newChip = chips.createEl("span", { text: `새 문제 ${subjectNew}`, cls: "mia-count-chip" });
+      newChip.dataset.tone = subjectNew > 0 ? "new" : "idle";
       const subjectActions = card.createDiv({ cls: "mia-inline-actions" });
       const reviewIds = buildReviewQueue(items, ctx.plugin.store.reviews, ctx.plugin.fsrs, { management: ctx.plugin.store.settings.studyManagement }).map((question) => question.id);
       const review = subjectActions.createEl("button", { text: "시험" });
@@ -164,15 +182,16 @@ export function renderProgress(ctx: StudyPageContext, root: HTMLElement): void {
   const progress = calculateProgress(questions, ctx.plugin.store.reviews, ctx.plugin.fsrs);
   root.createEl("h3", { text: "전체 학습현황", cls: "mia-page-title" });
   const totals = root.createDiv({ cls: "mia-stats" });
-  progressStat(ctx, totals, "전체 문제", progress.total, "all");
-  progressStat(ctx, totals, "학습 전", progress.new, "new");
-  progressStat(ctx, totals, "오늘 복습", progress.due, "due");
-  progressStat(ctx, totals, "1회 이상 학습", progress.studied, null);
-  progressStat(ctx, totals, "기억 안정", progress.stable, "stable");
-  progressStat(ctx, totals, "오늘 평가", progress.today, "today");
+  progressStat(ctx, totals, "전체 문제", progress.total, "all", "total");
+  progressStat(ctx, totals, "학습 전", progress.new, "new", "new");
+  progressStat(ctx, totals, "오늘 복습", progress.due, "due", "review");
+  progressStat(ctx, totals, "1회 이상 학습", progress.studied, null, "total");
+  progressStat(ctx, totals, "기억 안정", progress.stable, "stable", "good");
+  progressStat(ctx, totals, "오늘 평가", progress.today, "today", "good");
   renderProgressGuidance(ctx, root);
 
   root.createEl("h3", { text: "최근 평가", cls: "mia-section-title" });
+  renderRatingBar(root, progress);
   const ratings = root.createDiv({ cls: "mia-progress-ratings" });
   progressStat(ctx, ratings, "못 암기", progress.again, "again");
   progressStat(ctx, ratings, "애매", progress.hard, "hard");
@@ -192,6 +211,7 @@ export function renderProgress(ctx: StudyPageContext, root: HTMLElement): void {
     const heading = card.createDiv({ cls: "mia-progress-subject-heading" });
     heading.createEl("strong", { text: subject });
     heading.createEl("span", { text: `${counts.studied}/${counts.total} 학습` });
+    renderMeter(card, counts.studied, counts.total, "학습");
     const values = card.createDiv({ cls: "mia-progress-subject-values" });
     progressLink(ctx, values, `학습 전 ${counts.new}`, "new", subject);
     progressLink(ctx, values, `오늘 복습 ${counts.due}`, "due", subject);
@@ -223,10 +243,12 @@ function progressStat(
   label: string,
   value: number,
   review: ReviewFilter | null,
+  tone?: string,
 ): void {
   const card = review
     ? parent.createEl("button", { cls: "mia-stat mia-progress-stat" })
     : parent.createDiv({ cls: "mia-stat mia-progress-stat" });
+  if (tone) card.dataset.tone = tone;
   card.createEl("strong", { text: String(value) });
   card.createEl("span", { text: label });
   if (review) card.addEventListener("click", () => ctx.showQuestions(review));
@@ -235,4 +257,36 @@ function progressStat(
 function progressLink(ctx: StudyPageContext, parent: HTMLElement, label: string, review: ReviewFilter, subject: string): void {
   const button = parent.createEl("button", { text: label });
   button.addEventListener("click", () => ctx.showQuestions(review, subject));
+}
+
+function heroCount(parent: HTMLElement, label: string, value: number, detail: string, tone: string): void {
+  const item = parent.createDiv({ cls: "mia-hero-count" });
+  item.dataset.tone = tone;
+  item.createEl("strong", { text: String(value) });
+  item.createEl("span", { text: label });
+  item.createEl("small", { text: detail });
+}
+
+/** A labelled bar; the text stays readable for screen readers and narrow panes. */
+function renderMeter(parent: HTMLElement, value: number, total: number, label: string): void {
+  const ratio = total > 0 ? Math.min(1, value / total) : 0;
+  const meter = parent.createDiv({ cls: "mia-meter" });
+  meter.setAttr("role", "img");
+  meter.setAttr("aria-label", `${label} ${value}/${total}`);
+  meter.createDiv({ cls: "mia-meter-fill" }).style.setProperty("width", `${Math.round(ratio * 100)}%`);
+}
+
+function renderRatingBar(root: HTMLElement, counts: ProgressCounts): void {
+  const parts: Array<[string, number, string]> = [["못 암기", counts.again, "again"], ["애매", counts.hard, "hard"], ["암기", counts.good, "good"], ["너무 쉬움", counts.easy, "easy"]];
+  const total = parts.reduce((sum, [, value]) => sum + value, 0);
+  if (!total) return;
+  const bar = root.createDiv({ cls: "mia-rating-bar" });
+  bar.setAttr("role", "img");
+  bar.setAttr("aria-label", parts.map(([label, value]) => `${label} ${value}`).join(", "));
+  for (const [, value, tone] of parts) {
+    if (!value) continue;
+    const segment = bar.createDiv({ cls: "mia-rating-bar-part" });
+    segment.dataset.tone = tone;
+    segment.style.setProperty("flex-grow", String(value));
+  }
 }

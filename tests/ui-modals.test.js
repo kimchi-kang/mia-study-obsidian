@@ -95,8 +95,10 @@ describe("modal interaction regressions", () => {
     const saved = new Map(), change = vi.fn();
     const store = new StudyUiStore({ vault: { adapter: { exists: async()=>false, read: async()=>{throw Error("unexpected file read");}, write: async()=>{throw Error("unexpected file write");} } }, loadLocalStorage: key => saved.get(key), saveLocalStorage: (key, value) => saved.set(key, value) }, "ui.json");
     const modal = new StudyAppearanceModal({}, store, change); modal.onOpen();
-    const selects = modal.contentEl.children.filter(item => item.tag === "select");
-    const toggles = modal.contentEl.children.filter(item => item.tag === "input");
+    // Rows sit inside titled groups; collect controls in document order.
+    const descendants = element => element.children.flatMap(child => [child, ...descendants(child)]);
+    const selects = descendants(modal.contentEl).filter(item => item.tag === "select");
+    const toggles = descendants(modal.contentEl).filter(item => item.tag === "input");
     selects[0].handlers.get("change")("large"); selects[1].handlers.get("change")("compact");
     toggles[0].handlers.get("change")(true); selects[2].handlers.get("change")("split");
     toggles[1].handlers.get("change")(false); selects[4].handlers.get("change")("firm"); selects[3].handlers.get("change")("sequential");
