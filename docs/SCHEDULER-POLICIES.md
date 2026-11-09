@@ -14,7 +14,7 @@ MIA는 `FsrsService`에서 학습·재학습 단계 설정을 ts-fsrs에 넘기�
 
 원본의 `BasicLearningStepsStrategy`는 `getHardInterval()`에서 두 단계 이상일 때 항상 처음 두 단계의 평균을 반환하고, Hard의 `next_step`은 `cur_step`으로 둔다. MIA가 6분을 별도로 설정한 것은 아니다.
 
-[버전이 고정된 원본 코드](https://raw.githubusercontent.com/open-spaced-repetition/ts-fsrs/v5.4.1/packages/fsrs/src/strategies/learning_steps.ts), [MIA 래퍼](src/core/fsrs-service.ts).
+[버전이 고정된 원본 코드](https://raw.githubusercontent.com/open-spaced-repetition/ts-fsrs/v5.4.1/packages/fsrs/src/strategies/learning_steps.ts), [MIA 래퍼](../src/core/fsrs-service.ts).
 
 ## 24시간 이상 단계
 
@@ -66,4 +66,4 @@ MIA는 `FsrsService`에서 학습·재학습 단계 설정을 ts-fsrs에 넘기�
 
 ## 2026-10-27 안내 반영 후속
 
-현재 계산은 유지하면서 고급 단계 입력의 즉시 안내, 조작 도움말, 대시보드·학습현황의 ‘통계와 출제량 안내’에 위 조건을 반영했다. 기본6분을 모든 설정에 적용하지 않고 실제 단계/고정 간격에 맞게 설명한다. 24시간 이상 단계는 경고하고 입력은 허용한다. 통계를 바꾸지 않고 의미를 설명하는 권장안을 구현했다. 저장·외부 변경 수정과 후보의 실제 설치 결과는 [후속 검증](POLICY-SYNC-CANDIDATE-QA.md)에 구분했다.
+현재 계산은 유지하면서 고급 단계 입력의 즉시 안내, 조작 도움말, 대시보드·학습현황의 ‘통계와 출제량 안내’에 위 조건을 반영했다. 기본6분을 모든 설정에 적용하지 않고 실제 단계/고정 간격에 맞게 설명한다. 24시간 이상 단계는 경고하고 입력은 허용한다. 통계를 바꾸지 않고 의미를 설명하는 권장안을 구현했다. 저장·외부 변경 수정과 후보의 실제 설치 결과는 [후속 검증](qa/archive/POLICY-SYNC-CANDIDATE-QA.md)에 구분했다.

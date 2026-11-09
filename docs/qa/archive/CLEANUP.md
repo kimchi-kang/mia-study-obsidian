@@ -15,9 +15,9 @@ MIA 저장소의 시작 Git 상태는 깨끗했다. 프로젝트 소스·유효 
 
 ## 핵심 보존 위치
 
-- [최종 1.3.5 ZIP](artifacts/1.3.5-final/mia-study-1.3.5.zip), [체크섬](artifacts/1.3.5-final/SHA256SUMS), [릴리스 노트](docs/releases/1.3.5.md), [설치 안내](INSTALL.md).
-- [이전 정식 1.3.4](artifacts/1.3.4/): 업데이트 호환성 및 설치 파일 복구용.
-- [1.3.5 최종 검증·화면](docs/qa/1.3.5/README.md), [이전 후보 검증·화면](docs/qa/unreleased-install/README.md).
+- [최종 1.3.5 ZIP](../../../artifacts/1.3.5-final/mia-study-1.3.5.zip), [체크섬](../../../artifacts/1.3.5-final/SHA256SUMS), [릴리스 노트](../../releases/1.3.5.md), [설치 안내](../../../INSTALL.md).
+- [이전 정식 1.3.4](../../../artifacts/1.3.4/): 업데이트 호환성 및 설치 파일 복구용.
+- [1.3.5 최종 검증·화면](../1.3.5/README.md), [이전 후보 검증·화면](../unreleased-install/README.md).
 - `../release-prep-2026-10-26/before-update/`: 실제 1.3.4로 만든 합성 문제·설정·복습·이어하기의 최소 업데이트 출발점. 개인 데이터가 아닌 생성한 테스트 데이터이며 호환성 재검증에 필요하다.
 - `../release-prep-2026-10-26/`, `../release-1.3.5-qa-2026-10-27/`의 고유 화면·검증 JSON·최종 검사 로그: 중복 화면과 실행 보관함을 제외한 원시 근거.
 
