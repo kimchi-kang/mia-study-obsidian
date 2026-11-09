@@ -1,3 +1,5 @@
+export interface ExportReceipt { path: string; count: number; warnings: string[]; openFile?: () => Promise<void>; revealFile?: () => void }
+
 // Desktop APIs are loaded only when used, so the mobile plugin can still load.
 interface DesktopExportApi {
   remote: { app: { getPath(name: "downloads"): string } };

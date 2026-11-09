@@ -15,6 +15,12 @@ export interface ManagedQuestionInput {
   updatedAt?: string;
 }
 
+/** What the question editor submits: the question plus its subject and edited keyword meanings. */
+export interface ManagedQuestionDraft extends ManagedQuestionInput {
+  subject: string;
+  keywordMeanings: Array<{ target: string; label: string; meaning: string; preserveExistingWhenEmpty?: boolean }>;
+}
+
 export function validateManagedQuestionInput(input: ManagedQuestionInput): void {
   if (hasHeadingAtOrAbove(input.answerMarkdown, 3)) {
     throw new Error("정답에서는 #### 이하의 제목만 사용할 수 있습니다. #~### 제목은 문제 구역을 분리합니다.");
