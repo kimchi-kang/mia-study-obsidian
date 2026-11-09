@@ -1166,8 +1166,8 @@ describe("edit the current saved question from an active session", () => {
       ui.plugin.index.registered[1].questionMarkdown = "질문";
       ui.view.startReview(["related", "q"], mode);
       ui.view.moveToQuestion(ui.view.queue.indexOf("related"));
-      ui.view.questionText = "no matching question"; ui.view.questionSubject = "hidden";
-      ui.view.questionSort = "updated";
+      ui.view.questionList.text = "no matching question"; ui.view.questionList.subject = "hidden";
+      ui.view.questionList.sort = "updated";
       const state = structuredClone(ui.view.getState());
       const startedAt = ui.view.sessionStartedAt;
       expect(ui.content().includes("모범 답안")).toBe(mode === "browse");
@@ -1176,7 +1176,7 @@ describe("edit the current saved question from an active session", () => {
       expect(original.id).toBe("related");
       expect(ui.content()).toContain("현재 학습 문제");
       expect(ui.content()).toContain("기존 검색·필터·정렬은 유지");
-      expect(ui.view.questionText).toBe("no matching question");
+      expect(ui.view.questionList.text).toBe("no matching question");
       ui.plugin.index.registered[1] = { ...original, questionMarkdown: "수정된 질문", answerMarkdown: "수정된 답변" };
       saved();
       await vi.advanceTimersByTimeAsync(75_000);
@@ -1186,7 +1186,7 @@ describe("edit the current saved question from an active session", () => {
       expect(ui.content()).toContain("수정된 질문");
       if(mode === "recall") { expect(ui.content()).not.toContain("수정된 답변"); await ui.exactButton("정답 보기").click(); }
       expect(ui.content()).toContain("수정된 답변");
-      expect(ui.view.questionSort).toBe("updated");
+      expect(ui.view.questionList.sort).toBe("updated");
       expect(ui.plugin.index.registered[0].answerMarkdown).toBe("정답");
     });
     it(`${mode}: cancellation preserves content and prior ratings, changed answers explicitly retain grades`, async () => {
@@ -1443,7 +1443,7 @@ describe("bounded question results and Markdown resource lifetime", () => {
       ...base, id: `q-${i}`, heading: `문제 ${String(i).padStart(3, "0")}`,
       questionMarkdown: `내용 ${i}`, answerMarkdown: i === 120 ? "마지막 정답 검색" : "답변",
     }));
-    ui.view.questionSort = "title";
+    ui.view.questionList.sort = "title";
     ui.view.navigate("questions");
     const rows = () => {
       const visit = node => node.children.flatMap(child => [child, ...visit(child)]);
@@ -1465,7 +1465,7 @@ describe("bounded question results and Markdown resource lifetime", () => {
     ui.search("마지막 정답 검색");
     expect(ui.rows()).toHaveLength(1);
     expect(ui.rows()[0].content).toContain("문제 120");
-    expect(ui.view.questionPage).toBe(0);
+    expect(ui.view.questionList.page).toBe(0);
     ui.search("");
     const start = vi.spyOn(ui.view, "startReview").mockImplementation(() => {});
     await ui.exactButton("검색 결과 암기").click();

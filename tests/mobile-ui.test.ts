@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const styles = await readFile(new URL("../styles.css", import.meta.url), "utf8");
 const view = await readFile(new URL("../src/ui/study-view.ts", import.meta.url), "utf8");
+const questionList = await readFile(new URL("../src/ui/question-list-page.ts", import.meta.url), "utf8");
 
 describe("mobile UI contract", () => {
   it("uses compact mobile navigation labels without wrapping", () => {
@@ -11,7 +12,7 @@ describe("mobile UI contract", () => {
   });
 
   it("collapses the dense question filter panel on mobile", () => {
-    expect(view).toContain("filterPanel.open = !Platform.isMobile");
+    expect(questionList).toContain("filterPanel.open = !Platform.isMobile");
     expect(styles).toContain(".mia-filter-panel > summary");
   });
 
