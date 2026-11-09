@@ -118,7 +118,7 @@ export class KeywordOperations {
     const nextTarget = nextPath.replace(/\.md$/i, "");
     const references = () => this.referenceChanges(
       [current.target, nextTarget],
-      (items) => renameKeywordReferences(items, [current.target, nextTarget], nextTarget, name),
+      (items, spellings) => renameKeywordReferences(items, spellings, nextTarget, name),
     );
     if (destination instanceof TFile) {
       const sourceContent = await app.vault.read(source);
@@ -162,7 +162,7 @@ export class KeywordOperations {
     const { app } = this.host;
     const file = app.vault.getAbstractFileByPath(entry.filePath);
     if (!(file instanceof TFile)) throw new Error("삭제할 키워드 노트를 찾지 못했습니다.");
-    const writes = this.referenceChanges([entry.target], references => removeKeywordReferences(references, [entry.target]));
+    const writes = this.referenceChanges([entry.target], (references, spellings) => removeKeywordReferences(references, spellings));
     await applyFileChanges(app.vault, writes, () => trashFileVerified(app, file));
     await this.host.index.rebuild();
     new Notice(`${entry.name} 키워드를 삭제하고 연결된 문제를 갱신했습니다.`);
@@ -171,13 +171,34 @@ export class KeywordOperations {
   questionsUsing(targets: readonly string[]): RegisteredQuestion[] {
     return this.host.index.registered.filter((question) =>
       [...question.coreKeywords, ...question.subKeywords]
-        .some((reference) => keywordReferenceMatches(reference, targets)),
+        .some((reference) => this.refersTo(reference, question.filePath, targets)),
     );
+  }
+
+  /**
+   * Whether a keyword link opens one of the targets. Obsidian writes links in
+   * the vault's link format — after a rename, by default the shortest unique
+   * form such as [[A2]] — so a link that does not spell a target's path is
+   * resolved to the note it opens from its question file.
+   */
+  private refersTo(reference: KeywordReference, sourcePath: string, targets: readonly string[]): boolean {
+    if (keywordReferenceMatches(reference, targets)) return true;
+    const linkpath = reference.target.split("#")[0] ?? "";
+    const file = linkpath ? this.host.app.metadataCache.getFirstLinkpathDest(linkpath, sourcePath) : null;
+    return file !== null && keywordReferenceMatches({ ...reference, target: file.path }, targets);
+  }
+
+  /** The targets plus every other spelling in `references` that opens one of them. */
+  private spellingsOf(references: readonly KeywordReference[], sourcePath: string, targets: readonly string[]): string[] {
+    const aliases = references
+      .filter((reference) => !keywordReferenceMatches(reference, targets) && this.refersTo(reference, sourcePath, targets))
+      .map((reference) => reference.target);
+    return [...targets, ...aliases];
   }
 
   private referenceChanges(
     targets: readonly string[],
-    transform: (references: readonly KeywordReference[]) => KeywordReference[],
+    transform: (references: readonly KeywordReference[], spellings: readonly string[]) => KeywordReference[],
   ): FileChange[] {
     const byFile = new Map<string, RegisteredQuestion[]>();
     for (const question of this.questionsUsing(targets)) {
@@ -195,8 +216,8 @@ export class KeywordOperations {
           const current = findCurrentQuestion(parseQuestionFile(filePath, updated).questions, original);
           if (!current) throw new Error("키워드가 연결된 문제를 최신 원문에서 찾지 못했습니다.");
           const followUpLinks = followUpLinksIn(updated, current);
-          const coreKeywords = transform(current.coreKeywords);
-          const subKeywords = transform(current.subKeywords)
+          const coreKeywords = transform(current.coreKeywords, this.spellingsOf(current.coreKeywords, filePath, targets));
+          const subKeywords = transform(current.subKeywords, this.spellingsOf(current.subKeywords, filePath, targets))
             .filter((reference) => !keywordReferenceMatches(reference, coreKeywords.map((keyword) => keyword.target)));
           updated = updateQuestionMetadata(updated, current, {
             questionType: current.questionType,
