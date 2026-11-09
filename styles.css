@@ -1080,3 +1080,156 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 /* If actions leave no writing space, let the whole sheet scroll instead of covering inputs. */
 .mia-keyboard-modal .modal-content.mia-keyboard-actions-inline { scroll-padding-bottom: 24px; }
 .mia-keyboard-modal .mia-keyboard-actions-inline .mia-keyboard-actions { position: static; }
+
+/* ── 1.5 visual refresh ─────────────────────────────────────────────
+   Calmer surfaces, quieter secondary actions and one clear primary
+   action per screen. Visual properties only: layout, sizing, touch
+   targets and responsive rules above stay authoritative. Every colour
+   derives from Obsidian theme tokens so user themes and accents apply. */
+:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) {
+  --mia-radius: 14px;
+  --mia-radius-s: 10px;
+  --mia-line: color-mix(in srgb, var(--background-modifier-border) 80%, transparent);
+  --mia-surface: color-mix(in srgb, var(--background-primary-alt) 70%, var(--background-primary));
+  --mia-surface-hover: color-mix(in srgb, var(--text-normal) 5%, var(--mia-surface));
+  --mia-accent-soft: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+  --mia-accent-line: color-mix(in srgb, var(--interactive-accent) 38%, var(--background-modifier-border));
+  --mia-danger: var(--text-error, #e5484d);
+  --mia-ease: cubic-bezier(.2, .7, .2, 1);
+}
+.mia-view button { transition: background-color 140ms var(--mia-ease), border-color 140ms var(--mia-ease), color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease); }
+
+/* Header: lighter rule, quiet settings buttons. */
+.mia-view .mia-header { border-bottom-color: var(--mia-line); }
+.mia-view .mia-header h2 { font-weight: 750; letter-spacing: -.02em; }
+.mia-view .mia-header .mia-badge { background: var(--mia-accent-soft); color: var(--interactive-accent); font-weight: 650; border-radius: 6px; }
+.mia-view .mia-settings-buttons > button { background: transparent; box-shadow: none; border: 1px solid var(--mia-line); border-radius: var(--mia-radius-s); color: var(--text-muted); }
+.mia-view .mia-settings-buttons > button:hover { background: var(--mia-surface-hover); color: var(--text-normal); }
+
+/* Navigation: segmented control whose active tab is raised, not filled. */
+.mia-view .mia-nav { background: var(--mia-surface); border-color: var(--mia-line); border-radius: var(--mia-radius); }
+.mia-view .mia-nav button { border-radius: var(--mia-radius-s); font-weight: 550; }
+.mia-view .mia-nav button.mod-cta,
+.mia-view .mia-nav button.mod-cta:hover { background: var(--background-primary); color: var(--interactive-accent); font-weight: 700; box-shadow: 0 1px 2px rgb(0 0 0 / 12%), 0 0 0 1px var(--mia-accent-line); }
+
+/* Library screens line up with the header column like the dashboard does. */
+.mia-view:is(.mia-route-questions, .mia-route-weakness, .mia-route-keywords) > :not(.mia-header) { max-width: var(--mia-study-width); margin-left: auto; margin-right: auto; }
+
+/* Shared surfaces. */
+.mia-view :is(.mia-stat, .mia-row, .mia-keyword, .mia-subject-card, .mia-progress-subject) { background: var(--mia-surface); border-color: var(--mia-line); border-radius: var(--mia-radius); }
+.mia-view :is(.mia-row, .mia-keyword, .mia-subject-card, button.mia-stat):hover { border-color: var(--mia-accent-line); }
+.mia-view .mia-empty { border: 1px dashed var(--mia-line); border-radius: var(--mia-radius); }
+
+/* Dashboard hero: tinted panel that leads with the start action. */
+.mia-view.mia-route-dashboard .mia-primary-card {
+  border-color: var(--mia-accent-line);
+  border-radius: calc(var(--mia-radius) + 4px);
+  background:
+    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--interactive-accent) 16%, transparent), transparent 60%),
+    color-mix(in srgb, var(--interactive-accent) 4%, var(--background-primary));
+}
+.mia-view.mia-route-dashboard .mia-primary-card h3 { font-weight: 750; letter-spacing: -.02em; }
+.mia-view.mia-route-dashboard .mia-primary-card .mod-cta { box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--interactive-accent) 70%, transparent); }
+.mia-view .mia-resume-card { border-radius: var(--mia-radius); background: var(--mia-surface); border-color: var(--mia-line); border-left: 3px solid var(--interactive-accent); }
+
+/* Stats: number first, label second. */
+.mia-view .mia-stat strong { font-weight: 750; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.mia-view .mia-stat span { font-size: max(12px, var(--font-ui-smaller)); }
+
+/* Notices: a coloured edge instead of a full outline. */
+.mia-view :is(.mia-sync-warning, .mia-storage-warning) { border: 1px solid var(--mia-line); border-left: 3px solid var(--text-warning); border-radius: var(--mia-radius-s); background: color-mix(in srgb, var(--text-warning) 7%, var(--background-primary)); }
+
+/* Secondary actions are quiet; destructive ones say so without shouting. */
+.mia-view :is(.mia-row-actions, .mia-subject-card .mia-inline-actions, .mia-keyword) > button:not(.mod-cta),
+:is(.mia-detail-modal) .mia-detail-actions button:not(.mod-cta) { background: transparent; box-shadow: none; border: 1px solid var(--mia-line); border-radius: var(--mia-radius-s); }
+.mia-view :is(.mia-row-actions, .mia-subject-card .mia-inline-actions) > button:not(.mod-cta, .mod-warning):hover { background: var(--mia-surface-hover); }
+.mia-view .mia-row-actions > button:first-child { background: var(--mia-accent-soft); border-color: var(--mia-accent-line); color: var(--interactive-accent); font-weight: 650; }
+.mia-view .mia-row-actions > button:first-child:hover { background: color-mix(in srgb, var(--interactive-accent) 20%, transparent); }
+:is(.mia-view, .mia-detail-modal) button.mod-warning { background: transparent; box-shadow: none; color: var(--mia-danger); border: 1px solid color-mix(in srgb, var(--mia-danger) 40%, var(--mia-line)); }
+:is(.mia-view, .mia-detail-modal) button.mod-warning:hover { background: color-mix(in srgb, var(--mia-danger) 12%, transparent); color: var(--mia-danger); }
+.mia-view .mia-row-body > strong { font-weight: 650; letter-spacing: -.01em; }
+.mia-view .mia-row-body > small { color: var(--text-faint); }
+
+/* Filter chips and keyword chips share the pill language. */
+.mia-view .mia-filter-chips button,
+.mia-view .mia-keyword-chips button { background: var(--mia-surface); border: 1px solid var(--mia-line); box-shadow: none; }
+.mia-view .mia-filter-chips button.mod-warning { border-color: color-mix(in srgb, var(--mia-danger) 40%, var(--mia-line)); }
+
+/* Study: softer progress meter and rating cards without the heavy top rule. */
+.mia-view .mia-session-meter { background: var(--mia-line); }
+.mia-view .mia-session-meter-fill { background: linear-gradient(90deg, color-mix(in srgb, var(--interactive-accent) 70%, var(--background-primary)), var(--interactive-accent)); }
+.mia-view .mia-study-dock { background: linear-gradient(to bottom, transparent, var(--background-primary) 18px); }
+.mia-view .mia-study-dock .mia-ratings button {
+  border: 1px solid color-mix(in srgb, var(--mia-rating-color) 30%, var(--mia-line));
+  border-radius: var(--mia-radius);
+  background: color-mix(in srgb, var(--mia-rating-color) 8%, var(--background-primary));
+  box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--mia-rating-color) 55%, transparent);
+}
+.mia-view .mia-study-dock .mia-ratings button:hover:not(:disabled) { background: color-mix(in srgb, var(--mia-rating-color) 16%, var(--background-primary)); border-color: color-mix(in srgb, var(--mia-rating-color) 55%, var(--mia-line)); }
+.mia-view .mia-study-dock .mia-ratings strong { font-weight: 700; }
+.mia-view .mia-study-dock .mia-ratings small { font-weight: 600; font-variant-numeric: tabular-nums; }
+.mia-view .mia-study-dock .mia-reveal { border-radius: var(--mia-radius); box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--interactive-accent) 70%, transparent); }
+.mia-view .mia-answer-section { border-top: 1px solid var(--mia-line); }
+.mia-view .mia-card-label { letter-spacing: .06em; }
+
+/* Modals pick up the same radius and line colour. */
+:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) { border-radius: calc(var(--mia-radius) + 4px); }
+.mia-detail-meta span { border-color: var(--mia-line); background: var(--mia-surface); }
+
+/* Section rhythm: small heading followed by a hairline that fills the row. */
+.mia-view :is(.mia-section-title, .mia-page-title) { display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.mia-view :is(.mia-section-title, .mia-page-title)::after { content: ""; flex: 1 1 auto; height: 1px; background: var(--mia-line); }
+
+/* Dashboard hero: larger headline and a primary action that leads. */
+.mia-view.mia-route-dashboard .mia-primary-card h3 { font-size: 24px; margin-bottom: 10px; }
+.mia-view.mia-route-dashboard .mia-primary-card > p { color: var(--text-muted); }
+.mia-view.mia-route-dashboard .mia-primary-card .mia-inline-actions > button { border-radius: var(--mia-radius-s); padding-inline: 18px; min-height: 44px; font-weight: 600; }
+.mia-view.mia-route-dashboard .mia-primary-card .mia-inline-actions > button:not(.mod-cta) { background: color-mix(in srgb, var(--background-primary) 70%, transparent); box-shadow: none; border: 1px solid var(--mia-line); }
+.mia-view.mia-route-dashboard .mia-primary-card .mia-inline-actions > button:not(.mod-cta):hover { border-color: var(--mia-accent-line); }
+
+/* Stats read label-then-number, left aligned like a dashboard tile. */
+.mia-view .mia-stat:not(button), .mia-view button.mia-stat { align-items: flex-start; text-align: left; flex-direction: column-reverse; justify-content: flex-end; gap: 6px; }
+.mia-view .mia-stat strong { font-size: 1.95em; }
+.mia-view .mia-stat span { font-weight: 550; letter-spacing: .01em; }
+.mia-view button.mia-stat:hover { background: var(--mia-surface-hover); }
+.mia-view .mia-progress-ratings > .mia-stat { --mia-rating-color: var(--text-muted); border-top: 3px solid color-mix(in srgb, var(--mia-rating-color) 70%, transparent); }
+.mia-view .mia-progress-ratings > .mia-stat strong { color: var(--mia-rating-color); }
+.mia-view .mia-progress-ratings > .mia-stat:nth-child(1) { --mia-rating-color: var(--mia-again); }
+.mia-view .mia-progress-ratings > .mia-stat:nth-child(2) { --mia-rating-color: var(--mia-hard); }
+.mia-view .mia-progress-ratings > .mia-stat:nth-child(3) { --mia-rating-color: var(--mia-good); }
+.mia-view .mia-progress-ratings > .mia-stat:nth-child(4) { --mia-rating-color: var(--mia-easy); }
+
+/* Quick actions become dashed "add" tiles. */
+.mia-view.mia-route-dashboard .mia-manage-actions button { border: 1px dashed var(--mia-line); border-radius: var(--mia-radius-s); min-height: 44px; }
+.mia-view.mia-route-dashboard .mia-manage-actions button:hover { border-color: var(--interactive-accent); color: var(--interactive-accent); background: var(--mia-accent-soft); }
+
+/* Subject cards: name leads, meta follows, actions sit on a divider. */
+.mia-view .mia-subject-card { gap: 10px; }
+.mia-view .mia-subject-card > strong { font-size: 1.12em; font-weight: 700; letter-spacing: -.01em; }
+.mia-view .mia-subject-card > .mia-inline-actions { padding-top: 12px; border-top: 1px solid var(--mia-line); }
+.mia-view .mia-subject-card > .mia-inline-actions > button:first-child { background: var(--mia-accent-soft); border-color: var(--mia-accent-line); color: var(--interactive-accent); font-weight: 650; }
+
+/* Progress by subject: value buttons as quiet pills. */
+.mia-view .mia-progress-subject-heading strong { font-weight: 700; }
+.mia-view .mia-progress-subject-values button { background: transparent; box-shadow: none; border: 1px solid var(--mia-line); border-radius: 999px; color: var(--text-muted); }
+.mia-view .mia-progress-subject-values button:hover { color: var(--text-normal); border-color: var(--mia-accent-line); }
+
+/* Lists: hover marks the row with an accent edge. */
+.mia-view .mia-row { transition: border-color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease); }
+.mia-view .mia-row:hover { box-shadow: inset 3px 0 0 var(--interactive-accent), 0 6px 18px -12px rgb(0 0 0 / 45%); }
+.mia-view .mia-keyword { transition: border-color 140ms var(--mia-ease), transform 140ms var(--mia-ease); }
+.mia-view .mia-keyword:hover { transform: translateY(-1px); }
+.mia-view .mia-keyword > strong { font-weight: 700; }
+
+/* Study: labelled sections, answer on its own tinted panel. */
+.mia-view .mia-card-label { display: inline-block; padding: 3px 9px; border-radius: 999px; background: var(--mia-surface); border: 1px solid var(--mia-line); color: var(--text-muted); font-size: 11px; }
+.mia-view .mia-answer-section .mia-card-label { background: var(--mia-accent-soft); border-color: var(--mia-accent-line); color: var(--interactive-accent); }
+.mia-view .mia-answer-section { padding: 20px 22px; border: 1px solid var(--mia-line); border-left: 3px solid var(--interactive-accent); border-radius: var(--mia-radius); background: color-mix(in srgb, var(--interactive-accent) 4%, var(--background-primary)); }
+.mia-view .mia-study-card .mia-question-section > h2 { font-weight: 750; letter-spacing: -.025em; }
+.mia-view .mia-session-meter { height: 4px; border-radius: 4px; }
+.mia-view .mia-study-navigation .mia-progress { justify-self: center; padding: 4px 12px; border-radius: 999px; background: var(--mia-surface); border: 1px solid var(--mia-line); }
+.mia-view .mia-resume-card h3 { font-weight: 700; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mia-view button { transition: none; }
+}
