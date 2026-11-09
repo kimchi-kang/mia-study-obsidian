@@ -28,12 +28,12 @@ export class SubjectOperations {
   }
 
   async create(value: string): Promise<void> {
-    const { app, managedRoot } = this.host;
+    const { app } = this.host;
     const subject = validateSubjectName(value);
     const keywordContainer = this.keywordContainerName();
     if (keywordContainer && portableNameKey(subject) === portableNameKey(keywordContainer)) throw new Error("키워드 보관 폴더와 같은 이름은 사용할 수 없습니다.");
-    await ensureFolder(app, managedRoot);
-    const folderPath = normalizePath(`${managedRoot}/${subject}`);
+    await ensureFolder(app, this.host.managedRoot);
+    const folderPath = normalizePath(`${this.host.managedRoot}/${subject}`);
     assertPortablePath(app, folderPath);
     if (app.vault.getAbstractFileByPath(folderPath)) throw new Error("이미 존재하는 과목입니다.");
     await app.vault.createFolder(folderPath);
@@ -44,13 +44,13 @@ export class SubjectOperations {
 
   /** Renames the folder and its generated note, then rolls both back if any later step fails. */
   async rename(current: string, value: string): Promise<void> {
-    const { app, index, managedRoot } = this.host;
+    const { app } = this.host;
     const next = validateSubjectName(value);
     if (next === current) return;
     const keywordContainer = this.keywordContainerName();
     if (keywordContainer && portableNameKey(next) === portableNameKey(keywordContainer)) throw new Error("키워드 보관 폴더와 같은 이름은 사용할 수 없습니다.");
-    const currentPath = normalizePath(`${managedRoot}/${current}`);
-    const nextPath = normalizePath(`${managedRoot}/${next}`);
+    const currentPath = normalizePath(`${this.host.managedRoot}/${current}`);
+    const nextPath = normalizePath(`${this.host.managedRoot}/${next}`);
     assertPortablePath(app, nextPath);
     const folder = app.vault.getAbstractFileByPath(currentPath);
     if (!(folder instanceof TFolder)) throw new Error("기존 과목 폴더를 찾지 못했습니다.");
@@ -70,7 +70,7 @@ export class SubjectOperations {
         if (!(movedNote instanceof TFile)) throw new Error("과목 폴더 변경 후 자동 노트를 찾지 못했습니다.");
         await app.fileManager.renameFile(movedNote, this.notes.path(next));
       }
-      await index.rebuild();
+      await this.host.index.rebuild();
       const bank = app.vault.getAbstractFileByPath(normalizePath(`${nextPath}/문제은행.md`));
       const writes: FileChange[] = [];
       if (bank instanceof TFile) writes.push({ file: bank, update: content => renameSubjectBank(content, current, next) });
@@ -90,8 +90,8 @@ export class SubjectOperations {
           createdNote = { path, content: renderSubjectNote(next, questions) };
           await app.vault.create(path, createdNote.content);
         }
-        await index.rebuild();
-        await this.followUps.refreshIncoming(index.registered.filter(question => question.subject === next).map(question => question.id));
+        await this.host.index.rebuild();
+        await this.followUps.refreshIncoming(this.host.index.registered.filter(question => question.subject === next).map(question => question.id));
       });
     } catch (error) {
       try {
@@ -114,30 +114,30 @@ export class SubjectOperations {
       } catch (recoveryError) {
         throw new AggregateError([error, recoveryError], "과목 이름 변경을 복구하지 못했습니다. 원래 폴더와 변경 폴더를 확인하세요.");
       } finally {
-        await index.rebuild();
+        await this.host.index.rebuild();
       }
       throw error;
     }
-    await index.rebuild();
+    await this.host.index.rebuild();
     new Notice(`${current} 과목을 ${next}(으)로 변경했습니다.`);
   }
 
   async delete(subject: string): Promise<void> {
-    const { app, index, store } = this.host;
+    const { app } = this.host;
     const folderPath = normalizePath(`${this.host.managedRoot}/${subject}`);
     const folder = app.vault.getAbstractFileByPath(folderPath);
     if (!(folder instanceof TFolder)) throw new Error("과목 폴더를 찾지 못했습니다.");
-    const ids = index.registered
+    const ids = this.host.index.registered
       .filter((question) => question.filePath.startsWith(`${folderPath}/`))
       .map((question) => question.id);
     await trashFileVerified(app, folder);
     try {
-      await index.rebuild();
+      await this.host.index.rebuild();
       const writes = this.followUps.fileChanges(this.followUps.removedChanges(ids));
-      await applyFileChanges(app.vault, writes, () => store.removeReviews(ids));
-      await index.rebuild();
+      await applyFileChanges(app.vault, writes, () => this.host.store.removeReviews(ids));
+      await this.host.index.rebuild();
     } catch (error) {
-      await index.rebuild();
+      await this.host.index.rebuild();
       throw new Error("과목 폴더는 휴지통으로 이동했지만 평가 또는 연결 정리가 완료되지 않았습니다. 복구하려면 휴지통의 과목 폴더를 확인하세요.", { cause: error });
     }
     new Notice(`${subject} 과목을 휴지통으로 이동했습니다.`);
@@ -145,9 +145,8 @@ export class SubjectOperations {
 
   /** Top-level folder of the keyword folder when it sits inside the managed root; never a subject. */
   keywordContainerName(): string | null {
-    const { managedRoot, store } = this.host;
-    return store.settings.keywordFolder.startsWith(`${managedRoot}/`)
-      ? store.settings.keywordFolder.slice(managedRoot.length + 1).split("/")[0] ?? null
+    return this.host.store.settings.keywordFolder.startsWith(`${this.host.managedRoot}/`)
+      ? this.host.store.settings.keywordFolder.slice(this.host.managedRoot.length + 1).split("/")[0] ?? null
       : null;
   }
 }
