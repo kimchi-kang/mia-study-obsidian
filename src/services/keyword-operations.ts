@@ -8,9 +8,8 @@ import {
   validateKeywordName,
 } from "../core/keyword-note";
 import { keywordNotePath } from "../core/keyword-path";
-import { keywordReferenceMatches, removeKeywordReferences, renameKeywordReferences } from "../core/keyword-reference";
+import { keywordReferenceMatches, keywordTargetMatcher, removeKeywordReferences, renameKeywordReferences } from "../core/keyword-reference";
 import { followUpLinksIn } from "../core/managed-question";
-import { portableNameKey } from "../core/note-name";
 import type { KeywordReference, QuestionRecord } from "../core/models";
 import { parseQuestionFile } from "../core/question-parser";
 import { findCurrentQuestion, updateQuestionMetadata } from "../core/question-writer";
@@ -26,10 +25,20 @@ export interface KeywordNoteEntry {
 
 type RegisteredQuestion = QuestionRecord & { id: string };
 
-/** A note's file name as Obsidian compares it when resolving a link: no folder, no extension, any case or Unicode form. */
-function fileNameKey(path: string): string {
-  const name = path.replaceAll("\\", "/").split("/").at(-1) ?? "";
-  return portableNameKey(name.replace(/\.md$/i, "").trim());
+/** A link or path's file name without folder, heading or extension, lower-cased. */
+function fileName(path: string): string {
+  const hash = path.indexOf("#");
+  const end = hash < 0 ? path.length : hash;
+  const name = path.slice(Math.max(path.lastIndexOf("/", end - 1), path.lastIndexOf("\\", end - 1)) + 1, end).trim().toLowerCase();
+  return name.endsWith(".md") ? name.slice(0, -3) : name;
+}
+
+/** Which notes a keyword operation removes, and which note its links move to. */
+interface ReferenceScope {
+  /** Notes this operation trashes; their links in any form must be updated. */
+  removed: readonly string[];
+  /** The note a merge moves links to; also unified within the questions it touches. */
+  merged?: readonly string[];
 }
 
 /** Keyword notes and the keyword references that questions hold to them. */
@@ -125,10 +134,10 @@ export class KeywordOperations {
     const nextTarget = nextPath.replace(/\.md$/i, "");
     // Only a merge removes the source note. A rename keeps it, and Obsidian has
     // already pointed short links at its new path in the vault's link format.
-    const references = (removed: readonly string[]) => this.referenceChanges(
+    const references = (scope: ReferenceScope) => this.referenceChanges(
       [current.target, nextTarget],
       (items, spellings) => renameKeywordReferences(items, spellings, nextTarget, name),
-      removed,
+      scope,
     );
     if (destination instanceof TFile) {
       const sourceContent = await app.vault.read(source);
@@ -138,7 +147,7 @@ export class KeywordOperations {
         const destinationMeaning = readKeywordMeaning(content);
         const mergedMeaning = [...new Set([destinationMeaning, sourceMeaning, meaning].map(item => item.trim()).filter(Boolean))].join("\n\n");
         return updateKeywordMeaning(content, name, mergedMeaning);
-      } }, ...references([current.target])], async () => {
+      } }, ...references({ removed: [current.target], merged: [nextTarget] })], async () => {
         if (await app.vault.read(source) !== sourceContent) throw new Error("병합 중 원본 키워드가 변경되어 삭제하지 않았습니다.");
         await trashFileVerified(app, source);
       });
@@ -148,7 +157,7 @@ export class KeywordOperations {
         const renamed = app.vault.getAbstractFileByPath(nextPath);
         if (!(renamed instanceof TFile) || renamed !== source) throw new Error("키워드 이름을 바꾼 뒤 노트를 확인하지 못했습니다.");
         await applyFileChanges(app.vault, [
-          { file: renamed, update: content => updateKeywordMeaning(content, name, meaning) }, ...references([]),
+          { file: renamed, update: content => updateKeywordMeaning(content, name, meaning) }, ...references({ removed: [] }),
         ]);
       } catch (error) {
         try {
@@ -172,51 +181,51 @@ export class KeywordOperations {
     const { app } = this.host;
     const file = app.vault.getAbstractFileByPath(entry.filePath);
     if (!(file instanceof TFile)) throw new Error("삭제할 키워드 노트를 찾지 못했습니다.");
-    const writes = this.referenceChanges([entry.target], (references, spellings) => removeKeywordReferences(references, spellings), [entry.target]);
+    const writes = this.referenceChanges([entry.target], (references, spellings) => removeKeywordReferences(references, spellings), { removed: [entry.target] });
     await applyFileChanges(app.vault, writes, () => trashFileVerified(app, file));
     await this.host.index.rebuild();
     new Notice(`${entry.name} 키워드를 삭제하고 연결된 문제를 갱신했습니다.`);
   }
 
-  /** Questions linking to the targets. `removed` are notes about to be trashed; see `refersTo`. */
+  /** Questions linking to the targets. `removed` are notes about to be trashed; see `linkMatcher`. */
   questionsUsing(targets: readonly string[], removed: readonly string[] = targets): RegisteredQuestion[] {
+    const matches = this.linkMatcher(targets, removed);
     return this.host.index.registered.filter((question) =>
-      [...question.coreKeywords, ...question.subKeywords]
-        .some((reference) => this.refersTo(reference, question.filePath, targets, removed)),
+      [...question.coreKeywords, ...question.subKeywords].some((reference) => matches(reference, question.filePath)),
     );
   }
 
   /**
-   * Whether a keyword link points at one of the targets. A link that spells a
-   * target's path always does. A link in another form — Obsidian writes the
-   * vault's link format after a rename, by default the shortest unique form
-   * such as [[A2]] — is resolved, but only against `removed`: those links
-   * would break when the note is trashed. Links to a note that stays already
-   * open it and are left as written.
+   * Decides whether keyword links point at the targets. A link that spells a
+   * target's path always does. A link in another form — after a rename
+   * Obsidian writes the vault's link format, by default the shortest unique
+   * form such as [[A2]] — is resolved to the note it opens, but only against
+   * `resolvable`. Links to notes outside it already open them and are left as
+   * written. Built once per operation; a link costs one name comparison unless
+   * it carries a resolvable note's file name.
    */
-  private refersTo(reference: KeywordReference, sourcePath: string, targets: readonly string[], removed: readonly string[]): boolean {
-    if (keywordReferenceMatches(reference, targets)) return true;
-    const linkpath = reference.target.split("#")[0] ?? "";
-    // A link opens only a note with its file name, so most links need no lookup.
-    const candidates = removed.filter((target) => fileNameKey(target) === fileNameKey(linkpath));
-    if (!linkpath || !candidates.length) return false;
-    const file = this.host.app.metadataCache.getFirstLinkpathDest(linkpath, sourcePath);
-    return file !== null && keywordReferenceMatches({ ...reference, target: file.path }, candidates);
-  }
-
-  /** The targets plus every other spelling in `references` that points at one of them. */
-  private spellingsOf(references: readonly KeywordReference[], sourcePath: string, targets: readonly string[], removed: readonly string[]): string[] {
-    const aliases = references
-      .filter((reference) => !keywordReferenceMatches(reference, targets) && this.refersTo(reference, sourcePath, targets, removed))
-      .map((reference) => reference.target);
-    return [...targets, ...aliases];
+  private linkMatcher(targets: readonly string[], resolvable: readonly string[]): (reference: KeywordReference, sourcePath: string) => boolean {
+    const spelled = keywordTargetMatcher(targets);
+    const names = new Set(resolvable.flatMap((target) => [fileName(target).normalize("NFC"), fileName(target).normalize("NFD")]));
+    return (reference, sourcePath) => {
+      if (spelled(reference)) return true;
+      if (!names.has(fileName(reference.target))) return false;
+      const file = this.host.app.metadataCache.getFirstLinkpathDest(reference.target.split("#")[0] ?? "", sourcePath);
+      return file !== null && keywordReferenceMatches({ ...reference, target: file.path }, resolvable);
+    };
   }
 
   private referenceChanges(
     targets: readonly string[],
     transform: (references: readonly KeywordReference[], spellings: readonly string[]) => KeywordReference[],
-    removed: readonly string[],
+    { removed, merged = [] }: ReferenceScope,
   ): FileChange[] {
+    const spelled = keywordTargetMatcher(targets);
+    const matchesRemoved = this.linkMatcher(removed, removed);
+    const matchesTargets = this.linkMatcher(targets, removed);
+    // A merged question may already hold a short link to the destination; resolve
+    // it too so both collapse into one link. Other questions keep theirs as written.
+    const matchesMerged = merged.length ? this.linkMatcher(targets, [...removed, ...merged]) : matchesTargets;
     const byFile = new Map<string, RegisteredQuestion[]>();
     for (const question of this.questionsUsing(targets, removed)) {
       const questions = byFile.get(question.filePath) ?? [];
@@ -233,8 +242,13 @@ export class KeywordOperations {
           const current = findCurrentQuestion(parseQuestionFile(filePath, updated).questions, original);
           if (!current) throw new Error("키워드가 연결된 문제를 최신 원문에서 찾지 못했습니다.");
           const followUpLinks = followUpLinksIn(updated, current);
-          const coreKeywords = transform(current.coreKeywords, this.spellingsOf(current.coreKeywords, filePath, targets, removed));
-          const subKeywords = transform(current.subKeywords, this.spellingsOf(current.subKeywords, filePath, targets, removed))
+          const matches = [...current.coreKeywords, ...current.subKeywords].some((reference) => matchesRemoved(reference, filePath))
+            ? matchesMerged : matchesTargets;
+          const spellingsOf = (references: readonly KeywordReference[]): string[] => [...targets, ...references
+            .filter((reference) => !spelled(reference) && matches(reference, filePath))
+            .map((reference) => reference.target)];
+          const coreKeywords = transform(current.coreKeywords, spellingsOf(current.coreKeywords));
+          const subKeywords = transform(current.subKeywords, spellingsOf(current.subKeywords))
             .filter((reference) => !keywordReferenceMatches(reference, coreKeywords.map((keyword) => keyword.target)));
           updated = updateQuestionMetadata(updated, current, {
             questionType: current.questionType,
