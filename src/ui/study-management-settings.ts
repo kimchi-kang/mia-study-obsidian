@@ -8,8 +8,12 @@ import { WORKLOAD_PRESETS, RETENTION_PRESETS, workloadPreset, hasCustomAdvancedS
 
 type Save = (action: () => Promise<void>) => Promise<void>;
 
-/** The dialog and Obsidian settings share validation and explicit saving. */
-export function renderStudyManagementSettings(container: HTMLElement, plugin: MiaStudyPlugin, save: Save, cancel?: () => void): void {
+/**
+ * The dialog and Obsidian settings share validation and explicit saving.
+ * `beforeActions` renders extra sections above the action bar on every render,
+ * so the dialog's sticky bar stays the last element in its scroll area.
+ */
+export function renderStudyManagementSettings(container: HTMLElement, plugin: MiaStudyPlugin, save: Save, cancel?: () => void, beforeActions?: (parent: HTMLElement) => void): void {
   let baseline = structuredClone(plugin.store.settings);
   const render = (initial: StudyManagementSettings) => {
     container.empty();
@@ -89,7 +93,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
     fsrsArea.createEl("p", { text: "MIA는 FSRS-6을 항상 사용합니다. Anki의 FSRS 끄기(SM-2), 최적화·평가·시뮬레이터·일괄 재예약은 지원하지 않습니다. 매개변수 변경은 다음 평가부터이며 기존 예약을 재계산하지 않습니다.", cls: "setting-item-description" });
     const extra = section("고급 · MIA의 추가 정책");
     const stepGroups = container.createDiv({ cls: "mia-settings-step-groups" });
-    const retentionGroup = simple.createDiv();
+    const retentionGroup = simple.createDiv({ cls: "mia-settings-retention" });
     retentionGroup.createEl("h4", { text: "복습을 얼마나 자주 할지" });
     const retentionDetails = retentionGroup.createEl("details", { cls: "mia-settings-help" });
     retentionDetails.createEl("summary", { text: "세부 조정 · 복습 목표 직접 입력" });
@@ -472,6 +476,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       libraryStatus.setText(`「${value}」 보관을 준비했습니다. 학습 설정 저장을 눌러 완료하세요.`);
     });
     showProfiles();
+    beforeActions?.(container);
     container.createEl("p", { text: "기본값 불러오기는 새 문제 20개·복습 200회·목표 기억률 90%만 준비합니다. 저장 전에는 적용되지 않으며 고급 설정은 유지됩니다.", cls: "setting-item-description" });
     const actions = container.createDiv({ cls: "mia-learning-settings-actions mia-keyboard-actions" });
     saveStatus = actions.createEl("p", { cls: "mia-settings-save-status", attr: { role: "status" } });

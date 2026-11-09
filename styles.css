@@ -1233,3 +1233,302 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 @media (prefers-reduced-motion: reduce) {
   .mia-view button { transition: none; }
 }
+
+/* ── 1.6 redesign ──────────────────────────────────────────────────
+   A brand mark, a hero that shows today's numbers at a glance,
+   tone-coded tiles and progress bars, quieter list actions and the
+   question on its own card. Colours still come from theme tokens. */
+.mia-view {
+  --mia-tone-review: var(--interactive-accent);
+  --mia-tone-new: var(--mia-easy);
+  --mia-shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 8px 24px -16px rgb(0 0 0 / 35%);
+}
+.mia-view [data-tone="review"] { --mia-tone: var(--mia-tone-review); }
+.mia-view [data-tone="new"] { --mia-tone: var(--mia-tone-new); }
+.mia-view [data-tone="again"] { --mia-tone: var(--mia-again); }
+.mia-view [data-tone="hard"] { --mia-tone: var(--mia-hard); }
+.mia-view [data-tone="good"] { --mia-tone: var(--mia-good); }
+.mia-view [data-tone="easy"] { --mia-tone: var(--mia-easy); }
+.mia-view [data-tone="total"], .mia-view [data-tone="idle"] { --mia-tone: var(--text-muted); }
+
+/* Brand: a small accent mark in front of the title. */
+.mia-view .mia-header .mia-brand { align-items: center; gap: 8px; }
+.mia-view .mia-header .mia-home-button { gap: 9px; }
+.mia-view .mia-header .mia-home-button::before {
+  content: "M";
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent) 70%, #fff), var(--interactive-accent));
+  color: var(--text-on-accent);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0;
+  box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--interactive-accent) 75%, transparent);
+}
+.mia-view .mia-header { border-bottom: 0; padding-bottom: 6px; }
+
+/* Hero: text and actions on the left, today's two numbers on the right. */
+.mia-view .mia-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px 28px; align-items: center; }
+.mia-view .mia-hero-main { min-width: 0; }
+.mia-view .mia-hero-main > :first-child { margin-top: 0; }
+.mia-view .mia-hero-main > :last-child { margin-bottom: 0; }
+.mia-view .mia-hero-date { display: block; margin-bottom: 6px; color: var(--interactive-accent); font-size: 12px; font-weight: 700; letter-spacing: .02em; }
+.mia-view.mia-route-dashboard .mia-hero h3 { font-size: clamp(22px, 2.4cqi, 28px); line-height: 1.25; margin: 0 0 8px; }
+.mia-view .mia-hero-main > p:not(.mia-device-sync-hint) { margin: 0 0 4px; font-size: 13px; color: var(--text-muted); }
+.mia-view .mia-hero-main > .mia-inline-actions { margin-top: 18px; gap: 8px; }
+.mia-view .mia-hero .mia-device-sync-hint { margin: 16px 0 0; font-size: 11px; color: var(--text-faint); }
+.mia-view .mia-hero-counts { display: grid; grid-template-columns: repeat(2, minmax(118px, 1fr)); gap: 10px; }
+.mia-view .mia-hero-count {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 18px;
+  border-radius: var(--mia-radius);
+  border: 1px solid color-mix(in srgb, var(--mia-tone) 35%, var(--mia-line));
+  background: color-mix(in srgb, var(--mia-tone) 10%, var(--background-primary));
+}
+.mia-view .mia-hero-count strong { color: var(--mia-tone); font-size: 40px; font-weight: 800; line-height: 1.05; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.mia-view .mia-hero-count span { font-size: 13px; font-weight: 700; color: var(--text-normal); }
+.mia-view .mia-hero-count small { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* Stat tiles: a tone dot before the label, the number in the tone colour. */
+.mia-view .mia-stat[data-tone] span { display: flex; align-items: center; gap: 7px; }
+.mia-view .mia-stat[data-tone] span::before { content: ""; flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: var(--mia-tone); }
+.mia-view .mia-stat[data-tone]:not([data-tone="total"]) strong { color: color-mix(in srgb, var(--mia-tone) 80%, var(--text-normal)); }
+.mia-view .mia-stat { box-shadow: none; }
+.mia-view button.mia-stat:hover { box-shadow: var(--mia-shadow); transform: translateY(-1px); }
+.mia-view button.mia-stat { transition: border-color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease), transform 140ms var(--mia-ease), background-color 140ms var(--mia-ease); }
+
+/* Progress bars. */
+.mia-view .mia-meter { height: 6px; border-radius: 999px; background: var(--mia-line); overflow: hidden; }
+.mia-view .mia-meter-fill { height: 100%; min-width: 0; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--interactive-accent) 65%, var(--background-primary)), var(--interactive-accent)); }
+.mia-view .mia-rating-bar { display: flex; gap: 3px; height: 12px; margin-block: 0 14px; }
+.mia-view .mia-rating-bar-part { flex: 1 1 0; min-width: 6px; border-radius: 4px; background: var(--mia-tone); }
+
+/* Subject cards: name and size, progress, count chips, then actions. */
+.mia-view .mia-subject-card { gap: 12px; padding: 18px; }
+.mia-view .mia-subject-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
+.mia-view .mia-subject-heading strong { min-width: 0; font-size: 1.12em; font-weight: 700; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.mia-view .mia-subject-total { flex-shrink: 0; color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.mia-view .mia-subject-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mia-view .mia-count-chip { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 650; font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--mia-tone) 85%, var(--text-normal)); background: color-mix(in srgb, var(--mia-tone) 12%, transparent); border: 1px solid color-mix(in srgb, var(--mia-tone) 28%, transparent); }
+.mia-view .mia-count-chip[data-tone="idle"] { color: var(--text-faint); background: transparent; border-color: var(--mia-line); font-weight: 500; }
+.mia-view .mia-subject-card > .mia-inline-actions { margin-top: auto; }
+.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(n+3):not(.mod-warning) { color: var(--text-muted); }
+.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(3) { margin-inline-start: auto; }
+.mia-view .mia-progress-subject { display: flex; flex-direction: column; gap: 12px; padding: 18px; }
+.mia-view .mia-progress-subject > * { margin: 0; }
+
+/* Quick actions sit in one quiet row under the tiles. */
+.mia-view.mia-route-dashboard .mia-manage-actions { gap: 8px; }
+.mia-view.mia-route-dashboard .mia-manage-actions button.mod-cta { border-style: solid; border-color: var(--mia-accent-line); background: var(--mia-accent-soft); color: var(--interactive-accent); font-weight: 650; }
+
+/* Question list: one accented action, the rest are text until hovered. */
+.mia-view .mia-row { padding: 14px 16px; }
+.mia-view .mia-row-actions { gap: 2px; }
+.mia-view .mia-row-actions > button:not(:first-child) { border-color: transparent; color: var(--text-muted); padding-inline: 10px; }
+.mia-view .mia-row-actions > button:not(:first-child):hover { border-color: var(--mia-line); color: var(--text-normal); }
+.mia-view .mia-row-actions > button.mod-warning:not(:hover) { color: color-mix(in srgb, var(--mia-danger) 75%, var(--text-muted)); border-color: transparent; }
+.mia-view .mia-row-actions > button:first-child { margin-inline-end: 6px; }
+
+/* Study: the question sits on its own card above the answer panel. */
+.mia-view .mia-study-card {
+  box-sizing: border-box;
+  padding: clamp(18px, 3cqi, 32px);
+  border: 1px solid var(--mia-line);
+  border-radius: calc(var(--mia-radius) + 4px);
+  background: var(--mia-surface);
+  box-shadow: var(--mia-shadow);
+}
+.mia-view .mia-study-card .mia-answer-section { background: color-mix(in srgb, var(--interactive-accent) 6%, var(--background-primary)); }
+.mia-view .mia-card-context { display: flex; flex-wrap: wrap; gap: 6px; font-weight: 600; }
+.mia-view .mia-study-dock .mia-ratings strong { color: color-mix(in srgb, var(--mia-rating-color) 80%, var(--text-normal)); }
+.mia-view .mia-session-meter { height: 4px; }
+.mia-view .mia-session-edit-actions button { background: transparent; box-shadow: none; border: 1px solid var(--mia-line); border-radius: var(--mia-radius-s); color: var(--text-muted); }
+.mia-view .mia-session-edit-actions button:hover { color: var(--text-normal); background: var(--mia-surface-hover); }
+@container mia-view (min-width: 601px) {
+  /* The edit action moves to the card corner so the question reads straight into its body. */
+  .mia-view .mia-study-card .mia-session-edit-actions { position: absolute; top: clamp(14px, 2.4cqi, 26px); right: clamp(14px, 2.4cqi, 26px); margin: 0; }
+  .mia-view .mia-study-card .mia-card-context { padding-inline-end: 110px; }
+}
+.mia-view .mia-related { padding: 16px; border: 1px solid var(--mia-line); border-radius: var(--mia-radius); background: var(--mia-surface); }
+.mia-view .mia-study-layout .mia-related { padding: 16px; border: 1px solid var(--mia-line); border-radius: var(--mia-radius); background: var(--mia-surface); }
+.mia-view .mia-primary-card:not(.mia-hero) { border-radius: calc(var(--mia-radius) + 4px); border-color: var(--mia-line); background: var(--mia-surface); }
+
+@container mia-view (max-width: 760px) {
+  .mia-view .mia-hero { grid-template-columns: minmax(0, 1fr); }
+  .mia-view .mia-hero-counts { grid-row: 1; }
+}
+@container mia-view (max-width: 600px) {
+  .mia-view .mia-hero-count { padding: 12px 14px; }
+  .mia-view .mia-hero-count strong { font-size: 30px; }
+  .mia-view .mia-hero-main > .mia-inline-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mia-view .mia-subject-card, .mia-view .mia-progress-subject { padding: 14px; }
+  .mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(3) { margin-inline-start: 0; }
+  .mia-view .mia-row-actions { gap: 4px; }
+  .mia-view .mia-row-actions > button:first-child { margin-inline-end: 0; }
+  .mia-view .mia-row-actions > button:not(:first-child) { border-color: var(--mia-line); }
+  .mia-view .mia-study-card { padding: 16px; border-radius: var(--mia-radius); }
+}
+@container mia-view (max-width: 280px) {
+  .mia-view .mia-hero-counts, .mia-view .mia-hero-main > .mia-inline-actions { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mia-view button.mia-stat:hover { transform: none; }
+}
+@media (max-width: 640px) {
+  .mia-view .mia-hero-main > .mia-inline-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── 1.6 settings ──────────────────────────────────────────────────
+   Learning and view settings share the dashboard language: a
+   segmented mode switch, a tinted summary, numbered steps in simple
+   mode, cards for groups and a quiet action bar. Visual only; the
+   row layout and touch sizes above stay authoritative. */
+:is(.mia-study-management-modal, .mia-appearance-modal) .modal-title { font-weight: 750; letter-spacing: -.02em; }
+.mia-study-management-settings > .setting-item-description:first-of-type { margin-top: 0; }
+.mia-study-management-settings .setting-item-description { line-height: 1.6; }
+
+/* Saved/unsaved state reads as a small status pill. */
+.mia-study-management-settings .mia-settings-status { display: inline-flex; align-items: center; gap: 7px; margin: 4px 0 14px; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--mia-line); background: var(--mia-surface); font-size: 12px; }
+.mia-study-management-settings .mia-settings-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--interactive-accent); }
+
+/* Simple / advanced as a segmented control. */
+.mia-study-management-settings .mia-settings-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin: 0 0 14px; padding: 4px; border: 1px solid var(--mia-line); border-radius: var(--mia-radius); background: var(--mia-surface); }
+.mia-study-management-settings .mia-settings-modes button { min-height: max(38px, var(--mia-control-height, 38px)); border: 0; border-radius: var(--mia-radius-s); background: transparent; box-shadow: none; color: var(--text-muted); font-weight: 600; }
+.mia-study-management-settings .mia-settings-modes button:hover { color: var(--text-normal); }
+.mia-study-management-settings .mia-settings-modes button[aria-pressed="true"] { background: var(--background-primary); color: var(--interactive-accent); font-weight: 700; box-shadow: 0 1px 2px rgb(0 0 0 / 12%), 0 0 0 1px var(--mia-accent-line); }
+
+/* The current rule in one tinted line. */
+.mia-study-management-settings .mia-settings-summary { margin: 0 0 6px; padding: 14px 16px; border: 1px solid var(--mia-accent-line); border-left: 3px solid var(--interactive-accent); border-radius: var(--mia-radius); background: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-primary)); font-size: 14px; line-height: 1.55; }
+
+/* Simple mode: numbered questions, one after another. */
+/* Step editors are size containers, which scope CSS counters, so each number is explicit. */
+.mia-study-management-settings .mia-settings-simple h4 { --mia-step-number: "1"; display: flex; align-items: center; gap: 10px; margin: 28px 0 10px; font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.mia-study-management-settings .mia-settings-simple .mia-step-editor:nth-child(1) > h4 { --mia-step-number: "2"; }
+.mia-study-management-settings .mia-settings-simple .mia-step-editor:nth-child(2) > h4 { --mia-step-number: "3"; }
+.mia-study-management-settings .mia-settings-simple .mia-settings-retention > h4 { --mia-step-number: "4"; }
+.mia-study-management-settings .mia-settings-simple h4::before { content: var(--mia-step-number); flex: 0 0 auto; display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--mia-accent-soft); border: 1px solid var(--mia-accent-line); color: var(--interactive-accent); font-size: 12px; font-weight: 800; }
+.mia-study-management-settings .mia-step-editor { padding: 0; border: 0; border-radius: 0; }
+.mia-study-management-settings .mia-step-editor h4 { margin-bottom: 6px; }
+
+/* Rows: name first, description muted, controls rounded. */
+:is(.mia-study-management-settings, .mia-appearance-modal) .setting-item { border-top-color: var(--mia-line); }
+:is(.mia-study-management-settings, .mia-appearance-modal) .setting-item-name { font-weight: 600; }
+:is(.mia-study-management-settings, .mia-appearance-modal) :is(input:not([type="checkbox"], [type="radio"]), select, textarea) { border-radius: var(--mia-radius-s); }
+.mia-study-management-settings .setting-item-control > button,
+.mia-study-management-settings .mia-step-row > button { background: transparent; box-shadow: none; border: 1px solid var(--mia-line); border-radius: var(--mia-radius-s); color: var(--text-muted); }
+.mia-study-management-settings .setting-item-control > button:hover,
+.mia-study-management-settings .mia-step-row > button:hover { color: var(--text-normal); background: var(--mia-surface-hover); }
+
+/* The two daily numbers are tiles. */
+:is(.mia-study-management-modal, .mia-keyboard-settings) .mia-study-management-settings .mia-settings-basic > .setting-item { padding: 14px 16px; border: 1px solid var(--mia-line); border-radius: var(--mia-radius); background: var(--mia-surface); }
+.mia-study-management-settings .mia-settings-basic { gap: 10px; margin-block: 10px; }
+
+/* Disclosures: chevron row; open content sits on a soft panel. */
+:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary { display: flex; align-items: center; gap: 10px; list-style: none; color: var(--text-muted); font-size: 13px; font-weight: 600; }
+:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary::-webkit-details-marker { display: none; }
+:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary::before { content: ""; flex: 0 0 auto; width: 6px; height: 6px; margin-inline: 2px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform 140ms var(--mia-ease); }
+:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help[open] > summary::before { transform: rotate(45deg); }
+:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary:hover { color: var(--interactive-accent); }
+:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help[open] { padding: 0 14px 12px; border-radius: var(--mia-radius-s); background: var(--mia-surface); }
+:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help[open] > summary { color: var(--text-normal); }
+
+/* Advanced mode: each Anki group is a card. */
+.mia-study-management-settings .mia-anki-settings-section { margin-block: 12px; padding: 16px 18px; border: 1px solid var(--mia-line); border-radius: var(--mia-radius); background: var(--mia-surface); }
+.mia-study-management-settings .mia-anki-settings-section > h4 { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
+.mia-study-management-settings .mia-anki-settings-section .mia-settings-help[open] { background: var(--background-primary); }
+.mia-study-management-settings .mia-anki-settings-section .mia-settings-basic > .setting-item { background: var(--background-primary); }
+
+/* Saved combinations. */
+.mia-study-management-settings .mia-study-profiles { margin-top: 18px; }
+.mia-study-management-settings .mia-profile-row { border-block-start-color: var(--mia-line); }
+.mia-study-management-settings .mia-profile-row strong { font-size: 14px; }
+.mia-study-management-settings .mia-settings-changes { margin-top: 18px; padding: 10px 14px; border: 1px dashed var(--mia-line); border-radius: var(--mia-radius-s); }
+
+/* One clear save action on a separated bar. */
+.mia-study-management-settings .mia-learning-settings-actions { margin-top: 18px; border-top: 1px solid var(--mia-line); }
+:is(.mia-learning-settings-actions, .mia-appearance-actions) > button { min-height: 40px; border-radius: var(--mia-radius-s); font-weight: 600; }
+:is(.mia-learning-settings-actions, .mia-appearance-actions) > button:not(.mod-cta) { background: transparent; box-shadow: none; border: 1px solid var(--mia-line); color: var(--text-muted); }
+:is(.mia-learning-settings-actions, .mia-appearance-actions) > button:not(.mod-cta):hover { color: var(--text-normal); background: var(--mia-surface-hover); }
+:is(.mia-learning-settings-actions, .mia-appearance-actions) > button.mod-cta { flex: 1.4; font-weight: 700; box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--interactive-accent) 70%, transparent); }
+:is(.mia-learning-settings-actions, .mia-appearance-actions) > button.mod-cta:disabled { box-shadow: none; }
+
+/* Device sync is its own card with a status pill. */
+.mia-keyboard-settings .mia-device-sync-settings { margin-top: 24px; padding: 18px; border: 1px solid var(--mia-line); border-radius: var(--mia-radius); background: var(--mia-surface); }
+.mia-keyboard-settings .mia-device-sync-settings > h3 { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
+.mia-keyboard-settings .mia-device-sync-settings > .mia-muted { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--mia-line); background: var(--background-primary); font-size: 12px; }
+.mia-keyboard-settings .mia-device-sync-settings > .mia-muted::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
+.mia-keyboard-settings .mia-device-sync-settings > button { border-radius: var(--mia-radius-s); }
+
+/* View settings: titled groups of rows, like a phone settings list. */
+.mia-appearance-modal .mia-settings-group { margin-top: 18px; }
+.mia-appearance-modal .mia-settings-group-title { margin: 0 0 8px 4px; color: var(--text-muted); font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+.mia-appearance-modal .mia-settings-list { border: 1px solid var(--mia-line); border-radius: var(--mia-radius); background: var(--mia-surface); overflow: hidden; }
+/* Obsidian's .modal:not(.mod-settings) .setting-item:first-child rule is (0,5,0); stay above it. */
+.modal.mia-appearance-modal .mia-settings-list > .setting-item.setting-item:not(.setting-item-heading) { padding: 12px 16px; border-top: 1px solid var(--mia-line); }
+.modal.mia-appearance-modal .mia-settings-list > .setting-item.setting-item:not(.setting-item-heading):first-child { border-top: 0; }
+.mia-appearance-modal .mia-appearance-status { margin: 16px 0 0; font-size: 12px; }
+.mia-appearance-modal .mia-appearance-actions { border-top: 1px solid var(--mia-line); }
+
+/* The plugin's own settings tab carries the same brand mark. */
+.mia-keyboard-settings > h2:first-child { display: flex; align-items: center; gap: 10px; font-weight: 750; letter-spacing: -.02em; }
+.mia-keyboard-settings > h2:first-child::before { content: "M"; display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent) 70%, #fff), var(--interactive-accent)); color: var(--text-on-accent); font-size: 15px; font-weight: 800; }
+.mia-keyboard-settings > .mia-study-management-settings > h3 { font-size: 17px; font-weight: 750; }
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary::before { transition: none; }
+}
+
+/* Learning settings dialog: the save bar is the last element of the scroll area.
+   Drop the sheet's bottom padding so nothing scrolls visibly beneath the bar,
+   and fade content as it passes under the bar's top edge. */
+.modal.mia-study-management-modal .modal-content { padding-bottom: 0; }
+.mia-study-management-modal .mia-learning-settings-actions {
+  z-index: 2;
+  align-items: center;
+  margin-top: 24px;
+  padding-bottom: max(14px, var(--safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px));
+}
+.mia-study-management-modal .mia-learning-settings-actions::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 1px);
+  height: 24px;
+  background: linear-gradient(to bottom, transparent, var(--modal-background, var(--background-primary)));
+  pointer-events: none;
+}
+.mia-study-management-modal .mia-keyboard-actions-inline .mia-learning-settings-actions::before { display: none; }
+/* Reset is a quiet text action on the left; cancel and save keep their natural width on the right. */
+.mia-learning-settings-actions > button { flex: 0 0 auto; white-space: nowrap; }
+.mia-learning-settings-actions > button:first-of-type:not(.mod-cta) { margin-inline-end: auto; border-color: transparent; padding-inline: 8px; }
+.mia-learning-settings-actions > button.mod-cta { flex: 0 0 auto; min-width: 150px; }
+.mia-study-management-settings .mia-device-sync-settings { margin-bottom: 4px; }
+@media (max-width: 480px) {
+  .mia-learning-settings-actions > button { white-space: normal; }
+  .mia-learning-settings-actions > button:first-of-type:not(.mod-cta) { margin-inline-end: 0; }
+  .mia-learning-settings-actions > button.mod-cta { min-width: 0; }
+}
+
+/* One corner scale for settings: 18px dialog, 14px boxes, 10px controls.
+   Obsidian's own button and input radius variables follow the same scale. */
+:is(.mia-study-management-modal, .mia-appearance-modal, .mia-keyboard-settings) {
+  --button-radius: var(--mia-radius-s);
+  --input-radius: var(--mia-radius-s);
+}
+:is(.mia-study-management-settings, .mia-appearance-modal, .mia-keyboard-settings .mia-device-sync-settings) :is(button:not(.modal-close-button), input:not([type="checkbox"], [type="radio"]), select, textarea) { border-radius: var(--mia-radius-s); }
+/* Boxes: the summary keeps a uniform edge so all four corners match. */
+.mia-study-management-settings .mia-settings-summary { border-left-width: 1px; border-color: var(--mia-accent-line); border-radius: var(--mia-radius); }
+:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help[open],
+.mia-study-management-settings .mia-settings-changes { border-radius: var(--mia-radius); }
+/* Status labels use the control radius instead of a full pill. */
+.mia-study-management-settings .mia-settings-status,
+.mia-keyboard-settings .mia-device-sync-settings > .mia-muted { border-radius: var(--mia-radius-s); }
+/* Obsidian's .modal:not(.mod-settings) .setting-item:first-child removes padding (0,5,0); tiles keep theirs. */
+.mia-study-management-settings .mia-settings-basic > .setting-item.setting-item:not(.setting-item-heading):is(:first-child, :not(:first-child)) { padding: 14px 16px; }
