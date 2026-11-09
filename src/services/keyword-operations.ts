@@ -210,8 +210,15 @@ export class KeywordOperations {
     return (reference, sourcePath) => {
       if (spelled(reference)) return true;
       if (!names.has(fileName(reference.target))) return false;
-      const file = this.host.app.metadataCache.getFirstLinkpathDest(reference.target.split("#")[0] ?? "", sourcePath);
-      return file !== null && keywordReferenceMatches({ ...reference, target: file.path }, resolvable);
+      // Obsidian compares link text to file names exactly, so a link typed in the
+      // other Unicode form (decomposed Hangul from macOS) opens nothing though it
+      // reads the same. It still names this note: try both forms so the link is
+      // updated with the note instead of being left behind.
+      const linkpath = reference.target.split("#")[0] ?? "";
+      return [...new Set([linkpath, linkpath.normalize("NFC"), linkpath.normalize("NFD")])].some((form) => {
+        const file = this.host.app.metadataCache.getFirstLinkpathDest(form, sourcePath);
+        return file !== null && keywordReferenceMatches({ ...reference, target: file.path }, resolvable);
+      });
     };
   }
 

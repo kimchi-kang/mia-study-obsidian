@@ -15,7 +15,7 @@ import { parseQuestionFile } from "../src/core/question-parser";
 // Keyword merge and delete must treat such a link as the keyword it resolves to.
 
 const bankPath="MIA/수학/문제은행.md";
-function environment({link,links=[link],resolve={},withB=true}){
+function environment({link,links=[link],resolve={},withB=true,notes={}}){
   const root=Object.assign(new TFolder(),{path:"",name:"",children:[]});
   const files=new Map([["",root]]),contents=new Map();
   const add=(path,entry)=>{
@@ -28,6 +28,7 @@ function environment({link,links=[link],resolve={},withB=true}){
   note("MIA/키워드/A2.md",createKeywordNote("A2","원래 의미"));
   if(withB)note("MIA/키워드/B.md",createKeywordNote("B","B 의미"));
   note("MIA/다른/A2.md","# 다른 노트\n");
+  for(const [path,text] of Object.entries(notes))note(path,text);
   const coreKeywords=links.map(({target,label="A"})=>({target,label,raw:`[[${target}|${label}]]`}));
   note(bankPath,appendManagedQuestion(createSubjectBank("수학"),{questionMarkdown:"질문",answerMarkdown:"정답",questionType:"정의형",coreKeywords,subKeywords:[]},"mia-q-one"));
   const vault={
@@ -120,5 +121,23 @@ describe("keyword links in Obsidian's short form", () => {
     await env.plugin.index.rebuild();
     await env.plugin.saveKeyword(a2,"B","");
     expect(env.raws()).toEqual(["[[B#의미|내 별칭]]"]);
+  });
+
+  // Obsidian compares link text to file names exactly, so a decomposed-Hangul
+  // (NFD) link to a composed (NFC) file name opens nothing, yet reads the same.
+  describe("a decomposed Hangul link to a composed file name", () => {
+    const gauss={name:"가우스",target:"MIA/키워드/가우스",filePath:"MIA/키워드/가우스.md"};
+    const setup=()=>environment({link:{target:"가우스".normalize("NFD")},notes:{"MIA/키워드/가우스.md":createKeywordNote("가우스","의미")}});
+    it("counts and removes it when the keyword is deleted", async () => {
+      const env=setup();await env.plugin.index.rebuild();
+      expect(env.plugin.keywords.questionsUsing([gauss.target])).toHaveLength(1);
+      await env.plugin.deleteKeyword(gauss);
+      expect(env.keywords()).toEqual([]);
+    });
+    it("points it at the destination when the keyword is merged", async () => {
+      const env=setup();await env.plugin.index.rebuild();
+      await env.plugin.saveKeyword(gauss,"B","");
+      expect(env.keywords()).toEqual(["MIA/키워드/B"]);
+    });
   });
 });
