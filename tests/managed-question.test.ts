@@ -7,6 +7,7 @@ import {
   deleteCurrentManagedQuestion,
   renameSubjectBank,
   replaceCurrentManagedQuestion,
+  validateManagedQuestionInput,
   validateSubjectName,
 } from "../src/core/managed-question";
 
@@ -130,5 +131,23 @@ describe("generated equation headings", () => {
     const markdown = renderManagedQuestion({ ...first, questionMarkdown: "$$\nx_1+x_2\n$$" }, "mia-q-block-title");
     expect(markdown.split("\n")[0]).toBe("### 수식 질문");
     expect(markdown).toContain("> $$\n> x_1+x_2\n> $$");
+  });
+
+  it("rejects callout markers that would split one question into two", () => {
+    const answer = { ...first, answerMarkdown: "다른 노트의 예:\n\n> [!question] 문제\n> 구대칭 전하" };
+    expect(() => validateManagedQuestionInput(answer)).toThrow(/\[!question\]/);
+    const bank = `${createSubjectBank("전자기학")}\n### 기존\n\n> [!question] 문제\n> 질문\n^mia-q-existing\n\n#### 정답\n\n${answer.answerMarkdown}\n`;
+    // Without the guard the parser reports a second, unregistered question.
+    expect(parseQuestionFile("전자기학/문제은행.md", bank).questions).toHaveLength(2);
+    for (const questionMarkdown of ["[!question] 문제", "첫 줄\n[!mia]- 학습 정보"]) {
+      expect(() => validateManagedQuestionInput({ ...first, questionMarkdown })).toThrow(/\[!question\]|\[!mia\]/);
+    }
+  });
+
+  it("allows callout text inside answer code blocks and quoted non-question callouts", () => {
+    expect(() => validateManagedQuestionInput({ ...first, answerMarkdown: "```md\n> [!question] 예시\n```\n\n> [!note] 참고" })).not.toThrow();
+    expect(() => validateManagedQuestionInput({ ...first, questionMarkdown: "> [!question] 인용된 예시는 그대로 둔다" })).not.toThrow();
+    const markdown = renderManagedQuestion({ ...first, answerMarkdown: "```md\n> [!question] 예시\n```" }, "mia-q-fenced");
+    expect(parseQuestionFile("전자기학/문제은행.md", markdown).questions).toHaveLength(1);
   });
 });

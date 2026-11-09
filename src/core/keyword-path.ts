@@ -10,9 +10,23 @@ function normalizePath(path: string): string {
   return path.replaceAll("\\", "/").replace(/\/{2,}/g, "/").replace(/^\/+/, "");
 }
 
+/** Split on commas between keywords, never inside a `[[target|label]]` link. */
+function splitKeywordInput(value: string): string[] {
+  const items: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    if (value.startsWith("[[", index)) { depth += 1; index += 1; }
+    else if (depth > 0 && value.startsWith("]]", index)) { depth -= 1; index += 1; }
+    else if (depth === 0 && value[index] === ",") { items.push(value.slice(start, index)); start = index + 1; }
+  }
+  items.push(value.slice(start));
+  return items;
+}
+
 export function keywordReferencesFromInput(value: string, keywordFolder = ""): KeywordReference[] {
   const folder = normalizeFolder(keywordFolder);
-  return value.split(",").map((item) => item.trim()).filter(Boolean).map((item) => {
+  return splitKeywordInput(value).map((item) => item.trim()).filter(Boolean).map((item) => {
     assertSingleLine(item, "키워드");
     const match = item.match(/^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]$/);
     if (match) {
@@ -31,7 +45,9 @@ export function keywordNotePath(target: string, label: string, keywordFolder: st
   const targetPath = target.split("#")[0]?.trim() || label.trim();
   const explicitPath = targetPath.includes("/") || targetPath.includes("\\") || targetPath.endsWith(".md");
   const folder = normalizeFolder(keywordFolder);
-  const base = explicitPath || !folder ? targetPath : `${folder}/${label.trim()}`;
+  // Use the link target, not its display label, so `[[가우스 법칙|가우스]]` saves
+  // the meaning to the same note the link (and the meaning reader) resolves.
+  const base = explicitPath || !folder ? targetPath : `${folder}/${targetPath}`;
   const markdownPath = base.endsWith(".md") ? base : `${base}.md`;
   const path = normalizePath(markdownPath);
   const segments = path.split("/");

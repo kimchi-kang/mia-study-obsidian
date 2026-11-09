@@ -25,6 +25,22 @@ describe("keyword paths", () => {
       .toBe("개념/가우스 법칙.md");
   });
 
+  it("keeps commas inside wiki links when re-reading pre-filled keyword fields", () => {
+    const existing = [
+      { target: "MIA/키워드/RC, RL 회로", label: "RC, RL 회로", raw: "[[MIA/키워드/RC, RL 회로|RC, RL 회로]]" },
+      { target: "MIA/키워드/옴의 법칙", label: "옴의 법칙", raw: "[[MIA/키워드/옴의 법칙|옴의 법칙]]" },
+    ];
+    // The editors pre-fill the field this way and parse it again on save.
+    expect(keywordReferencesFromInput(existing.map(item => item.raw).join(", "), "MIA/키워드")).toEqual(existing);
+    expect(keywordReferencesFromInput("가우스 법칙, [[개념/전속|전기, 선속]], 대칭성", "MIA/키워드").map(item => item.label))
+      .toEqual(["가우스 법칙", "전기, 선속", "대칭성"]);
+  });
+
+  it("saves an aliased keyword's meaning at the note its link target resolves to", () => {
+    expect(keywordNotePath("가우스 법칙", "가우스", "MIA/키워드")).toBe("MIA/키워드/가우스 법칙.md");
+    expect(keywordNotePath("가우스 법칙#정의", "가우스", "MIA/키워드")).toBe("MIA/키워드/가우스 법칙.md");
+  });
+
   it("rejects traversal and Obsidian configuration paths", () => {
     expect(() => keywordNotePath("../밖", "밖", "MIA/키워드")).toThrow();
     expect(() => keywordNotePath(".obsidian/plugins/침범", "침범", "MIA/키워드")).toThrow();
