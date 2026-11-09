@@ -1,17 +1,13 @@
-import { SettingsConflictModal } from "./settings-conflict-modal";
-import { progressGuidance } from "./study-policy";
 import { withoutSourceAttribution } from "../core/source-attribution";
 import { StudyManagementModal } from "./study-management-modal";
-import { renderQuestionTitle } from "./question-title";
-import { Component, ItemView, MarkdownRenderer, Modal, Notice, Platform, ViewStateResult, WorkspaceLeaf } from "obsidian";
+import { Component, ItemView, MarkdownRenderer, Notice, Platform, ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { Rating } from "ts-fsrs";
 import type MiaStudyPlugin from "../main";
 import { StudyGrade } from "../core/fsrs-service";
 import { planLearningQueue } from "../core/learning-queue";
-import { QUESTION_TYPES, KeywordReference, QuestionRecord, QuestionReviewState } from "../core/models";
+import { KeywordReference, QuestionRecord, QuestionReviewState } from "../core/models";
 import { MiaRoute, MiaSessionMode, ReviewCheckpoint, parseMiaNavigationState } from "../core/navigation";
-import { calculateProgress } from "../core/progress";
-import { QuestionSort, ReviewFilter, queryQuestions, weaknessUrgency } from "../core/question-query";
+import type { ReviewFilter } from "../core/question-query";
 import { buildReviewQueue, recommendQuestions } from "../core/recommendation-engine";
 import { errorMessage } from "./error-message";
 import { bindKeyboardViewport, KeyboardViewportBinding } from "./mobile-keyboard";
@@ -21,12 +17,16 @@ import { bindStudyGestures, StudyGestureBinding } from "./study-gestures";
 import { bindAdaptiveLayout } from "./adaptive-layout";
 import { bindRatingTapGuard } from "./rating-tap-guard";
 import { StudyControlsModal } from "./study-controls-modal";
-import { ReviewConflictModal } from "./review-conflict-modal";
 import { StudyAppearanceModal } from "./study-appearance-modal";
 import type { StudySessionSummary } from "../services/study-ui-store";
+import { renderKeywords } from "./keywords-page";
+import { renderDashboard, renderProgress } from "./progress-pages";
+import { QuestionListState, renderQuestionsPage } from "./question-list-page";
+import { renderQuestionHeading } from "./question-row";
+import type { StudyPageContext } from "./study-page-context";
+import { renderWeakness } from "./weakness-page";
 
 export const MIA_VIEW_TYPE = "mia-study-view";
-const QUESTION_PAGE_SIZE = 50;
 
 function formatInterval(due: Date, days: number, fixedMinutes?: number, now = new Date()): string {
   if (fixedMinutes !== undefined) {
@@ -43,11 +43,10 @@ function formatInterval(due: Date, days: number, fixedMinutes?: number, now = ne
   return `약 ${(days / 365).toFixed(1)}년`;
 }
 
-function keywordKey(keyword: KeywordReference): string {
-  const path = keyword.target.split("#")[0]?.replace(/\.md$/i, "").replaceAll("\\", "/") ?? keyword.label;
-  return (path.split("/").at(-1) ?? path).trim().toLocaleLowerCase("ko");
-}
-
+/**
+ * The MIA tab. Owns navigation and the study session (queue, ratings, undo,
+ * resume, reading position); the read-only pages render from their own modules.
+ */
 export class MiaStudyView extends ItemView {
   private route: MiaRoute = "dashboard";
   private editingSessionQuestion: string | null = null;
@@ -61,14 +60,8 @@ export class MiaStudyView extends ItemView {
   private sessionMode: MiaSessionMode = "recall";
   private lastRated: { id: string; queueIndex: number; queueBefore: string[]; savedState: QuestionReviewState } | null = null;
   private isMutatingReview = false;
-  private questionText = "";
-  private questionSubject = "all";
-  private questionType: "all" | QuestionRecord["questionType"] = "all";
-  private questionReview: ReviewFilter = "all";
-  private questionKeyword = "";
-  private questionSort: QuestionSort = "review";
-  private questionPage = 0;
-  private candidateLimit = 100;
+  private readonly questionList = new QuestionListState();
+  private readonly pages: StudyPageContext = this.createPageContext();
   private sessionSeed: string[] = [];
   private sessionOrigin: MiaRoute = "dashboard";
   private sessionStartedAt = Date.now();
@@ -530,11 +523,11 @@ export class MiaStudyView extends ItemView {
       root.createEl("p", { text: "문제를 불러오는 중입니다…", cls: "mia-muted" });
       return;
     }
-    if (this.route === "dashboard") this.renderDashboard(root);
-    if (this.route === "progress") this.renderProgress(root);
-    if (this.route === "questions") this.renderQuestions(root);
-    if (this.route === "weakness") this.renderWeakness(root);
-    if (this.route === "keywords") this.renderKeywords(root);
+    if (this.route === "dashboard") renderDashboard(this.pages, root);
+    if (this.route === "progress") renderProgress(this.pages, root);
+    if (this.route === "questions") this.renderQuestionsRoute(root);
+    if (this.route === "weakness") renderWeakness(this.pages, root);
+    if (this.route === "keywords") renderKeywords(this.pages, root);
     if (this.route === "study") {
       this.renderStudy(root);
       const current = this.plugin.index.questionById(this.queue[this.queueIndex] ?? "");
@@ -580,7 +573,7 @@ export class MiaStudyView extends ItemView {
     version.setAttr("aria-label", `실행 중인 MIA Study 버전 ${this.plugin.manifest.version}`);
     title.createEl("span", { text: "FSRS-6", cls: "mia-badge" });
     const settingsButtons = title.createDiv({ cls: "mia-settings-buttons" });
-    settingsButtons.createEl("button", { text: "학습 설정", cls: "mia-learning-button" }).addEventListener("click", () => new StudyManagementModal(this.app, this.plugin, () => this.render(), () => this.restoreSettingsFocus(".mia-learning-button")).open());
+    settingsButtons.createEl("button", { text: "학습 설정", cls: "mia-learning-button" }).addEventListener("click", () => this.openStudySettings());
     const appearance = settingsButtons.createEl("button", { text: "보기 설정", cls: "mia-appearance-button" });
     appearance.addEventListener("click", () => new StudyAppearanceModal(this.app, this.plugin.studyUi, () => this.refreshAppearance(), () => this.restoreSettingsFocus(".mia-appearance-button")).open());
     if (this.route === "study") title.createEl("button", { text: "학습 나가기", cls: "mia-focus-exit" }).addEventListener("click", () => this.navigate("dashboard"));
@@ -606,586 +599,41 @@ export class MiaStudyView extends ItemView {
     button.addEventListener("click", () => this.navigate(route));
   }
 
-  private renderDashboard(root: HTMLElement): void {
-    const pendingRecovery = this.plugin.store.pendingRecovery;
-    if (pendingRecovery) {
-      const warning = root.createDiv({ cls: "mia-storage-warning" });
-      warning.createEl("p", { text: "완료를 확인하지 못한 저장 사본이 있습니다. 새 평가 전에 확인하세요." });
-      warning.createEl("button", { text: "미완료 저장 확인" }).addEventListener("click", () => {
-        const modal = new Modal(this.app);
-        modal.setTitle("미완료 저장 확인");
-        modal.modalEl.addClass("mia-preview-modal", "mia-recovery-modal");
-        modal.contentEl.createEl("p", { text: "이 사본은 저장 완료가 확인되지 않은 요청입니다. 아래 원본을 복사해 별도로 보관할 수 있습니다. 재시도는 최신 파일과 사본을 기존 충돌 규칙으로 비교하며, 평가를 다시 계산하거나 이력을 합산하지 않습니다. 설정·평가 차이가 있으면 별도 보관됩니다." });
-        const original = modal.contentEl.createEl("textarea", { attr: { readonly: "true", rows: "10", "aria-label": "미완료 저장 복구용 JSON" } });
-        original.value = JSON.stringify(pendingRecovery, null, 2);
-        original.style.width = "100%";
-        const retry = modal.contentEl.createEl("button", { text: "최신 파일과 확인 후 저장 재시도" });
-        retry.addEventListener("click", async () => {
-          retry.disabled = true;
-          try { await this.plugin.store.retryPending(); await this.plugin.index.rebuild(); modal.close(); this.showDashboard(); }
-          catch (error) { new Notice(`저장 재시도 실패: ${errorMessage(error)}`); retry.disabled = false; }
-        });
-        modal.contentEl.createEl("button", { text: "닫기" }).addEventListener("click", () => modal.close());
-        modal.open();
-      });
-    }
-    const settingsConflicts = this.plugin.store.settingsConflicts;
-    if (settingsConflicts?.length) {
-      const warning = root.createDiv({ cls: "mia-storage-warning" });
-      warning.createEl("p", { text: `기기 간 설정 차이 ${settingsConflicts.length}개를 보관했습니다. 현재 설정은 학습 설정에서 확인하세요.` });
-      warning.createEl("button", { text: "보관된 설정 확인" }).addEventListener("click", () => new SettingsConflictModal(this.app, this.plugin.store.settings, settingsConflicts, async id => {
-        await this.plugin.store.restoreSettingsConflict(id);
-        await this.plugin.index.rebuild();
-        this.showDashboard();
-      }).open());
-    }
-    const conflicts = this.plugin.store.conflicts;
-    if (conflicts && Object.keys(conflicts).length) {
-      const warning = root.createDiv({ cls: "mia-sync-warning" });
-      warning.createEl("p", { text: `기기 간 평가가 달랐던 문제 ${Object.keys(conflicts).length}개 · 이전 이력도 보관했습니다.` });
-      warning.createEl("button", { text: "보관된 평가 확인" }).addEventListener("click", () => new ReviewConflictModal(this.app, conflicts, id => this.plugin.index.questionById(id)?.heading ?? id).open());
-    }
-    const questions = this.plugin.index.registered;
-    const progress = calculateProgress(questions, this.plugin.store.reviews, this.plugin.fsrs);
-    const due = progress.due;
-    const fresh = progress.new;
-    const available = buildReviewQueue(questions, this.plugin.store.reviews, this.plugin.fsrs, { management: this.plugin.store.settings.studyManagement });
-    const availableNew = available.filter(question => this.plugin.fsrs.isNew(this.plugin.store.getReview(question.id))).length;
-    const availableDue = available.length - availableNew;
-    const empty = questions.length === 0;
-    const limited = !empty && available.length === 0 && due + fresh > 0;
-    const action = root.createDiv({ cls: "mia-primary-card" });
-    action.createEl("h3", { text: empty ? "첫 질문을 추가해 보세요" : available.length > 0 ? "오늘 학습을 시작할까요?" : limited ? "오늘 출제할 문제가 없습니다" : "지금 복습할 문제가 없습니다" });
-    action.createEl("p", { text: empty
-      ? "과목 이름, 질문, 정답, 핵심 키워드를 입력하면 바로 학습할 수 있습니다. 과목과 키워드는 함께 만들어집니다."
-      : `오늘 출제: 복습 ${availableDue}개 · 새 문제 ${availableNew}개 · 전체 대기: 복습 ${due}개 · 새 문제 ${fresh}개` });
-    const deferredDue = Math.max(0, due - availableDue);
-    if (deferredDue > 0) action.createEl("p", { text: `하루 상한으로 복습 ${deferredDue}개를 이번 출제에서 제외했습니다. 문제와 복습일은 유지되며 이후 학습에서 다시 확인할 수 있습니다.`, cls: "mia-muted mia-deferred-reviews" });
-    if (limited) action.createEl("p", { text: "대기 중인 문제는 있지만 하루 학습량 제한으로 시험 모드에 나오지 않습니다. 학습 설정에서 하루에 새로 배울 문제 수·하루 복습량을 확인하세요.", cls: "mia-muted" });
-    const actions = action.createDiv({ cls: "mia-inline-actions" });
-    if (empty) {
-      actions.createEl("button", { text: "첫 질문 추가", cls: "mod-cta" }).addEventListener("click", () => void this.plugin.openManagedQuestionEditor());
-      if (this.plugin.index.candidates.length) actions.createEl("button", { text: "등록할 질문 확인" }).addEventListener("click", () => this.navigate("questions"));
-    } else {
-      const start = actions.createEl("button", { text: "시험 모드 시작", cls: "mod-cta" });
-      start.disabled = available.length === 0;
-      start.addEventListener("click", () => this.startReview());
-      const browse = actions.createEl("button", { text: "전체 암기 모드" });
-      browse.disabled = due + fresh === 0;
-      browse.addEventListener("click", () => this.startReview(questions.map((question) => question.id), "browse"));
-    }
-    if (limited) actions.createEl("button", { text: "학습량 확인" }).addEventListener("click", () => new StudyManagementModal(this.app, this.plugin, () => this.render(), () => this.restoreSettingsFocus(".mia-learning-button")).open());
-    const refresh = actions.createEl("button", { text: "기록 새로고침" });
-    refresh.setAttr("title", "다른 기기에서 이 보관함으로 도착한 복습 기록과 이어하기 위치를 확인합니다.");
-    refresh.addEventListener("click", async () => {
-      refresh.disabled = true;
-      try { await this.refreshAfterReturn(true, true); }
-      finally { refresh.disabled = false; }
-    });
-    action.createEl("p", { text: "같은 보관함을 동기화하면 내 기기 사이에서 복습 기록·학습 설정·이어하기를 함께 씁니다.", cls: "mia-muted mia-device-sync-hint" });
-    const saved = this.plugin.studyUi.resume;
-    if (saved) {
-      const current = this.plugin.index.questionById(saved.queue[saved.queueIndex] ?? saved.seed[0] ?? "");
-      const resume = root.createDiv({ cls: "mia-resume-card" });
-      resume.createEl("span", { text: "마지막 학습", cls: "mia-card-label" });
-      const heading = resume.createEl("h3");
-      if (current) this.renderQuestionHeading(heading, current);
-      else heading.setText("저장된 학습");
-      resume.createEl("p", { text: `${current?.subject ?? ""} · ${saved.sessionMode === "recall" ? "시험" : "암기"} · ${Math.min(saved.queueIndex + 1, saved.queue.length)} / ${saved.queue.length}${saved.queueIndex >= saved.queue.length ? " · 다음 복습 대기" : ""}` });
-      resume.createEl("small", { text: `${new Date(saved.updatedAt).toLocaleString("ko-KR")} 저장`, cls: "mia-muted" });
-      resume.createEl("button", { text: "이어하기", cls: "mod-cta" }).addEventListener("click", () => this.resumeStudy());
-    }
-    const grid = root.createDiv({ cls: "mia-stats" });
-    this.progressStat(grid, "등록 문제", questions.length, "all");
-    const stableRatio = progress.total ? Math.round((progress.stable / progress.total) * 100) : 0;
-    const stable = grid.createEl("button", { cls: "mia-stat mia-progress-stat mia-stability-stat" });
-    stable.style.setProperty("--mia-stable-ratio", `${stableRatio * 3.6}deg`);
-    stable.createEl("strong", { text: `${stableRatio}%` });
-    stable.createEl("span", { text: "기억 안정 비율" });
-    stable.addEventListener("click", () => this.showQuestions("stable"));
-    this.progressStat(grid, "최근 너무 쉬움", progress.easy, "easy");
-    this.progressStat(grid, "오늘 평가", progress.today, "today");
-    this.progressStat(grid, "오늘 복습", due, "due");
-    this.progressStat(grid, "개선 필요", progress.again + progress.hard, "weak");
-    this.renderProgressGuidance(root);
-    const manage = root.createDiv({ cls: "mia-manage-actions" });
-    manage.createEl("button", { text: "과목 추가" }).addEventListener("click", () => this.plugin.openSubjectEditor());
-    manage.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () => void this.plugin.openManagedQuestionEditor());
-    manage.createEl("button", { text: "키워드 추가" }).addEventListener("click", () => this.plugin.openKeywordEditor());
-    manage.createEl("button", { text: "출력" }).addEventListener("click", () => this.plugin.openSubjectExport());
-    if (this.plugin.index.diagnostics.length) {
-      root.createEl("p", { text: `검사 필요 ${this.plugin.index.diagnostics.length}건 — 문제 목록에서 확인하세요.`, cls: "mia-warning" });
-    }
-
-    const subjects = new Map<string, Array<QuestionRecord & { id: string }>>();
-    for (const subject of this.plugin.listSubjects()) subjects.set(subject, []);
-    for (const question of questions) {
-      const items = subjects.get(question.subject) ?? [];
-      items.push(question);
-      subjects.set(question.subject, items);
-    }
-    if (subjects.size) {
-      root.createEl("h3", { text: "과목별 학습", cls: "mia-section-title" });
-      const subjectGrid = root.createDiv({ cls: "mia-subject-grid" });
-      for (const [subject, items] of [...subjects].sort(([left], [right]) => left.localeCompare(right, "ko"))) {
-        const subjectDue = items.filter((question) => this.plugin.fsrs.isDue(this.plugin.store.getReview(question.id))).length;
-        const subjectNew = items.filter((question) => this.plugin.fsrs.isNew(this.plugin.store.getReview(question.id))).length;
-        const card = subjectGrid.createDiv({ cls: "mia-subject-card" });
-        card.createEl("strong", { text: subject });
-        card.createEl("span", { text: `${items.length}문제 · 복습 ${subjectDue} · 새 문제 ${subjectNew}` });
-        const subjectActions = card.createDiv({ cls: "mia-inline-actions" });
-        const reviewIds = buildReviewQueue(items, this.plugin.store.reviews, this.plugin.fsrs, { management: this.plugin.store.settings.studyManagement }).map((question) => question.id);
-        const review = subjectActions.createEl("button", { text: "시험" });
-        review.disabled = reviewIds.length === 0;
-        review.addEventListener("click", () => this.startReview(reviewIds));
-        const memorize = subjectActions.createEl("button", { text: "암기" });
-        memorize.disabled = subjectDue + subjectNew === 0;
-        memorize.addEventListener("click", () => {
-          this.startReview(items.map((question) => question.id), "browse");
-        });
-        subjectActions.createEl("button", { text: "이름 수정" }).addEventListener("click", () => {
-          this.plugin.openSubjectEditor(subject);
-        });
-        subjectActions.createEl("button", { text: "삭제", cls: "mod-warning" }).addEventListener("click", () => {
-          this.plugin.confirmDeleteSubject(subject);
-        });
-      }
-    }
-  }
-
-  private renderProgress(root: HTMLElement): void {
-    const questions = this.plugin.index.registered;
-    const progress = calculateProgress(questions, this.plugin.store.reviews, this.plugin.fsrs);
-    root.createEl("h3", { text: "전체 학습현황", cls: "mia-page-title" });
-    const totals = root.createDiv({ cls: "mia-stats" });
-    this.progressStat(totals, "전체 문제", progress.total, "all");
-    this.progressStat(totals, "학습 전", progress.new, "new");
-    this.progressStat(totals, "오늘 복습", progress.due, "due");
-    this.progressStat(totals, "1회 이상 학습", progress.studied, null);
-    this.progressStat(totals, "기억 안정", progress.stable, "stable");
-    this.progressStat(totals, "오늘 평가", progress.today, "today");
-    this.renderProgressGuidance(root);
-
-    root.createEl("h3", { text: "최근 평가", cls: "mia-section-title" });
-    const ratings = root.createDiv({ cls: "mia-progress-ratings" });
-    this.progressStat(ratings, "못 암기", progress.again, "again");
-    this.progressStat(ratings, "애매", progress.hard, "hard");
-    this.progressStat(ratings, "암기", progress.good, "good");
-    this.progressStat(ratings, "너무 쉬움", progress.easy, "easy");
-
-    root.createEl("h3", { text: "과목별 현황", cls: "mia-section-title" });
-    const subjectProgress = new Map(progress.bySubject.map((item) => [item.subject, item.counts]));
-    for (const subject of this.plugin.listSubjects()) {
-      if (!subjectProgress.has(subject)) {
-        subjectProgress.set(subject, { total: 0, new: 0, studied: 0, due: 0, again: 0, hard: 0, good: 0, easy: 0, stable: 0, today: 0 });
-      }
-    }
-    const subjectGrid = root.createDiv({ cls: "mia-progress-subjects" });
-    for (const [subject, counts] of [...subjectProgress].sort(([left], [right]) => left.localeCompare(right, "ko"))) {
-      const card = subjectGrid.createDiv({ cls: "mia-progress-subject" });
-      const heading = card.createDiv({ cls: "mia-progress-subject-heading" });
-      heading.createEl("strong", { text: subject });
-      heading.createEl("span", { text: `${counts.studied}/${counts.total} 학습` });
-      const values = card.createDiv({ cls: "mia-progress-subject-values" });
-      this.progressLink(values, `학습 전 ${counts.new}`, "new", subject);
-      this.progressLink(values, `오늘 복습 ${counts.due}`, "due", subject);
-      this.progressLink(values, `못 암기 ${counts.again}`, "again", subject);
-      this.progressLink(values, `애매 ${counts.hard}`, "hard", subject);
-      this.progressLink(values, `암기 ${counts.good}`, "good", subject);
-      this.progressLink(values, `너무 쉬움 ${counts.easy}`, "easy", subject);
-      const actions = card.createDiv({ cls: "mia-inline-actions" });
-      const subjectQuestions = questions.filter((question) => question.subject === subject);
-      const reviewIds = buildReviewQueue(subjectQuestions, this.plugin.store.reviews, this.plugin.fsrs, { management: this.plugin.store.settings.studyManagement })
-        .map((question) => question.id);
-      const start = actions.createEl("button", { text: "복습 시작", cls: "mod-cta" });
-      start.disabled = reviewIds.length === 0;
-      start.addEventListener("click", () => this.startReview(reviewIds));
-      actions.createEl("button", { text: "전체 문제" }).addEventListener("click", () => this.showQuestions("all", subject));
-    }
-    if (subjectProgress.size === 0) root.createEl("p", { text: "과목과 질문을 추가하면 학습현황이 표시됩니다.", cls: "mia-empty" });
-  }
-
-  private renderProgressGuidance(root: HTMLElement): void {
-    const help = root.createEl("details", { cls: "mia-stat-guidance" });
-    help.createEl("summary", { text: "통계와 출제량 안내" });
-    help.createEl("p", { text: progressGuidance(this.plugin.store.settings.studyManagement.dayStartsAt), cls: "mia-muted" });
-  }
-
-  private progressStat(
-    parent: HTMLElement,
-    label: string,
-    value: number,
-    review: ReviewFilter | null,
-  ): void {
-    const card = review
-      ? parent.createEl("button", { cls: "mia-stat mia-progress-stat" })
-      : parent.createDiv({ cls: "mia-stat mia-progress-stat" });
-    card.createEl("strong", { text: String(value) });
-    card.createEl("span", { text: label });
-    if (review) card.addEventListener("click", () => this.showQuestions(review));
-  }
-
-  private progressLink(parent: HTMLElement, label: string, review: ReviewFilter, subject: string): void {
-    const button = parent.createEl("button", { text: label });
-    button.addEventListener("click", () => this.showQuestions(review, subject));
+  private openStudySettings(): void {
+    new StudyManagementModal(this.app, this.plugin, () => this.render(), () => this.restoreSettingsFocus(".mia-learning-button")).open();
   }
 
   private showQuestions(review: ReviewFilter, subject = "all"): void {
-    this.questionText = "";
-    this.questionKeyword = "";
-    this.questionType = "all";
-    this.questionSort = "review";
-    this.questionReview = review;
-    this.questionSubject = subject;
+    this.questionList.show(review, subject);
     this.navigate("questions");
   }
 
-  private stat(parent: HTMLElement, label: string, value: number): void {
-    const card = parent.createDiv({ cls: "mia-stat" });
-    card.createEl("strong", { text: String(value) });
-    card.createEl("span", { text: label });
-  }
-
-  private renderQuestions(root: HTMLElement): void {
-    if (this.editingSessionQuestion) {
-      const selected = root.createDiv({ cls: "mia-session-edit-target" });
-      selected.dataset.questionId = this.editingSessionQuestion;
-      selected.setAttr("role", "region");
-      selected.setAttr("aria-label", "학습 중인 원본 문제 편집");
-      selected.createEl("p", { text: "현재 학습 문제 · 기존 검색·필터·정렬은 유지됩니다. 이 항목만 필터와 관계없이 표시합니다." });
-      selected.createEl("button", { text: "진행 중인 학습으로 돌아가기" }).addEventListener("click", () => this.returnFromQuestionEditor());
-      const current = this.plugin.index.questionById(this.editingSessionQuestion);
-      if (current) this.renderQuestionRow(selected, current);
-      else selected.createEl("p", { text: "원본 문제를 찾을 수 없습니다. 삭제 또는 ID 충돌 여부를 확인하세요.", cls: "mia-warning" });
-      selected.tabIndex = -1;
-      if (this.focusEditTarget) {
-        this.focusEditTarget = false;
-        selected.scrollIntoView({ block: "start" });
-        selected.focus({ preventScroll: true });
-      }
-    }
-    const pageActions = root.createDiv({ cls: "mia-page-actions" });
-    pageActions.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () => {
-      void this.plugin.openManagedQuestionEditor();
-    });
-    const filterPanel = root.createEl("details", { cls: "mia-filter-panel" });
-    filterPanel.open = !Platform.isMobile;
-    filterPanel.createEl("summary", { text: "검색·필터·정렬" });
-    const toolbar = filterPanel.createDiv({ cls: "mia-toolbar mia-filter-toolbar" });
-    const search = toolbar.createEl("input", { type: "search", placeholder: "질문, 정답, 과목, 키워드 검색", attr: { "aria-label": "질문 검색" } });
-    search.value = this.questionText;
-    const subject = toolbar.createEl("select", { attr: { "aria-label": "과목 필터" } });
-    subject.createEl("option", { text: "전체 과목", value: "all" });
-    const subjects = [...new Set([
-      ...this.plugin.listSubjects(),
-      ...this.plugin.index.registered.map((question) => question.subject),
-    ])].sort((a, b) => a.localeCompare(b, "ko"));
-    subjects.forEach((item) => subject.createEl("option", { text: item, value: item }));
-    subject.value = this.questionSubject;
-    const type = toolbar.createEl("select", { attr: { "aria-label": "문제 유형 필터" } });
-    type.createEl("option", { text: "전체 유형", value: "all" });
-    QUESTION_TYPES.forEach((item) => type.createEl("option", { text: item, value: item }));
-    type.value = this.questionType;
-    const review = toolbar.createEl("select", { attr: { "aria-label": "복습 상태 필터" } });
-    const reviewOptions: Array<[ReviewFilter, string]> = [
-      ["all", "전체 상태"], ["due", "복습 예정"], ["new", "새 문제"],
-      ["again", "못 암기"], ["hard", "애매"], ["good", "암기"], ["easy", "너무 쉬움"],
-      ["weak", "취약 문제"], ["stable", "기억 안정"], ["today", "오늘 평가"],
-    ];
-    reviewOptions.forEach(([value, label]) => review.createEl("option", { text: label, value }));
-    review.value = this.questionReview;
-    const keyword = toolbar.createEl("input", { type: "search", placeholder: "키워드만 필터", attr: { "aria-label": "키워드 필터" } });
-    keyword.value = this.questionKeyword;
-    const sort = toolbar.createEl("select", { attr: { "aria-label": "정렬" } });
-    const sortOptions: Array<[QuestionSort, string]> = [
-      ["review", "복습 우선"], ["title", "문제명"], ["subject", "과목별"], ["type", "유형별"],
-      ["created", "최근 생성"], ["updated", "최근 수정"], ["weak", "못 암기 우선"], ["ambiguous", "애매 우선"],
-    ];
-    sortOptions.forEach(([value, label]) => sort.createEl("option", { text: label, value }));
-    sort.value = this.questionSort;
-
-    const chips = root.createDiv({ cls: "mia-filter-chips" });
-    const resultBar = root.createDiv({ cls: "mia-result-bar" });
-    const resultCount = resultBar.createSpan();
-    const resultActions = resultBar.createDiv({ cls: "mia-inline-actions" });
-    const testResults = resultActions.createEl("button", { text: "검색 결과 시험" });
-    const browseResults = resultActions.createEl("button", { text: "검색 결과 암기" });
-    const list = root.createDiv({ cls: "mia-list" });
-    const pagination = root.createDiv({ cls: "mia-pagination" });
-    const renderChips = () => {
-      chips.empty();
-      const active: Array<[string, () => void]> = [];
-      if (this.questionText) active.push([`검색: ${this.questionText}`, () => { this.questionText = ""; search.value = ""; }]);
-      if (this.questionSubject !== "all") active.push([`과목: ${this.questionSubject}`, () => { this.questionSubject = "all"; subject.value = "all"; }]);
-      if (this.questionType !== "all") active.push([`유형: ${this.questionType}`, () => { this.questionType = "all"; type.value = "all"; }]);
-      if (this.questionReview !== "all") active.push([`상태: ${reviewOptions.find(([value]) => value === this.questionReview)?.[1] ?? this.questionReview}`, () => { this.questionReview = "all"; review.value = "all"; }]);
-      if (this.questionKeyword) active.push([`키워드: ${this.questionKeyword}`, () => { this.questionKeyword = ""; keyword.value = ""; }]);
-      for (const [label, clear] of active) {
-        const chip = chips.createEl("button", { text: `${label} ×` });
-        chip.addEventListener("click", () => { clear(); this.questionPage = 0; renderList(); });
-      }
-      if (active.length > 1) {
-        const reset = chips.createEl("button", { text: "필터 전체 해제", cls: "mod-warning" });
-        reset.addEventListener("click", () => {
-          this.questionText = ""; this.questionSubject = "all"; this.questionType = "all";
-          this.questionReview = "all"; this.questionKeyword = ""; this.questionPage = 0;
-          search.value = ""; subject.value = "all"; type.value = "all"; review.value = "all"; keyword.value = "";
-          renderList();
-        });
-      }
+  private createPageContext(): StudyPageContext {
+    const view = this; // The getters below need the view, not the context object.
+    return {
+      get app() { return view.app; },
+      get plugin() { return view.plugin; },
+      get component() { return view.renderComponent ?? view; },
+      get renders() { return view.readingRenders; },
+      startReview: (questionIds, mode) => view.startReview(questionIds, mode),
+      resumeStudy: () => view.resumeStudy(),
+      navigate: (route) => view.navigate(route),
+      showDashboard: () => view.showDashboard(),
+      showQuestions: (review, subject) => view.showQuestions(review, subject),
+      openStudySettings: () => view.openStudySettings(),
+      refreshRecords: () => view.refreshAfterReturn(true, true),
     };
-    const listOwner = this.renderComponent ?? this;
-    const fixedRenderCount = this.readingRenders.length;
-    let listComponent: Component | null = null;
-    const renderList = () => {
-      // Results own their Markdown resources; replacing a page must release the old ones.
-      if (listComponent) listOwner.removeChild(listComponent);
-      listComponent = listOwner.addChild(new Component());
-      this.readingRenders.length = fixedRenderCount;
-      list.empty();
-      pagination.empty();
-      const questions = queryQuestions(this.plugin.index.registered, this.plugin.store.reviews, this.plugin.fsrs, {
-        text: this.questionText,
-        subject: this.questionSubject,
-        questionType: this.questionType,
-        review: this.questionReview,
-        keyword: this.questionKeyword,
-        sort: this.questionSort,
-      });
-      resultCount.setText(`${questions.length}개`);
-      testResults.disabled = questions.length === 0;
-      browseResults.disabled = questions.length === 0;
-      testResults.onclick = () => this.startReview(questions.map((question) => question.id));
-      browseResults.onclick = () => this.startReview(questions.map((question) => question.id), "browse");
-      const pageCount = Math.max(1, Math.ceil(questions.length / QUESTION_PAGE_SIZE));
-      this.questionPage = Math.min(this.questionPage, pageCount - 1);
-      const visible = questions.slice(this.questionPage * QUESTION_PAGE_SIZE, (this.questionPage + 1) * QUESTION_PAGE_SIZE);
-      for (const question of visible) this.renderQuestionRow(list, question, listComponent);
-      if (pageCount > 1) {
-        const previous = pagination.createEl("button", { text: `이전 ${QUESTION_PAGE_SIZE}개` });
-        previous.disabled = this.questionPage === 0;
-        previous.addEventListener("click", () => { this.questionPage -= 1; renderList(); root.scrollTo({ top: 0, behavior: "smooth" }); });
-        pagination.createSpan({ text: `${this.questionPage + 1} / ${pageCount}` });
-        const next = pagination.createEl("button", { text: `다음 ${QUESTION_PAGE_SIZE}개` });
-        next.disabled = this.questionPage >= pageCount - 1;
-        next.addEventListener("click", () => { this.questionPage += 1; renderList(); root.scrollTo({ top: 0, behavior: "smooth" }); });
-      }
-      if (!questions.length) list.createEl("p", {
-        text: this.plugin.index.registered.length ? "검색·필터 조건에 맞는 문제가 없습니다." : "등록된 문제가 없습니다.",
-        cls: "mia-empty",
-      });
-      renderChips();
-    };
-    let searchComposing = false;
-    let keywordComposing = false;
-    search.addEventListener("compositionstart", () => { searchComposing = true; });
-    search.addEventListener("compositionend", () => { searchComposing = false; this.questionText = search.value; this.questionPage = 0; renderList(); });
-    search.addEventListener("input", () => { if (!searchComposing) { this.questionText = search.value; this.questionPage = 0; renderList(); } });
-    keyword.addEventListener("compositionstart", () => { keywordComposing = true; });
-    keyword.addEventListener("compositionend", () => { keywordComposing = false; this.questionKeyword = keyword.value; this.questionPage = 0; renderList(); });
-    keyword.addEventListener("input", () => { if (!keywordComposing) { this.questionKeyword = keyword.value; this.questionPage = 0; renderList(); } });
-    subject.addEventListener("change", () => { this.questionSubject = subject.value; this.questionPage = 0; renderList(); });
-    type.addEventListener("change", () => { this.questionType = type.value as typeof this.questionType; this.questionPage = 0; renderList(); });
-    review.addEventListener("change", () => { this.questionReview = review.value as ReviewFilter; this.questionPage = 0; renderList(); });
-    sort.addEventListener("change", () => { this.questionSort = sort.value as QuestionSort; this.questionPage = 0; renderList(); });
-    renderList();
-
-    const diagnostics = this.plugin.index.diagnostics;
-    if (diagnostics.length) {
-      const details = root.createEl("details", { cls: "mia-candidates" });
-      details.createEl("summary", { text: `검사 필요 ${diagnostics.length}건` });
-      for (const diagnostic of diagnostics) {
-        const row = details.createDiv({ cls: "mia-candidate" });
-        row.createSpan({ text: `${diagnostic.message} · ${diagnostic.filePath}:${diagnostic.line + 1}` });
-        row.createEl("button", { text: "원문" }).addEventListener("click", () => {
-          void this.plugin.openLocation(diagnostic.filePath, diagnostic.line);
-        });
-      }
-    }
-    if (this.plugin.index.candidates.length) {
-      const details = root.createEl("details", { cls: "mia-candidates" });
-      details.createEl("summary", { text: `등록하지 않은 문제 후보 ${this.plugin.index.candidates.length}개` });
-      const candidateSearch = details.createEl("input", { type: "search", placeholder: "등록 후보 검색", attr: { "aria-label": "등록 후보 검색" }, cls: "mia-candidate-search" });
-      const candidateList = details.createDiv();
-      const renderCandidates = () => {
-        candidateList.empty();
-        const candidateQuery = candidateSearch.value.trim().toLocaleLowerCase("ko");
-        const matches = this.plugin.index.candidates.filter((question) =>
-          !candidateQuery || [question.heading, question.questionMarkdown, question.filePath]
-            .join("\n").toLocaleLowerCase("ko").includes(candidateQuery),
-        );
-        for (const question of matches.slice(0, this.candidateLimit)) {
-          const row = candidateList.createDiv({ cls: "mia-candidate" });
-          const label = row.createDiv({ cls: "mia-candidate-label" });
-          this.renderQuestionHeading(label.createEl("strong"), question);
-          label.createEl("small", { text: question.filePath });
-          const candidateActions = row.createDiv({ cls: "mia-inline-actions" });
-          candidateActions.createEl("button", { text: "등록" }).addEventListener("click", () => this.plugin.editMetadata(question));
-          candidateActions.createEl("button", { text: "원문" }).addEventListener("click", () => void this.plugin.openQuestion(question));
-        }
-        if (matches.length > this.candidateLimit) {
-          const more = candidateList.createEl("button", { text: `${Math.min(100, matches.length - this.candidateLimit)}개 더 보기`, cls: "mia-load-more" });
-          more.addEventListener("click", () => { this.candidateLimit += 100; renderCandidates(); });
-        }
-        if (!matches.length) candidateList.createEl("p", { text: "검색 조건에 맞는 후보가 없습니다.", cls: "mia-empty" });
-      };
-      candidateSearch.addEventListener("input", () => { this.candidateLimit = 100; renderCandidates(); });
-      renderCandidates();
-    }
   }
 
-  private renderQuestionHeading(element: HTMLElement, question: QuestionRecord, component = this.renderComponent ?? this): void {
-    this.readingRenders.push(renderQuestionTitle(this.app, question.heading, element, question.filePath, component));
+  private renderQuestionsRoute(root: HTMLElement): void {
+    const editing = this.editingSessionQuestion;
+    const editTarget = editing ? { id: editing, focus: this.focusEditTarget, returnToStudy: () => this.returnFromQuestionEditor() } : null;
+    if (editTarget) this.focusEditTarget = false;
+    renderQuestionsPage(this.pages, root, this.questionList, editTarget);
   }
 
-  private renderQuestionRow(parent: HTMLElement, question: QuestionRecord & { id: string }, component = this.renderComponent ?? this): void {
-    const row = parent.createDiv({ cls: "mia-row" });
-    const body = row.createDiv({ cls: "mia-row-body" });
-    this.renderQuestionHeading(body.createEl("strong"), question, component);
-    const prompt = body.createDiv({ cls: "mia-row-prompt mia-markdown" });
-    this.readingRenders.push(MarkdownRenderer.render(this.app, withoutSourceAttribution(question.questionMarkdown), prompt, question.filePath, component));
-    body.createEl("small", { text: `${question.subject} · ${question.questionType} · 핵심 ${question.coreKeywords.map((item) => item.label).join(", ") || "없음"} · 보조 ${question.subKeywords.map((item) => item.label).join(", ") || "없음"}` });
-    const actions = row.createDiv({ cls: "mia-row-actions" });
-    actions.createEl("button", { text: "학습" }).addEventListener("click", () => this.startReview([question.id]));
-    actions.createEl("button", { text: "상세" }).addEventListener("click", () => void this.plugin.openQuestionDetail(question));
-    actions.createEl("button", { text: "편집" }).addEventListener("click", () => void this.plugin.openManagedQuestionEditor(question));
-    actions.createEl("button", { text: "연결" }).addEventListener("click", () => this.plugin.openFollowUpEditor(question));
-    actions.createEl("button", { text: "삭제", cls: "mod-warning" }).addEventListener("click", () => {
-      this.plugin.confirmDeleteQuestion(question);
-    });
-  }
-
-  private renderWeakness(root: HTMLElement): void {
-    root.createEl("h3", { text: "취약 문제", cls: "mia-page-title" });
-    root.createEl("p", { text: "못 암기와 애매 문제를 복습 지연 시간까지 반영한 긴급도 순으로 표시합니다.", cls: "mia-muted" });
-    const toolbar = root.createDiv({ cls: "mia-toolbar" });
-    const search = toolbar.createEl("input", { type: "search", placeholder: "취약 문제 검색", attr: { "aria-label": "취약 문제 검색" } });
-    const start = toolbar.createEl("button", { text: "취약 문제 시험", cls: "mod-cta" });
-    const list = root.createDiv({ cls: "mia-list" });
-    let query = "";
-    let composing = false;
-    const renderList = () => {
-      list.empty();
-      const questions = queryQuestions(this.plugin.index.registered, this.plugin.store.reviews, this.plugin.fsrs, {
-        text: query,
-        subject: "all",
-        questionType: "all",
-        review: "weak",
-        keyword: "",
-        sort: "weak",
-      });
-      start.disabled = questions.length === 0;
-      start.onclick = () => this.startReview(questions.map((question) => question.id));
-      for (const question of questions.slice(0, 300)) {
-        const row = list.createDiv({ cls: "mia-row" });
-        const body = row.createDiv({ cls: "mia-row-body" });
-        this.renderQuestionHeading(body.createEl("strong"), question);
-        const review = this.plugin.store.getReview(question.id);
-        body.createEl("small", { text: `${question.subject} · 긴급도 ${weaknessUrgency(review)}점 · ${review?.lastRating === Rating.Again ? "못 암기" : "애매"}` });
-        const actions = row.createDiv({ cls: "mia-row-actions" });
-        actions.createEl("button", { text: "학습" }).addEventListener("click", () => this.startReview([question.id]));
-        actions.createEl("button", { text: "상세" }).addEventListener("click", () => void this.plugin.openQuestionDetail(question));
-      }
-      if (questions.length > 300) list.createEl("p", { text: `${questions.length}개 중 긴급도가 높은 300개만 표시합니다.`, cls: "mia-muted" });
-      if (!questions.length) list.createEl("p", { text: "현재 취약 문제가 없습니다.", cls: "mia-empty" });
-    };
-    search.addEventListener("compositionstart", () => { composing = true; });
-    search.addEventListener("compositionend", () => { composing = false; query = search.value; renderList(); });
-    search.addEventListener("input", () => { if (!composing) { query = search.value; renderList(); } });
-    renderList();
-  }
-
-  private renderKeywords(root: HTMLElement): void {
-    const pageActions = root.createDiv({ cls: "mia-page-actions" });
-    pageActions.createEl("button", { text: "키워드 추가", cls: "mod-cta" }).addEventListener("click", () => {
-      this.plugin.openKeywordEditor();
-    });
-    const toolbar = root.createDiv({ cls: "mia-toolbar" });
-    const search = toolbar.createEl("input", { type: "search", placeholder: "키워드 검색", attr: { "aria-label": "키워드 검색" } });
-    const keywords = new Map<string, {
-      keyword: KeywordReference;
-      questions: Map<string, QuestionRecord & { id: string }>;
-      entry?: ReturnType<MiaStudyPlugin["listKeywordNotes"]>[number];
-    }>();
-    for (const entry of this.plugin.listKeywordNotes()) {
-      const keyword = { target: entry.target, label: entry.name, raw: `[[${entry.target}|${entry.name}]]` };
-      keywords.set(keywordKey(keyword), { keyword, questions: new Map(), entry });
-    }
-    for (const question of this.plugin.index.registered) {
-      for (const keyword of [...question.coreKeywords, ...question.subKeywords]) {
-        const key = keywordKey(keyword);
-        const item = keywords.get(key) ?? { keyword, questions: new Map() };
-        item.questions.set(question.id, question);
-        keywords.set(key, item);
-      }
-    }
-    const grid = root.createDiv({ cls: "mia-keyword-grid" });
-    const renderGrid = () => {
-      grid.empty();
-      const query = search.value.trim().toLocaleLowerCase("ko");
-      const items = [...keywords.values()]
-        .filter((item) => !query || `${item.keyword.label}\n${item.keyword.target}`.toLocaleLowerCase("ko").includes(query))
-        .sort((a, b) => b.questions.size - a.questions.size || a.keyword.label.localeCompare(b.keyword.label, "ko"));
-      for (const item of items) {
-        const questions = [...item.questions.values()];
-        const coreCount = questions.filter((question) => question.coreKeywords.some((keyword) => keywordKey(keyword) === keywordKey(item.keyword))).length;
-        const subCount = questions.filter((question) => question.subKeywords.some((keyword) => keywordKey(keyword) === keywordKey(item.keyword))).length;
-        const card = grid.createDiv({ cls: "mia-keyword" });
-        card.createEl("strong", { text: item.keyword.label });
-        card.createEl("span", { text: `${questions.length}문제 · 핵심 ${coreCount} · 보조 ${subCount}` });
-        const reference = questions[0];
-        card.addEventListener("click", () => {
-          const sourcePath = reference?.filePath ?? item.entry?.filePath;
-          if (sourcePath) this.plugin.showKeywordMeaning(item.keyword.target, item.keyword.label, sourcePath);
-        });
-        const editEntry = item.entry ?? {
-          name: item.keyword.label,
-          target: item.keyword.target,
-          filePath: `${item.keyword.target}.md`,
-        };
-        const edit = card.createEl("button", { text: "키워드 수정" });
-        edit.addEventListener("click", (event) => {
-          event.stopPropagation();
-          this.plugin.openKeywordEditor(editEntry);
-        });
-        const review = card.createEl("button", { text: "연결 문제 시험" });
-        review.disabled = questions.length === 0;
-        review.addEventListener("click", (event) => {
-          event.stopPropagation();
-          this.startReview(questions.map((question) => question.id));
-        });
-        const browse = card.createEl("button", { text: "연결 문제 암기" });
-        browse.disabled = questions.length === 0;
-        browse.addEventListener("click", (event) => {
-          event.stopPropagation();
-          this.startReview(questions.map((question) => question.id), "browse");
-        });
-        if (questions.length) {
-          const details = card.createEl("details", { cls: "mia-keyword-questions" });
-          details.addEventListener("click", (event) => event.stopPropagation());
-          details.createEl("summary", { text: "연결 질문 보기" });
-          for (const question of questions.slice(0, 300)) {
-            const questionButton = details.createEl("button");
-            this.renderQuestionHeading(questionButton, question);
-            questionButton.addEventListener("click", () => void this.plugin.openQuestionDetail(question));
-          }
-        }
-        const remove = card.createEl("button", { text: "키워드 삭제", cls: "mod-warning" });
-        remove.addEventListener("click", (event) => {
-          event.stopPropagation();
-          this.plugin.confirmDeleteKeyword(editEntry);
-        });
-      }
-      if (!items.length) grid.createEl("p", {
-        text: keywords.size ? "검색 조건에 맞는 키워드가 없습니다." : "키워드를 추가하거나 질문에 핵심/보조 키워드를 연결하면 여기에 나타납니다.",
-        cls: "mia-empty",
-      });
-    };
-    let composing = false;
-    search.addEventListener("compositionstart", () => { composing = true; });
-    search.addEventListener("compositionend", () => { composing = false; renderGrid(); });
-    search.addEventListener("input", () => { if (!composing) renderGrid(); });
-    renderGrid();
+  private renderQuestionHeading(element: HTMLElement, question: QuestionRecord): void {
+    renderQuestionHeading(this.pages, element, question);
   }
 
   private returnFromQuestionEditor(): void {
