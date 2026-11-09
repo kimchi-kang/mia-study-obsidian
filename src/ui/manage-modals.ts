@@ -1,16 +1,13 @@
 import { renderQuestionTitle } from "./question-title";
 import { App, Component, Modal, Notice, Setting } from "obsidian";
 import { keywordReferencesFromInput } from "../core/keyword-path";
-import { ManagedQuestionInput } from "../core/managed-question";
+import type { ManagedQuestionDraft } from "../core/managed-question";
 import { QUESTION_TYPES, QuestionRecord, QuestionType } from "../core/models";
 import { MAX_FOLLOW_UPS, questionBlockLink } from "../core/follow-up";
 import { errorMessage } from "./error-message";
 import { KeyboardAwareModal } from "./mobile-keyboard";
 
-export interface ManagedQuestionDraft extends ManagedQuestionInput {
-  subject: string;
-  keywordMeanings: Array<{ target: string; label: string; meaning: string; preserveExistingWhenEmpty?: boolean }>;
-}
+export type { ManagedQuestionDraft };
 
 export class ConfirmDeleteModal extends Modal {
   constructor(

@@ -292,7 +292,7 @@ describe("stale follow-up editors and concurrent metadata",()=>{
     await expect(env.editor.submit(["mia-q-two"],true)).rejects.toThrow(/변경/);expect(env.contents).toEqual(before);
   });
   it("detects link changes on disk before the index receives them",async()=>{
-    const env=await connectedEnvironment(),writes=env.plugin.followUpFileChanges(new Map([["mia-q-one",[]]]));
+    const env=await connectedEnvironment(),writes=env.plugin.followUps.fileChanges(new Map([["mia-q-one",[]]]));
     const {updateQuestionMetadata}=await import("../src/core/question-writer");
     const q=env.plugin.index.questionById("mia-q-one");env.contents.set(oldPath,updateQuestionMetadata(env.contents.get(oldPath),q,{...q,followUpLinks:["[[MIA/물리/문제은행#^mia-q-two|둘]]"]}));const before=new Map(env.contents);
     const {applyFileChanges}=await import("../src/services/file-change-batch");
@@ -332,7 +332,7 @@ describe("late reverse-link conflicts",()=>{
   it("does not silently remove another unresolved link while refreshing a valid target",async()=>{
     const env=await connectedEnvironment();const {updateQuestionMetadata}=await import("../src/core/question-writer");
     const q=env.plugin.index.questionById("mia-q-one");env.contents.set(oldPath,updateQuestionMetadata(env.contents.get(oldPath),q,{...q,followUpLinks:["[[bank#^mia-q-two|둘]]","[[missing#^mia-q-missing|누락]]"]}));await env.plugin.index.rebuild();const before=env.contents.get(oldPath);
-    await expect(env.plugin.refreshIncomingFollowUpLinks(["mia-q-two"])).rejects.toThrow();expect(env.contents.get(oldPath)).toBe(before);
+    await expect(env.plugin.followUps.refreshIncoming(["mia-q-two"])).rejects.toThrow();expect(env.contents.get(oldPath)).toBe(before);
   });
 });
 
@@ -364,10 +364,10 @@ describe("reusing keywords while adding a question", () => {
 describe("editing a saved question from a session", () => {
   async function editEnvironment(options) {
     const env = await environment(options);
-    env.plugin.assertSubjectNoteWritable = vi.fn().mockResolvedValue(undefined);
-    env.plugin.saveDraftKeywordMeanings = vi.fn().mockResolvedValue(undefined);
-    env.plugin.syncSubjectNote = vi.fn().mockResolvedValue(undefined);
-    env.plugin.refreshIncomingFollowUpLinks = vi.fn().mockResolvedValue(undefined);
+    env.plugin.subjectNotes.assertWritable = vi.fn().mockResolvedValue(undefined);
+    env.plugin.questions.saveDraftKeywordMeanings = vi.fn().mockResolvedValue(undefined);
+    env.plugin.subjectNotes.sync = vi.fn().mockResolvedValue(undefined);
+    env.plugin.followUps.refreshIncoming = vi.fn().mockResolvedValue(undefined);
     env.plugin.store.reviews[env.question.id] = { marker: "existing FSRS record" };
     const duplicate = appendManagedQuestion(env.contents.get(oldPath), input, "mia-q-duplicate");
     env.contents.set(oldPath, duplicate);
@@ -418,7 +418,7 @@ describe("editing a saved question from a session", () => {
   });
   it("reports a partial derived-note failure and exposes the committed snapshot for safe retry",async()=>{
     const env=await editEnvironment();let snapshot=env.question;
-    env.plugin.syncSubjectNote.mockRejectedValueOnce(Error("note locked"));
+    env.plugin.subjectNotes.sync.mockRejectedValueOnce(Error("note locked"));
     await expect(env.plugin.updateManagedQuestion(snapshot,env.draft,q=>{snapshot=q;})).rejects.toThrow("원본 문제는 저장됐지만");
     expect(snapshot.answerMarkdown).toBe("수정 답변");
     expect(env.plugin.index.questionById("mia-q-one").answerMarkdown).toBe("수정 답변");
@@ -436,7 +436,7 @@ describe("editing a saved question from a session", () => {
 describe("new question and move commit boundaries",()=>{
   it("exposes a created question before a derived-note failure so retry retains its ID",async()=>{
     const env=await environment();let saved;
-    env.plugin.syncSubjectNote=vi.fn().mockRejectedValueOnce(Error("subject note locked"));
+    env.plugin.subjectNotes.sync=vi.fn().mockRejectedValueOnce(Error("subject note locked"));
     await expect(env.plugin.createManagedQuestion(env.draft,q=>{saved=q;})).rejects.toThrow();
     expect(saved?.id).toBeTruthy();
     const first=parseQuestionFile(nextPath,env.contents.get(nextPath)).questions;
@@ -446,7 +446,7 @@ describe("new question and move commit boundaries",()=>{
   });
   it("exposes the new path after a move even when derived notes fail",async()=>{
     const env=await environment();let saved=env.question;
-    env.plugin.syncSubjectNote=vi.fn().mockRejectedValueOnce(Error("subject note locked"));
+    env.plugin.subjectNotes.sync=vi.fn().mockRejectedValueOnce(Error("subject note locked"));
     await expect(env.plugin.updateManagedQuestion(saved,env.draft,q=>{saved=q;})).rejects.toThrow();
     expect(env.count(oldPath)).toBe(0);expect(env.count(nextPath)).toBe(1);
     expect(saved).toMatchObject({id:env.question.id,filePath:nextPath,subject:"물리"});
@@ -459,7 +459,7 @@ it("preserves an existing meaning on an empty new-reference retry but still perm
   const env=await environment();env.add("MIA/키워드",new TFolder());const path="MIA/키워드/기존.md";env.add(path,new TFile());
   const original="# 기존\n\n## 의미\n\n여러 줄\n기존 의미\n\n## 연결\n";env.contents.set(path,original);
   const item={target:"MIA/키워드/기존",label:"기존",meaning:"",preserveExistingWhenEmpty:true};
-  await env.plugin.saveDraftKeywordMeanings({...env.draft,keywordMeanings:[item]});expect(env.contents.get(path)).toBe(original);
-  await env.plugin.saveDraftKeywordMeanings({...env.draft,keywordMeanings:[{...item,preserveExistingWhenEmpty:false}]});
+  await env.plugin.questions.saveDraftKeywordMeanings({...env.draft,keywordMeanings:[item]});expect(env.contents.get(path)).toBe(original);
+  await env.plugin.questions.saveDraftKeywordMeanings({...env.draft,keywordMeanings:[{...item,preserveExistingWhenEmpty:false}]});
   const {readKeywordMeaning}=await import("../src/core/keyword-note");expect(readKeywordMeaning(env.contents.get(path))).toBe("");
 });

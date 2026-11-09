@@ -41,7 +41,7 @@ async function environment() {
   plugin.store = { settings: { sourceRoots: ["MIA"], keywordFolder: "MIA/키워드" }, reviews: {}, getReview: () => undefined, removeReview: vi.fn(async () => {}) };
   plugin.index = new QuestionIndex(plugin.app, () => ["MIA"]);
   await plugin.index.rebuild();
-  plugin.refreshIncomingFollowUpLinks = vi.fn(async () => {});
+  plugin.followUps.refreshIncoming = vi.fn(async () => {});
   return { plugin, contents };
 }
 

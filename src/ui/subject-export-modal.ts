@@ -2,7 +2,8 @@ import { App, Modal, Notice } from "obsidian";
 import { errorMessage } from "./error-message";
 
 export interface ExportSubjectOption { name: string; count: number }
-export interface ExportReceipt { path: string; count: number; warnings: string[]; openFile?: () => Promise<void>; revealFile?: () => void }
+import type { ExportReceipt } from "../services/export-file";
+export type { ExportReceipt };
 
 export class SubjectExportModal extends Modal {
   private busy = false;
