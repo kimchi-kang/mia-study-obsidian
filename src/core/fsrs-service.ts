@@ -17,7 +17,7 @@ import {
   SerializedFsrsCard,
   SerializedReviewLog,
 } from "./models";
-import { nextStudyDayStart } from "./study-management";
+import { nextStudyDayStart, studyDayStart } from "./study-management";
 
 export type StudyGrade = Rating.Again | Rating.Hard | Rating.Good | Rating.Easy;
 
@@ -63,6 +63,29 @@ function serializeLog(log: ReviewLog): SerializedReviewLog {
   };
 }
 
+const HOUR_MS = 3600000;
+
+function localOffsetMs(time: number): number {
+  return -new Date(time).getTimezoneOffset() * 60000;
+}
+
+/**
+ * ts-fsrs counts elapsed days by UTC calendar date. Shifting each instant by
+ * (local UTC offset - dayStartsAt) makes UTC midnight of the shifted timeline
+ * equal the local study-day start. Stored data always stays in real time.
+ */
+function toStudyTimeline(date: Date, dayStartsAt: number): Date {
+  const time = date.getTime();
+  return new Date(time + localOffsetMs(time) - dayStartsAt * HOUR_MS);
+}
+
+function fromStudyTimeline(date: Date, dayStartsAt: number): Date {
+  const shifted = date.getTime();
+  let real = shifted + dayStartsAt * HOUR_MS - localOffsetMs(shifted);
+  for (let i = 0; i < 3; i += 1) real = shifted + dayStartsAt * HOUR_MS - localOffsetMs(real);
+  return new Date(real);
+}
+
 export class FsrsService {
   private readonly scheduler;
   private readonly targetRetention: number;
@@ -92,11 +115,11 @@ export class FsrsService {
 
   preview(state: QuestionReviewState | undefined, now = new Date(), questionId = ""): RatingPreview[] {
     const current = state ?? this.createState(now);
-    const card = { ...deserializeCard(current.card), questionSeed: `${questionId}:` };
-    const preview = this.scheduler.repeat(card, now);
+    const card = { ...this.shiftCard(deserializeCard(current.card), toStudyTimeline), questionSeed: `${questionId}:` };
+    const preview = this.scheduler.repeat(card, toStudyTimeline(now, this.dayStartsAt));
     const grades: StudyGrade[] = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy];
     return grades.map((grade) => {
-      const scheduled = this.scheduleInterval(preview[grade].card, grade, now);
+      const scheduled = this.scheduleInterval(this.unshiftResult(preview[grade].card, now), grade, now);
       return { grade, due: scheduled.due, scheduledDays: scheduled.scheduled_days,
         ...(this.gradeIntervalsMinutes[grade] === undefined ? {} : { fixedIntervalMinutes: (scheduled.due.getTime() - now.getTime()) / 60000 }),
       };
@@ -108,18 +131,19 @@ export class FsrsService {
     if (current.card.last_review && Date.parse(current.card.last_review) > now.getTime()) {
       throw new Error("기기 시간이 직전 평가보다 이전입니다. 날짜와 시간을 확인한 뒤 다시 평가하세요.");
     }
-    const card = { ...deserializeCard(current.card), questionSeed: `${questionId}:` };
-    const result = this.scheduler.next(card, now, grade as Grade);
+    const card = { ...this.shiftCard(deserializeCard(current.card), toStudyTimeline), questionSeed: `${questionId}:` };
+    const result = this.scheduler.next(card, toStudyTimeline(now, this.dayStartsAt), grade as Grade);
+    const log = { ...result.log, due: fromStudyTimeline(result.log.due, this.dayStartsAt), review: fromStudyTimeline(result.log.review, this.dayStartsAt) };
     return {
-      card: serializeCard(this.scheduleInterval(result.card, grade, now)),
-      history: [...current.history, serializeLog(result.log)],
+      card: serializeCard(this.scheduleInterval(this.unshiftResult(result.card, now), grade, now)),
+      history: [...current.history, serializeLog(log)],
       lastRating: grade,
     };
   }
 
   retrievability(state: QuestionReviewState | undefined, now = new Date()): number | null {
     if (!state || state.card.state === State.New) return null;
-    return this.scheduler.get_retrievability(deserializeCard(state.card), now, false);
+    return this.scheduler.get_retrievability(this.shiftCard(deserializeCard(state.card), toStudyTimeline), toStudyTimeline(now, this.dayStartsAt), false);
   }
 
   /**
@@ -136,6 +160,15 @@ export class FsrsService {
       return due < nextStudyDayStart(now, this.dayStartsAt).getTime();
     }
     return due <= now.getTime();
+  }
+
+  /** True when `reviewedAt` falls in the same study day (from dayStartsAt) as `now`. */
+  isInStudyDay(reviewedAt: string | Date | undefined, now: Date): boolean {
+    if (!reviewedAt) return false;
+    const time = new Date(reviewedAt).getTime();
+    return Number.isFinite(time)
+      && time >= studyDayStart(now, this.dayStartsAt).getTime()
+      && time < nextStudyDayStart(now, this.dayStartsAt).getTime();
   }
 
   isNew(state: QuestionReviewState | undefined): boolean {
@@ -160,6 +193,28 @@ export class FsrsService {
       if (recall !== 0) return recall;
     }
     return Date.parse(left.card.due) - Date.parse(right.card.due);
+  }
+
+  private shiftCard(card: Card, convert: (date: Date, dayStartsAt: number) => Date): Card {
+    return {
+      ...card,
+      due: convert(card.due, this.dayStartsAt),
+      ...(card.last_review ? { last_review: convert(card.last_review, this.dayStartsAt) } : {}),
+    };
+  }
+
+  /**
+   * A scheduler result back in real time. The new due keeps the exact duration
+   * ts-fsrs scheduled from `now`, so a DST change inside the interval cannot
+   * move it by an hour.
+   */
+  private unshiftResult(card: Card, now: Date): Card {
+    const shiftedNow = toStudyTimeline(now, this.dayStartsAt).getTime();
+    return {
+      ...card,
+      due: new Date(now.getTime() + (card.due.getTime() - shiftedNow)),
+      ...(card.last_review ? { last_review: fromStudyTimeline(card.last_review, this.dayStartsAt) } : {}),
+    };
   }
 
   private scheduleInterval(card: Card, grade: StudyGrade, now: Date): Card {

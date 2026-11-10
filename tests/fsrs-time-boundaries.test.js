@@ -26,7 +26,7 @@ const schedules=times.map(value=>{
 });
 const q={id:'q',heading:'문제',questionMarkdown:'문제',answerMarkdown:'답',subject:'과목',questionType:'정의형',coreKeywords:[],subKeywords:[],followUpIds:[]};
 const localDates=[[2028,1,29],[2026,2,8],[2026,10,1],[2026,11,31]].map(([year,month,date])=>{
- const now=new Date(year,month,date,23,59,59,999),review=service.rate(undefined,Rating.Good,now,'q');
+ const now=new Date(year,month,date,3,59,59,999),review=service.rate(undefined,Rating.Good,now,'q');
  const reviews={q:review};
  const at=(time)=>({count:calculateProgress([q],reviews,service,time).today,filtered:queryQuestions([q],reviews,service,{text:'',subject:'all',questionType:'all',review:'today',keyword:'',sort:'title',now:time}).length});
  return [at(now),at(new Date(now.getTime()+1))];

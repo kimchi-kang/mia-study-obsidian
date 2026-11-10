@@ -18,5 +18,5 @@ export function learningStepGuidance(steps: readonly StepUnit[] | null, fixedHar
 }
 
 export function progressGuidance(dayStartsAt: number): string {
-  return `오늘 평가는 마지막 평가일이 오늘인 문제 수이며, 기기의 자정 기준입니다. 오늘 복습은 한도 적용 전 기한이 된 전체 문제 수입니다. 위 숫자는 하루 예산의 사용 횟수가 아닙니다. 자동 출제 예산은 기기 시간 ${dayStartsAt}시부터 계산하며, 실제 출제량은 학습 시작 안내에서 확인하세요.`;
+  return `오늘 평가는 마지막 평가가 오늘인 문제 수이며, 하루는 자정이 아니라 기기 시간 ${dayStartsAt}시에 시작하는 학습일 기준입니다. 오늘 복습은 한도 적용 전 기한이 된 전체 문제 수입니다. 위 숫자는 하루 예산의 사용 횟수가 아닙니다. 자동 출제 예산은 기기 시간 ${dayStartsAt}시부터 계산하며, 실제 출제량은 학습 시작 안내에서 확인하세요.`;
 }

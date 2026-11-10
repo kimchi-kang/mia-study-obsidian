@@ -21,7 +21,7 @@ describe("configured learning policy copy", () => {
   });
   it("separates calendar counts, total due and the configured study-day budget", () => {
     const copy = progressGuidance(7);
-    expect(copy).toContain("자정"); expect(copy).toContain("한도 적용 전");
+    expect(copy).toContain("학습일"); expect(copy).toContain("자정이 아니라"); expect(copy).toContain("한도 적용 전");
     expect(copy).toContain("기기 시간 7시"); expect(copy).not.toContain("4시");
   });
 });

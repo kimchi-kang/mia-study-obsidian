@@ -1,4 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
+const modalCapture = vi.hoisted(() => ({ args: null }));
+vi.mock("../src/ui/manage-modals", async importOriginal => ({
+  ...await importOriginal(),
+  ManagedQuestionModal: class { constructor(...args) { modalCapture.args = args; } open() {} },
+}));
 vi.mock("obsidian", () => ({
   Plugin: class {}, Modal: class {}, ItemView: class {}, PluginSettingTab: class {}, MarkdownView: class {},
   TFile: class {}, TFolder: class {}, Component: class {}, Setting: class {}, Notice: class {}, Platform: { isMobile: true }, normalizePath: path => path,
@@ -87,5 +92,58 @@ describe("subject notes cover every question file in the subject folder", () => 
     expect(contents.get(notePath)).toContain("질문: 가져온 질문 둘");
     expect(contents.get(notePath)).not.toContain("가져온 질문 하나");
     expect(contents.get(physicsNote)).toContain("질문: 가져온 질문 하나");
+  });
+
+  it("keeps imported questions in the old subject note when retrying it after a failed move", async () => {
+    const { plugin, contents } = await environment();
+    const moved = plugin.index.questionById("mia-q-import-one");
+    await plugin.openManagedQuestionEditor(moved);
+    const save = modalCapture.args[5];
+    const realSync = plugin.subjectNotes.sync.bind(plugin.subjectNotes);
+    let failures = 1;
+    plugin.subjectNotes.sync = async (...args) => { if (failures-- > 0) throw new Error("note write failed"); return realSync(...args); };
+    await expect(save(draftFor(moved, { subject: "물리" }))).rejects.toThrow("note write failed");
+    await save(draftFor(moved, { subject: "물리" }));
+    expect(contents.get(notePath)).toContain("질문: 은행 질문");
+    expect(contents.get(notePath)).toContain("질문: 가져온 질문 둘");
+    expect(contents.get(notePath)).not.toContain("가져온 질문 하나");
+    expect(contents.get(physicsNote)).toContain("질문: 가져온 질문 하나");
+  });
+
+  it("does not rewrite subject notes that are already up to date", async () => {
+    const { plugin, contents } = await environment();
+    await plugin.syncAllSubjectNotes(false);
+    const before = new Map(contents);
+    plugin.app.vault.process.mockClear(); plugin.app.vault.create.mockClear();
+    await plugin.syncAllSubjectNotes(false);
+    expect(plugin.app.vault.process).not.toHaveBeenCalled();
+    expect(plugin.app.vault.create).not.toHaveBeenCalled();
+    expect(contents).toEqual(before);
+  });
+
+  it("still refuses to overwrite a note that is no longer a managed subject note", async () => {
+    const { plugin, contents } = await environment();
+    contents.set(notePath, "# 내 노트\n사용자 내용");
+    await expect(plugin.subjectNotes.sync("수학", [])).rejects.toThrow("자동 생성 노트가 아닙니다");
+    expect(contents.get(notePath)).toBe("# 내 노트\n사용자 내용");
+  });
+});
+
+describe("scheduler rebuilds", () => {
+  it("keeps the same FsrsService until a scheduling setting changes", async () => {
+    const { plugin } = await environment();
+    Object.assign(plugin.store.settings, { targetRetention: 0.9, maximumIntervalDays: 36500, gradeIntervalsMinutes: {}, studyManagement: { dayStartsAt: 4, learningSteps: ["1m", "10m"], relearningSteps: ["10m"], fsrsParameters: [], enableFuzz: true } });
+    plugin.refreshFsrs();
+    const first = plugin.fsrs;
+    plugin.store.settings.sourceRoots = ["MIA", "다른"]; // unrelated setting
+    plugin.refreshFsrs();
+    expect(plugin.fsrs).toBe(first);
+    plugin.store.settings.targetRetention = 0.85;
+    plugin.refreshFsrs();
+    expect(plugin.fsrs).not.toBe(first);
+    const second = plugin.fsrs;
+    plugin.store.settings.studyManagement = { ...plugin.store.settings.studyManagement, dayStartsAt: 5 };
+    plugin.refreshFsrs();
+    expect(plugin.fsrs).not.toBe(second);
   });
 });
