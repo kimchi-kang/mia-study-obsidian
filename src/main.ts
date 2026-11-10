@@ -7,6 +7,7 @@ import { FsrsService, StudyGrade } from "./core/fsrs-service";
 import { StudyUiStore } from "./services/study-ui-store";
 import { QuestionPreviewModal } from "./ui/question-preview-modal";
 import { errorMessage } from "./ui/error-message";
+import { openEditorWithNotice } from "./ui/editor-notice";
 import { planFollowUpChanges } from "./core/follow-up";
 import { rebaseMarkdownLinks } from "./core/markdown-links";
 import type { ManagedQuestionDraft } from "./core/managed-question";
@@ -113,7 +114,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     for (const warning of this.store.loadWarnings) new Notice(`MIA Study: ${warning}`);
     this.refreshFsrs();
     this.register(this.store.subscribe(() => this.refreshFsrs()));
-    this.index = new QuestionIndex(this.app, () => this.store.settings.sourceRoots);
+    this.index = new QuestionIndex(this.app, () => this.store.settings.sourceRoots, () => this.managedRoot);
 
     this.registerView(MIA_VIEW_TYPE, (leaf) => new MiaStudyView(leaf, this));
     this.addRibbonIcon("brain-circuit", "MIA Study 열기", () => this.activateView());
@@ -123,7 +124,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     } });
     this.addCommand({ id: "export-subject-word", name: "과목 질문 답변 Word로 출력", callback: () => this.openSubjectExport() });
     this.addCommand({ id: "add-managed-subject", name: "GUI로 과목 추가", callback: () => this.openSubjectEditor() });
-    this.addCommand({ id: "add-managed-question", name: "GUI로 질문 추가", callback: () => void this.openManagedQuestionEditor() });
+    this.addCommand({ id: "add-managed-question", name: "GUI로 질문 추가", callback: () => openEditorWithNotice("질문 추가", () => this.openManagedQuestionEditor()) });
     this.addCommand({ id: "add-managed-keyword", name: "GUI로 키워드 추가", callback: () => this.openKeywordEditor() });
     this.addCommand({
       id: "sync-managed-subject-notes",
@@ -308,7 +309,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
       assertQuestionUnchanged(question, current);
     }
     let editorPath = question?.filePath;
-    const pendingSubjectNotes = new Set<string>();
+    const pendingSubjectNotes = new Map<string, string>();
     const persistedQuestion = (persisted: QuestionRecord) => {
       question = persisted;
       editorPath ??= persisted.filePath;
@@ -328,21 +329,22 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
           answerMarkdown: rebaseMarkdownLinks(draft.answerMarkdown, editorPath, question.filePath),
         } : draft;
         // Clear any stale source-index entry before resolving incoming links.
-        for (const subject of pendingSubjectNotes) {
-          const path = normalizePath(`${this.managedRoot}/${subject}/문제은행.md`);
-          const bank = this.app.vault.getAbstractFileByPath(path);
-          if (!(bank instanceof TFile)) throw new Error("이동 전 문제은행을 찾지 못했습니다. 갱신을 다시 시도하세요.");
-          await this.index.refreshFile(bank);
+        for (const path of pendingSubjectNotes.values()) {
+          const file = this.app.vault.getAbstractFileByPath(path);
+          if (!(file instanceof TFile)) throw new Error("이동 전 문제 파일을 찾지 못했습니다. 갱신을 다시 시도하세요.");
+          await this.index.refreshFile(file);
         }
-        const previousSubject = question?.subject;
+        const previousQuestion = question;
         try {
           if (question) await this.updateManagedQuestion(question, input, persistedQuestion);
           else await this.createManagedQuestion(input, persistedQuestion);
         } catch (error) {
-          if (previousSubject && question?.subject !== previousSubject) pendingSubjectNotes.add(previousSubject);
+          if (previousQuestion && question?.subject !== previousQuestion.subject && this.subjectNotes.containsQuestion(previousQuestion)) {
+            pendingSubjectNotes.set(previousQuestion.subject, previousQuestion.filePath);
+          }
           throw error;
         }
-        for (const subject of pendingSubjectNotes) {
+        for (const subject of pendingSubjectNotes.keys()) {
           // Every question file in the folder belongs in the note, not just the bank.
           await this.syncSubjectNote(subject, await this.subjectQuestions(subject));
           pendingSubjectNotes.delete(subject);
@@ -375,10 +377,13 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
   }
 
   confirmDeleteQuestion(question: QuestionRecord & { id: string }): void {
+    const hasSubjectNote = this.subjectNotes.containsQuestion(question)
+      && this.app.vault.getAbstractFileByPath(this.subjectNotes.path(question.subject)) instanceof TFile;
+    const location = hasSubjectNote ? `원문과 ${question.subject} 노트` : "원문";
     new ConfirmDeleteModal(
       this.app,
       "질문 삭제",
-      `“${question.heading}”을 문제은행과 ${question.subject} 노트에서 삭제하고 FSRS 복습 기록도 제거합니다.`,
+      `“${question.heading}”을 ${location}에서 삭제하고 FSRS 복습 기록도 제거합니다.`,
       "질문 삭제",
       () => this.deleteManagedQuestion(question),
     ).open();
@@ -429,8 +434,8 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     const review = this.store.getReview(current.id);
     new QuestionDetailModal(this.app, current, review, recommendations, meanings, {
       study: () => { void this.activateView([current.id]); },
-      edit: () => { void this.openManagedQuestionEditor(current); },
-      connections: () => this.openFollowUpEditor(current),
+      edit: () => openEditorWithNotice("문제 편집", () => this.openManagedQuestionEditor(current)),
+      connections: () => openEditorWithNotice("문제 연결", () => this.openFollowUpEditor(current)),
       remove: () => this.confirmDeleteQuestion(current),
       showKeyword: (target, label) => this.showKeywordMeaning(target, label, current.filePath),
       rate: (grade) => this.rateQuestionDirectly(current.id, grade, review),

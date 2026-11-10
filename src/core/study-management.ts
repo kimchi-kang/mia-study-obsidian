@@ -104,9 +104,12 @@ export function dailyStudyCounts(reviews: Readonly<Record<string, QuestionReview
   return { fresh, review };
 }
 
+export type DailyLimitReason = "new-limit" | "review-limit";
+
 export function orderManagedQueue<T extends QuestionRecord & { id: string }>(
   due: T[], fresh: T[], reviews: Readonly<Record<string, QuestionReviewState>>, settings: StudyManagementSettings,
   now: Date, random: () => number, compareRecall: (left: string, right: string) => number,
+  onLimited?: (id: string, reason: DailyLimitReason) => void,
 ): T[] {
   const shuffle = (items: T[]) => {
     for (let i = items.length - 1; i > 0; i -= 1) {
@@ -145,9 +148,16 @@ export function orderManagedQueue<T extends QuestionRecord & { id: string }>(
     orderedScheduled = settings.interdayLearningOrder === "before" ? [...steps, ...regular] : [...regular, ...steps];
   }
   const selectedReviews = orderedScheduled.slice(0, remaining);
-  const newBudget = Math.max(0, Math.min(settings.newCardsPerDay - counts.fresh,
+  const remainingNew = settings.newCardsPerDay - counts.fresh;
+  const newBudget = Math.max(0, Math.min(remainingNew,
     settings.newCardsIgnoreReviewLimit ? 9999 : remaining - selectedReviews.length));
   const selectedNew = fresh.slice(0, newBudget);
+  if (onLimited) {
+    for (const item of orderedScheduled.slice(selectedReviews.length)) onLimited(item.id, "review-limit");
+    for (let index = selectedNew.length; index < fresh.length; index += 1) {
+      onLimited(fresh[index]!.id, index >= remainingNew ? "new-limit" : "review-limit");
+    }
+  }
   if (settings.newReviewOrder === "before") return [...learning, ...selectedNew, ...selectedReviews];
   if (settings.newReviewOrder === "after") return [...learning, ...selectedReviews, ...selectedNew];
   // Spread new cards evenly through reviews instead of clustering either group.

@@ -6,9 +6,11 @@ import {
   deleteCurrentManagedQuestion,
   OVERLAPPING_QUESTION_ERROR,
   replaceCurrentManagedQuestion,
+  validateManagedQuestionEdit,
   validateManagedQuestionInput,
   validateSubjectName,
   type ManagedQuestionDraft,
+  type ManagedQuestionEditContext,
 } from "../core/managed-question";
 import { rebaseMarkdownLinks } from "../core/markdown-links";
 import type { QuestionRecord } from "../core/models";
@@ -125,22 +127,23 @@ export class QuestionOperations {
     const { app } = this.host;
     if (!question.id) throw new Error("등록되지 않은 질문은 GUI에서 전체 수정할 수 없습니다.");
     const nextSubject = validateSubjectName(draft.subject);
-    const sourcePath = nextSubject === question.subject ? question.filePath
-      : normalizePath(`${this.host.managedRoot}/${nextSubject}/문제은행.md`);
-    this.validateDraft(draft, sourcePath, question.headingLevel);
     const file = app.vault.getAbstractFileByPath(question.filePath);
     if (!(file instanceof TFile)) throw new Error("문제 파일을 찾지 못했습니다.");
     const latest = await app.vault.read(file);
-    const current = findCurrentQuestion(parseQuestionFile(question.filePath, latest).questions, question);
+    const questions = parseQuestionFile(question.filePath, latest).questions;
+    const current = findCurrentQuestion(questions, question);
     if (!current) throw new Error("수정할 문제를 찾지 못했습니다. 최신 문제를 다시 확인하세요.");
     assertQuestionUnchanged(question, current);
-    await this.notes.assertWritable(question.subject);
-    await this.notes.assertWritable(nextSubject);
     if (nextSubject !== question.subject) {
       await this.move(question as RegisteredQuestion, { ...draft, subject: nextSubject }, onPersisted);
-      new Notice("질문을 다른 과목으로 옮기고 두 과목 노트를 갱신했습니다.");
+      new Notice(this.notes.containsQuestion(question)
+        ? "질문을 다른 과목으로 옮기고 두 과목 노트를 갱신했습니다."
+        : "질문을 다른 과목으로 옮기고 대상 과목 노트를 갱신했습니다.");
       return;
     }
+    this.validateDraft(draft, question.filePath, { content: latest, original: current, questions });
+    const managed = this.notes.containsQuestion(question);
+    if (managed) await this.notes.assertWritable(question.subject);
     let updatedContent = "";
     try {
       await app.vault.process(file, (content) => {
@@ -164,7 +167,7 @@ export class QuestionOperations {
     const keywordError = await this.saveKeywordsAfterQuestion(draft, saved.filePath);
     try {
       await this.host.index.refreshFile(file);
-      await this.notes.sync(question.subject, await this.notes.questions(question.subject, new Map([[question.filePath, updatedContent]])));
+      if (managed) await this.notes.sync(question.subject, await this.notes.questions(question.subject, new Map([[question.filePath, updatedContent]])));
       await this.followUps.refreshIncoming([question.id]);
     } catch (error) {
       throw new Error(`원본 문제는 저장됐지만 화면·연결 노트 갱신을 완료하지 못했습니다. 입력 내용은 유지됩니다. 다시 저장해 갱신을 재시도하세요. (${error instanceof Error ? error.message : String(error)})`, { cause: error });
@@ -198,12 +201,17 @@ export class QuestionOperations {
     const editedQuestion = parseQuestionFile(question.filePath, edited).questions.find(item => item.id === question.id);
     if (!editedQuestion) throw new Error("이동할 문제를 확인하지 못했습니다.");
     const questionBlock = blockOf(edited, editedQuestion);
-    const originalQuestion = parseQuestionFile(question.filePath, source).questions.find(item => item.id === question.id);
+    const sourceQuestions = parseQuestionFile(question.filePath, source).questions;
+    const originalQuestion = sourceQuestions.find(item => item.id === question.id);
     if (!originalQuestion) throw new Error("원본 문제를 확인하지 못했습니다.");
     const originalBlock = blockOf(source, originalQuestion);
     const nextFolder = normalizePath(`${this.host.managedRoot}/${draft.subject}`);
-    await ensureFolder(app, nextFolder);
     const nextPath = normalizePath(`${nextFolder}/문제은행.md`);
+    this.validateDraft(draft, nextPath, { content: source, original: originalQuestion, questions: sourceQuestions, reinsertAnswer: true });
+    const managedSource = this.notes.containsQuestion(question);
+    if (managedSource) await this.notes.assertWritable(question.subject);
+    await this.notes.assertWritable(draft.subject);
+    await ensureFolder(app, nextFolder);
     assertPortablePath(app, nextPath);
     let nextFile = app.vault.getAbstractFileByPath(nextPath);
     if (!nextFile) nextFile = await app.vault.create(nextPath, createSubjectBank(draft.subject));
@@ -278,7 +286,7 @@ export class QuestionOperations {
     await this.host.index.refreshFile(oldFile);
     await this.host.index.refreshFile(nextFile);
     const written = new Map([[question.filePath, oldContent], [nextPath, nextContent]]);
-    await this.notes.sync(question.subject, await this.notes.questions(question.subject, written));
+    if (managedSource) await this.notes.sync(question.subject, await this.notes.questions(question.subject, written));
     await this.notes.sync(draft.subject, await this.notes.questions(draft.subject, written));
     await this.followUps.refreshIncoming([question.id]);
     if (keywordError) throw keywordError;
@@ -288,7 +296,8 @@ export class QuestionOperations {
     const { app } = this.host;
     const file = app.vault.getAbstractFileByPath(question.filePath);
     if (!(file instanceof TFile)) throw new Error("문제 파일을 찾지 못했습니다.");
-    await this.notes.assertWritable(question.subject);
+    const managed = this.notes.containsQuestion(question);
+    if (managed) await this.notes.assertWritable(question.subject);
     const review = this.host.store.getReview(question.id);
     const links = this.followUps.removedChanges([question.id]);
     let updatedContent = "";
@@ -299,11 +308,11 @@ export class QuestionOperations {
     await applyFileChanges(app.vault, writes, () => this.host.store.removeReview(question.id, { state: review }));
     await this.host.index.rebuild();
     try {
-      await this.notes.sync(question.subject, await this.notes.questions(question.subject, new Map([[question.filePath, updatedContent]])));
+      if (managed) await this.notes.sync(question.subject, await this.notes.questions(question.subject, new Map([[question.filePath, updatedContent]])));
     } catch (error) {
       throw new Error("문제와 평가·연결은 삭제했지만 과목 노트 갱신은 완료되지 않았습니다. 과목 노트를 다시 확인하세요.", { cause: error });
     }
-    new Notice("질문을 문제은행과 과목 노트에서 삭제했습니다.");
+    new Notice(managed ? "질문을 문제은행과 과목 노트에서 삭제했습니다." : "질문을 원문에서 삭제했습니다.");
   }
 
   /** Returns (does not throw) so derived notes are still refreshed after the question is saved. */
@@ -322,8 +331,9 @@ export class QuestionOperations {
     }
   }
 
-  private validateDraft(draft: ManagedQuestionDraft, sourcePath: string, headingLevel?: number): void {
-    validateManagedQuestionInput(draft, headingLevel);
+  private validateDraft(draft: ManagedQuestionDraft, sourcePath: string, edit?: ManagedQuestionEditContext): void {
+    if (edit) validateManagedQuestionEdit(draft, edit);
+    else validateManagedQuestionInput(draft);
     for (const item of draft.keywordMeanings) {
       validateKeywordMeaning(item.meaning);
       this.keywords.referenceMeaningDestination(item.target, item.label, sourcePath);

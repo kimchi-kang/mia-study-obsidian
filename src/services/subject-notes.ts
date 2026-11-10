@@ -9,6 +9,11 @@ import { assertPortablePath, ensureFolder } from "./vault-files";
 export class SubjectNotes {
   constructor(private readonly host: MiaHost) {}
 
+  containsQuestion(question: Pick<QuestionRecord, "filePath" | "subject">): boolean {
+    const folder = normalizePath(`${this.host.managedRoot}/${question.subject}`);
+    return normalizePath(question.filePath).startsWith(`${folder}/`);
+  }
+
   path(subject: string): string {
     return normalizePath(`${this.host.managedRoot}/${subject}/${subjectNoteFileName(subject)}`);
   }

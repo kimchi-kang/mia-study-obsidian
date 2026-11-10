@@ -7,7 +7,7 @@ import {
   validateKeywordMeaning,
   validateKeywordName,
 } from "../core/keyword-note";
-import { keywordNotePath } from "../core/keyword-path";
+import { keywordLinkPath, keywordNotePath } from "../core/keyword-path";
 import { keywordReferenceMatches, keywordTargetMatcher, removeKeywordReferences, renameKeywordReferences } from "../core/keyword-reference";
 import { followUpLinksIn } from "../core/managed-question";
 import { assertSingleLine } from "../core/markdown-structure";
@@ -27,13 +27,17 @@ export interface KeywordNoteEntry {
 
 type RegisteredQuestion = QuestionRecord & { id: string };
 
-function updateExistingKeywordMeaning(filePath: string, content: string, name: string, meaning: string): string {
+function assertKeywordNoteEditable(filePath: string, content: string, operation: string): void {
   if (isManagedSubjectNote(content)) {
-    throw new Error("자동 생성 과목 노트에는 키워드 뜻을 저장할 수 없습니다. 별도의 키워드 노트를 사용하세요.");
+    throw new Error(`자동 생성 과목 노트에 대한 ${operation} 작업을 중단했습니다. 별도의 키워드 노트를 사용하세요.`);
   }
   if (parseQuestionFile(filePath, content).questions.length > 0) {
-    throw new Error("문제은행에는 키워드 뜻을 저장할 수 없습니다. 별도의 키워드 노트를 사용하세요.");
+    throw new Error(`문제은행에 대한 ${operation} 작업을 중단했습니다. 별도의 키워드 노트를 사용하세요.`);
   }
+}
+
+function updateExistingKeywordMeaning(filePath: string, content: string, name: string, meaning: string): string {
+  assertKeywordNoteEditable(filePath, content, "키워드 뜻 저장");
   return updateKeywordMeaning(content, name, meaning);
 }
 
@@ -81,20 +85,23 @@ export class KeywordOperations {
     const output = new Map<string, string>();
     for (const keyword of [...question.coreKeywords, ...question.subKeywords]) {
       const file = this.resolveReferenceFile(keyword.target, question.filePath);
-      output.set(keyword.target, file ? readKeywordMeaning(await app.vault.cachedRead(file)) : "");
+      output.set(keyword.target, file?.extension === "md" ? readKeywordMeaning(await app.vault.cachedRead(file)) : "");
     }
     return output;
   }
 
   private resolveReferenceFile(target: string, sourcePath: string): TFile | null {
-    const linkpath = target.split("#")[0]?.trim() ?? "";
-    return this.host.app.metadataCache.getFirstLinkpathDest(linkpath, sourcePath);
+    return this.host.app.metadataCache.getFirstLinkpathDest(keywordLinkPath(target), sourcePath);
   }
 
   referenceMeaningDestination(target: string, label: string, sourcePath: string): TFile | string {
     assertSingleLine(target, "키워드 경로");
     assertSingleLine(label, "키워드 이름");
-    return this.resolveReferenceFile(target, sourcePath) ?? keywordNotePath(target, label, this.host.store.settings.keywordFolder);
+    const file = this.resolveReferenceFile(target, sourcePath);
+    if (file && file.extension !== "md") {
+      throw new Error("키워드 뜻은 마크다운(.md) 노트에만 저장할 수 있습니다. 연결할 노트를 바꿔 주세요.");
+    }
+    return file ?? keywordNotePath(target, label, this.host.store.settings.keywordFolder);
   }
 
   async saveReferenceMeaning(target: string, label: string, meaning: string, sourcePath: string, preserveExistingWhenEmpty = false): Promise<void> {
@@ -157,6 +164,8 @@ export class KeywordOperations {
     assertPortablePath(app, nextPath);
     const destination = app.vault.getAbstractFileByPath(nextPath);
     if (destination instanceof TFolder) throw new Error("변경할 키워드 경로가 폴더와 겹칩니다.");
+    const sourceContent = await app.vault.read(source);
+    assertKeywordNoteEditable(source.path, sourceContent, destination instanceof TFile ? "키워드 병합" : "키워드 이름 변경");
     const nextTarget = nextPath.replace(/\.md$/i, "");
     // Only a merge removes the source note. A rename keeps it, and Obsidian has
     // already pointed short links at its new path in the vault's link format.
@@ -166,7 +175,6 @@ export class KeywordOperations {
       scope,
     );
     if (destination instanceof TFile) {
-      const sourceContent = await app.vault.read(source);
       assertMergeableKeywordNote(sourceContent);
       const sourceMeaning = readKeywordMeaning(sourceContent);
       await applyFileChanges(app.vault, [{ file: destination, update: content => {
@@ -207,8 +215,12 @@ export class KeywordOperations {
     const { app } = this.host;
     const file = app.vault.getAbstractFileByPath(entry.filePath);
     if (!(file instanceof TFile)) throw new Error("삭제할 키워드 노트를 찾지 못했습니다.");
+    assertKeywordNoteEditable(file.path, await app.vault.read(file), "키워드 삭제");
     const writes = this.referenceChanges([entry.target], (references, spellings) => removeKeywordReferences(references, spellings), { removed: [entry.target] });
-    await applyFileChanges(app.vault, writes, () => trashFileVerified(app, file));
+    await applyFileChanges(app.vault, writes, async () => {
+      assertKeywordNoteEditable(file.path, await app.vault.read(file), "키워드 삭제");
+      await trashFileVerified(app, file);
+    });
     await this.host.index.rebuild();
     new Notice(`${entry.name} 키워드를 삭제하고 연결된 문제를 갱신했습니다.`);
   }

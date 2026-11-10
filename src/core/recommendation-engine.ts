@@ -1,4 +1,4 @@
-import { orderManagedQueue } from "./study-management";
+import { orderManagedQueue, type DailyLimitReason } from "./study-management";
 import type { StudyManagementSettings } from "./models";
 import { Rating } from "ts-fsrs";
 import { FsrsService } from "./fsrs-service";
@@ -95,6 +95,18 @@ export interface ReviewQueueOptions {
   now?: Date;
   random?: () => number;
   management?: StudyManagementSettings;
+  includeFuture?: boolean;
+}
+
+type RegisteredQuestion = QuestionRecord & { id: string };
+export type ReviewQueueExclusion = { id: string; reason: DailyLimitReason | "missing" }
+  | { id: string; reason: "not-due"; nextDue: Date };
+
+function shuffle<T>(items: T[], random: () => number): void {
+  for (let index = items.length - 1; index > 0; index -= 1) {
+    const target = Math.floor(random() * (index + 1));
+    [items[index], items[target]] = [items[target]!, items[index]!];
+  }
 }
 
 export function buildReviewQueue(
@@ -102,29 +114,46 @@ export function buildReviewQueue(
   reviews: Readonly<Record<string, QuestionReviewState>>,
   fsrsService: FsrsService,
   options: ReviewQueueOptions = {},
-): Array<QuestionRecord & { id: string }> {
+  onExcluded?: (exclusion: ReviewQueueExclusion) => void,
+): RegisteredQuestion[] {
   const now = options.now ?? new Date();
-  const registered = questions.filter((question): question is QuestionRecord & { id: string } => Boolean(question.id));
-  const due = registered
-    .filter((question) => fsrsService.isDue(reviews[question.id], now))
-    .sort((left, right) => fsrsService.compareDue(reviews[left.id], reviews[right.id], now)
-      || left.heading.localeCompare(right.heading, "ko"));
-  const fresh = registered
-    .filter((question) => fsrsService.isNew(reviews[question.id]));
+  const registered = questions.filter((question): question is RegisteredQuestion => Boolean(question.id));
+  if (options.includeFuture && !options.management) {
+    if (options.random) shuffle(registered, options.random);
+    return registered;
+  }
+  const due: RegisteredQuestion[] = [], fresh: RegisteredQuestion[] = [];
+  for (const question of registered) {
+    const review = reviews[question.id];
+    if (fsrsService.isDue(review, now)) due.push(question);
+    else if (fsrsService.isNew(review)) fresh.push(question);
+    else if (review) onExcluded?.({ id: question.id, reason: "not-due", nextDue: fsrsService.nextReviewAt(review) });
+  }
+  due.sort((left, right) => fsrsService.compareDue(reviews[left.id], reviews[right.id], now)
+    || left.heading.localeCompare(right.heading, "ko"));
   if (options.management) {
     return orderManagedQueue(due, fresh, reviews, options.management, now, options.random ?? Math.random,
-      (left, right) => fsrsService.compareDue(reviews[left], reviews[right], now));
+      (left, right) => fsrsService.compareDue(reviews[left], reviews[right], now),
+      onExcluded && ((id, reason) => onExcluded({ id, reason })));
   }
   if (options.random) {
     // Shuffle each eligibility group once; future reviews never enter either group.
-    for (const group of [due, fresh]) {
-      for (let index = group.length - 1; index > 0; index -= 1) {
-        const target = Math.floor(options.random() * (index + 1));
-        [group[index], group[target]] = [group[target]!, group[index]!];
-      }
-    }
+    for (const group of [due, fresh]) shuffle(group, options.random);
   }
   return [...due, ...fresh];
+}
+
+export function planSelectedReview(
+  questions: QuestionRecord[], ids: Iterable<string>, reviews: Readonly<Record<string, QuestionReviewState>>,
+  fsrsService: FsrsService, options: ReviewQueueOptions,
+): { queue: RegisteredQuestion[]; exclusions: ReviewQueueExclusion[] } {
+  const requested = new Set(ids);
+  const scope = questions.filter(question => question.id && requested.has(question.id));
+  const found = new Set(scope.map(question => question.id));
+  const exclusions: ReviewQueueExclusion[] = [];
+  const queue = buildReviewQueue(scope, reviews, fsrsService, options, exclusion => exclusions.push(exclusion));
+  for (const id of requested) if (!found.has(id)) exclusions.push({ id, reason: "missing" });
+  return { queue, exclusions };
 }
 
 export const RecommendationInternals = { normalizeKeyword };

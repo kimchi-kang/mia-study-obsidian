@@ -60,6 +60,7 @@ export class QuestionIndex {
   constructor(
     private readonly app: App,
     private readonly getSourceRoots: () => string[],
+    private readonly getManagedRoot?: () => string,
   ) {}
 
   start(): Promise<void> {
@@ -184,7 +185,8 @@ export class QuestionIndex {
   private async parse(file: TFile): Promise<ParsedQuestionFile> {
     const path = file.path;
     try {
-      const subject = subjectForPath(path, this.getSourceRoots());
+      const roots = this.getSourceRoots();
+      const subject = subjectForPath(path, roots.length === 0 && this.getManagedRoot ? [this.getManagedRoot()] : roots);
       return parseQuestionFile(path, await this.app.vault.cachedRead(file), subject ? { subject } : {});
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);

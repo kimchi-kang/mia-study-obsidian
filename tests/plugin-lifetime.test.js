@@ -1,6 +1,7 @@
 import{describe,it,expect,vi,afterEach}from'vitest';
+const notices = vi.hoisted(() => []);
 vi.mock('obsidian',()=>({
- Plugin:class{register(){}registerView(){}addRibbonIcon(){}addCommand(){}addSettingTab(){}},Modal:class{},ItemView:class{},PluginSettingTab:class{},MarkdownView:class{},TFile:class{},TFolder:class{},Component:class{},Setting:class{},Notice:class{},Platform:{isMobile:false},normalizePath:p=>p,
+ Plugin:class{register(){}registerView(){}addRibbonIcon(){}addCommand(){}addSettingTab(){}},Modal:class{},ItemView:class{},PluginSettingTab:class{},MarkdownView:class{},TFile:class{},TFolder:class{},Component:class{},Setting:class{},Notice:class{constructor(message){notices.push(message);}},Platform:{isMobile:false},normalizePath:p=>p,
 }));
 import MiaStudyPlugin from '../src/main';
 import {QuestionIndex} from '../src/services/question-index';
@@ -13,6 +14,20 @@ function host(){
  return{plugin,vault,callbacks,local,events};
 }
 afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();});
+
+it("reports an editor opening failure from the add-question command", async () => {
+  const { plugin } = host();
+  plugin.addCommand = vi.fn();
+  const rejection = Promise.reject(new Error("과목 목록을 읽지 못했습니다."));
+  void rejection.catch(() => {});
+  plugin.openManagedQuestionEditor = vi.fn(() => rejection);
+  await plugin.onload();
+  const [command] = plugin.addCommand.mock.calls.find(([item]) => item.id === "add-managed-question");
+  const before = notices.length;
+  await command.callback();
+  expect(notices.slice(before)).toEqual(["질문 추가 열기 실패: 과목 목록을 읽지 못했습니다."]);
+  plugin.onunload();
+});
 describe('plugin deferred startup cancellation',()=>{
  it('does not register vault events when layout becomes ready after unload',async()=>{
   const env=host();await env.plugin.onload();env.plugin.onunload();env.callbacks[0]();await flush();expect(env.vault.on).not.toHaveBeenCalled();expect(env.vault.getMarkdownFiles).not.toHaveBeenCalled();

@@ -67,6 +67,24 @@ describe("detail review conflict protection", () => {
   });
 });
 
+it.each([["edit", "문제 편집"], ["connections", "문제 연결"]])("reports an editor opening failure from question details for %s", async (action, label) => {
+  const question = { id: "q", heading: "질문", subject: "수학", coreKeywords: [], subKeywords: [], followUpIds: [] };
+  const plugin = new MiaStudyPlugin();
+  plugin.app = {};
+  plugin.store = { reviews: {}, getReview: () => undefined };
+  plugin.fsrs = fsrs;
+  plugin.index = { questionById: () => question, registered: [question] };
+  const failure = new Error("원본 문제를 찾지 못했습니다.");
+  const rejection = Promise.reject(failure);
+  void rejection.catch(() => {});
+  plugin.openManagedQuestionEditor = vi.fn(() => rejection);
+  plugin.openFollowUpEditor = vi.fn(() => { throw failure; });
+  await plugin.openQuestionDetail(question);
+
+  await expect(Promise.resolve().then(() => ui.detail.actions[action]())).resolves.toBeUndefined();
+  expect(ui.notices).toEqual([`${label} 열기 실패: 원본 문제를 찾지 못했습니다.`]);
+});
+
 describe("recovery storage failure boundaries", () => {
   it("starts from valid disk data and preserves quarantine when recovery reading fails", async () => {
     const env = environment(), disk = env.read(); disk.reviews.q = first();

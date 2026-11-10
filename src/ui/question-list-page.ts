@@ -1,6 +1,7 @@
 import { Component, Platform } from "obsidian";
 import { QUESTION_TYPES, type QuestionType } from "../core/models";
 import { type QuestionSort, type ReviewFilter, queryQuestions } from "../core/question-query";
+import { openEditorWithNotice } from "./editor-notice";
 import { renderQuestionHeading, renderQuestionRow } from "./question-row";
 import type { StudyPageContext } from "./study-page-context";
 
@@ -57,9 +58,8 @@ export function renderQuestionsPage(ctx: StudyPageContext, root: HTMLElement, st
     }
   }
   const pageActions = root.createDiv({ cls: "mia-page-actions" });
-  pageActions.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () => {
-    void ctx.plugin.openManagedQuestionEditor();
-  });
+  pageActions.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () =>
+    openEditorWithNotice("질문 추가", () => ctx.plugin.openManagedQuestionEditor()));
   const filterPanel = root.createEl("details", { cls: "mia-filter-panel" });
   filterPanel.open = !Platform.isMobile;
   filterPanel.createEl("summary", { text: "검색·필터·정렬" });

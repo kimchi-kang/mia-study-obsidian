@@ -275,10 +275,37 @@ describe("preview question-only markdown", () => {
 });
 
 describe("keyword meaning dialog lifetime", () => {
+  it.each(["png", "pdf"])("explains a linked %s attachment without reading it or offering note creation", async extension => {
+    const { KeywordMeaningModal } = await import("../src/ui/keyword-modal");
+    const target = `자료.${extension}`;
+    const getFirstLinkpathDest = vi.fn(() => ({ path: `첨부/${target}`, extension }));
+    const cachedRead = vi.fn().mockResolvedValue("첨부 내용");
+    const modal = new KeywordMeaningModal({ metadataCache: { getFirstLinkpathDest }, vault: { cachedRead } },
+      target, "자료", "source.md", "keywords");
+    await modal.onOpen();
+    expect(cachedRead).not.toHaveBeenCalled();
+    expect(modal.contentEl.find("이 링크는 노트가 아닌 파일을 가리킵니다.")).toBeDefined();
+    expect(modal.contentEl.find("의미 노트 만들기")).toBeUndefined();
+    expect(modal.contentEl.find("키워드 노트 열기")).toBeUndefined();
+  });
+
+  it("resolves an anchored keyword preview using its note path and source file", async () => {
+    const { KeywordMeaningModal } = await import("../src/ui/keyword-modal");
+    const file = { path: "keywords/키워드.md", extension: "md" };
+    const getFirstLinkpathDest = vi.fn(target => target === "키워드" ? file : null);
+    const cachedRead = vi.fn().mockResolvedValue("뜻");
+    const modal = new KeywordMeaningModal({ metadataCache: { getFirstLinkpathDest }, vault: { cachedRead } },
+      "키워드#정의", "키워드", "source.md", "keywords");
+    await modal.onOpen();
+    expect(getFirstLinkpathDest).toHaveBeenCalledExactlyOnceWith("키워드", "source.md");
+    expect(cachedRead).toHaveBeenCalledExactlyOnceWith(file);
+    expect(modal.contentEl.find("키워드 노트 열기")).toBeDefined();
+  });
+
   it.each([false, true])("ignores a read completing after close (failure=%s)", async fail => {
     const { KeywordMeaningModal } = await import("../src/ui/keyword-modal");
     let finish;
-    const app = { metadataCache: { getFirstLinkpathDest: () => ({ path: "keyword.md" }) }, vault: {
+    const app = { metadataCache: { getFirstLinkpathDest: () => ({ path: "keyword.md", extension: "md" }) }, vault: {
       cachedRead: () => new Promise((resolve, reject) => { finish = () => fail ? reject(Error("read failed")) : resolve("meaning"); }),
     } };
     const render = vi.spyOn(MarkdownRenderer, "render");
@@ -292,7 +319,7 @@ describe("keyword meaning dialog lifetime", () => {
   it("does not append controls after a closed dialog's slow renderer finishes", async () => {
     const { KeywordMeaningModal } = await import("../src/ui/keyword-modal");
     let finish;
-    const app = { metadataCache: { getFirstLinkpathDest: () => ({ path: "keyword.md" }) }, vault: { cachedRead: async () => "meaning" } };
+    const app = { metadataCache: { getFirstLinkpathDest: () => ({ path: "keyword.md", extension: "md" }) }, vault: { cachedRead: async () => "meaning" } };
     const render = vi.spyOn(MarkdownRenderer, "render").mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
     try {
       const modal = new KeywordMeaningModal(app, "keyword", "키워드", "source.md", "keywords");
@@ -303,7 +330,7 @@ describe("keyword meaning dialog lifetime", () => {
   it("still renders a readable note and reports an active read failure", async () => {
     const { KeywordMeaningModal } = await import("../src/ui/keyword-modal");
     const cachedRead = vi.fn().mockResolvedValueOnce("meaning").mockRejectedValueOnce(Error("read failed"));
-    const app = { metadataCache: { getFirstLinkpathDest: () => ({ path: "keyword.md" }) }, vault: { cachedRead } };
+    const app = { metadataCache: { getFirstLinkpathDest: () => ({ path: "keyword.md", extension: "md" }) }, vault: { cachedRead } };
     const modal = new KeywordMeaningModal(app, "keyword", "키워드", "source.md", "keywords");
     await modal.onOpen(); expect(modal.contentEl.find("키워드 노트 열기")).toBeDefined(); modal.onClose();
     await modal.onOpen(); expect(modal.contentEl.find("키워드 노트를 읽지 못했습니다: read failed")).toBeDefined();
