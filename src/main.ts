@@ -49,6 +49,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
   store!: MiaDataStore;
   index!: QuestionIndex;
   fsrs!: FsrsService;
+  private fsrsKey = "";
   studyUi!: StudyUiStore;
   portableSyncActive = false;
   private legacyStudyStorage!: VerifiedPluginStorage;
@@ -110,8 +111,8 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     catch (error) { new Notice(`이어하기 정보 불러오기 실패: ${errorMessage(error)}`); }
     if (this.unloadRequested) return;
     for (const warning of this.store.loadWarnings) new Notice(`MIA Study: ${warning}`);
-    this.fsrs = new FsrsService(this.store.settings);
-    this.register(this.store.subscribe(() => { this.fsrs = new FsrsService(this.store.settings); }));
+    this.refreshFsrs();
+    this.register(this.store.subscribe(() => this.refreshFsrs()));
     this.index = new QuestionIndex(this.app, () => this.store.settings.sourceRoots);
 
     this.registerView(MIA_VIEW_TYPE, (leaf) => new MiaStudyView(leaf, this));
@@ -201,9 +202,18 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     this.portableSyncActive = true;
   }
 
+  /** Rebuilds the scheduler only when a setting it actually uses has changed. */
+  private refreshFsrs(): void {
+    const { targetRetention, maximumIntervalDays, gradeIntervalsMinutes, studyManagement } = this.store.settings;
+    const key = JSON.stringify([targetRetention, maximumIntervalDays, gradeIntervalsMinutes, studyManagement]);
+    if (this.fsrs && key === this.fsrsKey) return;
+    this.fsrsKey = key;
+    this.fsrs = new FsrsService(this.store.settings);
+  }
+
   async updateSettings(patch: Partial<MiaSettings>, expectedBase?: MiaSettings): Promise<void> {
     await this.store.updateSettings(patch, expectedBase);
-    this.fsrs = new FsrsService(this.store.settings);
+    this.refreshFsrs();
     // Scheduling options do not change indexed questions. A scan failure after a
     // successful write must not report that these settings failed to save.
     if (patch.sourceRoots !== undefined || patch.keywordFolder !== undefined) await this.index.rebuild();
@@ -333,10 +343,8 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
           throw error;
         }
         for (const subject of pendingSubjectNotes) {
-          const path = normalizePath(`${this.managedRoot}/${subject}/문제은행.md`);
-          const bank = this.app.vault.getAbstractFileByPath(path);
-          if (!(bank instanceof TFile)) throw new Error("이동 전 문제은행을 찾지 못했습니다. 과목 노트 갱신을 다시 시도하세요.");
-          await this.syncSubjectNote(subject, parseQuestionFile(path, await this.app.vault.read(bank), { subject }).questions);
+          // Every question file in the folder belongs in the note, not just the bank.
+          await this.syncSubjectNote(subject, await this.subjectQuestions(subject));
           pendingSubjectNotes.delete(subject);
         }
         onSaved?.();

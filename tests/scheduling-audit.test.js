@@ -131,12 +131,18 @@ it.each([
  expect(actual.start).toBe(expected);
 });
 
-it('honors upstream UTC calendar elapsed days across midnight, independently of the local study budget day',()=>{
- const card={...rawReview,last_review:new Date('2026-11-05T12:00:00Z')};
+it('counts elapsed days across the local study-day boundary, not UTC midnight',()=>{
+ const last=new Date(2026,10,5,12,0,0,0);
+ const card={...rawReview,last_review:last};
  const mia=new FsrsService({...settings,studyManagement:{...settings.studyManagement,learningSteps:['1m','10m'],relearningSteps:['5m'],fsrsParameters:[...default_w]},targetRetention:.85});
- for(const [at,elapsed] of [['2026-11-05T23:59:59.999Z',0],['2026-11-06T00:00:00.000Z',1]]){
-  const expected=upstream(false).next({...card,questionSeed:'utc:'},new Date(at),Rating.Good);
+ // Oracle: upstream on a timeline whose UTC midnight is the local 04:00 study-day start.
+ const shift=d=>new Date(d.getTime()-d.getTimezoneOffset()*60000-4*3600000);
+ for(const [at,elapsed] of [[new Date(2026,10,6,3,59,59,999),0],[new Date(2026,10,6,4,0,0,0),1]]){
+  const expected=upstream(false).next({...card,due:shift(card.due),last_review:shift(last),questionSeed:'sd:'},shift(at),Rating.Good);
   expect(expected.log.elapsed_days).toBe(elapsed);
-  expect(mia.rate({card:serialize(card),history:[],lastRating:3},3,new Date(at),'utc').card.due).toBe(expected.card.due.toISOString());
+  const actual=mia.rate({card:serialize(card),history:[],lastRating:3},3,at,'sd');
+  expect(actual.card.stability).toBe(expected.card.stability);
+  expect(actual.card.elapsed_days).toBe(elapsed);
+  expect(actual.card.last_review).toBe(at.toISOString());
  }
 });

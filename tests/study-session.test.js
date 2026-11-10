@@ -494,6 +494,30 @@ describe("study view scheduling integration", () => {
     expect(next.reviews).toEqual({});
   });
 
+  it.each([["recall", ["q"]], ["browse", ["q", "related"]]])("drops a remaining card rated on another device before resume in %s mode", async (mode, expected) => {
+    const ui = setup({ linked: true, start: false });
+    ui.view.startReview(["q", "related"], mode);
+    ui.view.saveStudyPosition(); await ui.plugin.studyUi.load();
+    await vi.advanceTimersByTimeAsync(5000);
+    ui.reviews.related = ui.plugin.fsrs.rate(undefined, Rating.Good, new Date(), "related");
+    ui.view.showDashboard(); await ui.plugin.studyUi.load();
+    await ui.view.resumeStudy();
+    expect(ui.view.getState().queue).toEqual(expected);
+    expect(ui.reviews.related.history).toHaveLength(1);
+  });
+
+  it("keeps a card this session graded itself and drops one rated elsewhere on refresh", async () => {
+    const ui = setup({ linked: true, start: false });
+    ui.plugin.index.registered.push({ ...ui.plugin.index.registered[0], id: "third", heading: "셋째" });
+    ui.view.startReview(["q", "related", "third"], "recall");
+    await ui.button("정답 보기").click(); await ui.button("너무 쉬움").click();
+    await vi.advanceTimersByTimeAsync(5000);
+    ui.reviews.third = ui.plugin.fsrs.rate(undefined, Rating.Good, new Date(), "third");
+    ui.plugin.synchronizeStudyData = async () => {};
+    await ui.view.refreshAfterReturn(true, false);
+    expect(ui.view.getState().queue).toEqual(["q", "related"]);
+  });
+
   it("resumes the same in-memory session without losing undo", async () => {
     const ui = setup({ linked: true }); ui.view.startReview(["q", "related"]);
     await ui.button("정답 보기").click(); await ui.button("너무 쉬움").click();
@@ -1432,7 +1456,7 @@ it("explains dashboard and progress counts without changing the selected queue o
  const before=structuredClone(ui.reviews);ui.view.showDashboard();
  expect(ui.content()).toContain('통계와 출제량 안내');expect(ui.content()).toContain('기기 시간 7시');expect(ui.content()).toContain('한도 적용 전');
  await ui.view.setState({...ui.view.getState(),route:'progress'},{});
- expect(ui.content()).toContain('자정 기준');expect(ui.reviews).toEqual(before);
+ expect(ui.content()).toContain('학습일 기준');expect(ui.reviews).toEqual(before);
 });
 
 describe("bounded question results and Markdown resource lifetime", () => {
@@ -1616,25 +1640,27 @@ it("does not credit a pre-session rating when only its durable version changes",
   expect(next.view.studyResult().easy).toBe(0);
 });
 
-it("refreshes an expired interval at UTC midnight before accepting a changed schedule", async () => {
-  vi.setSystemTime(new Date("2026-11-05T23:59:59.999Z"));
+it("refreshes an expired interval at the study-day boundary before accepting a changed schedule", async () => {
+  const boundary = new Date(2026, 10, 6, 4, 0, 0, 0); // local 04:00 study-day start
+  vi.setSystemTime(new Date(boundary.getTime() - 1));
   const ui = setup({ start: false });
   ui.plugin.fsrs = new FsrsService({ ...structuredClone(DEFAULT_SETTINGS), gradeIntervalsMinutes: { 4: 120 }, studyManagement: { ...DEFAULT_SETTINGS.studyManagement, enableFuzz: false } });
-  const baseline = ui.plugin.fsrs.rate(undefined, Rating.Easy, new Date("2026-11-04T12:00:00Z"), "q");
+  const reviewedAt = new Date(2026, 10, 4, 12, 0, 0, 0);
+  const baseline = ui.plugin.fsrs.rate(undefined, Rating.Easy, reviewedAt, "q");
   ui.reviews.q = baseline;
-  expect(baseline.card.due).toBe("2026-11-04T14:00:00.000Z");
+  expect(baseline.card.due).toBe(new Date(reviewedAt.getTime() + 120 * 60000).toISOString());
   await ui.view.setState({ route: "study", queue: ["q"], queueIndex: 0, answerVisible: true, sessionMode: "browse" }, {});
-  // Locked upstream 5.4.1 yields Good 13d before midnight and 18d after it.
+  // One study day elapsed before the boundary, two after it.
   expect(ui.button("암기").attrs["aria-label"]).toContain("다음 복습 13일");
   const shown = ui.button("암기");
-  vi.setSystemTime(new Date("2026-11-06T00:00:00.000Z"));
+  vi.setSystemTime(boundary);
   await shown.click();
   expect(ui.reviews.q).toEqual(baseline);
   expect(ui.view.getState().queueIndex).toBe(0);
   expect(ui.button("암기").attrs["aria-label"]).toContain("다음 복습 18일");
   await ui.button("암기").click();
   expect(ui.reviews.q.history).toHaveLength(baseline.history.length + 1);
-  expect(ui.reviews.q.card.due).toBe("2026-11-24T00:00:00.000Z");
+  expect(ui.reviews.q.card.due).toBe(new Date(boundary.getTime() + 18 * 86400000).toISOString());
 });
 
 

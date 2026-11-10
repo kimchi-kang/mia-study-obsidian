@@ -75,7 +75,6 @@ export class QuestionOperations {
     await this.notes.assertWritable(subject);
     const id = createQuestionId();
     const now = new Date().toISOString();
-    await this.saveDraftKeywordMeanings(draft, true);
     let updatedContent = "";
     try {
       await app.vault.process(file, (content) => {
@@ -89,12 +88,15 @@ export class QuestionOperations {
     const saved = persisted.find(question => question.id === id);
     if (!saved) throw new Error("추가한 원본 문제를 확인하지 못했습니다.");
     onPersisted?.(saved);
+    // The question is validated and written first; a failed write must not leave keyword notes changed.
+    const keywordError = await this.saveKeywordsAfterQuestion(draft, true);
     try {
       await this.host.index.refreshFile(file);
       await this.notes.sync(subject, await this.notes.questions(subject, new Map([[filePath, updatedContent]])));
     } catch (error) {
       throw new Error("원본 질문은 추가됐지만 화면·과목 노트 갱신을 완료하지 못했습니다. 입력을 유지한 채 다시 저장해 갱신을 재시도하세요.", { cause: error });
     }
+    if (keywordError) throw keywordError;
     new Notice("질문을 문제은행에 추가했습니다.");
   }
 
@@ -111,7 +113,6 @@ export class QuestionOperations {
     assertQuestionUnchanged(question, current);
     await this.notes.assertWritable(question.subject);
     await this.notes.assertWritable(nextSubject);
-    await this.saveDraftKeywordMeanings(draft);
     if (nextSubject !== question.subject) {
       await this.move(question as RegisteredQuestion, { ...draft, subject: nextSubject }, onPersisted);
       new Notice("질문을 다른 과목으로 옮기고 두 과목 노트를 갱신했습니다.");
@@ -137,6 +138,7 @@ export class QuestionOperations {
     if (!saved) throw new Error("저장한 원본 문제를 확인하지 못했습니다.");
     // Keep the editor's optimistic-concurrency baseline current even if a derived note fails.
     onPersisted?.(saved);
+    const keywordError = await this.saveKeywordsAfterQuestion(draft);
     try {
       await this.host.index.refreshFile(file);
       await this.notes.sync(question.subject, await this.notes.questions(question.subject, new Map([[question.filePath, updatedContent]])));
@@ -144,6 +146,7 @@ export class QuestionOperations {
     } catch (error) {
       throw new Error(`원본 문제는 저장됐지만 화면·연결 노트 갱신을 완료하지 못했습니다. 입력 내용은 유지됩니다. 다시 저장해 갱신을 재시도하세요. (${error instanceof Error ? error.message : String(error)})`, { cause: error });
     }
+    if (keywordError) throw keywordError;
     new Notice("질문과 학습 정보를 수정했습니다.");
   }
 
@@ -247,12 +250,14 @@ export class QuestionOperations {
     if (oldContent === undefined) throw new Error("이동 후 원본 내용을 확인하지 못했습니다.");
     if (!inserted) throw new Error("이동한 원본 문제를 확인하지 못했습니다.");
     onPersisted?.(inserted);
+    const keywordError = await this.saveKeywordsAfterQuestion(draft);
     await this.host.index.refreshFile(oldFile);
     await this.host.index.refreshFile(nextFile);
     const written = new Map([[question.filePath, oldContent], [nextPath, nextContent]]);
     await this.notes.sync(question.subject, await this.notes.questions(question.subject, written));
     await this.notes.sync(draft.subject, await this.notes.questions(draft.subject, written));
     await this.followUps.refreshIncoming([question.id]);
+    if (keywordError) throw keywordError;
   }
 
   async delete(question: RegisteredQuestion): Promise<void> {
@@ -275,6 +280,16 @@ export class QuestionOperations {
       throw new Error("문제와 평가·연결은 삭제했지만 과목 노트 갱신은 완료되지 않았습니다. 과목 노트를 다시 확인하세요.", { cause: error });
     }
     new Notice("질문을 문제은행과 과목 노트에서 삭제했습니다.");
+  }
+
+  /** Returns (does not throw) so derived notes are still refreshed after the question is saved. */
+  private async saveKeywordsAfterQuestion(draft: ManagedQuestionDraft, preserveExistingWhenEmpty = false): Promise<Error | null> {
+    try {
+      await this.saveDraftKeywordMeanings(draft, preserveExistingWhenEmpty);
+      return null;
+    } catch (error) {
+      return new Error(`질문은 저장됐지만 키워드 뜻은 저장하지 못했습니다. 입력 내용은 유지됩니다. 다시 저장해 키워드 뜻을 재시도하세요. (${error instanceof Error ? error.message : String(error)})`, { cause: error });
+    }
   }
 
   private async saveDraftKeywordMeanings(draft: ManagedQuestionDraft, preserveExistingWhenEmpty = false): Promise<void> {

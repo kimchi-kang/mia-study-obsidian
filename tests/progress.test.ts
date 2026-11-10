@@ -3,6 +3,7 @@ import { Rating } from "ts-fsrs";
 import { FsrsService } from "../src/core/fsrs-service";
 import { QuestionRecord } from "../src/core/models";
 import { calculateProgress } from "../src/core/progress";
+import { queryQuestions } from "../src/core/question-query";
 
 const fsrs = new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500 });
 
@@ -51,5 +52,19 @@ describe("study progress", () => {
       { subject: "전자기학", counts: expect.objectContaining({ total: 1, studied: 1, good: 1 }) },
       { subject: "회로", counts: expect.objectContaining({ total: 2, new: 1, due: 1, hard: 1 }) },
     ]);
+  });
+});
+
+describe("today follows the study-day start", () => {
+  const record = question("sd", "과목");
+  const reviewedAt = (at: Date) => ({ sd: fsrs.rate(undefined, Rating.Good, at, "sd") });
+  it.each([
+    [new Date(2026, 10, 6, 3, 0), new Date(2026, 10, 6, 5, 0), 0], // before 04:00 belongs to the previous study day
+    [new Date(2026, 10, 6, 5, 0), new Date(2026, 10, 7, 3, 0), 1], // still the same study day after midnight
+    [new Date(2026, 10, 6, 5, 0), new Date(2026, 10, 7, 4, 0), 0],
+  ])("counts a review at %s as today at %s: %s", (at, now, expected) => {
+    const reviews = reviewedAt(at);
+    expect(calculateProgress([record], reviews, fsrs, now).today).toBe(expected);
+    expect(queryQuestions([record], reviews, fsrs, { text: "", subject: "all", questionType: "all", review: "today", keyword: "", sort: "title", now }).length).toBe(expected);
   });
 });

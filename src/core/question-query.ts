@@ -51,12 +51,7 @@ function matchesReview(
   if (filter === "new") return fsrsService.isNew(review);
   if (filter === "stable") return fsrsService.isStable(review, now);
   if (filter === "today") {
-    const reviewed = review?.history.at(-1)?.review;
-    if (!reviewed) return false;
-    const date = new Date(reviewed);
-    return date.getFullYear() === now.getFullYear()
-      && date.getMonth() === now.getMonth()
-      && date.getDate() === now.getDate();
+    return fsrsService.isInStudyDay(review?.history.at(-1)?.review, now);
   }
   const rating = review?.lastRating;
   if (filter === "weak") return rating === Rating.Again || rating === Rating.Hard;

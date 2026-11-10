@@ -355,8 +355,10 @@ export class MiaStudyView extends ItemView {
       await this.plugin.studyUi.load();
       // A focus event can occur between pointerdown and click. Replacing unchanged
       // controls here drops that first tap; visibility changes still refresh timers.
+      const pruned = this.route === "study" && !this.isMutatingReview && this.pruneExternallyRated(false);
+      if (pruned) this.saveStudyPosition();
       const resumeChanged = previousResume !== JSON.stringify(this.plugin.studyUi.resume);
-      if (!this.closed && ((refreshTime && (this.route === "study" || this.route === "dashboard" || this.route === "progress"))
+      if (!this.closed && ((pruned || refreshTime && (this.route === "study" || this.route === "dashboard" || this.route === "progress"))
         || (resumeChanged && this.route === "dashboard"))) this.render();
       if (!this.closed && notify) new Notice("보관함에 도착한 학습 기록과 이어하기 위치를 확인했습니다.");
     } catch (error) { new Notice(`학습 기록 확인 실패: ${errorMessage(error)}`); }
@@ -439,12 +441,39 @@ export class MiaStudyView extends ItemView {
       }
       if (advanced) this.restoreCommittedSessionGrade(queue[originalIndex]);
       this.queue = queue; this.queueIndex = index; this.sessionSeed = saved.seed.filter(exists);
-      this.readingPosition = { key: `study:${index}:${queue[index] ?? ""}`, scrollTop: advanced ? 0 : saved.scrollTop ?? 0, pageScrollTop: advanced ? 0 : saved.pageScrollTop ?? 0, conceptsOpen: advanced ? false : saved.conceptsOpen ?? false };
-      this.answerVisible = advanced ? saved.sessionMode === "browse" : saved.answerVisible; this.sessionMode = saved.sessionMode; this.resultShown = false;
+      this.sessionMode = saved.sessionMode;
+      // Cards rated on another device since this session started must not come back.
+      const currentBefore = queue[index];
+      const pruned = this.pruneExternallyRated(true);
+      const moved = advanced || (pruned && this.queue[index] !== currentBefore);
+      this.readingPosition = { key: `study:${index}:${this.queue[index] ?? ""}`, scrollTop: moved ? 0 : saved.scrollTop ?? 0, pageScrollTop: moved ? 0 : saved.pageScrollTop ?? 0, conceptsOpen: moved ? false : saved.conceptsOpen ?? false };
+      this.answerVisible = moved ? saved.sessionMode === "browse" : saved.answerVisible; this.resultShown = false;
       this.stateRestored = true;
-      if (advanced) this.saveStudyPosition();
+      if (advanced || pruned) this.saveStudyPosition();
       this.navigate("study");
     } catch (error) { new Notice(`이어하기 실패: ${errorMessage(error)}`); }
+  }
+
+  /**
+   * In recall mode, drops not-yet-reached cards whose newest review came after
+   * this session started and that this session did not grade itself (for example
+   * a review synced in from another device). Browse mode is never changed.
+   */
+  private pruneExternallyRated(includeCurrent: boolean): boolean {
+    if (this.sessionMode !== "recall" || !this.queue.length) return false;
+    if ([...this.sessionAttempts.keys()].some((position) => position >= this.queueIndex)) return false;
+    const own = new Set([...this.sessionGrades.keys(), ...[...this.sessionAttempts.values()].map((attempt) => attempt.id)]);
+    const from = includeCurrent ? this.queueIndex : this.queueIndex + 1;
+    const external = (id: string) => {
+      if (own.has(id)) return false;
+      const reviewedAt = Date.parse(this.plugin.store.getReview(id)?.history.at(-1)?.review ?? "");
+      return Number.isFinite(reviewedAt) && reviewedAt > this.sessionStartedAt;
+    };
+    const dropped = new Set(this.queue.slice(from).filter(external));
+    if (!dropped.size) return false;
+    this.queue = this.queue.filter((id, position) => position < from || !dropped.has(id));
+    this.sessionSeed = this.sessionSeed.filter((id) => !dropped.has(id));
+    return true;
   }
 
   private restoreSessionSummary(summary: StudySessionSummary | undefined, queue: string[]): void {

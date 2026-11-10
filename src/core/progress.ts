@@ -40,13 +40,8 @@ function countQuestion(
   if (review?.lastRating === Rating.Good) counts.good += 1;
   if (review?.lastRating === Rating.Easy) counts.easy += 1;
   if (fsrs.isStable(review, now)) counts.stable += 1;
-  const reviewed = review?.history.at(-1)?.review;
-  if (reviewed) {
-    const date = new Date(reviewed);
-    if (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()) {
-      counts.today += 1;
-    }
-  }
+  // "Today" is the study day (dayStartsAt), the same boundary the queue and dashboard use.
+  if (fsrs.isInStudyDay(review?.history.at(-1)?.review, now)) counts.today += 1;
 }
 
 export function calculateProgress(

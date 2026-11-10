@@ -59,6 +59,8 @@ export class SubjectNotes {
     const path = this.path(subject);
     const content = renderSubjectNote(subject, questions);
     const existing = app.vault.getAbstractFileByPath(path);
+    // Startup re-syncs every note; do not touch (and re-sync) files that already match.
+    if (existing instanceof TFile && await app.vault.read(existing) === content) return;
     if (existing instanceof TFile) await app.vault.process(existing, latest => {
       if (!isManagedSubjectNote(latest)) throw new Error(`${subjectNoteFileName(subject)} 파일이 사용자 노트로 변경되어 덮어쓰지 않았습니다.`);
       return content;

@@ -349,6 +349,21 @@ describe("reusing keywords while adding a question", () => {
     expect(parseQuestionFile(nextPath, env.contents.get(nextPath)).questions).toHaveLength(1);
     expect(env.contents.get(path)).toBe(original);
   });
+  it("leaves keyword notes untouched when the question write fails", async () => {
+    const env = await environment();
+    const keyword = { target: "MIA/키워드/새키워드", label: "새키워드", raw: "[[MIA/키워드/새키워드|새키워드]]" };
+    const process = env.plugin.app.vault.process.getMockImplementation();
+    env.plugin.app.vault.process.mockImplementation(async (file, update) => { if (file.path === nextPath) throw Error("bank write failed"); return process(file, update); });
+    await expect(env.plugin.createManagedQuestion({ ...env.draft, coreKeywords: [keyword], keywordMeanings: [{ ...keyword, meaning: "새 의미" }] })).rejects.toThrow("bank write failed");
+    expect(env.contents.has("MIA/키워드/새키워드.md")).toBe(false);
+  });
+  it("reports that the question was saved when the keyword meaning write fails afterwards", async () => {
+    const env = await environment();
+    const keyword = { target: "MIA/키워드/새키워드", label: "새키워드", raw: "[[MIA/키워드/새키워드|새키워드]]" };
+    env.plugin.keywords.saveReferenceMeaning = vi.fn().mockRejectedValue(Error("keyword disk full"));
+    await expect(env.plugin.createManagedQuestion({ ...env.draft, coreKeywords: [keyword], keywordMeanings: [{ ...keyword, meaning: "새 의미" }] })).rejects.toThrow("질문은 저장됐지만 키워드 뜻은 저장하지 못했습니다");
+    expect(parseQuestionFile(nextPath, env.contents.get(nextPath)).questions).toHaveLength(1);
+  });
   it("creates a new keyword note with an empty meaning and applies an explicitly supplied meaning to an existing keyword", async () => {
     const env = await environment();
     const keyword = { target: "MIA/키워드/새키워드", label: "새키워드", raw: "[[MIA/키워드/새키워드|새키워드]]" };
