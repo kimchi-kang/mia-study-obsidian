@@ -21,6 +21,10 @@ import { nextStudyDayStart, studyDayStart } from "./study-management";
 
 export type StudyGrade = Rating.Again | Rating.Hard | Rating.Good | Rating.Easy;
 
+export function isInterdayReview(card: Pick<SerializedFsrsCard, "state" | "scheduled_days">): boolean {
+  return card.state !== State.New && card.scheduled_days >= 1;
+}
+
 export interface RatingPreview {
   grade: StudyGrade;
   due: Date;
@@ -150,13 +154,13 @@ export class FsrsService {
    * Like Anki, an interday review is due for its whole study day (from the
    * configured day start), not only after its exact timestamp. Otherwise a
    * card graded at 09:05 is not due at 09:00 a day later and every review
-   * slips a day for someone who studies at the same time daily. Learning
-   * steps and sub-day fixed intervals keep their exact time.
+   * slips a day for someone who studies at the same time daily. Sub-day
+   * intervals keep their exact time.
    */
   isDue(state: QuestionReviewState | undefined, now = new Date()): boolean {
     if (!state || state.card.state === State.New) return false;
     const due = new Date(state.card.due).getTime();
-    if (this.isInterdayReview(state)) {
+    if (isInterdayReview(state.card)) {
       return due < nextStudyDayStart(now, this.dayStartsAt).getTime();
     }
     return due <= now.getTime();
@@ -164,11 +168,7 @@ export class FsrsService {
 
   nextReviewAt(state: QuestionReviewState): Date {
     const due = new Date(state.card.due);
-    return this.isInterdayReview(state) ? studyDayStart(due, this.dayStartsAt) : due;
-  }
-
-  private isInterdayReview(state: QuestionReviewState): boolean {
-    return state.card.state === State.Review && state.card.scheduled_days >= 1;
+    return isInterdayReview(state.card) ? studyDayStart(due, this.dayStartsAt) : due;
   }
 
   /** True when `reviewedAt` falls in the same study day (from dayStartsAt) as `now`. */

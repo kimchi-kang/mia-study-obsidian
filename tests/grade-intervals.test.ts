@@ -26,8 +26,8 @@ describe("button-specific review intervals", () => {
         expect(rated.history.length).toBe((state?.history.length ?? 0) + 1);
         expect(rated.card.reps).toBe((state?.card.reps ?? 0) + 1);
         expect(DataStoreInternals.parseReviews({ q: rated }).quarantined).toEqual({});
-        // Interday reviews are due for their whole study day (Anki); other states at the exact time.
-        const dueFrom = rated.card.state === State.Review && rated.card.scheduled_days >= 1
+        // Day-long fixed intervals use the study day even if FSRS keeps a learning state.
+        const dueFrom = rated.card.state !== State.New && rated.card.scheduled_days >= 1
           ? studyDayStart(preview.due, DEFAULT_SETTINGS.studyManagement.dayStartsAt) : preview.due;
         expect(custom.isDue(rated, new Date(dueFrom.getTime() - 1))).toBe(false);
         expect(custom.isDue(rated, dueFrom)).toBe(true);

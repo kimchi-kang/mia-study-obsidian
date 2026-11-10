@@ -1173,6 +1173,22 @@ describe("memorization ordering and back navigation", () => {
   });
 });
 
+it("completes recall and clears resume after a new card is graded Good with a fixed three-day interval", async () => {
+  vi.setSystemTime(new Date("2026-10-20T09:05:00+09:00"));
+  const ui = setup({ start: false });
+  ui.plugin.fsrs = new FsrsService({ ...DEFAULT_SETTINGS, gradeIntervalsMinutes: { 3: 4320 } });
+  ui.view.startReview(["q"]);
+  await ui.button("정답 보기").click();
+  await ui.plugin.studyUi.load();
+  expect(ui.plugin.studyUi.resume?.queue).toEqual(["q"]);
+  await ui.button("암기").click();
+  expect(ui.reviews.q.card).toMatchObject({ state: State.Learning, scheduled_days: 3, due: "2026-10-23T00:05:00.000Z" });
+  expect(ui.content()).not.toContain("다음 복습 대기 중");
+  expect(ui.content()).toContain("학습 완료");
+  await ui.plugin.studyUi.load();
+  expect(ui.plugin.studyUi.resume).toBeNull();
+});
+
 it.each([[90, "90분"], [36 * 60, "36시간"], [45 * 1440, "45일"], [36500 * 1440 - 1, "52559999분"], [1440, "1일"]])("shows a fixed interval of %s minutes exactly and saves that duration", async (minutes, label) => {
   const ui = setup({ start: false });
   ui.plugin.fsrs = new FsrsService({ targetRetention: .9, maximumIntervalDays: 36500, gradeIntervalsMinutes: { 3: minutes } });

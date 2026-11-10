@@ -32,8 +32,8 @@ function sameReview(left: QuestionReviewState, right: QuestionReviewState): bool
 function version(data: MiaPluginData, id: string): string {
   return data.reviewVersions[id] ?? `${data.reviews[id]?.card.last_review ?? "1970-01-01T00:00:00.000Z"}:`;
 }
-function isPrefix(left: QuestionReviewState, right: QuestionReviewState): boolean {
-  return left.history.length <= right.history.length && left.history.every((entry, i) => same(entry, right.history[i]));
+function isStrictPrefix(left: QuestionReviewState, right: QuestionReviewState): boolean {
+  return left.history.length < right.history.length && left.history.every((entry, i) => same(entry, right.history[i]));
 }
 
 function prefersLocal(local: MiaPluginData, incoming: MiaPluginData, id: string, leftKey: string, rightKey: string): boolean {
@@ -83,10 +83,10 @@ function merge(local: MiaPluginData, incoming: MiaPluginData, consume: boolean):
     else delete next.reviewVersions[id];
     const alternatives = [...(local.reviewConflicts[id] ?? []), ...(incoming.reviewConflicts[id] ?? [])];
     if (left && right && leftKey !== rightKey) {
-      const leftPrefix = isPrefix(left, right);
-      const equalLength = left.history.length === right.history.length;
-      const rightPrefix = equalLength ? leftPrefix : isPrefix(right, left);
-      if ((!leftPrefix && !rightPrefix) || (equalLength && leftPrefix)) alternatives.push(localWins ? right : left);
+      const [kept, delivered] = localWins ? [left, right] : [right, left];
+      // A winning undo can be shorter than an offline branch. Only a losing
+      // strict prefix is fully covered by normal forward progress.
+      if (!isStrictPrefix(delivered, kept)) alternatives.push(delivered);
     }
     // A tombstone cannot tell an undone grade from an unseen offline branch.
     // Keep the delivered state for inspection without making it active again.

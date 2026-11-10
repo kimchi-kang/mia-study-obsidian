@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { Plugin } from "obsidian";
 import { Rating } from "ts-fsrs";
-import { FsrsService } from "../src/core/fsrs-service";
+import { FsrsService, type StudyGrade } from "../src/core/fsrs-service";
 import { MiaDataStore } from "../src/services/data-store";
-import { DEFAULT_PLUGIN_DATA, MiaPluginData } from "../src/core/models";
+import { DEFAULT_PLUGIN_DATA, MiaPluginData, type QuestionReviewState } from "../src/core/models";
+import { mergeReviewData } from "../src/core/review-sync";
 
 const fsrs = new FsrsService({ targetRetention: .9, maximumIntervalDays: 36500 });
 function environment() {
@@ -85,5 +86,103 @@ describe("concurrent file delivery", () => {
     env.overwrite(stale); await phone.store.synchronize(); await pad.store.synchronize();
     expect(pad.store.getReview("one")).toBeUndefined();
     expect(env.read().reviewVersions.one).toBe(deletion.reviewVersions.one);
+  });
+});
+
+function reviewAt(previous: QuestionReviewState | undefined, day: number, grade: StudyGrade = Rating.Good): QuestionReviewState {
+  return fsrs.rate(previous, grade, new Date(Date.UTC(2026, 9, day, 9)), "q");
+}
+
+function reviewSnapshot(state: QuestionReviewState | undefined, version: string): MiaPluginData {
+  const data = structuredClone(DEFAULT_PLUGIN_DATA);
+  if (state) data.reviews.q = structuredClone(state);
+  data.reviewVersions.q = version;
+  return data;
+}
+
+describe("archiving the losing review after a cross-device undo", () => {
+  const h1 = reviewAt(undefined, 1);
+  const h2 = reviewAt(h1, 2);
+  const h3 = reviewAt(h2, 10);
+  const h4 = reviewAt(h3, 15);
+
+  it("keeps the day-16 undo active and archives the day-15 device's four grades", () => {
+    const undo = reviewSnapshot(h2, "2026-10-16T09:00:00.000Z:undo");
+    const offline = reviewSnapshot(h4, "2026-10-15T09:00:00.000Z:offline");
+    const merged = mergeReviewData(undo, offline);
+    expect(merged.reviews.q).toEqual(h2);
+    expect(merged.reviews.q?.history).toHaveLength(2);
+    expect(merged.reviewVersions.q).toBe(undo.reviewVersions.q);
+    expect(merged.reviewConflicts.q).toEqual([h4]);
+    expect(merged.reviewConflicts.q?.[0]?.history).toHaveLength(4);
+  });
+
+  it("does not archive a losing state whose grades are a strict prefix of the winning progression", () => {
+    const earlier = reviewSnapshot(h2, "2026-10-02T09:00:00.000Z:earlier");
+    const later = reviewSnapshot(h4, "2026-10-15T09:00:00.000Z:later");
+    const merged = mergeReviewData(earlier, later);
+    expect(merged.reviews.q).toEqual(h4);
+    expect(merged.reviewConflicts.q).toBeUndefined();
+  });
+
+  it("merges 512 seeded pairs symmetrically and idempotently without duplicate archives or lost grades", () => {
+    const fork = reviewAt(h2, 10, Rating.Again);
+    const states = [undefined, h1, h2, h3, h4, fork, reviewAt(fork, 15, Rating.Hard)];
+    let seed = 20261016;
+    const random = (max: number) => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return Math.floor(seed / 0x100000000 * max);
+    };
+    const snapshot = (device: string) => {
+      const data = reviewSnapshot(states[random(states.length)], `2026-10-${16 + random(4)}T09:00:00.000Z:${device}`);
+      if (random(3) === 0) {
+        const archived = states[1 + random(states.length - 1)]!;
+        data.reviewConflicts.q = [structuredClone(archived)];
+      }
+      return data;
+    };
+    const logs = (data: MiaPluginData) => new Set([data.reviews.q, ...(data.reviewConflicts.q ?? [])]
+      .flatMap(state => state?.history.map(log => JSON.stringify(log)) ?? []));
+    for (let index = 0; index < 512; index++) {
+      const left = snapshot("left"), right = snapshot("right");
+      const merged = mergeReviewData(left, right);
+      expect(mergeReviewData(right, left), `pair ${index}`).toEqual(merged);
+      for (const original of [left, right, merged]) expect(mergeReviewData(merged, original), `pair ${index}`).toEqual(merged);
+      const archived = (merged.reviewConflicts.q ?? []).map(review => JSON.stringify(review));
+      expect(new Set(archived).size, `pair ${index}`).toBe(archived.length);
+      expect(logs(merged), `pair ${index}`).toEqual(new Set([...logs(left), ...logs(right)]));
+    }
+  });
+
+  it("archives one previously shared grade when the second device has not added a grade", async () => {
+    const env = environment(), phone = env.device(), pad = env.device();
+    await phone.store.load();
+    await phone.store.setReview("q", h2);
+    await phone.store.setReview("q", h3, { state: h2 });
+    await pad.store.load();
+    expect(pad.store.getReview("q")).toEqual(h3);
+    await phone.store.setReview("q", h2, { state: h3 });
+    await pad.store.synchronize();
+    await phone.store.synchronize();
+    expect(env.read().reviews.q).toEqual(h2);
+    expect(env.read().reviewConflicts).toEqual({ q: [h3] });
+    expect(h3.history.slice(h2.history.length)).toHaveLength(1);
+  });
+
+  it.each([false, true])("archives nothing for a single-device grade and undo (previous state=%s)", async (existing) => {
+    const env = environment(), phone = env.device();
+    await phone.store.load();
+    const previous = existing ? h2 : undefined;
+    const rated = reviewAt(previous, 10);
+    if (previous) await phone.store.setReview("q", previous);
+    await phone.store.setReview("q", rated, { state: previous });
+    if (previous) await phone.store.setReview("q", previous, { state: rated });
+    else await phone.store.removeReview("q", { state: rated });
+    const restarted = phone.restart();
+    await restarted.load();
+    await restarted.synchronize();
+    expect(restarted.getReview("q")).toEqual(previous);
+    expect(restarted.conflicts).toEqual({});
+    expect(env.read().reviewConflicts).toEqual({});
   });
 });
