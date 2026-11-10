@@ -10,7 +10,9 @@ export function normalizeFollowUpIds(baseId: string, ids: readonly string[]): st
 
 export function questionBlockLink(question: RegisteredQuestion): string {
   const path = question.filePath.replace(/\.md$/i, "");
-  return `[[${path}#^${question.id}|${question.heading}]]`;
+  const heading = question.heading;
+  const alias = heading.includes("|") || heading.includes("]]") || heading.endsWith("]") ? "" : `|${heading}`;
+  return `[[${path}#^${question.id}${alias}]]`;
 }
 
 export function planFollowUpChanges(

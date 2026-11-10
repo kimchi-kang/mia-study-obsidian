@@ -12,7 +12,9 @@ import { TFile,TFolder } from "obsidian";
 import MiaStudyPlugin from "../src/main";
 import { QuestionIndex } from "../src/services/question-index";
 import { appendManagedQuestion,createSubjectBank } from "../src/core/managed-question";
+import { readKeywordMeaning } from "../src/core/keyword-note";
 import { parseQuestionFile } from "../src/core/question-parser";
+import { renderSubjectNote } from "../src/core/subject-note";
 
 const oldPath="MIA/수학/문제은행.md",nextPath="MIA/물리/문제은행.md";
 const input={questionMarkdown:"원래 질문",answerMarkdown:"원래 정답",questionType:"정의형",coreKeywords:[],subKeywords:[]};
@@ -43,7 +45,7 @@ async function environment({sourceFailure,rollbackFailure=false,afterInsert}={})
       if(file.path===oldPath && sourceFailure==="after")throw Error("source error after persistence");
     }),
   };
-  const plugin=new MiaStudyPlugin();plugin.app={vault};plugin.store={settings:{sourceRoots:["MIA"],keywordFolder:"MIA/키워드"},reviews:{}};
+  const plugin=new MiaStudyPlugin();plugin.app={vault,metadataCache:{getFirstLinkpathDest:()=>null}};plugin.store={settings:{sourceRoots:["MIA"],keywordFolder:"MIA/키워드"},reviews:{}};
   plugin.index=new QuestionIndex(plugin.app,()=>["MIA"]);await plugin.index.rebuild();
   const question=plugin.index.questionById("mia-q-one");
   const draft={...input,subject:"물리",keywordMeanings:[]};
@@ -337,6 +339,81 @@ describe("late reverse-link conflicts",()=>{
 });
 
 describe("reusing keywords while adding a question", () => {
+  it.each(["create", "update", "move"])("saves a short keyword link to the note resolved from the %s destination", async (action) => {
+    const env = await environment();
+    env.add("MIA/키워드", new TFolder());
+    const folders = ["MIA/수학", "MIA/물리", "MIA/키워드"];
+    for (const folder of folders) {
+      const path = `${folder}/전속.md`;
+      env.add(path, new TFile());
+      env.contents.set(path, `# 전속\n\n## 의미\n\n${folder}의 뜻\n`);
+    }
+    const resolve = vi.fn((target, sourcePath) => target === "전속"
+      ? env.files.get(`${sourcePath.slice(0, sourcePath.lastIndexOf("/"))}/전속.md`) ?? null
+      : null);
+    env.plugin.app.metadataCache = { getFirstLinkpathDest: resolve };
+    const keyword = { target: "전속#정의", label: "전속", raw: "[[전속#정의|전속]]" };
+    const draft = { ...env.draft, coreKeywords: [keyword], keywordMeanings: [{ ...keyword, meaning: "새 뜻" }] };
+    if (action === "create") await env.plugin.createManagedQuestion(draft);
+    else await env.plugin.updateManagedQuestion(env.question, { ...draft, subject: action === "update" ? "수학" : "물리" });
+
+    const bankPath = action === "update" ? oldPath : nextPath;
+    const folder = bankPath.slice(0, bankPath.lastIndexOf("/"));
+    for (const path of folders) {
+      expect(readKeywordMeaning(env.contents.get(`${path}/전속.md`))).toBe(path === folder ? "새 뜻" : `${path}의 뜻`);
+    }
+    const [saved] = parseQuestionFile(bankPath, env.contents.get(bankPath)).questions;
+    expect((await env.plugin.keywords.loadMeanings(saved)).get(keyword.target)).toBe("새 뜻");
+    expect(resolve).toHaveBeenCalledWith("전속", bankPath);
+  });
+
+  it("keeps the problem bank protected when a short keyword link resolves to it", async () => {
+    const env = await environment();
+    env.plugin.app.metadataCache = { getFirstLinkpathDest: vi.fn(() => env.files.get(oldPath)) };
+    const keyword = { target: "문제은행", label: "문제은행", raw: "[[문제은행]]" };
+    await expect(env.plugin.createManagedQuestion({
+      ...env.draft, coreKeywords: [keyword], keywordMeanings: [{ ...keyword, meaning: "새 뜻" }],
+    })).rejects.toThrow(/문제은행.*키워드 뜻/);
+    expect(env.contents.get(oldPath)).toBe(env.source);
+    expect(env.contents.has("MIA/키워드/문제은행.md")).toBe(false);
+  });
+
+  it("keeps every problem when its bank is the explicit keyword meaning target", async () => {
+    const env = await environment();
+    const bank = env.source.replace(/^### /m, "## 의미\n\n은행 설명\n\n### ");
+    env.contents.set(oldPath, bank);
+    const keyword = { target: "MIA/수학/문제은행", label: "은행", raw: "[[MIA/수학/문제은행|은행]]" };
+    await expect(env.plugin.createManagedQuestion({
+      ...env.draft, subject: "수학", questionMarkdown: "새 질문", coreKeywords: [keyword],
+      keywordMeanings: [{ ...keyword, meaning: "뜻" }],
+    })).rejects.toThrow(/문제은행.*키워드 뜻/);
+    const written = env.contents.get(oldPath);
+    expect(written.startsWith(bank)).toBe(true);
+    expect(parseQuestionFile(oldPath, written).questions.map(q => q.questionMarkdown)).toEqual(["원래 질문", "새 질문"]);
+  });
+
+  it.each(["save", "edit", "merge", "rename"])("protects a generated subject note during keyword %s", async (action) => {
+    const env = await environment();
+    env.add("MIA/키워드", new TFolder());
+    const old = { name: "기존", target: "MIA/키워드/기존", filePath: "MIA/키워드/기존.md" };
+    const destination = "MIA/키워드/대상.md";
+    const protectedPath = action === "rename" ? old.filePath : destination;
+    const generated = renderSubjectNote("수학", [input]);
+    if (action === "merge") {
+      env.add(old.filePath, new TFile());
+      env.contents.set(old.filePath, "# 기존\n\n## 의미\n\n기존 뜻\n");
+    }
+    env.add(protectedPath, new TFile());
+    env.contents.set(protectedPath, generated);
+    const before = new Map(env.contents);
+    const current = action === "edit" ? { name: "대상", target: "MIA/키워드/대상", filePath: destination } : old;
+    const save = action === "save" ? env.plugin.keywords.saveMeaning("대상", "새 뜻")
+      : env.plugin.saveKeyword(current, "대상", "새 뜻");
+    await expect(save).rejects.toThrow(/과목 노트.*키워드 뜻/);
+    expect(env.contents).toEqual(before);
+    expect(env.trashFile).not.toHaveBeenCalled();
+  });
+
   it.each(["", "   "])("preserves the existing meaning when the new question leaves it blank (%j)", async meaning => {
     const env = await environment();
     env.add("MIA/키워드", new TFolder());
@@ -401,6 +478,21 @@ describe("editing a saved question from a session", () => {
     expect(env.plugin.store.reviews).toEqual(reviews);
     expect(env.contents.get(oldPath)).toContain("사용자 메모: 이동해도 보존");
   });
+  it.each(["#", "##"])("keeps a ### answer subheading when saving a %s question", async (heading) => {
+    const env = await editEnvironment();
+    const bank = env.contents.get(oldPath)
+      .replace(/^### /gm, `${heading} `)
+      .replace(/^#### 정답$/gm, `${heading}# 정답`);
+    env.contents.set(oldPath, bank);
+    await env.plugin.index.refreshFile(env.files.get(oldPath));
+    const original = env.plugin.index.questionById("mia-q-one");
+    expect(original?.headingLevel).toBe(heading.length);
+
+    const answerMarkdown = "part1\n\n### 소제목\n\npart2";
+    await env.plugin.updateManagedQuestion(original, { ...env.draft, answerMarkdown });
+    const persisted = parseQuestionFile(oldPath, env.contents.get(oldPath)).questions;
+    expect(persisted.find(q => q.id === "mia-q-one")?.answerMarkdown).toBe(answerMarkdown);
+  });
   it("does not change persisted content or the index on write failure, and permits retry",async()=>{
     const env=await editEnvironment();const before=env.contents.get(oldPath);
     env.vault.process.mockRejectedValueOnce(Error("disk full"));
@@ -449,6 +541,55 @@ describe("editing a saved question from a session", () => {
 });
 
 describe("new question and move commit boundaries",()=>{
+  it("leaves a bank with an open code fence unchanged after repeated failed adds", async () => {
+    const env = await environment();
+    const bank = "# 물리 문제은행\n\n```\n열린 펜스\n";
+    env.contents.set(nextPath, bank);
+    const attempts = [];
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const save = env.plugin.createManagedQuestion(env.draft);
+      await expect(save).rejects.toThrow(/추가한 원본 문제/);
+      attempts.push(save);
+    }
+    expect(env.contents.get(nextPath)).toBe(bank);
+    for (const save of attempts) await expect(save).rejects.toThrow(/닫히지 않은 코드 블록/);
+  });
+
+  it.each(["create", "move"])("rejects %s before appending a question that overlaps an existing answer", async (action) => {
+    const env = await environment();
+    const bank = env.source.replace(/^### /m, "## ").replace(/^#### 정답$/m, "### 정답")
+      .replace("mia-q-one", "mia-q-destination");
+    env.contents.set(nextPath, bank);
+    const before = new Map(env.contents);
+    const save = action === "create"
+      ? env.plugin.createManagedQuestion(env.draft)
+      : env.plugin.moveManagedQuestion(env.question, env.draft);
+    await expect(save).rejects.toThrow(/제목 수준.*겹/);
+    expect(env.contents).toEqual(before);
+  });
+
+  it.each(["delete", "edit"])("rejects %s when the affected range contains another question", async (action) => {
+    const env = await environment();
+    const shallow = env.source.replace(/^### /m, "## ").replace(/^#### 정답$/m, "### 정답");
+    const bank = appendManagedQuestion(shallow, input, "mia-q-nested");
+    env.contents.set(oldPath, bank);
+    await env.plugin.index.refreshFile(env.files.get(oldPath));
+    const original = env.plugin.index.questionById("mia-q-one");
+    expect(env.plugin.index.questionById("mia-q-nested")).toBeDefined();
+    env.plugin.store.getReview = () => undefined;
+    env.plugin.store.removeReview = vi.fn();
+    const save = action === "delete"
+      ? env.plugin.deleteManagedQuestion(original)
+      : env.plugin.updateManagedQuestion(original, { ...env.draft, subject: "수학", answerMarkdown: "바꾼 정답" });
+    await expect(save).rejects.toThrow(/제목 수준.*겹/);
+    expect(env.contents.get(oldPath)).toBe(bank);
+    expect(env.plugin.store.removeReview).not.toHaveBeenCalled();
+
+    await env.plugin.writeMetadata(original, { ...input, questionType: "계산형" });
+    expect(env.plugin.index.questionById("mia-q-one")?.questionType).toBe("계산형");
+    expect(env.plugin.index.questionById("mia-q-nested")).toBeDefined();
+  });
+
   it("exposes a created question before a derived-note failure so retry retains its ID",async()=>{
     const env=await environment();let saved;
     env.plugin.subjectNotes.sync=vi.fn().mockRejectedValueOnce(Error("subject note locked"));
@@ -474,7 +615,7 @@ it("preserves an existing meaning on an empty new-reference retry but still perm
   const env=await environment();env.add("MIA/키워드",new TFolder());const path="MIA/키워드/기존.md";env.add(path,new TFile());
   const original="# 기존\n\n## 의미\n\n여러 줄\n기존 의미\n\n## 연결\n";env.contents.set(path,original);
   const item={target:"MIA/키워드/기존",label:"기존",meaning:"",preserveExistingWhenEmpty:true};
-  await env.plugin.questions.saveDraftKeywordMeanings({...env.draft,keywordMeanings:[item]});expect(env.contents.get(path)).toBe(original);
-  await env.plugin.questions.saveDraftKeywordMeanings({...env.draft,keywordMeanings:[{...item,preserveExistingWhenEmpty:false}]});
-  const {readKeywordMeaning}=await import("../src/core/keyword-note");expect(readKeywordMeaning(env.contents.get(path))).toBe("");
+  await env.plugin.questions.saveDraftKeywordMeanings({...env.draft,keywordMeanings:[item]},nextPath);expect(env.contents.get(path)).toBe(original);
+  await env.plugin.questions.saveDraftKeywordMeanings({...env.draft,keywordMeanings:[{...item,preserveExistingWhenEmpty:false}]},nextPath);
+  expect(readKeywordMeaning(env.contents.get(path))).toBe("");
 });

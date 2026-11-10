@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { parseQuestionFile, QuestionParserInternals } from "../src/core/question-parser";
+import { questionBlockLink } from "../src/core/follow-up";
+import { renderManagedQuestion } from "../src/core/managed-question";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixturePath = join(here, "fixtures/vault/전자기학/04 정전기학/가우스 법칙.md");
@@ -60,5 +62,30 @@ describe("metadata parsing", () => {
       { target: "가우스 법칙", label: "가우스 법칙", raw: "가우스 법칙" },
       { target: "전속 밀도", label: "전속 밀도", raw: "전속 밀도" },
     ]);
+  });
+});
+
+describe("follow-up wiki links", () => {
+  const path = "수학/문제은행.md";
+  const input = { questionMarkdown: "질문", answerMarkdown: "정답", questionType: "정의형" as const, coreKeywords: [], subKeywords: [] };
+
+  it("reads follow-up IDs only from wiki link targets", () => {
+    const followUpLinks = [
+      "[[다른 노트#^mia-q-target|제목 f[x] #^mia-q-unselected 포함]]",
+      "[[다른 [노트]#^mia-q-no-alias]]",
+      "[[일반 노트|#^mia-q-alias-only]]",
+      "그냥 메모 #^mia-q-plain-text",
+    ];
+    const content = renderManagedQuestion({ ...input, followUpLinks }, "mia-q-one");
+    expect(parseQuestionFile(path, content).questions[0]?.followUpIds).toEqual(["mia-q-target", "mia-q-no-alias"]);
+  });
+
+  it.each(["제목 | #^mia-q-unselected", "제목 ]] #^mia-q-unselected", "제목]"])("writes one intact follow-up link for an unsafe title: %s", (heading) => {
+    const [target] = parseQuestionFile(path, renderManagedQuestion(input, "mia-q-target")).questions;
+    if (!target?.id) throw new Error("Expected a registered question in the fixture");
+    const link = questionBlockLink({ ...target, id: target.id, heading });
+    expect(link).toBe("[[수학/문제은행#^mia-q-target]]");
+    const content = renderManagedQuestion({ ...input, followUpLinks: [link] }, "mia-q-one");
+    expect(parseQuestionFile(path, content).questions[0]?.followUpIds).toEqual(["mia-q-target"]);
   });
 });

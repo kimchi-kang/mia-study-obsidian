@@ -486,8 +486,8 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     return this.questions.move(question, draft, onPersisted);
   }
   private deleteManagedQuestion(question: QuestionRecord & { id: string }): Promise<void> { return this.questions.delete(question); }
-  private saveKeywordReferenceMeaning(target: string, label: string, meaning: string, preserveExistingWhenEmpty = false): Promise<void> {
-    return this.keywords.saveReferenceMeaning(target, label, meaning, preserveExistingWhenEmpty);
+  private saveKeywordReferenceMeaning(target: string, label: string, meaning: string, sourcePath: string, preserveExistingWhenEmpty = false): Promise<void> {
+    return this.keywords.saveReferenceMeaning(target, label, meaning, sourcePath, preserveExistingWhenEmpty);
   }
   private saveKeywordMeaning(name: string, meaning: string, notify = true): Promise<void> { return this.keywords.saveMeaning(name, meaning, notify); }
   private saveKeyword(current: KeywordNoteEntry | null, value: string, meaning: string): Promise<void> { return this.keywords.save(current, value, meaning); }

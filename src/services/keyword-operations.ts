@@ -10,9 +10,11 @@ import {
 import { keywordNotePath } from "../core/keyword-path";
 import { keywordReferenceMatches, keywordTargetMatcher, removeKeywordReferences, renameKeywordReferences } from "../core/keyword-reference";
 import { followUpLinksIn } from "../core/managed-question";
+import { assertSingleLine } from "../core/markdown-structure";
 import type { KeywordReference, QuestionRecord } from "../core/models";
 import { parseQuestionFile } from "../core/question-parser";
 import { findCurrentQuestion, updateQuestionMetadata } from "../core/question-writer";
+import { isManagedSubjectNote } from "../core/subject-note";
 import { applyFileChanges, type FileChange } from "./file-change-batch";
 import type { MiaHost } from "./mia-host";
 import { assertPortablePath, ensureFolder, trashFileVerified } from "./vault-files";
@@ -24,6 +26,16 @@ export interface KeywordNoteEntry {
 }
 
 type RegisteredQuestion = QuestionRecord & { id: string };
+
+function updateExistingKeywordMeaning(filePath: string, content: string, name: string, meaning: string): string {
+  if (isManagedSubjectNote(content)) {
+    throw new Error("자동 생성 과목 노트에는 키워드 뜻을 저장할 수 없습니다. 별도의 키워드 노트를 사용하세요.");
+  }
+  if (parseQuestionFile(filePath, content).questions.length > 0) {
+    throw new Error("문제은행에는 키워드 뜻을 저장할 수 없습니다. 별도의 키워드 노트를 사용하세요.");
+  }
+  return updateKeywordMeaning(content, name, meaning);
+}
 
 /** A link or path's file name without folder, heading or extension, lower-cased. */
 function fileName(path: string): string {
@@ -68,24 +80,38 @@ export class KeywordOperations {
     const { app } = this.host;
     const output = new Map<string, string>();
     for (const keyword of [...question.coreKeywords, ...question.subKeywords]) {
-      const file = app.metadataCache.getFirstLinkpathDest(keyword.target, question.filePath);
+      const file = this.resolveReferenceFile(keyword.target, question.filePath);
       output.set(keyword.target, file ? readKeywordMeaning(await app.vault.cachedRead(file)) : "");
     }
     return output;
   }
 
-  async saveReferenceMeaning(target: string, label: string, meaning: string, preserveExistingWhenEmpty = false): Promise<void> {
+  private resolveReferenceFile(target: string, sourcePath: string): TFile | null {
+    const linkpath = target.split("#")[0]?.trim() ?? "";
+    return this.host.app.metadataCache.getFirstLinkpathDest(linkpath, sourcePath);
+  }
+
+  referenceMeaningDestination(target: string, label: string, sourcePath: string): TFile | string {
+    assertSingleLine(target, "키워드 경로");
+    assertSingleLine(label, "키워드 이름");
+    return this.resolveReferenceFile(target, sourcePath) ?? keywordNotePath(target, label, this.host.store.settings.keywordFolder);
+  }
+
+  async saveReferenceMeaning(target: string, label: string, meaning: string, sourcePath: string, preserveExistingWhenEmpty = false): Promise<void> {
     const { app } = this.host;
     validateKeywordMeaning(meaning);
-    const path = keywordNotePath(target, label, this.host.store.settings.keywordFolder);
-    assertPortablePath(app, path);
-    const folder = path.split("/").slice(0, -1).join("/");
-    if (folder) await ensureFolder(app, folder);
-    const existing = app.vault.getAbstractFileByPath(path);
+    const destination = this.referenceMeaningDestination(target, label, sourcePath);
+    const path = typeof destination === "string" ? destination : destination.path;
+    if (typeof destination === "string") {
+      assertPortablePath(app, path);
+      const folder = path.split("/").slice(0, -1).join("/");
+      if (folder) await ensureFolder(app, folder);
+    }
+    const existing = typeof destination === "string" ? app.vault.getAbstractFileByPath(path) : destination;
     if (existing instanceof TFolder) throw new Error("키워드 노트 경로가 폴더와 겹칩니다.");
     if (existing instanceof TFile) {
       if (preserveExistingWhenEmpty && !meaning.trim()) return;
-      await app.vault.process(existing, (content) => updateKeywordMeaning(content, label, meaning));
+      await app.vault.process(existing, (content) => updateExistingKeywordMeaning(existing.path, content, label, meaning));
     } else {
       await app.vault.create(path, createKeywordNote(label, meaning));
     }
@@ -102,7 +128,7 @@ export class KeywordOperations {
     const existing = app.vault.getAbstractFileByPath(path);
     if (existing instanceof TFolder) throw new Error("키워드 노트 경로가 폴더와 겹칩니다.");
     if (existing instanceof TFile) {
-      await app.vault.process(existing, (content) => updateKeywordMeaning(content, safeName, meaning));
+      await app.vault.process(existing, (content) => updateExistingKeywordMeaning(existing.path, content, safeName, meaning));
     } else {
       await app.vault.create(path, createKeywordNote(safeName, meaning));
     }
@@ -121,7 +147,7 @@ export class KeywordOperations {
       validateKeywordMeaning(meaning);
       const file = app.vault.getAbstractFileByPath(current.filePath);
       if (!(file instanceof TFile)) throw new Error("기존 키워드 노트를 찾지 못했습니다.");
-      await app.vault.process(file, content => updateKeywordMeaning(content, name, meaning));
+      await app.vault.process(file, content => updateExistingKeywordMeaning(file.path, content, name, meaning));
       new Notice(`${name} 키워드를 저장했습니다.`);
       return;
     }
@@ -146,7 +172,7 @@ export class KeywordOperations {
       await applyFileChanges(app.vault, [{ file: destination, update: content => {
         const destinationMeaning = readKeywordMeaning(content);
         const mergedMeaning = [...new Set([destinationMeaning, sourceMeaning, meaning].map(item => item.trim()).filter(Boolean))].join("\n\n");
-        return updateKeywordMeaning(content, name, mergedMeaning);
+        return updateExistingKeywordMeaning(destination.path, content, name, mergedMeaning);
       } }, ...references({ removed: [current.target], merged: [nextTarget] })], async () => {
         if (await app.vault.read(source) !== sourceContent) throw new Error("병합 중 원본 키워드가 변경되어 삭제하지 않았습니다.");
         await trashFileVerified(app, source);
@@ -157,7 +183,7 @@ export class KeywordOperations {
         const renamed = app.vault.getAbstractFileByPath(nextPath);
         if (!(renamed instanceof TFile) || renamed !== source) throw new Error("키워드 이름을 바꾼 뒤 노트를 확인하지 못했습니다.");
         await applyFileChanges(app.vault, [
-          { file: renamed, update: content => updateKeywordMeaning(content, name, meaning) }, ...references({ removed: [] }),
+          { file: renamed, update: content => updateExistingKeywordMeaning(renamed.path, content, name, meaning) }, ...references({ removed: [] }),
         ]);
       } catch (error) {
         try {

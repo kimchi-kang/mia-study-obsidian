@@ -183,8 +183,8 @@ describe("portable subject and keyword writes", () => {
     const files = new Map([[root.path, root], [keywords.path, keywords], [file.path, file]]);
     const process = vi.fn(), create = vi.fn();
     const plugin = new MiaStudyPlugin(); plugin.store = { settings: { keywordFolder: "MIA/키워드" } };
-    plugin.app = { vault: { getRoot: () => vaultRoot, getAbstractFileByPath: path => files.get(path), process, create } };
-    await expect(plugin.saveKeywordReferenceMeaning("MIA/키워드/math", "math", "의미")).rejects.toThrow(/표기|이름/);
+    plugin.app = { metadataCache: { getFirstLinkpathDest: () => null }, vault: { getRoot: () => vaultRoot, getAbstractFileByPath: path => files.get(path), process, create } };
+    await expect(plugin.saveKeywordReferenceMeaning("MIA/키워드/math", "math", "의미", "MIA/수학/문제은행.md")).rejects.toThrow(/표기|이름/);
     expect(process).not.toHaveBeenCalled(); expect(create).not.toHaveBeenCalled();
   });
 });

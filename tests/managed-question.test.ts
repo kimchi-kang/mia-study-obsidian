@@ -30,6 +30,11 @@ describe("managed question documents", () => {
     expect(parsed.questions[0]?.answerMarkdown).toBe(first.answerMarkdown);
   });
 
+  it.each(["```js\nlet a = 1", "~~~js\nlet a = 1\n```"])("rejects an unclosed answer fence on append: %j", (answerMarkdown) => {
+    expect(() => appendManagedQuestion(createSubjectBank("전자기학"), { ...first, answerMarkdown }, "mia-q-one"))
+      .toThrow(/정답의 코드 블록을 닫아 주세요/);
+  });
+
   it("edits exactly one ID while keeping its FSRS identity and neighbors", () => {
     const path = "전공면접대비/전자기학/문제은행.md";
     const content = appendManagedQuestion(
@@ -69,6 +74,17 @@ describe("managed question documents", () => {
       { ...first, answerMarkdown: "새 정답" },
     );
     expect(updated).toContain("> 이어보기: [[다른과목/문제은행#^mia-q-next|후속 질문]]");
+  });
+
+  it("rejects an answer heading at the edited question's heading level", () => {
+    const path = "전자기학/문제은행.md";
+    const content = "#### Q\n\n> [!question] 문제\n> 질문\n^mia-q-one\n\n##### 풀이\n\n기존 정답\n";
+    const parse = (markdown: string) => parseQuestionFile(path, markdown).questions;
+    const [original] = parse(content);
+    expect(original?.headingLevel).toBe(4);
+    if (!original) throw new Error("Expected a question in the fixture");
+    const input = { ...first, questionMarkdown: original.questionMarkdown, answerMarkdown: "part1\n\n#### 소제목\n\npart2" };
+    expect(() => replaceCurrentManagedQuestion(content, original, parse, input)).toThrow(/##### 이하/);
   });
 
   it("deletes exactly one ID while keeping neighboring questions", () => {
