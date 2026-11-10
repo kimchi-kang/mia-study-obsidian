@@ -1,10 +1,10 @@
 import { Notice, TFile, normalizePath } from "obsidian";
 import { validateKeywordMeaning } from "../core/keyword-note";
-import { keywordNotePath } from "../core/keyword-path";
 import {
   appendManagedQuestion,
   createSubjectBank,
   deleteCurrentManagedQuestion,
+  OVERLAPPING_QUESTION_ERROR,
   replaceCurrentManagedQuestion,
   validateManagedQuestionInput,
   validateSubjectName,
@@ -29,6 +29,24 @@ import type { SubjectNotes } from "./subject-notes";
 import { assertPortablePath, ensureFolder } from "./vault-files";
 
 type RegisteredQuestion = QuestionRecord & { id: string };
+
+function validateQuestionInsertion(
+  before: readonly QuestionRecord[], after: readonly QuestionRecord[], id: string,
+): QuestionRecord {
+  const [inserted, duplicate] = after.filter(question => question.id === id);
+  if (!inserted || duplicate) {
+    throw new Error("추가한 원본 문제를 확인하지 못했습니다. 문제은행에 닫히지 않은 코드 블록이 있는지 확인한 뒤 다시 시도하세요.");
+  }
+  const existing = after.filter(question => question.id !== id);
+  if (existing.length !== before.length || before.some((question, index) => {
+    const current = existing[index];
+    return current?.id !== question.id || current.questionMarkdown !== question.questionMarkdown
+      || current.answerMarkdown !== question.answerMarkdown;
+  })) {
+    throw new Error(OVERLAPPING_QUESTION_ERROR);
+  }
+  return inserted;
+}
 
 /**
  * Writes question blocks in subject banks. The source bank is always written
@@ -64,10 +82,10 @@ export class QuestionOperations {
   async create(draft: ManagedQuestionDraft, onPersisted?: (question: QuestionRecord) => void): Promise<void> {
     const { app } = this.host;
     const subject = validateSubjectName(draft.subject);
-    this.validateDraft(draft);
     const folderPath = normalizePath(`${this.host.managedRoot}/${subject}`);
-    await ensureFolder(app, folderPath);
     const filePath = normalizePath(`${folderPath}/문제은행.md`);
+    this.validateDraft(draft, filePath);
+    await ensureFolder(app, folderPath);
     assertPortablePath(app, filePath);
     let file = app.vault.getAbstractFileByPath(filePath);
     if (!file) file = await app.vault.create(filePath, createSubjectBank(subject));
@@ -76,20 +94,23 @@ export class QuestionOperations {
     const id = createQuestionId();
     const now = new Date().toISOString();
     let updatedContent = "";
+    let saved: QuestionRecord | undefined;
     try {
       await app.vault.process(file, (content) => {
-        updatedContent = appendManagedQuestion(content, { ...draft, createdAt: now, updatedAt: now }, id);
+        const candidate = appendManagedQuestion(content, { ...draft, createdAt: now, updatedAt: now }, id);
+        saved = validateQuestionInsertion(
+          parseQuestionFile(filePath, content).questions, parseQuestionFile(filePath, candidate, { subject }).questions, id,
+        );
+        updatedContent = candidate;
         return updatedContent;
       });
     } catch (error) {
       if (!updatedContent || await app.vault.read(file) !== updatedContent) throw error;
     }
-    const persisted = parseQuestionFile(filePath, updatedContent, { subject }).questions;
-    const saved = persisted.find(question => question.id === id);
     if (!saved) throw new Error("추가한 원본 문제를 확인하지 못했습니다.");
     onPersisted?.(saved);
     // The question is validated and written first; a failed write must not leave keyword notes changed.
-    const keywordError = await this.saveKeywordsAfterQuestion(draft, true);
+    const keywordError = await this.saveKeywordsAfterQuestion(draft, saved.filePath, true);
     try {
       await this.host.index.refreshFile(file);
       await this.notes.sync(subject, await this.notes.questions(subject, new Map([[filePath, updatedContent]])));
@@ -104,7 +125,9 @@ export class QuestionOperations {
     const { app } = this.host;
     if (!question.id) throw new Error("등록되지 않은 질문은 GUI에서 전체 수정할 수 없습니다.");
     const nextSubject = validateSubjectName(draft.subject);
-    this.validateDraft(draft);
+    const sourcePath = nextSubject === question.subject ? question.filePath
+      : normalizePath(`${this.host.managedRoot}/${nextSubject}/문제은행.md`);
+    this.validateDraft(draft, sourcePath, question.headingLevel);
     const file = app.vault.getAbstractFileByPath(question.filePath);
     if (!(file instanceof TFile)) throw new Error("문제 파일을 찾지 못했습니다.");
     const latest = await app.vault.read(file);
@@ -138,7 +161,7 @@ export class QuestionOperations {
     if (!saved) throw new Error("저장한 원본 문제를 확인하지 못했습니다.");
     // Keep the editor's optimistic-concurrency baseline current even if a derived note fails.
     onPersisted?.(saved);
-    const keywordError = await this.saveKeywordsAfterQuestion(draft);
+    const keywordError = await this.saveKeywordsAfterQuestion(draft, saved.filePath);
     try {
       await this.host.index.refreshFile(file);
       await this.notes.sync(question.subject, await this.notes.questions(question.subject, new Map([[question.filePath, updatedContent]])));
@@ -191,14 +214,15 @@ export class QuestionOperations {
     let inserted: QuestionRecord | undefined;
     try {
       await app.vault.process(nextFile, (content) => {
-        if (parseQuestionFile(nextPath, content).questions.some((item) => item.id === question.id)) {
+        const before = parseQuestionFile(nextPath, content).questions;
+        if (before.some((item) => item.id === question.id)) {
           throw new Error("이동할 문제은행에 같은 문제 ID가 이미 있습니다.");
         }
         const newline = content.includes("\r\n") ? "\r\n" : "\n";
         const base = content.replaceAll("\r\n", "\n").trimEnd();
-        nextContent = `${base}${base ? "\n\n" : ""}${block}\n`.replaceAll("\n", newline);
-        inserted = parseQuestionFile(nextPath, nextContent, { subject: draft.subject }).questions.find(item => item.id === question.id);
-        if (!inserted) throw new Error("이동 대상의 문제를 확인하지 못했습니다.");
+        const candidate = `${base}${base ? "\n\n" : ""}${block}\n`.replaceAll("\n", newline);
+        inserted = validateQuestionInsertion(before, parseQuestionFile(nextPath, candidate, { subject: draft.subject }).questions, question.id);
+        nextContent = candidate;
         return nextContent;
       });
     } catch (error) {
@@ -250,7 +274,7 @@ export class QuestionOperations {
     if (oldContent === undefined) throw new Error("이동 후 원본 내용을 확인하지 못했습니다.");
     if (!inserted) throw new Error("이동한 원본 문제를 확인하지 못했습니다.");
     onPersisted?.(inserted);
-    const keywordError = await this.saveKeywordsAfterQuestion(draft);
+    const keywordError = await this.saveKeywordsAfterQuestion(draft, inserted.filePath);
     await this.host.index.refreshFile(oldFile);
     await this.host.index.refreshFile(nextFile);
     const written = new Map([[question.filePath, oldContent], [nextPath, nextContent]]);
@@ -283,26 +307,26 @@ export class QuestionOperations {
   }
 
   /** Returns (does not throw) so derived notes are still refreshed after the question is saved. */
-  private async saveKeywordsAfterQuestion(draft: ManagedQuestionDraft, preserveExistingWhenEmpty = false): Promise<Error | null> {
+  private async saveKeywordsAfterQuestion(draft: ManagedQuestionDraft, sourcePath: string, preserveExistingWhenEmpty = false): Promise<Error | null> {
     try {
-      await this.saveDraftKeywordMeanings(draft, preserveExistingWhenEmpty);
+      await this.saveDraftKeywordMeanings(draft, sourcePath, preserveExistingWhenEmpty);
       return null;
     } catch (error) {
       return new Error(`질문은 저장됐지만 키워드 뜻은 저장하지 못했습니다. 입력 내용은 유지됩니다. 다시 저장해 키워드 뜻을 재시도하세요. (${error instanceof Error ? error.message : String(error)})`, { cause: error });
     }
   }
 
-  private async saveDraftKeywordMeanings(draft: ManagedQuestionDraft, preserveExistingWhenEmpty = false): Promise<void> {
+  private async saveDraftKeywordMeanings(draft: ManagedQuestionDraft, sourcePath: string, preserveExistingWhenEmpty = false): Promise<void> {
     for (const item of draft.keywordMeanings) {
-      await this.keywords.saveReferenceMeaning(item.target, item.label, item.meaning, preserveExistingWhenEmpty || item.preserveExistingWhenEmpty === true);
+      await this.keywords.saveReferenceMeaning(item.target, item.label, item.meaning, sourcePath, preserveExistingWhenEmpty || item.preserveExistingWhenEmpty === true);
     }
   }
 
-  private validateDraft(draft: ManagedQuestionDraft): void {
-    validateManagedQuestionInput(draft);
+  private validateDraft(draft: ManagedQuestionDraft, sourcePath: string, headingLevel?: number): void {
+    validateManagedQuestionInput(draft, headingLevel);
     for (const item of draft.keywordMeanings) {
       validateKeywordMeaning(item.meaning);
-      keywordNotePath(item.target, item.label, this.host.store.settings.keywordFolder);
+      this.keywords.referenceMeaningDestination(item.target, item.label, sourcePath);
     }
   }
 }

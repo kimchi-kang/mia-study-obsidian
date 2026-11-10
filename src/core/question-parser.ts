@@ -63,10 +63,12 @@ function parseKeywordReferences(value: string): KeywordReference[] {
 }
 
 function parseFollowUpIds(value: string): string[] {
-  const ids = [...value.matchAll(/#\^(mia-q-[A-Za-z0-9-]+)/g)]
-    .map((match) => match[1])
-    .filter((id): id is string => Boolean(id));
-  return [...new Set(ids)];
+  const ids = new Set<string>();
+  for (const [, target] of value.matchAll(/\[\[((?:(?!\[\[|\]\]|\|).)+)(?:\|.*?)?\]\]/g)) {
+    const id = target?.trim().match(/#\^(mia-q-[A-Za-z0-9-]+)$/)?.[1];
+    if (id) ids.add(id);
+  }
+  return [...ids];
 }
 
 function parseMetadataBlock(lines: string[], startLine: number): MetadataBlock {

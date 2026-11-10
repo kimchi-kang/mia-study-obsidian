@@ -1,8 +1,10 @@
 import { KeywordReference, QuestionRecord, QuestionType } from "./models";
 import { assertQuestionUnchanged, findCurrentQuestion, questionMetadataLines } from "./question-writer";
 import { assertSingleLine, fencedCodeLines, hasHeadingAtOrAbove } from "./markdown-structure";
-import { MIA_CALLOUT, QUESTION_CALLOUT } from "./question-parser";
+import { MIA_CALLOUT, parseQuestionFile, QUESTION_CALLOUT } from "./question-parser";
 import { validateNoteName } from "./note-name";
+
+export const OVERLAPPING_QUESTION_ERROR = "문제 제목 수준이 달라 문제 범위가 겹칩니다. 원문에서 문제 제목 수준을 맞춘 뒤 다시 시도하세요.";
 
 export interface ManagedQuestionInput {
   questionMarkdown: string;
@@ -21,14 +23,21 @@ export interface ManagedQuestionDraft extends ManagedQuestionInput {
   keywordMeanings: Array<{ target: string; label: string; meaning: string; preserveExistingWhenEmpty?: boolean }>;
 }
 
-export function validateManagedQuestionInput(input: ManagedQuestionInput): void {
-  if (hasHeadingAtOrAbove(input.answerMarkdown, 3)) {
-    throw new Error("정답에서는 #### 이하의 제목만 사용할 수 있습니다. #~### 제목은 문제 구역을 분리합니다.");
+export function validateManagedQuestionInput(input: ManagedQuestionInput, headingLevel = 3): void {
+  const answerMarkdown = input.answerMarkdown.trim();
+  const answerLines = answerMarkdown.replaceAll("\r\n", "\n").split("\n");
+  const fenced = fencedCodeLines([...answerLines, ""]);
+  if (fenced.at(-1)) {
+    throw new Error("정답의 코드 블록을 닫아 주세요. 닫지 않으면 뒤의 문제도 코드 블록으로 인식됩니다.");
+  }
+  if (hasHeadingAtOrAbove(answerMarkdown, headingLevel)) {
+    if (headingLevel === 6) {
+      throw new Error("이 문제에서는 정답 안의 제목이 문제 구역을 분리합니다. 제목을 일반 문장으로 바꿔 주세요.");
+    }
+    throw new Error(`정답에서는 ${"#".repeat(headingLevel + 1)} 이하의 제목만 사용할 수 있습니다. 문제 제목과 같거나 더 큰 제목은 문제 구역을 분리합니다.`);
   }
   // The parser starts a new question at every `> [!question]` outside code and
   // reads `> [!mia]` inside a question callout as its metadata block.
-  const answerLines = input.answerMarkdown.replaceAll("\r\n", "\n").split("\n");
-  const fenced = fencedCodeLines(answerLines);
   if (answerLines.some((line, index) => !fenced[index] && QUESTION_CALLOUT.test(line))) {
     throw new Error("정답에 `> [!question]` 줄이 있으면 별도 문제로 인식됩니다. 코드 블록 안에 넣거나 표기를 바꿔 주세요.");
   }
@@ -101,13 +110,23 @@ export function appendManagedQuestion(content: string, input: ManagedQuestionInp
   return `${base}${base ? "\n\n" : ""}${renderManagedQuestion(input, id)}\n`.replaceAll("\n", newline);
 }
 
+function assertQuestionRangeIsSeparate(content: string, question: QuestionRecord, questions?: readonly QuestionRecord[]): void {
+  const { headingLine, answerEndLine, questionStartLine } = question.location;
+  const records = questions ?? parseQuestionFile(question.filePath, content).questions;
+  if (records.some(({ location }) => location.questionStartLine !== questionStartLine
+    && location.questionStartLine >= headingLine && location.questionStartLine < answerEndLine)) {
+    throw new Error(OVERLAPPING_QUESTION_ERROR);
+  }
+}
+
 export function replaceManagedQuestion(
   content: string,
   original: QuestionRecord,
   input: ManagedQuestionInput,
+  questions?: readonly QuestionRecord[],
 ): string {
   if (!original.id) throw new Error("등록되지 않은 문제는 전체 편집할 수 없습니다.");
-  validateManagedQuestionInput(input);
+  validateManagedQuestionInput(input, original.headingLevel);
   const newline = newlineFor(content);
   const lines = content.replaceAll("\r\n", "\n").split("\n");
   const location = original.location;
@@ -122,6 +141,7 @@ export function replaceManagedQuestion(
     edits.push({ start: location.headingLine, end: location.headingLine + 1, replacement: [`${"#".repeat(original.headingLevel)} ${cleanHeading(input.questionMarkdown)}`] });
   }
   if (input.answerMarkdown !== original.answerMarkdown) {
+    assertQuestionRangeIsSeparate(content, original, questions);
     let start = location.answerHeadingLine + 1;
     let end = location.answerEndLine;
     while (start < end && !lines[start]?.trim()) start += 1;
@@ -163,8 +183,9 @@ export function timestampsIn(content: string, question: QuestionRecord): Pick<Ma
   return { ...(createdAt ? { createdAt } : {}), ...(updatedAt ? { updatedAt } : {}) };
 }
 
-export function deleteManagedQuestion(content: string, question: QuestionRecord): string {
+export function deleteManagedQuestion(content: string, question: QuestionRecord, questions?: readonly QuestionRecord[]): string {
   if (!question.id) throw new Error("등록되지 않은 문제는 삭제할 수 없습니다.");
+  assertQuestionRangeIsSeparate(content, question, questions);
   const newline = newlineFor(content);
   const lines = content.replaceAll("\r\n", "\n").split("\n");
   const start = question.location.headingLine;
@@ -179,10 +200,11 @@ export function deleteCurrentManagedQuestion(
   original: QuestionRecord,
   parse: (content: string) => QuestionRecord[],
 ): string {
-  const current = findCurrentQuestion(parse(content), original);
+  const questions = parse(content);
+  const current = findCurrentQuestion(questions, original);
   if (!current) throw new Error("원문이 바뀌어 삭제할 문제를 안전하게 찾지 못했습니다. 다시 열어 주세요.");
   assertQuestionUnchanged(original, current);
-  return deleteManagedQuestion(content, current);
+  return deleteManagedQuestion(content, current, questions);
 }
 
 export function replaceCurrentManagedQuestion(
@@ -191,7 +213,8 @@ export function replaceCurrentManagedQuestion(
   parse: (content: string) => QuestionRecord[],
   input: ManagedQuestionInput,
 ): string {
-  const current = findCurrentQuestion(parse(content), original);
+  const questions = parse(content);
+  const current = findCurrentQuestion(questions, original);
   if (!current) throw new Error("원문이 바뀌어 문제 위치를 안전하게 찾지 못했습니다. 다시 열어 주세요.");
   assertQuestionUnchanged(original, current);
   const preserved = input.followUpLinks === undefined ? followUpLinksIn(content, current) : input.followUpLinks;
@@ -202,7 +225,7 @@ export function replaceCurrentManagedQuestion(
     ...(preserved ? { followUpLinks: preserved } : {}),
     ...(input.createdAt ? { createdAt: input.createdAt } : {}),
     ...(input.updatedAt ? { updatedAt: input.updatedAt } : {}),
-  });
+  }, questions);
 }
 
 export function validateSubjectName(value: string): string {

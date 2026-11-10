@@ -16,6 +16,19 @@ describe("keyword paths", () => {
       label: "인구 분석",
       raw: "[[개념/물량|인구 분석]]",
     });
+    expect(keywordReferencesFromInput("[[개념/물량#정의|인구 분석]]", "MIA/키워드")).toEqual([{
+      target: "개념/물량#정의",
+      label: "인구 분석",
+      raw: "[[개념/물량#정의|인구 분석]]",
+    }]);
+  });
+
+  it.each(["f[x]", "C]D", "x#y", "x|y", "x^y"])("rejects wiki-link special characters in a plain keyword: %s", (name) => {
+    expect(() => keywordReferencesFromInput(name, "MIA/키워드")).toThrow(/키워드 이름에 링크 특수문자/);
+  });
+
+  it.each(["[[ |별칭]], 정상", "[[   ]]", "[[|별칭]]", "[[]]"])("rejects a keyword wiki link with an empty target: %s", (value) => {
+    expect(() => keywordReferencesFromInput(value, "MIA/키워드")).toThrow(/키워드 링크의 대상.*입력/);
   });
 
   it("creates legacy root-link meanings in the configured folder", () => {

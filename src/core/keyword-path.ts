@@ -28,11 +28,15 @@ export function keywordReferencesFromInput(value: string, keywordFolder = ""): K
   const folder = normalizeFolder(keywordFolder);
   return splitKeywordInput(value).map((item) => item.trim()).filter(Boolean).map((item) => {
     assertSingleLine(item, "키워드");
-    const match = item.match(/^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]$/);
+    const match = item.match(/^\[\[([^\]|]*)(?:\|([^\]]+))?\]\]$/);
     if (match) {
-      const target = match[1]?.trim() || item;
+      const target = match[1]?.trim();
+      if (!target) throw new Error("키워드 링크의 대상이 비어 있습니다. 연결할 노트 이름이나 경로를 입력하세요.");
       const label = match[2]?.trim() || target.split("#").at(-1) || target;
       return { target, label, raw: item };
+    }
+    if (/[#\[\]^|]/u.test(item)) {
+      throw new Error("키워드 이름에 링크 특수문자([, ], #, |, ^)를 사용할 수 없습니다. 특수문자를 빼고 다시 입력해 주세요.");
     }
     const target = folder ? `${folder}/${item}` : item;
     return { target, label: item, raw: folder ? `[[${target}|${item}]]` : `[[${item}]]` };
