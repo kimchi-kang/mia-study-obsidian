@@ -156,10 +156,19 @@ export class FsrsService {
   isDue(state: QuestionReviewState | undefined, now = new Date()): boolean {
     if (!state || state.card.state === State.New) return false;
     const due = new Date(state.card.due).getTime();
-    if (state.card.state === State.Review && state.card.scheduled_days >= 1) {
+    if (this.isInterdayReview(state)) {
       return due < nextStudyDayStart(now, this.dayStartsAt).getTime();
     }
     return due <= now.getTime();
+  }
+
+  nextReviewAt(state: QuestionReviewState): Date {
+    const due = new Date(state.card.due);
+    return this.isInterdayReview(state) ? studyDayStart(due, this.dayStartsAt) : due;
+  }
+
+  private isInterdayReview(state: QuestionReviewState): boolean {
+    return state.card.state === State.Review && state.card.scheduled_days >= 1;
   }
 
   /** True when `reviewedAt` falls in the same study day (from dayStartsAt) as `now`. */

@@ -39,7 +39,7 @@ function configuredPath(value: string, allowInternal = false): string | null {
   return normalized;
 }
 
-function parseSettings(value: unknown): MiaSettings {
+export function parseSettings(value: unknown): MiaSettings {
   const raw = isRecord(value) ? value : {};
   const roots = Array.isArray(raw.sourceRoots)
     ? [...new Set(raw.sourceRoots

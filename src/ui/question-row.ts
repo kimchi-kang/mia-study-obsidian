@@ -1,6 +1,7 @@
 import { MarkdownRenderer } from "obsidian";
 import type { QuestionRecord } from "../core/models";
 import { withoutSourceAttribution } from "../core/source-attribution";
+import { openEditorWithNotice } from "./editor-notice";
 import { renderQuestionTitle } from "./question-title";
 import type { StudyPageContext } from "./study-page-context";
 
@@ -18,8 +19,8 @@ export function renderQuestionRow(ctx: StudyPageContext, parent: HTMLElement, qu
   const actions = row.createDiv({ cls: "mia-row-actions" });
   actions.createEl("button", { text: "학습" }).addEventListener("click", () => ctx.startReview([question.id]));
   actions.createEl("button", { text: "상세" }).addEventListener("click", () => void ctx.plugin.openQuestionDetail(question));
-  actions.createEl("button", { text: "편집" }).addEventListener("click", () => void ctx.plugin.openManagedQuestionEditor(question));
-  actions.createEl("button", { text: "연결" }).addEventListener("click", () => ctx.plugin.openFollowUpEditor(question));
+  actions.createEl("button", { text: "편집" }).addEventListener("click", () => openEditorWithNotice("문제 편집", () => ctx.plugin.openManagedQuestionEditor(question)));
+  actions.createEl("button", { text: "연결" }).addEventListener("click", () => openEditorWithNotice("문제 연결", () => ctx.plugin.openFollowUpEditor(question)));
   actions.createEl("button", { text: "삭제", cls: "mod-warning" }).addEventListener("click", () => {
     ctx.plugin.confirmDeleteQuestion(question);
   });

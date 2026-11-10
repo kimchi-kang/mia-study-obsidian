@@ -1,5 +1,5 @@
 import { Component, MarkdownRenderer, Modal, Notice, TFile } from "obsidian";
-import { keywordNotePath } from "../core/keyword-path";
+import { keywordLinkPath, keywordNotePath } from "../core/keyword-path";
 import { errorMessage } from "./error-message";
 
 export class KeywordMeaningModal extends Modal {
@@ -20,11 +20,15 @@ export class KeywordMeaningModal extends Modal {
     const revision = ++this.renderRevision;
     this.contentEl.empty();
     this.titleEl.setText(this.label);
-    const renderer = new Component();
-    this.renderer = renderer;
-    renderer.load();
-    const file = this.app.metadataCache.getFirstLinkpathDest(this.target, this.sourcePath);
+    const file = this.app.metadataCache.getFirstLinkpathDest(keywordLinkPath(this.target), this.sourcePath);
     if (file) {
+      if (file.extension !== "md") {
+        this.contentEl.createEl("p", { text: "이 링크는 노트가 아닌 파일을 가리킵니다.", cls: "mia-warning" });
+        return;
+      }
+      const renderer = new Component();
+      this.renderer = renderer;
+      renderer.load();
       try {
         const markdown = await this.app.vault.cachedRead(file);
         if (revision !== this.renderRevision) return;

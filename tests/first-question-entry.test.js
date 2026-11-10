@@ -1,9 +1,9 @@
 import { it, expect, vi } from "vitest";
-const dialogs = vi.hoisted(() => ({ questions: [], subjects: [] }));
+const dialogs = vi.hoisted(() => ({ questions: [], subjects: [], deletes: [] }));
 vi.mock("../src/ui/manage-modals", () => ({
   ManagedQuestionModal: class { constructor(...args) { dialogs.questions.push(args); } open() {} },
   SubjectEditorModal: class { constructor(...args) { dialogs.subjects.push(args); } open() {} },
-  ConfirmDeleteModal: class {}, KeywordEditorModal: class {},
+  ConfirmDeleteModal: class { constructor(...args) { dialogs.deletes.push(args); } open() {} }, KeywordEditorModal: class {},
 }));
 vi.mock("obsidian", () => ({
   Plugin: class {}, Modal: class {}, ItemView: class {}, PluginSettingTab: class {}, MarkdownView: class {},
@@ -93,4 +93,35 @@ it("keeps relative links and repairs the original subject note when retrying a c
   expect(plugin.syncSubjectNote).toHaveBeenCalledTimes(2);
   expect(plugin.updateManagedQuestion.mock.calls[1][0]).toEqual(moved);
   expect(plugin.updateManagedQuestion.mock.calls[1][1].answerMarkdown).toBe("![image](../math/image.png)");
+});
+
+it("retries a committed move from an external question without looking for a managed source bank", async () => {
+  const plugin = new MiaStudyPlugin();
+  plugin.app = { vault: { getAbstractFileByPath: vi.fn(() => null) } };
+  plugin.store = { settings: { keywordFolder: "MIA/키워드", sourceRoots: ["MIA", "회로이론"] } };
+  const original = { id: "mia-q-external", filePath: "회로이론/1장.md", subject: "미분류" };
+  const moved = { ...original, filePath: "MIA/물리/문제은행.md", subject: "물리" };
+  plugin.index = { registered: [original], questionById: () => original };
+  plugin.listSubjects = () => ["물리"];
+  plugin.loadKeywordMeanings = async () => new Map();
+  plugin.updateManagedQuestion = vi.fn().mockImplementationOnce(async (_question, _draft, persisted) => {
+    persisted(moved);
+    throw Error("destination note write failed");
+  }).mockResolvedValue(undefined);
+
+  await plugin.openManagedQuestionEditor(original);
+  const submit = dialogs.questions.at(-1)[5];
+  const draft = { subject: "물리", questionMarkdown: "질문", answerMarkdown: "정답" };
+  await expect(submit(draft)).rejects.toThrow("destination note write failed");
+  await expect(submit(draft)).resolves.toBeUndefined();
+  expect(plugin.updateManagedQuestion).toHaveBeenLastCalledWith(moved, draft, expect.any(Function));
+  expect(plugin.app.vault.getAbstractFileByPath).not.toHaveBeenCalled();
+});
+
+it("omits the subject note from deletion confirmation when no managed note exists", () => {
+  const plugin = new MiaStudyPlugin();
+  plugin.store = { settings: { sourceRoots: ["MIA"] } };
+  plugin.app = { vault: { getAbstractFileByPath: () => null } };
+  plugin.confirmDeleteQuestion({ heading: "질문", subject: "물리", filePath: "MIA/물리/문제은행.md" });
+  expect(dialogs.deletes.at(-1)[2]).not.toContain("물리 노트");
 });

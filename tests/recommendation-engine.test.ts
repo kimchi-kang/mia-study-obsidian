@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { Rating } from "ts-fsrs";
+import { Rating, State } from "ts-fsrs";
 import { FsrsService } from "../src/core/fsrs-service";
-import { QuestionRecord } from "../src/core/models";
-import { buildReviewQueue, recommendQuestions } from "../src/core/recommendation-engine";
+import { DEFAULT_STUDY_MANAGEMENT, QuestionRecord } from "../src/core/models";
+import { buildReviewQueue, planSelectedReview, recommendQuestions } from "../src/core/recommendation-engine";
 import { queryQuestions } from "../src/core/question-query";
+import { studyDayStart } from "../src/core/study-management";
 
 const fsrs = new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500 });
 
@@ -107,5 +108,41 @@ describe("buildReviewQueue", () => {
 
     expect(buildReviewQueue([newQuestion, anotherNewQuestion, dueQuestion], { due: dueReview }, fsrs, { now })
       .map((item) => item.id)).toEqual(["due", "new", "new-2"]);
+  });
+});
+
+describe("planSelectedReview", () => {
+  it("explains each omitted selection using the same study day and daily limits as the queue", () => {
+    const now = new Date(2026, 9, 17, 9);
+    const futureAt = new Date(2026, 9, 18, 15);
+    const old = fsrs.rate(undefined, Rating.Easy, new Date(2026, 8, 15, 9));
+    const reviews = {
+      future: { ...old, card: { ...old.card, state: State.Review, scheduled_days: 1, due: futureAt.toISOString() } },
+      due: old,
+      introduced: fsrs.rate(undefined, Rating.Easy, new Date(2026, 9, 17, 8)),
+    };
+    const management = { ...DEFAULT_STUDY_MANAGEMENT, newCardsPerDay: 1, reviewsPerDay: 1 };
+    const options = { management, now };
+    const questions = [question("future"), question("due"), question("fresh")];
+    const result = planSelectedReview(questions, ["future", "due", "fresh", "missing", "missing"], reviews, fsrs, options);
+    expect(result.queue).toEqual(buildReviewQueue(questions, reviews, fsrs, options));
+    expect(result.queue).toEqual([]);
+    expect(result.exclusions).toEqual(expect.arrayContaining([
+      { id: "future", reason: "not-due", nextDue: studyDayStart(futureAt, management.dayStartsAt) },
+      { id: "due", reason: "review-limit" },
+      { id: "fresh", reason: "new-limit" },
+      { id: "missing", reason: "missing" },
+    ]));
+    expect(result.exclusions).toHaveLength(4);
+  });
+
+  it("reports the review cap for a new card blocked only by the shared review budget", () => {
+    const now = new Date(2026, 9, 17, 9);
+    const learning = fsrs.rate(undefined, Rating.Again, new Date(now.getTime() - 120_000));
+    const management = { ...DEFAULT_STUDY_MANAGEMENT, reviewsPerDay: 0, newCardsPerDay: 3 };
+    const questions = [question("fresh"), question("learning")];
+    const result = planSelectedReview(questions, ["fresh", "learning"], { learning }, fsrs, { now, management });
+    expect(result.queue.map(item => item.id)).toEqual(["learning"]);
+    expect(result.exclusions).toEqual([{ id: "fresh", reason: "review-limit" }]);
   });
 });

@@ -23,8 +23,8 @@ export interface ManagedQuestionDraft extends ManagedQuestionInput {
   keywordMeanings: Array<{ target: string; label: string; meaning: string; preserveExistingWhenEmpty?: boolean }>;
 }
 
-export function validateManagedQuestionInput(input: ManagedQuestionInput, headingLevel = 3): void {
-  const answerMarkdown = input.answerMarkdown.trim();
+function validateManagedAnswer(markdown: string, headingLevel: number): void {
+  const answerMarkdown = markdown.trim();
   const answerLines = answerMarkdown.replaceAll("\r\n", "\n").split("\n");
   const fenced = fencedCodeLines([...answerLines, ""]);
   if (fenced.at(-1)) {
@@ -36,11 +36,14 @@ export function validateManagedQuestionInput(input: ManagedQuestionInput, headin
     }
     throw new Error(`정답에서는 ${"#".repeat(headingLevel + 1)} 이하의 제목만 사용할 수 있습니다. 문제 제목과 같거나 더 큰 제목은 문제 구역을 분리합니다.`);
   }
-  // The parser starts a new question at every `> [!question]` outside code and
-  // reads `> [!mia]` inside a question callout as its metadata block.
+  // The parser starts a new question at every `> [!question]` outside code.
   if (answerLines.some((line, index) => !fenced[index] && QUESTION_CALLOUT.test(line))) {
     throw new Error("정답에 `> [!question]` 줄이 있으면 별도 문제로 인식됩니다. 코드 블록 안에 넣거나 표기를 바꿔 주세요.");
   }
+}
+
+export function validateManagedQuestionInput(input: ManagedQuestionInput, headingLevel = 3, writesAnswer = true): void {
+  if (writesAnswer) validateManagedAnswer(input.answerMarkdown, headingLevel);
   if (quoteCallout(input.questionMarkdown).some((line) => QUESTION_CALLOUT.test(line) || MIA_CALLOUT.test(line))) {
     throw new Error("질문 줄을 `[!question]` 또는 `[!mia]`로 시작하면 문제 구역이 분리됩니다. 표기를 바꿔 주세요.");
   }
@@ -119,6 +122,20 @@ function assertQuestionRangeIsSeparate(content: string, question: QuestionRecord
   }
 }
 
+export interface ManagedQuestionEditContext {
+  content: string;
+  original: QuestionRecord;
+  questions: readonly QuestionRecord[] | undefined;
+  reinsertAnswer?: boolean;
+}
+
+export function validateManagedQuestionEdit(input: ManagedQuestionInput, context: ManagedQuestionEditContext): void {
+  const { content, original, questions, reinsertAnswer } = context;
+  const writesAnswer = reinsertAnswer || input.answerMarkdown !== original.answerMarkdown;
+  if (writesAnswer) assertQuestionRangeIsSeparate(content, original, questions);
+  validateManagedQuestionInput(input, original.headingLevel, writesAnswer);
+}
+
 export function replaceManagedQuestion(
   content: string,
   original: QuestionRecord,
@@ -126,7 +143,7 @@ export function replaceManagedQuestion(
   questions?: readonly QuestionRecord[],
 ): string {
   if (!original.id) throw new Error("등록되지 않은 문제는 전체 편집할 수 없습니다.");
-  validateManagedQuestionInput(input, original.headingLevel);
+  validateManagedQuestionEdit(input, { content, original, questions });
   const newline = newlineFor(content);
   const lines = content.replaceAll("\r\n", "\n").split("\n");
   const location = original.location;
@@ -141,7 +158,6 @@ export function replaceManagedQuestion(
     edits.push({ start: location.headingLine, end: location.headingLine + 1, replacement: [`${"#".repeat(original.headingLevel)} ${cleanHeading(input.questionMarkdown)}`] });
   }
   if (input.answerMarkdown !== original.answerMarkdown) {
-    assertQuestionRangeIsSeparate(content, original, questions);
     let start = location.answerHeadingLine + 1;
     let end = location.answerEndLine;
     while (start < end && !lines[start]?.trim()) start += 1;

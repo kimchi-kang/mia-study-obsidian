@@ -3,7 +3,7 @@ import { Rating, State } from "ts-fsrs";
 import { FsrsService } from "../src/core/fsrs-service";
 import { QuestionIndex } from "../src/services/question-index";
 
-const modalBoundary = vi.hoisted(() => ({ instances: [] }));
+const modalBoundary = vi.hoisted(() => ({ instances: [], notices: [] }));
 
 // Only Obsidian's UI boundary is replaced; the view, timers and FSRS are real.
 vi.mock("obsidian", () => {
@@ -73,7 +73,7 @@ vi.mock("obsidian", () => {
       addChild(child) { this.children.push(child); child.load(); return child; }
       removeChild(child) { child.unload(); this.children = this.children.filter(item => item !== child); return child; }
     },
-    Modal: class { constructor(app) { this.app=app; this.contentEl=new Element(); this.modalEl=new Element(); this.containerEl=new Element(); this.close=vi.fn(this.close.bind(this)); modalBoundary.instances.push(this); } setTitle() {} open = vi.fn(); close() {} }, Notice: class {}, Platform: { isMobile: false },
+    Modal: class { constructor(app) { this.app=app; this.contentEl=new Element(); this.modalEl=new Element(); this.containerEl=new Element(); this.close=vi.fn(this.close.bind(this)); modalBoundary.instances.push(this); } setTitle() {} open = vi.fn(); close() {} }, Notice: class { constructor(message) { modalBoundary.notices.push(message); } }, Platform: { isMobile: false },
     MarkdownRenderer: { render: async (_app, text, element) => { element.text = text; } },
   };
 });
@@ -244,7 +244,121 @@ describe("Obsidian learning settings integration", () => {
   });
 });
 
+describe("committing vault folder settings", () => {
+  async function folderSettings() {
+    const ui = setup({ start: false });
+    let disk = null;
+    const saveData = vi.fn(async value => { disk = structuredClone(value); });
+    ui.plugin.store = new MiaDataStore({ loadData: async () => structuredClone(disk), saveData });
+    await ui.plugin.store.load();
+    const update = vi.spyOn(ui.plugin.store, "updateSettings");
+    ui.plugin.index.rebuild = vi.fn();
+    const tab = new MiaSettingTab({}, ui.plugin);
+    tab.display();
+    const field = label => tab.containerEl.children.find(row => row.children.some(child => child.text === label))
+      .querySelectorAll("textarea,input")[0];
+    return { tab, store: ui.plugin.store, update, saveData, rebuild: ui.plugin.index.rebuild, roots: field("문제 폴더"), keywords: field("키워드 노트 폴더") };
+  }
+
+  it.each([["roots", "전자기학", 1], ["keywords", "키워드", 0]])("writes %s once on change and never while typing", async (key, value, scans) => {
+    const ui = await folderSettings();
+    const field = ui[key];
+    for (let length = 0; length <= value.length; length += 1) {
+      field.value = value.slice(0, length);
+      await field.handlers.get("input")?.(field.value);
+    }
+    expect(ui.update).not.toHaveBeenCalled();
+    expect(ui.saveData).not.toHaveBeenCalled();
+    expect(ui.rebuild).not.toHaveBeenCalled();
+    await field.handlers.get("change")?.();
+    await field.handlers.get("change")?.();
+    expect(ui.update).toHaveBeenCalledOnce();
+    expect(ui.saveData).toHaveBeenCalledOnce();
+    expect(ui.rebuild).toHaveBeenCalledTimes(scans);
+  });
+
+  it.each([
+    ["roots", "전자기학\n../잘못된 폴더", "전자기학", 1],
+    ["roots", "MIA\n../잘못된 폴더", "MIA", 0],
+    ["keywords", ".obsidian/키워드", "MIA/키워드", 0],
+  ])("restores the saved %s path and explains a normalized input %j", async (key, raw, saved, writes) => {
+    const ui = await folderSettings();
+    const field = ui[key];
+    const before = modalBoundary.notices.length;
+    field.value = raw;
+    await field.handlers.get("change")?.();
+    expect(field.value).toBe(saved);
+    expect(ui.update).toHaveBeenCalledTimes(writes);
+    expect(ui.rebuild).toHaveBeenCalledTimes(writes);
+    expect(modalBoundary.notices.slice(before)).toEqual([expect.stringContaining(raw)]);
+    expect(modalBoundary.notices.at(-1)).toContain(saved);
+  });
+
+  it("commits both folder fields on hide without resubmitting an in-flight change", async () => {
+    const ui = await folderSettings();
+    ui.roots.value = "전자기학\n회로이론";
+    ui.keywords.value = "개념/키워드";
+    void ui.roots.handlers.get("change")?.();
+    ui.tab.hide();
+    await ui.tab.settingsWrites;
+    expect(ui.store.settings.sourceRoots).toEqual(["전자기학", "회로이론"]);
+    expect(ui.store.settings.keywordFolder).toBe("개념/키워드");
+    expect(ui.update).toHaveBeenCalledTimes(2);
+    expect(ui.rebuild).toHaveBeenCalledOnce();
+  });
+});
+
 describe("study view scheduling integration", () => {
+  it("explains a future selected review and opens it without grades", async () => {
+    const ui = setup({ start: false });
+    const review = ui.plugin.fsrs.rate(undefined, Rating.Easy);
+    ui.reviews.q = review;
+    ui.view.startReview(["q"]);
+    expect(ui.content()).toContain("복습 기한 전");
+    const next = studyDayStart(new Date(review.card.due), DEFAULT_SETTINGS.studyManagement.dayStartsAt);
+    expect(ui.content()).toContain(next.toLocaleString("ko-KR"));
+    await ui.exactButton("암기 모드로 보기").click();
+    expect(ui.content()).toContain("암기 모드 · 1 / 1");
+    expect(ui.content()).toContain("모범 답안");
+    for (const label of ["못 암기", "애매", "암기", "너무 쉬움"]) expect(ui.exactButton(label)).toBeUndefined();
+    expect(ui.reviews.q).toEqual(review);
+    expect(ui.plugin.studyUi.resume).toBeNull();
+  });
+
+  it("counts mixed reasons only when the selected recall queue is empty", () => {
+    const ui = setup({ start: false });
+    const [template] = ui.plugin.index.registered;
+    for (const id of ["second-new", "review"]) ui.plugin.index.registered.push({ ...template, id, heading: id });
+    ui.reviews.review = ui.plugin.fsrs.rate(undefined, Rating.Easy, new Date(Date.now() - 30 * 86_400_000));
+    const management = ui.plugin.store.settings.studyManagement;
+    management.newCardsPerDay = 0;
+    management.reviewsPerDay = 0;
+    const ids = ["q", "second-new", "review", "missing"];
+    ui.view.startReview(ids);
+    expect(ui.content()).toContain("오늘 새 문제 한도 도달 · 2개");
+    expect(ui.content()).toContain("오늘 복습 한도 도달 · 1개");
+    expect(ui.content()).toContain("지정한 문제를 찾을 수 없음 · 1개");
+    expect(ui.exactButton("암기 모드로 보기").disabled).toBe(false);
+
+    management.reviewsPerDay = 1;
+    ui.view.startReview(ids);
+    expect(ui.view.getState().queue).toEqual(["review"]);
+    expect(ui.exactButton("암기 모드로 보기")).toBeUndefined();
+    expect(ui.content()).not.toContain("오늘 새 문제 한도 도달");
+  });
+
+  it("distinguishes missing selections from the unchanged general empty screen", () => {
+    const ui = setup({ start: false });
+    ui.view.startReview(["missing"]);
+    expect(ui.content()).toContain("지정한 문제를 찾을 수 없음 · 1개");
+    expect(ui.exactButton("암기 모드로 보기").disabled).toBe(true);
+
+    ui.plugin.index.registered.splice(0);
+    ui.view.startReview();
+    expect(ui.content()).toContain("문제를 등록하거나 다음 복습 시각에 다시 확인하세요.");
+    expect(ui.exactButton("암기 모드로 보기")).toBeUndefined();
+  });
+
   it("disables global and subject recall at the daily limit while leaving browse available", async () => {
     const ui = setup({ start: false });
     ui.plugin.store.settings.studyManagement.newCardsPerDay = 0;
@@ -1180,6 +1294,28 @@ describe("dashboard task guidance", () => {
     expect(modalBoundary.instances.length).toBe(before + 1);
     expect(modalBoundary.instances.at(-1)).toBeInstanceOf(StudyManagementModal);
   });
+});
+
+it.each([
+  ["questions", "편집", "문제 편집"],
+  ["questions", "연결", "문제 연결"],
+  ["questions", "질문 추가", "질문 추가"],
+  ["dashboard", "질문 추가", "질문 추가"],
+  ["dashboard", "첫 질문 추가", "질문 추가"],
+])("reports editor opening failures on %s for %s", async (page, button, label) => {
+  const ui = setup({ start: false });
+  const failure = new Error("원본이 바뀌었습니다.");
+  const rejection = Promise.reject(failure);
+  void rejection.catch(() => {});
+  ui.plugin.openManagedQuestionEditor.mockReturnValue(rejection);
+  ui.plugin.openFollowUpEditor = vi.fn(() => { throw failure; });
+  if (button === "첫 질문 추가") ui.plugin.index.registered.splice(0);
+  if (page === "questions") ui.view.showQuestions("all");
+  else ui.view.showDashboard();
+
+  const before = modalBoundary.notices.length;
+  await expect(ui.exactButton(button).click()).resolves.toBeUndefined();
+  expect(modalBoundary.notices.slice(before)).toEqual([`${label} 열기 실패: 원본이 바뀌었습니다.`]);
 });
 
 

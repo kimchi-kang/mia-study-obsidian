@@ -6,9 +6,9 @@ import type MiaStudyPlugin from "../main";
 import { StudyGrade } from "../core/fsrs-service";
 import { planLearningQueue } from "../core/learning-queue";
 import { KeywordReference, QuestionRecord, QuestionReviewState } from "../core/models";
-import { MiaRoute, MiaSessionMode, ReviewCheckpoint, parseMiaNavigationState } from "../core/navigation";
+import { DEFAULT_MIA_NAVIGATION_STATE, MiaRoute, MiaSessionMode, ReviewCheckpoint, parseMiaNavigationState } from "../core/navigation";
 import type { ReviewFilter } from "../core/question-query";
-import { buildReviewQueue, recommendQuestions } from "../core/recommendation-engine";
+import { buildReviewQueue, planSelectedReview, recommendQuestions, type ReviewQueueExclusion, type ReviewQueueOptions } from "../core/recommendation-engine";
 import { errorMessage } from "./error-message";
 import { bindKeyboardViewport, KeyboardViewportBinding } from "./mobile-keyboard";
 import { StudyResult, StudyResultModal } from "./study-result-modal";
@@ -27,6 +27,11 @@ import type { StudyPageContext } from "./study-page-context";
 import { renderWeakness } from "./weakness-page";
 
 export const MIA_VIEW_TYPE = "mia-study-view";
+
+interface BlockedSelection {
+  ids: string[];
+  exclusions: ReviewQueueExclusion[];
+}
 
 function formatInterval(due: Date, days: number, fixedMinutes?: number, now = new Date()): string {
   if (fixedMinutes !== undefined) {
@@ -58,6 +63,8 @@ export class MiaStudyView extends ItemView {
   private queueIndex = 0;
   private answerVisible = false;
   private sessionMode: MiaSessionMode = "recall";
+  private blockedSelection: BlockedSelection | null = null;
+  private readOnlyBrowse = false;
   private lastRated: { id: string; queueIndex: number; queueBefore: string[]; savedState: QuestionReviewState } | null = null;
   private isMutatingReview = false;
   private readonly questionList = new QuestionListState();
@@ -179,7 +186,7 @@ export class MiaStudyView extends ItemView {
     this.navigate("dashboard");
   }
 
-  startReview(questionIds?: string[], mode: MiaSessionMode = "recall"): void {
+  startReview(questionIds?: string[], mode: MiaSessionMode = "recall", withoutGrading = false): void {
     if (this.reviewSavePending()) return;
     this.clearResultPopup();
     if (this.readingTimer !== null) { window.clearTimeout(this.readingTimer); this.readingTimer = null; }
@@ -192,10 +199,21 @@ export class MiaStudyView extends ItemView {
     this.undoFeedback = "";
     this.stateRestored = true;
     const questions = this.plugin.index.registered;
+    const { reviews } = this.plugin.store;
+    const fsrs = this.plugin.fsrs;
     const requestedIds = questionIds ? new Set(questionIds) : null;
     const scope = requestedIds ? questions.filter((question) => requestedIds.has(question.id)) : questions;
     const sequential = mode === "browse" && this.plugin.studyUi.appearance.memorizationOrder === "sequential";
-    const eligible = buildReviewQueue(scope, this.plugin.store.reviews, this.plugin.fsrs, mode === "browse" ? (sequential ? {} : { random: Math.random }) : { management: this.plugin.store.settings.studyManagement });
+    this.readOnlyBrowse = mode === "browse" && withoutGrading;
+    const options: ReviewQueueOptions = { now: new Date() };
+    if (mode === "recall") options.management = this.plugin.store.settings.studyManagement;
+    else {
+      if (!sequential) options.random = Math.random;
+      if (this.readOnlyBrowse) options.includeFuture = true;
+    }
+    const selected = mode === "recall" && requestedIds?.size ? planSelectedReview(questions, requestedIds, reviews, fsrs, options) : null;
+    const eligible = selected?.queue ?? buildReviewQueue(scope, reviews, fsrs, options);
+    this.blockedSelection = selected && !eligible.length && requestedIds ? { ids: [...requestedIds], exclusions: selected.exclusions } : null;
     const eligibleIds = new Set(eligible.map((question) => question.id));
     this.queue = (sequential ? scope.filter((question) => question.id && eligibleIds.has(question.id)) : eligible)
       .map((question) => question.id);
@@ -216,6 +234,12 @@ export class MiaStudyView extends ItemView {
   }
 
   getState(): Record<string, unknown> {
+    // The fallback is read-only and must not restore as a gradable browse session.
+    if (this.readOnlyBrowse) return { ...DEFAULT_MIA_NAVIGATION_STATE, route: this.route === "study" ? this.sessionOrigin : this.route };
+    return this.navigationState();
+  }
+
+  private navigationState(): Record<string, unknown> {
     return {
       route: this.route,
       queue: [...this.queue],
@@ -249,6 +273,8 @@ export class MiaStudyView extends ItemView {
     const sessionChanged = next.sessionMode !== this.sessionMode || next.queue.length !== this.queue.length
       || next.queue.some((id, index) => id !== this.queue[index]);
     if (sessionChanged) {
+      this.blockedSelection = null;
+      this.readOnlyBrowse = false;
       // Workspace history can restore a different queue into the same view.
       // Position-based baselines and undo belong only to their original session.
       this.clearResultPopup();
@@ -310,7 +336,7 @@ export class MiaStudyView extends ItemView {
     void this.leaf.setViewState({
       type: MIA_VIEW_TYPE,
       active: true,
-      state: { ...this.getState(), route },
+      state: { ...this.navigationState(), route },
     });
     if (route === "dashboard") {
       void this.plugin.studyUi.load().then(() => {
@@ -402,6 +428,7 @@ export class MiaStudyView extends ItemView {
   }
 
   private saveStudyPosition(expectedResume?: string, expectedRevision?: number): void {
+    if (this.readOnlyBrowse || this.blockedSelection) return;
     if (expectedRevision !== undefined && this.plugin.studyUi.resumeRevision !== expectedRevision) return;
     if (expectedResume !== undefined && JSON.stringify(this.plugin.studyUi.resume) !== expectedResume) return;
     if (!this.closed) this.captureReadingPosition();
@@ -432,7 +459,9 @@ export class MiaStudyView extends ItemView {
       const originalIndex = saved.queue.slice(0, saved.queueIndex).filter(exists).length;
       const index = this.restoredQueueIndex(queue, originalIndex, saved.reviewCheckpoint);
       const advanced = index !== originalIndex;
-      const sameSession = this.queueIndex === index && this.sessionMode === saved.sessionMode && this.queue.length === queue.length && this.queue.every((id, position) => id === queue[position]);
+      const sameSession = !this.readOnlyBrowse && this.queueIndex === index && this.sessionMode === saved.sessionMode && this.queue.length === queue.length && this.queue.every((id, position) => id === queue[position]);
+      this.readOnlyBrowse = false;
+      this.blockedSelection = null;
       if (!sameSession) {
         this.lastRated = null; this.sessionBaselines.clear(); this.sessionAttempts.clear();
         this.sessionGrades.clear(); this.sessionSkipped.clear(); this.sessionStartedAt = Date.now();
@@ -735,7 +764,8 @@ export class MiaStudyView extends ItemView {
       const result = this.studyResult();
       const done = root.createDiv({ cls: "mia-primary-card" });
       done.createEl("h3", { text: this.queue.length ? "학습 완료" : "학습할 문제가 없습니다" });
-      done.createEl("p", { text: this.queue.length
+      if (this.blockedSelection && !this.queue.length) this.renderBlockedSelection(done, this.blockedSelection);
+      else done.createEl("p", { text: this.queue.length
         ? `${result.total}문제 · 못 암기 ${result.again} · 애매 ${result.hard} · 암기 ${result.good} · 너무 쉬움 ${result.easy} · 건너뜀 ${result.skipped}`
         : "문제를 등록하거나 다음 복습 시각에 다시 확인하세요." });
       if (this.lastRated) {
@@ -745,7 +775,7 @@ export class MiaStudyView extends ItemView {
         done.createEl("button", { text: "같은 범위 다시 학습", cls: "mod-cta" }).addEventListener("click", () => this.restartSession());
       }
       done.createEl("button", { text: "학습 전 화면으로" }).addEventListener("click", () => this.returnToSessionOrigin());
-      if (this.queue.length && !this.resultShown) {
+      if (this.queue.length && !this.resultShown && !this.readOnlyBrowse) {
         this.resultTimer = window.setTimeout(() => {
           this.resultTimer = null;
           this.resultShown = true;
@@ -883,8 +913,26 @@ export class MiaStudyView extends ItemView {
       }
     }
     const dock = root.createDiv({ cls: "mia-study-dock" });
-    this.renderRatings(dock, question);
+    if (!this.readOnlyBrowse) this.renderRatings(dock, question);
     this.renderStudyUtilities(dock, previous, next);
+  }
+
+  private renderBlockedSelection(parent: HTMLElement, { ids, exclusions }: BlockedSelection): void {
+    const reasons = [
+      ["not-due", "복습 기한 전"], ["new-limit", "오늘 새 문제 한도 도달"],
+      ["review-limit", "오늘 복습 한도 도달"], ["missing", "지정한 문제를 찾을 수 없음"],
+    ] as const;
+    for (const [reason, label] of reasons) {
+      const matching = exclusions.filter(item => item.reason === reason);
+      if (!matching.length) continue;
+      const nextDue = matching.flatMap(item => item.reason === "not-due" ? [item.nextDue] : [])
+        .sort((left, right) => left.getTime() - right.getTime())[0];
+      const time = nextDue ? ` · 가장 이른 다음 복습 ${nextDue.toLocaleString("ko-KR")}` : "";
+      parent.createEl("p", { text: `${label} · ${matching.length}개${time}`, cls: "mia-muted" });
+    }
+    const browse = parent.createEl("button", { text: "암기 모드로 보기", cls: "mod-cta" });
+    browse.disabled = !ids.some(id => this.plugin.index.questionById(id));
+    browse.addEventListener("click", () => this.startReview(ids, "browse", true));
   }
 
   private renderStudyUtilities(dock: HTMLElement, previous: HTMLButtonElement, next: HTMLButtonElement): void {
@@ -900,14 +948,14 @@ export class MiaStudyView extends ItemView {
     back.addEventListener("click", () => previous.click());
     if (this.lastRated) {
       this.renderUndoButton(utility, "mia-dock-undo");
-    } else {
+    } else if (!this.readOnlyBrowse) {
       const help = utility.createEl("button", { text: "조작 안내", cls: "mia-controls-help" });
       help.addEventListener("click", () => new StudyControlsModal(this.app).open());
     }
     const forward = utility.createEl("button", { text: "다음 →", cls: "mia-thumb-next" });
     forward.setAttr("aria-label", "평가 없이 다음 문제");
     forward.addEventListener("click", () => next.click());
-    dock.createEl("p", { text: "Space 정답 · 1–4 평가 · ← → 이동 · U 취소", cls: "mia-shortcut-hint" });
+    dock.createEl("p", { text: this.readOnlyBrowse ? "평가 없이 보기 · ← → 이동" : "Space 정답 · 1–4 평가 · ← → 이동 · U 취소", cls: "mia-shortcut-hint" });
     dock.createEl("p", { text: "화면 왼쪽에서 오른쪽으로 쓸면 뒤로가기 · 문제 이동은 버튼으로", cls: "mia-touch-hint" });
   }
 
@@ -1120,6 +1168,7 @@ export class MiaStudyView extends ItemView {
   }
 
   private refreshLearningQueue(): Date | null {
+    if (this.readOnlyBrowse) return null;
     const scope = [...new Set([...this.sessionSeed, ...this.queue])].filter((id) => this.plugin.index.questionById(id));
     const plan = planLearningQueue(this.queue, this.queueIndex, scope, this.plugin.store.reviews, this.sessionSkipped);
     // Revisiting history must not shift the positions of recorded attempts.
@@ -1143,7 +1192,7 @@ export class MiaStudyView extends ItemView {
   private restartSession(): void {
     const seed = [...this.sessionSeed];
     const mode = this.sessionMode;
-    this.startReview(seed, mode);
+    this.startReview(seed, mode, this.readOnlyBrowse);
   }
 
   private returnToSessionOrigin(): void {

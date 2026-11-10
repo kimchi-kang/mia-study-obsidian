@@ -5,6 +5,7 @@ import type { ReviewFilter } from "../core/question-query";
 import { buildReviewQueue } from "../core/recommendation-engine";
 import { studyDayStart } from "../core/study-management";
 import { errorMessage } from "./error-message";
+import { openEditorWithNotice } from "./editor-notice";
 import { renderQuestionHeading } from "./question-row";
 import { ReviewConflictModal } from "./review-conflict-modal";
 import { SettingsConflictModal } from "./settings-conflict-modal";
@@ -75,7 +76,8 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
   if (limited) action.createEl("p", { text: "대기 중인 문제는 있지만 하루 학습량 제한으로 시험 모드에 나오지 않습니다. 학습 설정에서 하루에 새로 배울 문제 수·하루 복습량을 확인하세요.", cls: "mia-muted" });
   const actions = action.createDiv({ cls: "mia-inline-actions" });
   if (empty) {
-    actions.createEl("button", { text: "첫 질문 추가", cls: "mod-cta" }).addEventListener("click", () => void ctx.plugin.openManagedQuestionEditor());
+    actions.createEl("button", { text: "첫 질문 추가", cls: "mod-cta" }).addEventListener("click", () =>
+      openEditorWithNotice("질문 추가", () => ctx.plugin.openManagedQuestionEditor()));
     if (ctx.plugin.index.candidates.length) actions.createEl("button", { text: "등록할 질문 확인" }).addEventListener("click", () => ctx.navigate("questions"));
   } else {
     const start = actions.createEl("button", { text: "시험 모드 시작", cls: "mod-cta" });
@@ -126,7 +128,8 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
   renderProgressGuidance(ctx, root);
   const manage = root.createDiv({ cls: "mia-manage-actions" });
   manage.createEl("button", { text: "과목 추가" }).addEventListener("click", () => ctx.plugin.openSubjectEditor());
-  manage.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () => void ctx.plugin.openManagedQuestionEditor());
+  manage.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () =>
+    openEditorWithNotice("질문 추가", () => ctx.plugin.openManagedQuestionEditor()));
   manage.createEl("button", { text: "키워드 추가" }).addEventListener("click", () => ctx.plugin.openKeywordEditor());
   manage.createEl("button", { text: "출력" }).addEventListener("click", () => ctx.plugin.openSubjectExport());
   if (ctx.plugin.index.diagnostics.length) {

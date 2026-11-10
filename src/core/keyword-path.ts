@@ -43,10 +43,14 @@ export function keywordReferencesFromInput(value: string, keywordFolder = ""): K
   });
 }
 
+export function keywordLinkPath(target: string): string {
+  return target.split("#")[0]?.trim() ?? "";
+}
+
 export function keywordNotePath(target: string, label: string, keywordFolder: string): string {
   assertSingleLine(target, "키워드 경로");
   assertSingleLine(label, "키워드 이름");
-  const targetPath = target.split("#")[0]?.trim() || label.trim();
+  const targetPath = keywordLinkPath(target) || label.trim();
   const explicitPath = targetPath.includes("/") || targetPath.includes("\\") || targetPath.endsWith(".md");
   const folder = normalizeFolder(keywordFolder);
   // Use the link target, not its display label, so `[[가우스 법칙|가우스]]` saves
