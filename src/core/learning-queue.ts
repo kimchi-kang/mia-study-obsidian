@@ -1,4 +1,5 @@
 import { State } from "ts-fsrs";
+import { isInterdayReview } from "./fsrs-service";
 import { QuestionReviewState } from "./models";
 
 /** Reinsert only learning steps, never a future long-term review. */
@@ -12,7 +13,8 @@ export function planLearningQueue(
 ): { queue: string[]; nextDue: Date | null } {
   const learners = [...new Set(scope)].flatMap((id) => {
     const card = reviews[id]?.card;
-    if (skipped.has(id) || !card || (card.state !== State.Learning && card.state !== State.Relearning)) return [];
+    if (skipped.has(id) || !card || isInterdayReview(card)
+      || (card.state !== State.Learning && card.state !== State.Relearning)) return [];
     return [{ id, due: new Date(card.due) }];
   }).sort((left, right) => left.due.getTime() - right.due.getTime());
   const ready = learners.filter(({ due }) => due.getTime() <= now.getTime()).map(({ id }) => id);

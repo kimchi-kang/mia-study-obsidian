@@ -8,6 +8,19 @@ const start = new Date("2026-10-15T00:00:00Z");
 const none = new Set<string>();
 
 describe("Anki-style learning steps within a session", () => {
+  it.each([State.Learning, State.Relearning])("does not wait for or reinsert an interday card in state %s", (state) => {
+    const fixed = new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500, gradeIntervalsMinutes: { 1: 1440 } });
+    const previous = state === State.Relearning
+      ? fixed.rate(undefined, Rating.Easy, new Date(start.getTime() - 30 * 86400000), "a")
+      : undefined;
+    const review = fixed.rate(previous, Rating.Again, start, "a");
+    expect(review.card).toMatchObject({ state, scheduled_days: 1 });
+    const completed = { queue: ["a"], nextDue: null };
+    const due = new Date(review.card.due);
+    expect([start, due].map(now => planLearningQueue(["a"], 1, ["a"], { a: review }, none, now)))
+      .toEqual([completed, completed]);
+  });
+
   it("waits for the scheduled step, then reintroduces the card ahead of new cards", () => {
     const review = fsrs.rate(undefined, Rating.Again, start);
     const due = new Date(review.card.due);

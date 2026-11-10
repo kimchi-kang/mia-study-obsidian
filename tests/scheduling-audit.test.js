@@ -44,6 +44,96 @@ import { planLearningQueue } from '../src/core/learning-queue';
 import { DEFAULT_STUDY_MANAGEMENT } from '../src/core/models';
 import { parsePluginData } from '../src/services/data-store';
 
+const fixedDayCode = buildSync({
+  stdin: { resolveDir: process.cwd(), contents: `
+    import { FsrsService } from "./src/core/fsrs-service";
+    import { DEFAULT_SETTINGS } from "./src/core/models";
+    const [grade, days, hour, minute, simulate] = JSON.parse(process.argv[1]);
+    const scheduler = new FsrsService({ ...DEFAULT_SETTINGS, gradeIntervalsMinutes: { [grade]: days * 1440 } });
+    const session = day => new Date(2026, 9, 20 + day, hour, minute);
+    const rate = (previous, day) => scheduler.rate(previous, grade, new Date(+session(day) + 5 * 60000), "fixed");
+    let review = rate(undefined, 0);
+    if (!simulate) {
+      const stored = JSON.parse(JSON.stringify(review));
+      const baseline = new FsrsService(DEFAULT_SETTINGS).rate(undefined, grade, new Date(+session(0) + 5 * 60000), "fixed");
+      const unchanged = { ...baseline, card: { ...baseline.card, due: stored.card.due, scheduled_days: days } };
+      const next = scheduler.nextReviewAt(stored);
+      console.log(JSON.stringify({
+        stored, unchanged, next, dueAtStudyTime: scheduler.isDue(stored, session(days)),
+        beforeDay: scheduler.isDue(stored, new Date(2026, 9, 20 + days, 3, 59, 59, 999)),
+      }));
+    } else {
+      let late = 0, early = 0, visits = 0, expectedDay = days;
+      for (let day = 1; day <= 64; day++) {
+        if (!scheduler.isDue(review, session(day))) continue;
+        late += Number(day > expectedDay);
+        early += Number(day < expectedDay);
+        visits++;
+        review = rate(review, day);
+        expectedDay = day + days;
+      }
+      console.log(JSON.stringify({ late, early, visits }));
+    }
+  ` },
+  bundle: true, packages: 'external', platform: 'node', format: 'esm', write: false,
+}).outputFiles[0].text;
+
+function fixedDayInSeoul(args) {
+  return JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', fixedDayCode, JSON.stringify(args)], {
+    cwd: process.cwd(), env: { ...process.env, TZ: 'Asia/Seoul' }, encoding: 'utf8',
+  }));
+}
+
+it('makes the fixed three-day Good card due on its Seoul study day without changing the saved state', () => {
+  const { stored, unchanged, next, dueAtStudyTime, beforeDay } = fixedDayInSeoul([Rating.Good, 3, 9, 0, false]);
+  expect(stored.card).toMatchObject({ state: State.Learning, scheduled_days: 3, due: '2026-10-23T00:05:00.000Z' });
+  expect(stored).toEqual(unchanged);
+  expect({ dueAtStudyTime, beforeDay, next }).toEqual({
+    dueAtStudyTime: true, beforeDay: false, next: '2026-10-22T19:00:00.000Z',
+  });
+});
+
+it.each([
+  [Rating.Good, 3, 9, 0], [Rating.Good, 3, 23, 30], [Rating.Good, 3, 3, 30],
+  [Rating.Hard, 1, 9, 0], [Rating.Hard, 1, 23, 30], [Rating.Hard, 1, 3, 30],
+])('has no late fixed reviews over 64 days in Seoul (grade %s, %s days, %s:%s)', (grade, days, hour, minute) => {
+  expect(fixedDayInSeoul([grade, days, hour, minute, true])).toEqual({
+    late: 0, early: 0, visits: Math.floor(64 / days),
+  });
+});
+
+it('keeps an exact due timestamp for a fixed 23-hour learning interval', () => {
+  const scheduler = new FsrsService({ ...DEFAULT_SETTINGS, gradeIntervalsMinutes: { 3: 1380 } });
+  const review = scheduler.rate(undefined, Rating.Good, new Date(2026, 9, 20, 9, 5), 'sub-day');
+  const due = new Date(review.card.due);
+  expect(review.card).toMatchObject({ state: State.Learning, scheduled_days: 0 });
+  expect(scheduler.nextReviewAt(review)).toEqual(due);
+  expect(scheduler.isDue(review, new Date(+due - 1))).toBe(false);
+  expect(scheduler.isDue(review, due)).toBe(true);
+});
+
+it.each([
+  ['default', DEFAULT_STUDY_MANAGEMENT],
+  ...[['30m', '12h'], ['23h'], ['1d', '2d']].map(steps =>
+    [steps.join(' '), { ...DEFAULT_STUDY_MANAGEMENT, learningSteps: steps, relearningSteps: steps }]),
+])('never saves a day-long Learning or Relearning state without fixed intervals (%s)', (_label, studyManagement) => {
+  const scheduler = new FsrsService({ ...DEFAULT_SETTINGS, studyManagement });
+  const grades = [Rating.Again, Rating.Hard, Rating.Good, Rating.Good, Rating.Easy, Rating.Again, Rating.Good, Rating.Easy];
+  const counts = { total: 0, interdayLearning: 0 };
+  for (let card = 0; card < 24; card++) {
+    let review;
+    let at = new Date(2026, 9, 20, card);
+    for (let turn = 0; turn < 240; turn++) {
+      review = scheduler.rate(review, grades[(card + turn) % grades.length], at, `ordinary-${card}`);
+      const { state, scheduled_days } = review.card;
+      if ((state === State.Learning || state === State.Relearning) && scheduled_days >= 1) counts.interdayLearning++;
+      counts.total++;
+      at = new Date(Math.max(Date.parse(review.card.due), +at + 60000));
+    }
+  }
+  expect(counts).toEqual({ total: 5760, interdayLearning: 0 });
+});
+
 const instant=new Date('2026-11-06T12:00:00.123Z');
 const params={request_retention:.85,maximum_interval:36500,learning_steps:['1m','10m'],relearning_steps:['5m'],w:[...default_w]};
 const upstream=fuzz=>fsrs({...params,enable_fuzz:fuzz}).useStrategy(StrategyMode.SEED,GenSeedStrategyWithCardId('questionSeed'));
