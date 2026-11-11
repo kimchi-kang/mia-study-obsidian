@@ -4,7 +4,7 @@ import type { MiaRoute, MiaSessionMode } from "../core/navigation";
 import type { ReviewFilter } from "../core/question-query";
 
 /**
- * What the read-only pages (dashboard, progress, questions, weakness,
+ * What the read-only pages (dashboard, progress, questions,
  * keywords) need from the study view. Every member reads the view's current
  * state when used, so a page never holds a stale component or render list.
  */

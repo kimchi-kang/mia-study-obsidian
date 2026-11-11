@@ -2,10 +2,22 @@ import { Component, Platform } from "obsidian";
 import { QUESTION_TYPES, type QuestionType } from "../core/models";
 import { type QuestionSort, type ReviewFilter, queryQuestions } from "../core/question-query";
 import { openEditorWithNotice } from "./editor-notice";
+import { errorMessage } from "./error-message";
+import { QuestionDetailView, type RegisteredQuestion } from "./question-detail-view";
 import { renderQuestionHeading, renderQuestionRow } from "./question-row";
 import type { StudyPageContext } from "./study-page-context";
 
 const QUESTION_PAGE_SIZE = 50;
+
+/** Quick state filters above the list. They set the same review filter as the dropdown below. */
+const STATUS_CHIPS: ReadonlyArray<{ review: ReviewFilter; label: string }> = [
+  { review: "all", label: "전체" },
+  { review: "due", label: "오늘 복습" },
+  { review: "new", label: "학습 전" },
+  { review: "weak", label: "▲ 취약" },
+];
+
+const WEAK_SORT_NOTE = "못 암기와 애매 문제를 복습 지연 시간까지 반영한 긴급도 순으로 표시합니다.";
 
 /** Search, filter and paging choices; kept across visits to the page. */
 export class QuestionListState {
@@ -17,15 +29,23 @@ export class QuestionListState {
   sort: QuestionSort = "review";
   page = 0;
   candidateLimit = 100;
+  /** The question open in the side panel (wide panes only). */
+  selectedId: string | null = null;
+  /** The panel control last used, by its `data-action` (or "title"); kept across re-renders and dialogs. */
+  panelFocus: string | null = null;
+  /** The panel body's scroll position for the selected question; reset when the selection changes. */
+  panelScroll: { id: string; top: number } | null = null;
 
   /** Opens the list on one review state; clears the other filters but keeps the page. */
   show(review: ReviewFilter, subject = "all"): void {
     this.text = "";
     this.keyword = "";
     this.type = "all";
-    this.sort = "review";
+    // Weak questions come most-urgent first, the order the former weak-question page used.
+    this.sort = review === "weak" ? "weak" : "review";
     this.review = review;
     this.subject = subject;
+    this.selectedId = null;
   }
 }
 
@@ -40,7 +60,11 @@ export interface SessionEditTarget {
  * The question library page. The editing target, when present, is the
  * question the learner opened for editing from an active session.
  */
-export function renderQuestionsPage(ctx: StudyPageContext, root: HTMLElement, state: QuestionListState, editTarget: SessionEditTarget | null): void {
+export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement, state: QuestionListState, editTarget: SessionEditTarget | null): void {
+  // The list column and the detail side panel sit side by side on wide panes.
+  const layout = scroller.createDiv({ cls: "mia-questions-layout" });
+  const root = layout.createDiv({ cls: "mia-questions-main" });
+  const panel = layout.createEl("aside", { cls: "mia-detail-panel", attr: { "aria-label": "문제 상세" } });
   if (editTarget) {
     const selected = root.createDiv({ cls: "mia-session-edit-target" });
     selected.dataset.questionId = editTarget.id;
@@ -60,6 +84,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, root: HTMLElement, st
   const pageActions = root.createDiv({ cls: "mia-page-actions" });
   pageActions.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () =>
     openEditorWithNotice("질문 추가", () => ctx.plugin.openManagedQuestionEditor()));
+  const statusChips = root.createDiv({ cls: "mia-status-chips" });
   const filterPanel = root.createEl("details", { cls: "mia-filter-panel" });
   filterPanel.open = !Platform.isMobile;
   filterPanel.createEl("summary", { text: "검색·필터·정렬" });
@@ -97,6 +122,29 @@ export function renderQuestionsPage(ctx: StudyPageContext, root: HTMLElement, st
   sort.value = state.sort;
 
   const chips = root.createDiv({ cls: "mia-filter-chips" });
+  const registered = ctx.plugin.index.registered;
+  const countFor = (filter: ReviewFilter): number => filter === "all" ? registered.length
+    : queryQuestions(registered, ctx.plugin.store.reviews, ctx.plugin.fsrs, { text: "", subject: "all", questionType: "all", review: filter, keyword: "", sort: "title" }).length;
+  const chipCounts = new Map(STATUS_CHIPS.map(({ review: filter }) => [filter, countFor(filter)]));
+  /** One rule for the chips and the dropdown: weak reads most-urgent first, leaving it restores the default order. */
+  const setReviewFilter = (filter: ReviewFilter) => {
+    state.review = filter;
+    if (filter === "weak") state.sort = "weak";
+    else if (state.sort === "weak") state.sort = "review";
+    state.page = 0;
+    review.value = filter;
+    sort.value = state.sort;
+    renderList();
+  };
+  const renderStatusChips = () => {
+    statusChips.empty();
+    for (const { review: filter, label } of STATUS_CHIPS) {
+      const chip = statusChips.createEl("button", { text: `${label} ${chipCounts.get(filter) ?? 0}`, cls: filter === "weak" ? "mia-chip-weak" : "" });
+      chip.setAttr("aria-pressed", String(state.review === filter));
+      chip.addEventListener("click", () => setReviewFilter(filter));
+    }
+  };
+  const weakNote = root.createEl("p", { cls: "mia-muted mia-weak-note" });
   const resultBar = root.createDiv({ cls: "mia-result-bar" });
   const resultCount = resultBar.createSpan();
   const resultActions = resultBar.createDiv({ cls: "mia-inline-actions" });
@@ -129,6 +177,127 @@ export function renderQuestionsPage(ctx: StudyPageContext, root: HTMLElement, st
   const listOwner = ctx.component;
   const fixedRenderCount = ctx.renders.length;
   let listComponent: Component | null = null;
+  let panelComponent: Component | null = null;
+  let panelRevision = 0;
+  const markSelected = () => {
+    for (const row of Array.from(list.children) as HTMLElement[]) {
+      const selected = row.dataset.questionId === state.selectedId;
+      row.toggleClass("mia-row-selected", selected);
+      if (selected) row.setAttribute("aria-current", "true"); else row.removeAttribute("aria-current");
+    }
+  };
+  const clearPanel = () => {
+    panelRevision += 1;
+    if (panelComponent) listOwner.removeChild(panelComponent);
+    panelComponent = null;
+    panel.empty();
+  };
+  const panelButtons = (): HTMLElement[] => Array.from(panel.querySelectorAll<HTMLElement>("button"));
+  const actionOf = (target: EventTarget | null): string | null => {
+    const element = target as HTMLElement | null;
+    if (!element || !panel.contains(element)) return null;
+    return element.closest?.<HTMLElement>("button")?.dataset.action ?? "title";
+  };
+  /**
+   * Puts focus back on the control last used, even after a re-render replaced it. A control that is
+   * disabled now (a reset with nothing left to reset) hands focus to the nearest enabled one; the title is the fallback.
+   */
+  const restorePanelFocus = (title: HTMLElement) => {
+    const wanted = state.panelFocus;
+    if (wanted === null) return;
+    // Never take focus from somewhere else: a dialog that is open, or an element outside this view (another pane's editor).
+    const doc = panel.ownerDocument;
+    const active = doc?.activeElement;
+    if (doc?.querySelector?.(".modal-container")) return;
+    if (active && active !== doc.body && !scroller.contains(active)) return;
+    const buttons = panelButtons();
+    // Still loading (no controls yet): the render that finishes will restore focus itself.
+    if (!buttons.length) return;
+    const target = buttons.find((button) => button.dataset.action === wanted);
+    if (!target) { title.focus({ preventScroll: true }); return; }
+    if (!(target as HTMLButtonElement).disabled) { target.focus({ preventScroll: true }); return; }
+    const at = buttons.indexOf(target);
+    const nearest = buttons.map((button, index) => ({ button, distance: Math.abs(index - at) }))
+      .filter(({ button }) => !(button as HTMLButtonElement).disabled)
+      .sort((left, right) => left.distance - right.distance)[0]?.button;
+    (nearest ?? title).focus({ preventScroll: true });
+  };
+  const rememberFocus = (event: Event) => { const action = actionOf(event.target); if (action) state.panelFocus = action; };
+  panel.addEventListener("focusin", rememberFocus);
+  panel.addEventListener("pointerdown", rememberFocus);
+  panel.addEventListener("scroll", (event: Event) => {
+    const target = event.target as HTMLElement;
+    if (state.selectedId && target.classList?.contains("mia-detail-scroll")) state.panelScroll = { id: state.selectedId, top: target.scrollTop };
+  }, true);
+  // On the page's own layout element (rebuilt every render), not the long-lived view root, so no stale listeners pile up.
+  layout.addEventListener("focusin", (event: FocusEvent) => {
+    if (!panel.contains(event.target as Node)) state.panelFocus = null;
+  });
+  /**
+   * Obsidian's dialogs hand focus back to their opener when they close and the opener still exists. If the page was
+   * re-rendered while a dialog was open (so the opener is gone), wait for that dialog to close, then restore once.
+   */
+  const restoreAfterDialog = (component: Component) => {
+    const document = panel.ownerDocument;
+    const view = document?.defaultView;
+    if (!view?.MutationObserver || !document.querySelector(".modal-container")) return;
+    const observer = new view.MutationObserver(() => {
+      if (document.querySelector(".modal-container")) return;
+      observer.disconnect();
+      const title = panel.querySelector<HTMLElement>(".mia-detail-title");
+      if (panel.isConnected && title) restorePanelFocus(title);
+    });
+    observer.observe(document.body, { childList: true });
+    component.register?.(() => observer.disconnect());
+  };
+  /** Fills the side panel with the shared detail body; the same actions and reset confirmation as the dialog. */
+  const showPanel = async (question: RegisteredQuestion): Promise<void> => {
+    const revision = ++panelRevision;
+    if (panelComponent) listOwner.removeChild(panelComponent);
+    const component = listOwner.addChild(new Component());
+    panelComponent = component;
+    panel.empty();
+    panel.createEl("p", { text: "상세를 불러오는 중입니다…", cls: "mia-muted" });
+    try {
+      const source = await ctx.plugin.questionDetailSource(question);
+      if (revision !== panelRevision) return;
+      panel.empty();
+      const title = panel.createEl("h2", { cls: "mia-detail-title" });
+      title.tabIndex = -1;
+      const detail = new QuestionDetailView(ctx.app, source, {
+        afterAction: () => {},
+        // A saved rating or reset changes the store, which re-renders this page and rebuilds the panel
+        // from `selectedId`; refetching here would run against the DOM that render is about to replace.
+        afterMutation: () => {},
+      });
+      await detail.render(panel, title, component, () => revision === panelRevision);
+      if (revision !== panelRevision) return;
+      const body = panel.querySelector<HTMLElement>(".mia-detail-scroll");
+      if (body && state.panelScroll?.id === question.id) body.scrollTop = state.panelScroll.top;
+      restorePanelFocus(title);
+      restoreAfterDialog(component);
+    } catch (error) {
+      if (revision !== panelRevision) return;
+      panel.empty();
+      panel.createEl("p", { text: `상세를 열 수 없습니다: ${errorMessage(error)}`, cls: "mia-warning" });
+    }
+  };
+  const showPanelPlaceholder = () => {
+    clearPanel();
+    panel.createEl("p", { text: "문제를 누르면 여기에 상세가 열립니다.", cls: "mia-detail-placeholder mia-muted" });
+  };
+  /** The stylesheet decides whether the panel is shown (wide pane, not a phone), so this follows it. */
+  const panelVisible = (): boolean => !Platform.isPhone && panel.isConnected
+    && panel.ownerDocument?.defaultView?.getComputedStyle(panel).display !== "none";
+  /** Wide panes open the detail beside the list, moving focus to its title; narrow ones and phones keep the dialog. */
+  const openDetail = (question: RegisteredQuestion): void => {
+    if (!panelVisible()) { void ctx.plugin.openQuestionDetail(question); return; }
+    state.panelFocus = "title";
+    if (state.selectedId !== question.id) state.panelScroll = null;
+    state.selectedId = question.id;
+    markSelected();
+    void showPanel(question);
+  };
   const renderList = () => {
     // Results own their Markdown resources; replacing a page must release the old ones.
     if (listComponent) listOwner.removeChild(listComponent);
@@ -145,6 +314,8 @@ export function renderQuestionsPage(ctx: StudyPageContext, root: HTMLElement, st
       sort: state.sort,
     });
     resultCount.setText(`${questions.length}개`);
+    renderStatusChips();
+    weakNote.setText(state.review === "weak" && state.sort === "weak" ? WEAK_SORT_NOTE : "");
     testResults.disabled = questions.length === 0;
     browseResults.disabled = questions.length === 0;
     testResults.onclick = () => ctx.startReview(questions.map((question) => question.id));
@@ -152,15 +323,17 @@ export function renderQuestionsPage(ctx: StudyPageContext, root: HTMLElement, st
     const pageCount = Math.max(1, Math.ceil(questions.length / QUESTION_PAGE_SIZE));
     state.page = Math.min(state.page, pageCount - 1);
     const visible = questions.slice(state.page * QUESTION_PAGE_SIZE, (state.page + 1) * QUESTION_PAGE_SIZE);
-    for (const question of visible) renderQuestionRow(ctx, list, question, listComponent);
+    for (const question of visible) {
+      renderQuestionRow(ctx, list, question, listComponent, { openDetail, selected: question.id === state.selectedId, showWeakness: state.review === "weak" });
+    }
     if (pageCount > 1) {
       const previous = pagination.createEl("button", { text: `이전 ${QUESTION_PAGE_SIZE}개` });
       previous.disabled = state.page === 0;
-      previous.addEventListener("click", () => { state.page -= 1; renderList(); root.scrollTo({ top: 0, behavior: "smooth" }); });
+      previous.addEventListener("click", () => { state.page -= 1; renderList(); scroller.scrollTo({ top: 0, behavior: "smooth" }); });
       pagination.createSpan({ text: `${state.page + 1} / ${pageCount}` });
       const next = pagination.createEl("button", { text: `다음 ${QUESTION_PAGE_SIZE}개` });
       next.disabled = state.page >= pageCount - 1;
-      next.addEventListener("click", () => { state.page += 1; renderList(); root.scrollTo({ top: 0, behavior: "smooth" }); });
+      next.addEventListener("click", () => { state.page += 1; renderList(); scroller.scrollTo({ top: 0, behavior: "smooth" }); });
     }
     if (!questions.length) list.createEl("p", {
       text: ctx.plugin.index.registered.length ? "검색·필터 조건에 맞는 문제가 없습니다." : "등록된 문제가 없습니다.",
@@ -178,9 +351,12 @@ export function renderQuestionsPage(ctx: StudyPageContext, root: HTMLElement, st
   keyword.addEventListener("input", () => { if (!keywordComposing) { state.keyword = keyword.value; state.page = 0; renderList(); } });
   subject.addEventListener("change", () => { state.subject = subject.value; state.page = 0; renderList(); });
   type.addEventListener("change", () => { state.type = type.value as QuestionListState["type"]; state.page = 0; renderList(); });
-  review.addEventListener("change", () => { state.review = review.value as ReviewFilter; state.page = 0; renderList(); });
+  review.addEventListener("change", () => setReviewFilter(review.value as ReviewFilter));
   sort.addEventListener("change", () => { state.sort = sort.value as QuestionSort; state.page = 0; renderList(); });
   renderList();
+  const selected = state.selectedId ? ctx.plugin.index.questionById(state.selectedId) : undefined;
+  if (selected) void showPanel(selected);
+  else { state.selectedId = null; showPanelPlaceholder(); }
 
   const diagnostics = ctx.plugin.index.diagnostics;
   if (diagnostics.length) {

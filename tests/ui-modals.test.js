@@ -77,7 +77,7 @@ describe("modal interaction regressions", () => {
     const rate = () => new Promise(resolve => { finish = resolve; });
     const modal = new QuestionDetailModal({}, question, undefined, [], new Map(), { rate, edit, remove, study });
     await modal.onOpen(); modal.contentEl.find("암기").click();
-    modal.contentEl.find("질문 수정").click(); modal.contentEl.find("삭제").click(); modal.contentEl.find("학습").click();
+    modal.contentEl.find("편집").click(); modal.contentEl.find("삭제").click(); modal.contentEl.find("학습").click();
     expect(edit).not.toHaveBeenCalled(); expect(remove).not.toHaveBeenCalled(); expect(study).not.toHaveBeenCalled();
     finish(); await new Promise(resolve => setTimeout(resolve, 0));
   });
@@ -87,7 +87,7 @@ describe("modal interaction regressions", () => {
     await modal.onOpen();
     expect(modal.modalEl.dataset.readingSize).toBe("large");
     expect(modal.contentEl.find("정답")).toBeDefined();
-    for (const text of ["못 암기", "학습", "질문 수정", "삭제"]) expect(modal.contentEl.find(text)).toBeUndefined();
+    for (const text of ["못 암기", "학습", "편집", "삭제"]) expect(modal.contentEl.find(text)).toBeUndefined();
     modal.contentEl.find("전체 상세").click(); expect(modal.close).toHaveBeenCalledOnce(); expect(details).toHaveBeenCalledOnce();
     modal.onClose(); expect(restore).toHaveBeenCalledOnce(); expect(modal.contentEl.children).toHaveLength(0);
   });
