@@ -1889,3 +1889,70 @@ body.theme-dark .mia-view { --mia-danger-text: #ff7a70; }
 .mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(4),
 .mia-view.mia-view .mia-keyword > button.mod-warning { width: calc(100% + 4px); margin-left: -4px; }
 .mia-view.mia-view .mia-progress-subject-values > button { justify-content: flex-start; }
+
+/* ── Detail modal button layout ────────────────────────────────────
+   Scoped to .mia-detail-modal. Grade buttons carry the study-screen colours
+   (red / yellow / ink / blue) as a thick top bar; the reset sits below a thin
+   rule as a quiet destructive text action; the question's own actions
+   (학습, 질문 수정, 연결 관리) share one row and 삭제 is set apart on the
+   right. Markup, labels and handlers are unchanged. */
+.modal.mia-detail-modal {
+  --mia-hair: color-mix(in srgb, var(--mia-ink) 30%, transparent);
+  --mia-danger-text: var(--mia-red);
+}
+body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
+
+.modal.mia-detail-modal .mia-ratings { gap: 8px; margin-top: 12px; }
+.modal.mia-detail-modal .mia-ratings button {
+  --mia-grade: var(--mia-muted);
+  min-height: 48px; padding: 8px 6px; white-space: nowrap;
+  border: 3px solid var(--mia-ink); border-top: 8px solid var(--mia-grade);
+  background: var(--mia-panel); color: var(--mia-ink);
+}
+.modal.mia-detail-modal .mia-ratings button:nth-child(1) { --mia-grade: var(--mia-again); }
+.modal.mia-detail-modal .mia-ratings button:nth-child(2) { --mia-grade: var(--mia-hard); }
+.modal.mia-detail-modal .mia-ratings button:nth-child(3) { --mia-grade: var(--mia-good); }
+.modal.mia-detail-modal .mia-ratings button:nth-child(4) { --mia-grade: var(--mia-easy); }
+.modal.mia-detail-modal .mia-ratings button:not(:disabled):hover { background: color-mix(in srgb, var(--mia-grade) 22%, var(--mia-panel)); color: var(--mia-ink); }
+
+/* Reset: separated, quiet, destructive. */
+.modal.mia-detail-modal button.mia-detail-reset {
+  display: block; width: 100%; margin: 16px 0 0; padding: 6px 8px; min-height: 40px;
+  background: transparent; border: 0; border-top: 2px solid var(--mia-hair);
+  color: var(--mia-danger-text); font-size: .86em; font-weight: 700; text-align: right; box-shadow: none;
+}
+.modal.mia-detail-modal button.mia-detail-reset:not(:disabled):hover { background: var(--mia-red); color: var(--mia-on-color); border-color: var(--mia-hair); }
+.modal.mia-detail-modal button.mia-detail-reset:disabled { color: var(--mia-muted); }
+
+/* Related questions: each row is a ruled block. */
+.modal.mia-detail-modal .mia-detail-related-row { padding: 6px 0 6px 10px; border-left: 4px solid var(--mia-ink); line-height: 1.5; }
+
+/* Question actions: [학습 | 질문 수정 | 연결 관리] ........ [삭제] */
+.modal.mia-detail-modal .mia-detail-actions {
+  display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px;
+  margin-top: 24px; padding-top: 16px; border-top: 2px solid var(--mia-hair);
+}
+.modal.mia-detail-modal .mia-detail-actions > button { min-height: 40px; padding-inline: 16px; white-space: nowrap; }
+.modal.mia-detail-modal .mia-detail-actions > button:first-child { background: var(--mia-blue); color: var(--mia-on-color); border: 3px solid var(--mia-ink); }
+.modal.mia-detail-modal .mia-detail-actions > button:first-child:not(:disabled):hover { background: var(--mia-ink); color: var(--mia-bg); }
+.modal.mia-detail-modal .mia-detail-actions > button.mod-warning {
+  margin-inline-start: auto; background: transparent; border: 0; box-shadow: none;
+  color: var(--mia-danger-text); font-size: .86em; font-weight: 700;
+}
+.modal.mia-detail-modal .mia-detail-actions > button.mod-warning:not(:disabled):hover { background: var(--mia-red); color: var(--mia-on-color); }
+
+/* Phones: four grade buttons in one row, three actions in a row, delete below. */
+.is-phone .modal.mia-detail-modal .mia-ratings { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.is-phone .modal.mia-detail-modal .mia-ratings button { min-height: 52px; padding: 6px 2px; white-space: normal; word-break: keep-all; }
+.is-phone .modal.mia-detail-modal button.mia-detail-reset { min-height: 44px; }
+.is-phone .modal.mia-detail-modal .mia-detail-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.is-phone .modal.mia-detail-modal .mia-detail-actions > button { min-height: 44px; padding-inline: 4px; }
+.is-phone .modal.mia-detail-modal .mia-detail-actions > button.mod-warning { grid-column: 1 / -1; margin: 6px 0 0; border-top: 2px solid var(--mia-hair); text-align: right; padding-inline: 8px; }
+@media (max-width: 480px) {
+  .modal.mia-detail-modal .mia-ratings { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .modal.mia-detail-modal .mia-ratings button { min-height: 52px; padding: 6px 2px; white-space: normal; word-break: keep-all; }
+  .modal.mia-detail-modal button.mia-detail-reset { min-height: 44px; }
+  .modal.mia-detail-modal .mia-detail-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .modal.mia-detail-modal .mia-detail-actions > button { min-height: 44px; padding-inline: 4px; }
+  .modal.mia-detail-modal .mia-detail-actions > button.mod-warning { grid-column: 1 / -1; margin: 6px 0 0; border-top: 2px solid var(--mia-hair); text-align: right; padding-inline: 8px; }
+}

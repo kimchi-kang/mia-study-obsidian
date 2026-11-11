@@ -16,6 +16,7 @@ export class ConfirmDeleteModal extends Modal {
     private readonly description: string,
     private readonly confirmLabel: string,
     private readonly onConfirm: () => Promise<void>,
+    private readonly failureLabel = "삭제 실패",
   ) {
     super(app);
     this.setTitle(title);
@@ -32,7 +33,7 @@ export class ConfirmDeleteModal extends Modal {
         await this.onConfirm();
         this.close();
       } catch (error) {
-        new Notice(`삭제 실패: ${errorMessage(error)}`);
+        new Notice(`${this.failureLabel}: ${errorMessage(error)}`);
         button.setDisabled(false);
       }
     }));
