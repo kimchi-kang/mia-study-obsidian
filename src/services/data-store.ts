@@ -250,6 +250,8 @@ export class MiaDataStore {
   private pendingReadFailed = false;
   private listeners = new Set<() => void>();
   private recoveryWriteFailed = false;
+  private pendingWriteFailed = false;
+  private pendingClearFailed = false;
   private recoveryReadFailed = false;
   loadWarnings: string[] = [];
 
@@ -454,9 +456,20 @@ export class MiaDataStore {
   }
 
   private async persist(data: MiaPluginData): Promise<void> {
+    // The vault file is the source of truth. The device-local pending copy is a
+    // safety net only, so failing to store it must not block the file write.
+    let pendingStored = false;
     if (this.recovery?.writePending) {
-      this.recovery.writePending(data);
-      this.pending = structuredClone(data);
+      try {
+        this.recovery.writePending(data);
+        this.pending = structuredClone(data);
+        pendingStored = true;
+        this.pendingWriteFailed = false;
+      } catch {
+        const alreadyWarned = this.pendingWriteFailed;
+        this.pendingWriteFailed = true;
+        if (!alreadyWarned) this.recovery.onWarning?.("기기 내 임시 저장 사본을 만들지 못했습니다. 기록은 보관함 파일에 직접 저장합니다. 저장 공간과 로컬 저장소 상태를 확인하세요.");
+      }
     }
     this.writePending = true;
     try {
@@ -469,7 +482,17 @@ export class MiaDataStore {
         if (JSON.stringify(persisted) !== JSON.stringify(data)) throw error;
       }
       if (this.recovery?.writePending) {
-        this.recovery.writePending(null);
+        // The file is confirmed, so the commit must complete even if the copy cannot be cleared.
+        // A copy left in device storage is read at the next start as an unconfirmed save, and
+        // retryPending merges it with the file (equal content) and clears it.
+        try {
+          this.recovery.writePending(null);
+          this.pendingClearFailed = false;
+        } catch {
+          const alreadyWarned = this.pendingClearFailed;
+          this.pendingClearFailed = true;
+          if (pendingStored && !alreadyWarned) this.recovery.onWarning?.("기록은 저장되었지만 기기 내 임시 저장 사본을 정리하지 못했습니다. 다음 실행에서 미완료 저장 확인이 나타나면 재시도를 눌러 정리하세요.");
+        }
         this.pending = null;
       }
     } finally { this.writePending = false; }

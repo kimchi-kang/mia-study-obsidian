@@ -14,6 +14,21 @@ import { progressGuidance } from "./study-policy";
 
 // The dashboard and progress pages: counts, start buttons and per-subject cards.
 
+const MAX_LISTED_DUPLICATE_FILES = 8;
+
+/** Explains why questions vanished when a sync app left a copy of a question file. */
+function renderDuplicateFileWarning(ctx: StudyPageContext, root: HTMLElement): void {
+  const duplicates = ctx.plugin.index.crossFileDuplicates;
+  if (!duplicates?.files.length) return;
+  const card = root.createDiv({ cls: "mia-primary-card" });
+  card.createEl("p", { text: `같은 문제가 둘 이상의 파일에 들어 있어 문제 ${duplicates.hiddenQuestions}개가 목록과 학습에서 숨겨져 있습니다.`, cls: "mia-warning" });
+  card.createEl("p", { text: "동기화 앱이 파일의 사본을 만들었을 때 흔히 생깁니다. 학습 기록은 그대로 보관되어 있으며, 불필요한 사본 파일을 삭제하거나 문제 폴더 밖으로 옮기면 문제가 다시 나타납니다.", cls: "mia-muted" });
+  const list = card.createEl("ul");
+  for (const file of duplicates.files.slice(0, MAX_LISTED_DUPLICATE_FILES)) list.createEl("li", { text: file.filePath });
+  const more = duplicates.files.length - MAX_LISTED_DUPLICATE_FILES;
+  if (more > 0) card.createEl("p", { text: `외 ${more}개 파일`, cls: "mia-muted" });
+}
+
 export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void {
   const pendingRecovery = ctx.plugin.store.pendingRecovery;
   if (pendingRecovery) {
@@ -53,6 +68,7 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
     warning.createEl("p", { text: `기기 간 평가가 달랐던 문제 ${Object.keys(conflicts).length}개 · 이전 이력도 보관했습니다.` });
     warning.createEl("button", { text: "보관된 평가 확인" }).addEventListener("click", () => new ReviewConflictModal(ctx.app, conflicts, id => ctx.plugin.index.questionById(id)?.heading ?? id).open());
   }
+  renderDuplicateFileWarning(ctx, root);
   const questions = ctx.plugin.index.registered;
   const progress = calculateProgress(questions, ctx.plugin.store.reviews, ctx.plugin.fsrs);
   const due = progress.due;

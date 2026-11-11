@@ -67,9 +67,11 @@ describe('known edit bases and recovery',()=>{
   a.storage.saveData=save;await restart.retryPending();await restart.retryPending();
   expect(restart.getReview('q')).toEqual(review());expect(a.disk().reviews.q!.card.due).toBe('2026-10-27T00:10:00.000Z');expect(pending).toBeNull();trace('failed-write-retry',{final:a.disk(),pendingAfterRetry:pending});
  });
- it('does not attempt a host write when staging the local recovery intent fails',async()=>{
-  const a=device();const store=new MiaDataStore(a.storage,{...a.recovery,writePending:()=>{throw Error('local full');}});await store.load();
-  await expect(store.setReview('q',review())).rejects.toThrow('local full');expect(a.disk().reviews).toEqual({});
+ it('still writes the vault file when the device-local pending copy cannot be staged, and warns once',async()=>{
+  const a=device();const warnings:string[]=[];
+  const store=new MiaDataStore(a.storage,{...a.recovery,writePending:()=>{throw Error('local full');},onWarning:m=>{warnings.push(m);}});await store.load();
+  await store.setReview('q',review());expect(a.disk().reviews.q).toEqual(review());expect(store.getReview('q')).toEqual(review());
+  expect(store.pendingRecovery).toBeNull();expect(warnings).toHaveLength(1);
  });
  it('retains known local evaluations when a service replaces the file before the app reads it',async()=>{
   const a=device(),b=device();await a.store.load();await b.store.load();await a.store.setReview('a',review());await b.store.setReview('b',review());

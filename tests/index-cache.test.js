@@ -34,3 +34,33 @@ describe("index lookup cache invalidation",()=>{
   expect(env.index.questionById("mia-q-one")).toBeUndefined();expect(env.index.diagnostics[0].code).toBe("read-error");env.contents.set(file.path,bank("mia-q-one"));await env.index.refreshFile(file);expect(env.index.questionById("mia-q-one")).toBeDefined();expect(env.index.diagnostics).toEqual([]);
  });
 });
+
+describe("cross-file duplicate summary",()=>{
+ const two=bank("mia-q-one","첫째")+"\n"+bank("mia-q-two","둘째");
+ it("groups a sync conflict copy with its original and counts the hidden questions",async()=>{
+  const env=environment();env.add("문제/은행.md",two);env.add("문제/은행 (1).md",two);env.add("문제/다른.md",bank("mia-q-other"));await env.index.rebuild();
+  expect(env.index.registered.map(q=>q.id)).toEqual(["mia-q-other"]);
+  expect(env.index.crossFileDuplicates).toEqual({hiddenQuestions:2,files:[
+   {filePath:"문제/은행 (1).md",hiddenQuestions:2,sharesWith:["문제/은행.md"]},
+   {filePath:"문제/은행.md",hiddenQuestions:2,sharesWith:["문제/은행 (1).md"]},
+  ]});
+ });
+ it("names the other files in each cross-file diagnostic and caps a long list",async()=>{
+  const env=environment();env.add("a.md",bank("mia-q-one"));for(const n of [1,2,3,4,5])env.add(`a (${n}).md`,bank("mia-q-one"));await env.index.rebuild();
+  const message=env.index.diagnostics.find(d=>d.filePath==="a.md"&&d.code==="duplicate-id").message;
+  expect(message).toBe("여러 파일에서 중복된 문제 ID: mia-q-one · 같은 ID가 있는 다른 파일: a (1).md, a (2).md, a (3).md 외 2개");
+  expect(env.index.diagnostics.find(d=>d.filePath==="a (1).md"&&d.code==="duplicate-id").message).toContain("a (2).md, a (3).md, a (4).md 외 2개");
+  expect(env.index.crossFileDuplicates.hiddenQuestions).toBe(1);
+ });
+ it("keeps the dropping rule and the old diagnostic for duplicates inside one file",async()=>{
+  const env=environment();env.add("a.md",bank("mia-q-one","첫째")+"\n"+bank("mia-q-one","둘째"));await env.index.rebuild();
+  expect(env.index.registered).toHaveLength(0);expect(env.index.crossFileDuplicates).toEqual({hiddenQuestions:0,files:[]});
+  expect(env.index.diagnostics.filter(d=>d.code==="duplicate-id").map(d=>d.message)).toContain("여러 파일에서 중복된 문제 ID: mia-q-one");
+  expect(env.index.diagnostics.filter(d=>d.message.includes("다른 파일"))).toEqual([]);
+ });
+ it("empties the summary once the copy is removed and returns a copy of the data",async()=>{
+  const env=environment();env.add("a.md",bank("mia-q-one"));env.add("a (1).md",bank("mia-q-one"));await env.index.rebuild();
+  env.index.crossFileDuplicates.files.splice(0);env.index.crossFileDuplicates.files[0]?.sharesWith.splice(0);expect(env.index.crossFileDuplicates.files).toHaveLength(2);expect(env.index.crossFileDuplicates.files[0].sharesWith).toHaveLength(1);
+  env.index.remove("a (1).md",false);expect(env.index.crossFileDuplicates).toEqual({hiddenQuestions:0,files:[]});expect(env.index.questionById("mia-q-one")).toBeDefined();
+ });
+});

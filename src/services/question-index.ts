@@ -39,6 +39,21 @@ function uniqueRegisteredQuestions(questions: QuestionRecord[]): RegisteredQuest
   return registered.filter((question) => !duplicates.has(question.id));
 }
 
+/** Questions hidden because the same ID is claimed by more than one file (typically a sync-app copy). */
+export interface CrossFileDuplicateSummary {
+  /** Distinct question IDs that are hidden from lists and study because of cross-file duplicates. */
+  hiddenQuestions: number;
+  /** Every file involved, with the other files it shares at least one ID with. Sorted by path. */
+  files: Array<{ filePath: string; hiddenQuestions: number; sharesWith: string[] }>;
+}
+
+const MAX_NAMED_DUPLICATE_FILES = 3;
+
+function otherFilesLabel(paths: string[]): string {
+  const shown = paths.slice(0, MAX_NAMED_DUPLICATE_FILES).join(", ");
+  return paths.length > MAX_NAMED_DUPLICATE_FILES ? `${shown} 외 ${paths.length - MAX_NAMED_DUPLICATE_FILES}개` : shown;
+}
+
 export class QuestionIndex {
   private readonly byFile = new Map<string, ParsedQuestionFile>();
   private readonly listeners = new Set<() => void>();
@@ -48,6 +63,7 @@ export class QuestionIndex {
     byId: Map<string, RegisteredQuestion>;
     candidates: QuestionRecord[];
     diagnostics: QuestionDiagnostic[];
+    duplicates: CrossFileDuplicateSummary;
   } | undefined;
   private eventRefs: EventRef[] = [];
   private startPromise: Promise<void> | undefined;
@@ -127,6 +143,12 @@ export class QuestionIndex {
     return this.snapshot.diagnostics.slice();
   }
 
+  /** Cross-file duplicate IDs, grouped by file. Empty when no ID spans two files. */
+  get crossFileDuplicates(): CrossFileDuplicateSummary {
+    const { hiddenQuestions, files } = this.snapshot.duplicates;
+    return { hiddenQuestions, files: files.map(file => ({ ...file, sharesWith: file.sharesWith.slice() })) };
+  }
+
   questionById(id: string): RegisteredQuestion | undefined {
     return this.snapshot.byId.get(id);
   }
@@ -166,18 +188,39 @@ export class QuestionIndex {
       list.push(question);
       locations.set(question.id, list);
     }
+    const perFile = new Map<string, { hidden: number; sharesWith: Set<string> }>();
+    const hiddenIds = new Set<string>();
     for (const [id, questions] of locations) {
       if (questions.length < 2) continue;
-      for (const question of questions) diagnostics.push({
-        filePath: question.filePath,
-        line: question.location.anchorLine ?? question.location.questionStartLine,
-        code: "duplicate-id",
-        message: `여러 파일에서 중복된 문제 ID: ${id}`,
-      });
+      const paths = [...new Set(questions.map(question => question.filePath))].sort();
+      const crossFile = paths.length > 1;
+      if (crossFile) hiddenIds.add(id);
+      for (const question of questions) {
+        const others = paths.filter(path => path !== question.filePath);
+        if (crossFile) {
+          const entry = perFile.get(question.filePath) ?? { hidden: 0, sharesWith: new Set<string>() };
+          entry.hidden += 1;
+          for (const path of others) entry.sharesWith.add(path);
+          perFile.set(question.filePath, entry);
+        }
+        diagnostics.push({
+          filePath: question.filePath,
+          line: question.location.anchorLine ?? question.location.questionStartLine,
+          code: "duplicate-id",
+          message: crossFile
+            ? `여러 파일에서 중복된 문제 ID: ${id} · 같은 ID가 있는 다른 파일: ${otherFilesLabel(others)}`
+            : `여러 파일에서 중복된 문제 ID: ${id}`,
+        });
+      }
     }
+    const duplicates: CrossFileDuplicateSummary = {
+      hiddenQuestions: hiddenIds.size,
+      files: [...perFile].sort(([left], [right]) => left.localeCompare(right))
+        .map(([filePath, entry]) => ({ filePath, hiddenQuestions: entry.hidden, sharesWith: [...entry.sharesWith].sort() })),
+    };
     this.cachedSnapshot = {
       registered, byId: new Map(registered.map(question => [question.id, question])),
-      candidates: all.filter(question => question.id === null), diagnostics,
+      candidates: all.filter(question => question.id === null), diagnostics, duplicates,
     };
     return this.cachedSnapshot;
   }

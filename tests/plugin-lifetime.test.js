@@ -94,3 +94,15 @@ describe('external source configuration delivery',()=>{
   env.plugin.onunload();
  });
 });
+
+
+describe('sync folder that has not fully arrived at startup',()=>{
+ const warning='MIA Study: 동기화 폴더(MIA Study Sync)를 찾았지만 아직 모두 도착하지 않았습니다. 지금 남기는 평가는 이 기기에만 저장됩니다. 보관함 동기화를 마친 뒤 Obsidian을 다시 시작하세요.';
+ for(const present of [['MIA Study Sync'],['MIA Study Sync/study-data.md'],['MIA Study Sync/study-resume.md']])it(`warns and still uses device storage when only ${present[0]} exists`,async()=>{
+  const env=host();env.vault.adapter.exists=async path=>present.includes(path);const before=notices.length;await env.plugin.onload();
+  expect(notices.slice(before)).toContain(warning);expect(env.plugin.portableSyncActive).toBe(false);expect(env.plugin.portableSyncIncomplete).toBe(true);expect(env.local.get('mia-study:portable-sync:test:.obsidian')).toBeUndefined();env.plugin.onunload();
+ });
+ it('stays silent when no sync folder exists',async()=>{
+  const env=host();const before=notices.length;await env.plugin.onload();expect(notices.slice(before).some(text=>text.includes('동기화 폴더'))).toBe(false);expect(env.plugin.portableSyncIncomplete).toBe(false);env.plugin.onunload();
+ });
+});
