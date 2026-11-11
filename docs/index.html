@@ -10,425 +10,375 @@
 <meta property="og:description" content="질문·키워드·FSRS-6 복습을 Obsidian 안에서. 정식 1.4.12.">
 <meta property="og:image" content="https://kimchi-kang.github.io/mia-study-obsidian/assets/screens/desktop-dashboard.jpg">
 <meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f7f6fb;--bg-soft:#efedf7;--panel:#ffffff;--text:#1b1830;--muted:#5d5873;--faint:#8a85a0;
-  --border:#e2dfee;--accent:#7c5cf0;--accent-strong:#6342e0;--accent-soft:#ece6ff;--on-accent:#ffffff;
-  --red:#d9485f;--amber:#c47a12;--green:#2f9e5b;--blue:#2f6fe0;
-  --shadow:0 1px 2px rgba(27,24,48,.06),0 12px 40px -12px rgba(76,52,170,.22);
-  --radius:18px;
-  font-family:"Pretendard",system-ui,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI","Malgun Gothic",sans-serif;
+  --bg:#f3efe4;--ink:#121212;--muted:#46433b;--panel:#fffdf6;
+  --red:#d42a1f;--yellow:#f4c20d;--blue:#1f4fd8;--on-color:#ffffff;--on-yellow:#121212;
+  --link:#1f4fd8;
+  --head:"Black Han Sans","Do Hyeon","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  font-family:"Pretendard",system-ui,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI","Malgun Gothic","Noto Sans KR",sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#121118;--bg-soft:#1a1823;--panel:#1d1b27;--text:#ece9f6;--muted:#aaa4c0;--faint:#7f7996;
-  --border:#2e2b3c;--accent:#9b82ff;--accent-strong:#b3a0ff;--accent-soft:#2a2442;--on-accent:#120f1f;
-  --red:#ff7a8a;--amber:#f0a947;--green:#5fd18f;--blue:#7aa7ff;
-  --shadow:0 1px 2px rgba(0,0,0,.4),0 18px 50px -18px rgba(0,0,0,.7);
+  --bg:#121212;--ink:#f3efe4;--muted:#c9c5b8;--panel:#1c1c1c;
+  --red:#d42a1f;--yellow:#f4c20d;--blue:#3d63e8;--link:#8fa9ff;
 }}
 :root[data-theme="dark"]{
-  --bg:#121118;--bg-soft:#1a1823;--panel:#1d1b27;--text:#ece9f6;--muted:#aaa4c0;--faint:#7f7996;
-  --border:#2e2b3c;--accent:#9b82ff;--accent-strong:#b3a0ff;--accent-soft:#2a2442;--on-accent:#120f1f;
-  --red:#ff7a8a;--amber:#f0a947;--green:#5fd18f;--blue:#7aa7ff;
-  --shadow:0 1px 2px rgba(0,0,0,.4),0 18px 50px -18px rgba(0,0,0,.7);
+  --bg:#121212;--ink:#f3efe4;--muted:#c9c5b8;--panel:#1c1c1c;
+  --red:#d42a1f;--yellow:#f4c20d;--blue:#3d63e8;--link:#8fa9ff;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--text);line-height:1.7;word-break:keep-all;overflow-wrap:anywhere;-webkit-font-smoothing:antialiased}
-a{color:var(--accent-strong);text-underline-offset:3px}
-a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:8px}
-img{max-width:100%;display:block}
-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;background:var(--bg-soft);border:1px solid var(--border);padding:.08em .4em;border-radius:6px}
-.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
-.skip{position:absolute;left:12px;top:-60px;background:var(--panel);padding:10px 16px;border-radius:10px;z-index:20}
+body{margin:0;background:var(--bg);color:var(--ink);line-height:1.65;word-break:keep-all;overflow-wrap:anywhere;-webkit-font-smoothing:antialiased}
+a{color:var(--link);text-underline-offset:3px;text-decoration-thickness:2px}
+a:focus-visible,button:focus-visible{outline:4px solid var(--blue);outline-offset:3px}
+:root[data-theme="dark"] a:focus-visible,:root[data-theme="dark"] button:focus-visible{outline-color:var(--yellow)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) a:focus-visible,:root:not([data-theme="light"]) button:focus-visible{outline-color:var(--yellow)}}
+img{max-width:100%;display:block;height:auto}
+figure{margin:0}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86em;border:2px solid var(--ink);padding:.04em .35em;background:var(--panel)}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+.skip{position:absolute;left:12px;top:-80px;background:var(--yellow);color:var(--on-yellow);padding:10px 16px;font-weight:800;z-index:30}
 .skip:focus{top:12px}
+h1,h2,h3{font-family:var(--head);font-weight:400;margin:0;line-height:1.15;letter-spacing:-.01em}
+.num{font-family:var(--head);font-size:1rem}
 
 /* top bar */
-.top{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--border)}
-.top .wrap{display:flex;align-items:center;gap:16px;height:60px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:800;color:var(--text);text-decoration:none;letter-spacing:-.02em}
-.logo{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(135deg,#9b82ff,#6a45e8);color:#fff;font-weight:800;font-size:.95rem;box-shadow:0 4px 14px -4px rgba(124,92,240,.7)}
+.top{border-bottom:4px solid var(--ink);background:var(--bg)}
+.top .wrap{display:flex;align-items:center;gap:20px;height:64px}
+.brand{display:flex;align-items:center;gap:12px;font-family:var(--head);font-size:1.3rem;color:var(--ink);text-decoration:none}
+.mark{width:28px;height:28px;position:relative;flex:none}
+.mark i{position:absolute;display:block}
+.mark .c{width:16px;height:16px;border-radius:50%;background:var(--red);left:0;top:0}
+.mark .s{width:14px;height:14px;background:var(--blue);right:0;bottom:0}
+.mark .t{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid var(--yellow);right:1px;top:0}
 .top nav{display:flex;gap:4px;margin-left:auto}
-.top nav a{color:var(--muted);text-decoration:none;font-size:.93rem;font-weight:600;padding:8px 12px;border-radius:9px}
-.top nav a:hover{color:var(--text);background:var(--bg-soft)}
-.theme-btn{border:1px solid var(--border);background:var(--panel);color:var(--text);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:1rem;display:grid;place-items:center}
+.top nav a{color:var(--ink);text-decoration:none;font-weight:800;font-size:.92rem;padding:8px 12px;border-bottom:4px solid transparent}
+.top nav a:hover{border-bottom-color:var(--red)}
+.theme-btn{border:3px solid var(--ink);background:var(--bg);color:var(--ink);width:40px;height:40px;cursor:pointer;font-size:1.05rem;display:grid;place-items:center;padding:0}
+.theme-btn:hover{background:var(--yellow);color:var(--on-yellow)}
 
 /* hero */
-.hero{position:relative;padding:72px 0 40px;overflow:hidden}
-.hero::before{content:"";position:absolute;inset:-200px -10% auto;height:620px;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 26%,transparent),transparent 70%);pointer-events:none;z-index:-1}
-.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;border-radius:999px;background:var(--panel);border:1px solid var(--border);font-size:.86rem;color:var(--muted);text-decoration:none;box-shadow:var(--shadow)}
-.pill b{background:var(--accent);color:var(--on-accent);border-radius:999px;padding:2px 9px;font-size:.78rem}
-h1{font-size:clamp(2.4rem,6.4vw,4.4rem);line-height:1.12;letter-spacing:-.045em;margin:22px 0 18px;font-weight:850}
-h1 .grad{background:linear-gradient(100deg,var(--accent-strong),#e35d9a 70%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.lead{font-size:clamp(1.05rem,2.2vw,1.24rem);color:var(--muted);max-width:640px;margin:0}
-.cta{display:flex;flex-wrap:wrap;gap:12px;margin:30px 0 14px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:12px 22px;border-radius:13px;font-weight:700;font-size:1rem;text-decoration:none;border:1px solid transparent;transition:transform .15s ease,box-shadow .15s ease}
-.btn:hover{transform:translateY(-1px)}
-.btn-primary{background:var(--accent);color:var(--on-accent);box-shadow:0 10px 30px -10px color-mix(in srgb,var(--accent) 90%,transparent)}
-.btn-ghost{background:var(--panel);color:var(--text);border-color:var(--border)}
-.meta{font-size:.88rem;color:var(--faint)}
-.meta span+span::before{content:"·";margin:0 8px}
+.hero{padding:56px 0 0}
+.hero-grid{display:grid;grid-template-columns:7fr 5fr;gap:40px;align-items:stretch}
+.ver{display:inline-block;background:var(--ink);color:var(--bg);font-weight:800;font-size:.85rem;padding:4px 12px;letter-spacing:.04em}
+h1{font-size:clamp(2.6rem,7.4vw,5.6rem);margin:20px 0 20px;letter-spacing:-.02em}
+h1 em{font-style:normal;color:var(--red)}
+.lead{font-size:clamp(1.05rem,2vw,1.25rem);max-width:30em;margin:0;font-weight:600}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:28px 0 16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:12px 24px;font-weight:800;font-size:1.02rem;text-decoration:none;border:3px solid var(--ink)}
+.btn-red{background:var(--red);color:var(--on-color)}
+.btn-red:hover{background:var(--ink);color:var(--bg)}
+.btn-line{background:transparent;color:var(--ink)}
+.btn-line:hover{background:var(--yellow);color:var(--on-yellow)}
+.meta{font-size:.9rem;font-weight:700;margin:0;color:var(--muted)}
+.meta span+span::before{content:"/";margin:0 10px}
 
-.window{margin-top:44px;border-radius:16px;background:var(--panel);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
-.window-bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--border);background:var(--bg-soft)}
-.window-bar i{width:11px;height:11px;border-radius:50%;background:#ff5f57}.window-bar i:nth-child(2){background:#febc2e}.window-bar i:nth-child(3){background:#28c840}
-.window-bar span{margin-left:10px;font-size:.8rem;color:var(--faint)}
-.window img{width:100%;height:auto;background:#1e1e1e}
+.geo{position:relative;min-height:320px;border:4px solid var(--ink);background:var(--yellow);overflow:hidden}
+.geo svg{position:absolute;inset:0;width:100%;height:100%}
 
-/* stats strip */
-.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:40px 0 0}
-.fact{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
-.fact strong{display:block;font-size:1.55rem;letter-spacing:-.03em;line-height:1.25}
-.fact span{color:var(--muted);font-size:.9rem}
+.frame{border:4px solid var(--ink);background:#1e1e1e;box-shadow:12px 12px 0 var(--ink)}
+.frame img{width:100%}
+.hero-shot{margin:56px 0 0}
 
 /* sections */
-section{padding:84px 0 0;scroll-margin-top:70px}
-.kicker{color:var(--accent-strong);font-weight:750;font-size:.84rem;letter-spacing:.1em;text-transform:uppercase}
-h2{font-size:clamp(1.7rem,3.8vw,2.5rem);line-height:1.25;letter-spacing:-.035em;margin:8px 0 14px;font-weight:820}
-h3{font-size:1.14rem;line-height:1.45;margin:0 0 6px;letter-spacing:-.015em}
-.sub{color:var(--muted);max-width:660px;margin:0 0 34px}
+section{padding:88px 0 0;scroll-margin-top:12px}
+.sh{display:flex;align-items:center;gap:16px;border-top:4px solid var(--ink);padding-top:20px;margin-bottom:36px}
+.sh .shape{flex:none;width:36px;height:36px}
+.sh h2{font-size:clamp(1.8rem,4.4vw,2.8rem)}
+.sh .num{margin-left:auto;font-size:1rem;color:var(--muted)}
+.shape.c{border-radius:50%;background:var(--red)}
+.shape.s{background:var(--blue)}
+.shape.t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.shape.sq-y{background:var(--yellow)}
 
-/* feature rows */
-.feature{display:grid;grid-template-columns:1fr 1.35fr;gap:44px;align-items:center;margin:0 0 64px}
-.feature.flip{grid-template-columns:1.35fr 1fr}
-.feature.flip .copy{order:2}
-.feature .shot{border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow);background:#1e1e1e}
-.feature ul{list-style:none;padding:0;margin:16px 0 0}
-.feature li{position:relative;padding-left:28px;margin:10px 0;color:var(--muted)}
-.feature li::before{content:"";position:absolute;left:4px;top:.62em;width:10px;height:10px;border-radius:3px;background:var(--accent);transform:rotate(45deg)}
-.grades{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
-.grade{padding:6px 12px;border-radius:10px;font-weight:700;font-size:.88rem;border:1px solid currentColor;background:color-mix(in srgb,currentColor 10%,transparent)}
-.g1{color:var(--red)}.g2{color:var(--amber)}.g3{color:var(--green)}.g4{color:var(--blue)}
+/* features */
+.feat{display:grid;grid-template-columns:5fr 7fr;gap:40px;align-items:center;margin:0 0 72px}
+.feat.flip{grid-template-columns:7fr 5fr}
+.feat.flip .copy{order:2}
+.feat h3{font-size:clamp(1.5rem,3vw,2rem);margin:0 0 12px}
+.feat p{margin:0 0 14px;font-weight:500}
+.tag{display:inline-block;width:32px;height:8px;margin-bottom:14px}
+.t-r{background:var(--red)}.t-y{background:var(--yellow)}.t-b{background:var(--blue)}
+.grades{display:grid;grid-template-columns:repeat(4,1fr);border:3px solid var(--ink);margin:6px 0 14px}
+.grades span{padding:8px 4px;text-align:center;font-weight:800;font-size:.82rem;line-height:1.3}
+.grades span+span{border-left:3px solid var(--ink)}
+.grades b{display:block;font-weight:600;font-size:.76rem}
+.g1{background:var(--red);color:var(--on-color)}.g2{background:var(--yellow);color:var(--on-yellow)}.g3{background:var(--ink);color:var(--bg)}.g4{background:var(--blue);color:var(--on-color)}
+.keys{font-size:.9rem;color:var(--muted);margin:0}
 
-/* card grid */
-.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
-.card .ico{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-strong);margin-bottom:14px}
-.card .ico svg{width:21px;height:21px}
-.card p{margin:0;color:var(--muted);font-size:.95rem}
+.more{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:4px solid var(--ink);background:var(--panel)}
+.more div{padding:20px 18px;border-left:4px solid var(--ink)}
+.more div:first-child{border-left:0}
+.more h3{font-family:inherit;font-weight:800;font-size:1rem;margin:10px 0 6px;line-height:1.35}
+.more p{margin:0;font-size:.88rem;color:var(--muted)}
+.more .dot{width:18px;height:18px;display:block}
+.dot.c{border-radius:50%;background:var(--red)}.dot.s{background:var(--blue)}.dot.t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)}
 
-/* mobile phones */
-.phones{display:flex;justify-content:center;gap:22px;flex-wrap:wrap}
-.phone{width:min(240px,44vw);border-radius:30px;padding:9px;background:linear-gradient(160deg,#3a3550,#16141e);box-shadow:var(--shadow)}
-.phone img{border-radius:22px;width:100%;height:auto}
-.phone figcaption{text-align:center;font-size:.82rem;color:var(--faint);margin-top:10px}
-figure{margin:0}
+/* mobile */
+.blue{background:var(--blue);color:var(--on-color);padding:56px 0;margin-top:88px}
+.blue section{padding:0}
+.blue .sh{border-top-color:var(--on-color)}
+.blue .sh .num{color:#dfe6ff}
+.blue a{color:var(--on-color)}
+.mob{display:grid;grid-template-columns:5fr 7fr;gap:40px;align-items:center}
+.mob p{margin:0 0 14px;font-weight:500}
+.mob .honest{border:3px solid var(--on-color);padding:12px 14px;font-weight:700;font-size:.92rem;margin-top:18px}
+.phones{display:flex;gap:20px;justify-content:center}
+.phone{width:min(230px,42vw);border:4px solid #121212;background:#121212;box-shadow:10px 10px 0 #121212}
+.phone img{width:100%}
 
-/* steps */
-.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;counter-reset:s}
-.step{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:24px;position:relative}
-.step::before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--on-accent);font-weight:800;margin-bottom:14px}
-.step p{margin:0;color:var(--muted);font-size:.95rem}
+/* install */
+.install{display:grid;grid-template-columns:1fr 1fr;gap:0;border:4px solid var(--ink)}
+.box{padding:28px;background:var(--panel)}
+.box+.box{border-left:4px solid var(--ink)}
+.box h3{font-size:1.5rem;margin-bottom:6px}
+.box h3 small{font-family:inherit;font-size:.78rem;font-weight:800;background:var(--yellow);color:var(--on-yellow);padding:3px 9px;vertical-align:4px;margin-left:8px}
+.box ol{margin:14px 0 0;padding-left:0;list-style:none;counter-reset:n}
+.box li{counter-increment:n;position:relative;padding:0 0 0 40px;margin:12px 0}
+.box li::before{content:counter(n);position:absolute;left:0;top:0;width:28px;height:28px;display:grid;place-items:center;background:var(--ink);color:var(--bg);font-family:var(--head);font-size:.9rem}
+.links{margin:18px 0 0;font-weight:700;font-size:.92rem}
 
-/* install tabs */
-.install{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.box{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:26px}
-.box ol{margin:12px 0 0;padding-left:22px}
-.box li{margin:8px 0;color:var(--muted)}
-.box li strong{color:var(--text)}
-.tag{display:inline-block;font-size:.75rem;font-weight:750;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent-strong);margin-left:6px;vertical-align:2px}
-.note{margin-top:16px;padding:14px 16px;border-radius:12px;background:var(--bg-soft);border:1px solid var(--border);color:var(--muted);font-size:.92rem}
-
-/* changelog */
-.release{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow)}
-.release header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 14px;margin-bottom:6px}
-.release .v{font-size:1.5rem;font-weight:850;letter-spacing:-.03em}
-.release ul{margin:14px 0 0;padding-left:20px}
-.release li{margin:8px 0;color:var(--muted)}
-.timeline{list-style:none;margin:20px 0 0;padding:0;border-left:2px solid var(--border)}
-.timeline li{position:relative;padding:0 0 18px 22px}
-.timeline li::before{content:"";position:absolute;left:-7px;top:.55em;width:12px;height:12px;border-radius:50%;background:var(--panel);border:2px solid var(--accent)}
-.timeline b{margin-right:8px}
-.timeline p{margin:2px 0 0;color:var(--muted);font-size:.93rem}
-details.more{margin-top:18px}
-details.more summary{cursor:pointer;font-weight:700;color:var(--accent-strong);min-height:44px;display:flex;align-items:center}
+/* update */
+.upd{display:grid;grid-template-columns:5fr 7fr;gap:0;border:4px solid var(--ink)}
+.upd .l{background:var(--yellow);color:var(--on-yellow);padding:28px;border-right:4px solid var(--ink)}
+.upd .l .big{font-family:var(--head);font-size:clamp(3rem,7vw,4.6rem);line-height:1}
+.upd .l p{margin:8px 0 0;font-weight:800}
+.upd .r{padding:28px;background:var(--panel)}
+.upd h3{font-size:1.4rem;margin-bottom:10px}
+.upd ul{margin:0 0 16px;padding-left:20px}
+.upd li{margin:6px 0}
+.upd .l a{color:var(--on-yellow)}
 
 /* verify */
-.verify{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.verify .card strong{display:block;font-size:1.9rem;letter-spacing:-.03em;line-height:1.2;margin-bottom:4px}
-.status{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:700;padding:3px 10px;border-radius:999px;margin-bottom:12px}
-.ok{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}
-.warn{background:color-mix(in srgb,var(--amber) 16%,transparent);color:var(--amber)}
+.verify{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:4px solid var(--ink)}
+.v{padding:24px;background:var(--panel)}
+.v+.v{border-left:4px solid var(--ink)}
+.v b{display:block;font-family:var(--head);font-weight:400;font-size:2rem;line-height:1.15;margin:12px 0 6px}
+.v p{margin:0;font-size:.92rem;color:var(--muted)}
+.v .lab{display:inline-block;font-weight:800;font-size:.8rem;padding:3px 10px}
+.lab.ok{background:var(--ink);color:var(--bg)}
+.lab.no{background:var(--red);color:var(--on-color)}
+.vlink{margin:16px 0 0;font-weight:700}
 
 /* footer */
-.final{margin:92px 0 0;padding:52px 32px;border-radius:24px;text-align:center;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 22%,var(--panel)),var(--panel));border:1px solid var(--border)}
-.final h2{margin-top:0}
-.final .cta{justify-content:center}
-footer{padding:48px 0 60px;color:var(--faint);font-size:.88rem}
-footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between}
-footer a{color:var(--muted)}
+footer{margin-top:96px;background:var(--ink);color:var(--bg);padding:36px 0 44px;font-size:.9rem}
+footer a{color:var(--bg)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between;align-items:center}
+footer .fm{display:flex;gap:8px;align-items:center}
+footer .fm i{display:block;width:18px;height:18px}
+footer .fm .c{border-radius:50%;background:var(--red)}
+footer .fm .s{background:var(--blue)}
+footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)}
 
 @media (max-width:900px){
-  .feature,.feature.flip{grid-template-columns:1fr;gap:22px}
-  .feature.flip .copy{order:0}
-  .cards,.verify{grid-template-columns:1fr 1fr}
-  .facts{grid-template-columns:1fr 1fr}
+  .hero-grid,.feat,.feat.flip,.mob,.upd{grid-template-columns:1fr;gap:28px}
+  .feat.flip .copy{order:0}
+  .geo{min-height:200px}
+  .more{grid-template-columns:1fr 1fr}
+  .more div{border-left:0;border-top:4px solid var(--ink)}
+  .more div:nth-child(-n+2){border-top:0}
+  .more div:nth-child(even){border-left:4px solid var(--ink)}
+  .more div:last-child{grid-column:1/-1;border-left:0}
+  .upd .l{border-right:0;border-bottom:4px solid var(--ink)}
 }
 @media (max-width:640px){
   .wrap{padding:0 16px}
   .top nav{display:none}
   .top .theme-btn{margin-left:auto}
-  .hero{padding-top:44px}
+  .hero{padding-top:36px}
   .btn{width:100%}
-  .cards,.verify,.steps,.install{grid-template-columns:1fr}
-  .facts{grid-template-columns:1fr 1fr}
-  .fact strong{font-size:1.3rem}
   section{padding-top:64px}
-  .release,.box{padding:20px}
-  .final{padding:36px 18px}
+  .blue{margin-top:64px;padding:40px 0}
+  .install,.verify{grid-template-columns:1fr}
+  .box+.box,.v+.v{border-left:0;border-top:4px solid var(--ink)}
+  .box,.upd .l,.upd .r{padding:20px}
+  .frame{box-shadow:6px 6px 0 var(--ink)}
+  .more{grid-template-columns:1fr}
+  .more div,.more div:nth-child(even){border-left:0;border-top:4px solid var(--ink)}
+  .more div:first-child{border-top:0}
+  .more div:nth-child(2){border-top:4px solid var(--ink)}
+  .grades span{font-size:.74rem}
+  .sh .num{display:none}
+  .phones{gap:12px}
+  .phone{box-shadow:6px 6px 0 #121212}
+  footer{margin-top:64px}
 }
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn{transition:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
 <body>
 <a class="skip" href="#features">본문으로 이동</a>
 
-<div class="top">
+<header class="top">
   <div class="wrap">
-    <a class="brand" href="#"><span class="logo" aria-hidden="true">M</span>MIA Study</a>
+    <a class="brand" href="#"><span class="mark" aria-hidden="true"><i class="c"></i><i class="s"></i><i class="t"></i></span>MIA Study</a>
     <nav aria-label="페이지 안내">
-      <a href="#features">기능</a><a href="#mobile">모바일</a><a href="#install">설치</a><a href="#changes">업데이트</a><a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a>
+      <a href="#features">기능</a><a href="#mobile">모바일</a><a href="#install">설치</a><a href="#update">업데이트</a><a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a>
     </nav>
     <button class="theme-btn" type="button" id="theme" aria-label="밝은·어두운 테마 전환">◐</button>
   </div>
-</div>
+</header>
 
 <main>
 <div class="hero">
   <div class="wrap">
-    <a class="pill" href="#changes"><b>1.4.12</b>동기화 충돌 복사본·부분 동기화 경고 →</a>
-    <h1>전공 질문을 모으고,<br><span class="grad">잊기 전에 다시 꺼내 보세요.</span></h1>
-    <p class="lead">MIA Study는 Obsidian 안에서 과목·질문·키워드를 화면으로 관리하고, FSRS-6 간격 반복으로 복습 시점을 잡아 주는 공부 플러그인입니다. 면접·시험 준비용 전공 질문을 Markdown 그대로 쌓아 두세요.</p>
-    <div class="cta">
-      <a class="btn btn-primary" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/mia-study-1.4.12.zip" download>↓ 1.4.12 다운로드</a>
-      <a class="btn btn-ghost" href="#install">BRAT으로 설치하기</a>
+    <div class="hero-grid">
+      <div>
+        <span class="ver">정식 1.4.12</span>
+        <h1>질문을 모으고,<br><em>잊기 전에</em><br>다시 꺼낸다.</h1>
+        <p class="lead">Obsidian 안에서 과목·질문·키워드를 관리하고, FSRS-6로 복습 시점을 잡아 주는 전공 공부 플러그인.</p>
+        <div class="cta">
+          <a class="btn btn-red" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/mia-study-1.4.12.zip" download>↓ 1.4.12 다운로드</a>
+          <a class="btn btn-line" href="#install">BRAT 설치</a>
+        </div>
+        <p class="meta"><span>무료 · MIT</span><span>데스크톱·모바일</span><span>Obsidian 1.8.7+</span></p>
+      </div>
+      <div class="geo" aria-hidden="true">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+          <rect x="52" y="8" width="38" height="38" fill="var(--blue)"/>
+          <circle cx="30" cy="72" r="32" fill="var(--red)"/>
+          <polygon points="62,96 98,96 80,58" fill="var(--ink)"/>
+          <rect x="0" y="46" width="100" height="3" fill="var(--ink)"/>
+        </svg>
+      </div>
     </div>
-    <p class="meta"><span>무료 · MIT 라이선스</span><span>데스크톱·모바일</span><span>Obsidian 1.8.7 이상</span><span>2026년 11월 11일 갱신</span></p>
-
-    <div class="window">
-      <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>Major Study · 대시보드</span></div>
+    <figure class="frame hero-shot">
       <img src="assets/screens/desktop-dashboard.jpg" width="1600" height="1075" alt="MIA Study 대시보드. 오늘 출제할 복습 1개와 새 문제 6개, 이어하기 카드, 등록 문제 13개·기억 안정 비율·오늘 평가 통계 타일, 과목별 학습 카드가 보인다.">
-    </div>
-
-    <div class="facts">
-      <div class="fact"><strong>FSRS-6</strong><span>Anki와 같은 계열의 복습 알고리즘</span></div>
-      <div class="fact"><strong>노트 0개</strong><span>문제마다 파일을 만들지 않는 문제은행</span></div>
-      <div class="fact"><strong>4단계 평가</strong><span>못 암기 · 애매 · 암기 · 너무 쉬움</span></div>
-      <div class="fact"><strong>1,685개</strong><span>1.4.12 자동 검사 통과</span></div>
-    </div>
+    </figure>
   </div>
 </div>
 
 <section id="features">
   <div class="wrap">
-    <span class="kicker">Features</span>
-    <h2>공부 흐름이 한 화면에서 이어집니다</h2>
-    <p class="sub">질문 등록부터 복습, 약점 확인, 정리본 출력까지 Markdown을 직접 쓰지 않고 폼과 버튼으로 진행합니다.</p>
+    <div class="sh"><span class="shape c" aria-hidden="true"></span><h2>기능</h2><span class="num">01</span></div>
 
-    <div class="feature">
+    <div class="feat">
       <div class="copy">
-        <h3>떠올리고, 확인하고, 평가하기</h3>
-        <p class="sub" style="margin:0">시험 모드는 정답을 가린 채 시작합니다. 정답을 본 뒤 네 단계로 평가하면 다음 복습 시점이 버튼 위에 바로 보입니다.</p>
-        <div class="grades" aria-label="평가 단계"><span class="grade g1">못 암기 1분</span><span class="grade g2">애매 6분</span><span class="grade g3">암기 10분</span><span class="grade g4">너무 쉬움 1일</span></div>
-        <ul>
-          <li>LaTeX 수식(<code>$…$</code>, <code>$$…$$</code>)을 그대로 렌더링</li>
-          <li>직전 평가 취소, 이전·다음 문제 이동, 키보드 단축키(Space · 1–4 · U)</li>
-          <li>Anki처럼 기한일 단위 출제 — 하루 시작 04:00부터 그날의 복습을 모두 냅니다</li>
-        </ul>
+        <span class="tag t-r" aria-hidden="true"></span>
+        <h3>떠올리고, 네 단계로 평가</h3>
+        <p>정답을 가린 채 시작하고, 평가하면 다음 복습 시점이 버튼에 바로 보입니다. LaTeX 수식도 그대로 렌더링됩니다.</p>
+        <div class="grades" role="img" aria-label="평가 단계: 못 암기 1분, 애매 6분, 암기 10분, 너무 쉬움 10일"><span class="g1">못 암기<b>1분</b></span><span class="g2">애매<b>6분</b></span><span class="g3">암기<b>10분</b></span><span class="g4">너무 쉬움<b>10일</b></span></div>
+        <p class="keys">Space 정답 · 1–4 평가 · U 직전 평가 취소</p>
       </div>
-      <figure class="shot"><img src="assets/screens/desktop-study.jpg" width="1600" height="1075" loading="lazy" alt="시험 모드 학습 화면. 시차 계산에 관한 질문 아래 분수 형태의 수식이 렌더링된 모범 답안과 네 가지 평가 버튼이 있다."></figure>
+      <figure class="frame"><img src="assets/screens/desktop-study.jpg" width="1600" height="1075" loading="lazy" alt="시험 모드 학습 화면. 시차 계산 질문 아래 분수 수식이 렌더링된 모범 답안과 못 암기·애매·암기·너무 쉬움 평가 버튼이 보인다."></figure>
     </div>
 
-    <div class="feature flip">
+    <div class="feat flip">
       <div class="copy">
+        <span class="tag t-y" aria-hidden="true"></span>
         <h3>이미지·표·코드도 그대로</h3>
-        <p class="sub" style="margin:0">정답에 넣은 이미지(<code>![[첨부/그림.png]]</code>), 표, 목록, 코드 블록이 학습 화면에서 Obsidian 그대로 렌더링됩니다.</p>
-        <ul>
-          <li>이미지 크기 지정(<code>|300</code>)도 지원</li>
-          <li>화면의 예시는 모두 일반 상식 수준의 데모 질문입니다</li>
-        </ul>
+        <p>정답에 넣은 이미지(<code>![[그림.png]]</code>), 표, 목록, 코드 블록이 Obsidian 그대로 렌더링됩니다.</p>
       </div>
-      <figure class="shot"><img src="assets/screens/desktop-study-image.jpg" width="1600" height="1075" loading="lazy" alt="시험 모드 학습 화면. 막대그래프 질문의 모범 답안 안에 컬러 막대그래프 이미지가 삽입되어 렌더링되어 있다."></figure>
+      <figure class="frame"><img src="assets/screens/desktop-study-image.jpg" width="1600" height="1075" loading="lazy" alt="시험 모드 학습 화면. 막대그래프 질문의 모범 답안 안에 컬러 막대그래프 이미지가 삽입되어 렌더링되어 있다."></figure>
     </div>
 
-    <div class="feature">
+    <div class="feat">
       <div class="copy">
-        <h3>질문은 과목별 문제은행 하나에</h3>
-        <p class="sub" style="margin:0">질문·정답·유형·핵심/보조 키워드를 입력하면 과목 폴더의 <code>문제은행.md</code>에 정리되고, 과목 노트도 자동으로 갱신됩니다.</p>
-        <ul>
-          <li>과목·유형·복습 상태·키워드로 검색하고 정렬</li>
-          <li>검색 결과만 골라 바로 시험·암기</li>
-          <li>꼬리질문을 최대 50개까지 연결</li>
-        </ul>
+        <span class="tag t-b" aria-hidden="true"></span>
+        <h3>과목별 문제은행과 검색</h3>
+        <p>질문·정답·유형·키워드를 입력하면 과목 폴더의 <code>문제은행.md</code>에 정리됩니다. 검색 결과만 골라 바로 시험·암기하고, 키워드로 개념끼리 연결합니다.</p>
       </div>
-      <figure class="shot"><img src="assets/screens/desktop-questions.jpg" width="1600" height="1075" loading="lazy" alt="문제 목록 화면. 수학 기초·요리 과학 예시 질문 13개와 검색창, 과목·유형·상태 필터, 질문마다 학습·상세·편집·연결·삭제 버튼이 있다."></figure>
+      <figure class="frame"><img src="assets/screens/desktop-questions.jpg" width="1600" height="1075" loading="lazy" alt="문제 목록 화면. 수학 기초·요리 과학 예시 질문 13개와 검색창, 과목·유형·상태 필터, 질문마다 학습·상세·편집·연결·삭제 버튼이 보인다."></figure>
     </div>
 
-    <div class="feature flip">
-      <div class="copy">
-        <h3>키워드로 개념끼리 연결</h3>
-        <p class="sub" style="margin:0">키워드마다 의미 노트가 생기고, 같은 키워드를 쓰는 질문이 묶입니다. 학습 중에는 관련 문제를 추천받아 이어서 풀 수 있습니다.</p>
-        <ul>
-          <li>키워드별 연결 문제 시험·암기</li>
-          <li>이름 변경·병합·삭제 시 모든 문제은행 링크를 함께 갱신</li>
-        </ul>
+    <div class="more">
+      <div><span class="dot c" aria-hidden="true"></span><h3>학습현황·취약 문제</h3><p>과목별 진도와 긴급도 순 약점</p></div>
+      <div><span class="dot s" aria-hidden="true"></span><h3>Anki 스타일 설정</h3><p>일일 상한·단계·목표 기억률</p></div>
+      <div><span class="dot t" aria-hidden="true"></span><h3>Word 정리본</h3><p>과목 전체를 A4 .docx로</p></div>
+      <div><span class="dot c" aria-hidden="true"></span><h3>이어하기·동기화</h3><p>기기 간 기록·설정 공유</p></div>
+      <div><span class="dot s" aria-hidden="true"></span><h3>Markdown 그대로</h3><p>질문은 평범한 콜아웃으로 남음</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="blue" id="mobile">
+  <section>
+    <div class="wrap">
+      <div class="sh"><span class="shape sq-y" aria-hidden="true"></span><h2>모바일</h2><span class="num">02</span></div>
+      <div class="mob">
+        <div>
+          <p>좁은 화면에서는 탭이 한 줄로 줄고 평가 버튼이 2×2로 커집니다. Obsidian의 밝은·어두운 테마를 그대로 따릅니다.</p>
+          <p class="honest">데스크톱 Obsidian에서 휴대폰 폭(390px)으로 찍은 화면입니다. 실제 휴대폰 캡처가 아닙니다.</p>
+        </div>
+        <div class="phones">
+          <figure class="phone"><img src="assets/screens/mobile-dashboard.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 어두운 테마의 대시보드. 복습 1개·새 문제 6개 대기 타일, 시험 모드 시작 버튼, 이어하기 카드가 보인다."></figure>
+          <figure class="phone"><img src="assets/screens/mobile-study.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 학습 화면. 수식이 렌더링된 모범 답안 아래에 평가 버튼 네 개가 2×2로 배치되어 있다."></figure>
+        </div>
       </div>
-      <figure class="shot"><img src="assets/screens/desktop-keywords.jpg" width="1600" height="1075" loading="lazy" alt="키워드 화면. 가우스·마이야르 반응·막대그래프 같은 키워드 카드마다 연결된 문제 수와 시험·암기·연결 질문 보기 버튼이 있다."></figure>
     </div>
-
-    <div class="cards">
-      <article class="card">
-        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-6"/></svg></div>
-        <h3>학습현황과 취약 문제</h3><p>과목별 진도, 최근 평가, 못 암기·애매 문제를 지연 시간까지 반영한 긴급도 순으로 보여 줍니다.</p>
-      </article>
-      <article class="card">
-        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1.3z"/></svg></div>
-        <h3>Anki 스타일 학습 설정</h3><p>하루 새 문제·복습 상한, 학습·재학습 단계, 목표 기억률, 버튼별 고정 간격을 간편·고급 화면에서 조정합니다.</p>
-      </article>
-      <article class="card">
-        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 14h6M9 18h4"/></svg></div>
-        <h3>과목별 Word 정리본</h3><p>과목의 질문·답변 전체를 A4 서식의 .docx로 출력합니다. 표·목록·코드·보관함 이미지를 포함합니다.</p>
-      </article>
-      <article class="card">
-        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg></div>
-        <h3>이어하기와 기기 간 동기화</h3><p>마지막 위치에서 다시 시작합니다. 같은 보관함을 동기화하면 복습 기록·설정·이어하기를 여러 기기에서 함께 씁니다.</p>
-      </article>
-      <article class="card">
-        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div>
-        <h3>자료를 지키는 저장 방식</h3><p>같은 이름의 사용자 노트는 덮어쓰지 않고, 깨지는 답안·링크는 저장 전에 거절하며, 충돌한 평가는 버리지 않고 보관합니다.</p>
-      </article>
-      <article class="card">
-        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div>
-        <h3>Markdown 그대로</h3><p>질문 원문은 평범한 Markdown 콜아웃으로 남습니다. 플러그인 없이도 읽을 수 있고, GPT 등으로 문제를 만들 때는 <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/MIA-AGENT.md">작성 가이드</a>를 쓰세요.</p>
-      </article>
-    </div>
-  </div>
-</section>
-
-<section id="mobile">
-  <div class="wrap">
-    <span class="kicker">Mobile</span>
-    <h2>휴대폰에서도 같은 흐름으로</h2>
-    <p class="sub">좁은 화면에서는 탭이 한 줄로 줄고, 평가 버튼은 2×2로 커집니다. 키보드가 열리면 입력칸이 가려지지 않도록 창 높이를 맞춥니다. Obsidian 테마의 밝은·어두운 모드를 그대로 따릅니다.</p>
-    <div class="phones">
-      <figure class="phone"><img src="assets/screens/mobile-dashboard.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 어두운 테마의 대시보드. 복습·새 문제 대기 수와 이어하기 카드가 보인다."><figcaption>대시보드 · 어두운 테마</figcaption></figure>
-      <figure class="phone"><img src="assets/screens/mobile-study.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 학습 화면. 평가 버튼이 2열로 배치되어 있다."><figcaption>학습 화면 · 2×2 평가 버튼</figcaption></figure>
-      <figure class="phone"><img src="assets/screens/mobile-dashboard-light.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 밝은 테마의 대시보드"><figcaption>대시보드 · 밝은 테마</figcaption></figure>
-    </div>
-    <p class="note" style="max-width:720px;margin:24px auto 0;text-align:center">화면은 1.4.12와 예시 문제로 데스크톱 Obsidian에서 휴대폰 폭(390px)을 흉내 내 찍었습니다. 실제 휴대폰 화면 캡처가 아닙니다.</p>
-  </div>
-</section>
-
-<section id="start">
-  <div class="wrap">
-    <span class="kicker">Getting started</span>
-    <h2>세 단계면 첫 복습까지</h2>
-    <p class="sub">설치 후 리본의 뇌 아이콘 또는 명령 팔레트의 <code>MIA Study 열기</code>로 시작합니다.</p>
-    <div class="steps">
-      <div class="step"><h3>과목 추가</h3><p>과목 폴더와 문제은행 노트가 자동으로 생깁니다. 기본 위치는 <code>MIA/&lt;과목&gt;/</code>입니다.</p></div>
-      <div class="step"><h3>질문 추가</h3><p>질문·정답·유형과 핵심 키워드를 입력합니다. 키워드 의미 노트도 함께 만들어집니다.</p></div>
-      <div class="step"><h3>시험 모드 시작</h3><p>하루 새 문제 20개·복습 200회(기본값) 안에서 출제됩니다. 평가하면 다음 복습일이 정해집니다.</p></div>
-    </div>
-  </div>
-</section>
+  </section>
+</div>
 
 <section id="install">
   <div class="wrap">
-    <span class="kicker">Install</span>
-    <h2>설치와 업데이트</h2>
-    <p class="sub">아직 Obsidian 커뮤니티 목록에는 없어서 BRAT 또는 ZIP으로 설치합니다.</p>
+    <div class="sh"><span class="shape t" aria-hidden="true"></span><h2>설치</h2><span class="num">03</span></div>
     <div class="install">
       <div class="box">
-        <h3>BRAT으로 설치 <span class="tag">추천</span></h3>
+        <h3>BRAT <small>추천</small></h3>
         <ol>
-          <li>커뮤니티 플러그인에서 <strong>BRAT</strong>을 설치하고 켭니다.</li>
-          <li>명령 팔레트에서 <code>BRAT: Add a beta plugin for testing</code>을 실행합니다.</li>
-          <li><code>https://github.com/kimchi-kang/mia-study-obsidian</code>을 입력합니다.</li>
-          <li>커뮤니티 플러그인 목록에서 <strong>MIA Study</strong>를 켭니다.</li>
+          <li><strong>BRAT</strong> 플러그인을 설치하고 켭니다.</li>
+          <li>명령 팔레트에서 <code>BRAT: Add a beta plugin for testing</code> 실행.</li>
+          <li><code>https://github.com/kimchi-kang/mia-study-obsidian</code> 입력.</li>
+          <li>커뮤니티 플러그인에서 <strong>MIA Study</strong>를 켭니다.</li>
         </ol>
-        <p class="note">업데이트도 BRAT에서 합니다. 설치 후 Major Study 제목 옆 버전이 <strong>v1.4.12</strong>인지 확인하세요.</p>
+        <p class="links">업데이트도 BRAT에서 합니다.</p>
       </div>
       <div class="box">
-        <h3>ZIP으로 직접 설치·업데이트</h3>
+        <h3>ZIP 직접 설치</h3>
         <ol>
           <li>보관함을 백업하고 Obsidian을 닫습니다.</li>
-          <li><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/mia-study-1.4.12.zip">mia-study-1.4.12.zip</a>의 <code>main.js</code>, <code>styles.css</code>, <code>manifest.json</code>을 <code>.obsidian/plugins/mia-study/</code>에 넣습니다.</li>
-          <li>기존 <code>data.json</code>, <code>ui-state.json</code>은 그대로 둡니다. 학습 기록과 이어하기가 여기 있습니다.</li>
-          <li>Obsidian을 다시 열고 버전을 확인합니다.</li>
+          <li><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/mia-study-1.4.12.zip">ZIP</a>의 <code>main.js</code>·<code>styles.css</code>·<code>manifest.json</code>을 <code>.obsidian/plugins/mia-study/</code>에 복사.</li>
+          <li><code>data.json</code>, <code>ui-state.json</code>은 그대로 둡니다. 학습 기록이 여기 있습니다.</li>
+          <li>Obsidian을 다시 엽니다.</li>
         </ol>
-        <p class="note">여러 기기에서 쓰면 모든 기기를 같은 버전으로 맞추세요. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/SHA256SUMS">SHA256SUMS</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/INSTALL.md">자세한 설치·복구 안내</a></p>
+        <p class="links"><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/SHA256SUMS">SHA256SUMS</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/INSTALL.md">INSTALL.md</a></p>
       </div>
     </div>
   </div>
 </section>
 
-<section id="changes">
+<section id="update">
   <div class="wrap">
-    <span class="kicker">What's new</span>
-    <h2>업데이트 내역</h2>
-    <p class="sub">저장 형식은 1.4 계열 내내 바뀌지 않아, 기존 학습 기록을 그대로 이어 씁니다.</p>
-    <article class="release">
-      <header><span class="v">1.4.12</span><span class="status ok">● 최신 정식</span><span class="meta">2026년 11월 11일</span></header>
-      <h3>동기화 충돌 복사본·부분 동기화 경고</h3>
-      <ul>
-        <li>같은 문제 ID가 여러 파일에 있으면(동기화 앱이 만든 충돌 복사본) 대시보드가 파일 목록과 숨겨진 문제 수를 알려 줍니다.</li>
-        <li>동기화 파일의 CRLF·BOM·끝 줄바꿈 차이는 읽고, 잘리거나 바뀐 파일은 거절합니다.</li>
-        <li>동기화 폴더가 일부만 도착하면 시작할 때 알림과 설정 경고를 띄웁니다.</li>
-        <li>기기 안 임시 저장이 실패해도 평가는 보관함 파일에 저장하고 한 번만 경고합니다.</li>
-      </ul>
-      <p style="margin:14px 0 0"><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.12">릴리스 노트와 설치 파일 →</a></p>
-    </article>
-
-    <ol class="timeline" aria-label="이전 버전">
-      <li><b>1.4.11</b><span class="meta">11월 10일</span><p>하루 이상 고정 간격 카드를 기한일 하루 동안 출제하고, 기기 간 평가 취소 때 다른 기기의 평가를 보관합니다.</p></li>
-      <li><b>1.4.10</b><span class="meta">11월 10일</span><p>깨진 답안·키워드 링크와 엉뚱한 파일 덮어쓰기를 저장 전에 막고, 실패 안내를 늘렸습니다.</p></li>
-      <li><b>1.4.9</b><span class="meta">11월 10일</span><p>복습 간격의 하루 경계를 04:00 기준으로 계산하고, 다른 기기에서 평가한 문제를 이어하기에서 뺍니다.</p></li>
-      <li><b>1.4.8</b><span class="meta">11월 10일</span><p>대시보드·학습현황·학습 화면과 설정 창 디자인을 새로 정리했습니다.</p></li>
-      <li><b>1.4.6</b><span class="meta">11월 9일</span><p>정규 복습을 Anki처럼 기한일 단위로 출제해 복습이 하루씩 밀리지 않습니다.</p></li>
-    </ol>
-    <details class="more">
-      <summary>이전 버전 더 보기</summary>
-      <ol class="timeline">
-        <li><b>1.4.7</b><p>키워드 병합·삭제 후 끊어진 링크(짧은 형식, 한글 유니코드 형식)를 정리합니다.</p></li>
-        <li><b>1.4.5</b><p>탭·버튼 무게, 통계 타일, 평가별 색, 모범 답안 패널 디자인 정돈.</p></li>
-        <li><b>1.4.4</b><p>쉼표가 든 키워드, 과목 노트 범위, 키워드 의미 저장 위치 수정.</p></li>
-        <li><b>1.4.3</b><p>Anki 스타일 학습 설정(간편·고급)과 좁은 화면 입력 개선.</p></li>
-        <li><b>1.3.x</b><p>기기 간 동기화 모드, 학습 기록·설정 충돌 보관, 반응형 보강.</p></li>
-        <li><b>1.0.x</b><p>정식 공개, 수식 표시 수정, 실행 버전 표시.</p></li>
-      </ol>
-      <p><a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/releases/HISTORY.md">전체 변경 이력</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases">모든 릴리스</a></p>
-    </details>
+    <div class="sh"><span class="shape c" aria-hidden="true"></span><h2>최신 업데이트</h2><span class="num">04</span></div>
+    <div class="upd">
+      <div class="l">
+        <div class="big">1.4.12</div>
+        <p>2026년 11월 11일</p>
+        <p><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.12">릴리스 노트 →</a></p>
+      </div>
+      <div class="r">
+        <h3>동기화 충돌 복사본·부분 동기화 경고</h3>
+        <ul>
+          <li>같은 문제 ID가 여러 파일에 있으면 대시보드가 파일 목록과 숨겨진 문제 수를 알려 줍니다.</li>
+          <li>동기화 폴더가 일부만 도착하면 시작할 때 알림과 설정 경고를 띄웁니다.</li>
+          <li>기기 안 임시 저장이 실패해도 평가는 보관함 파일에 저장합니다.</li>
+        </ul>
+        <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/releases/HISTORY.md">전체 변경 이력 →</a>
+      </div>
+    </div>
   </div>
 </section>
 
 <section id="verification">
   <div class="wrap">
-    <span class="kicker">Quality</span>
-    <h2>어떻게 확인했나요</h2>
-    <p class="sub">확인한 범위와 확인하지 못한 범위를 나눠 적습니다.</p>
+    <div class="sh"><span class="shape s" aria-hidden="true"></span><h2>검증</h2><span class="num">05</span></div>
     <div class="verify">
-      <div class="card"><span class="status ok">● 통과</span><strong>1,685개</strong><p>1.4.12 전체 자동 검사 실패·생략 0, 타입 검사와 배포 빌드 통과. 배포 파일은 소스 빌드와 해시가 같습니다.</p></div>
-      <div class="card"><span class="status ok">● 확인</span><strong>데스크톱 앱</strong><p>격리한 macOS Obsidian에서 1.4.12로 대시보드·모든 탭, 시험·암기, 평가와 직전 평가 취소, 질문·키워드 추가·편집·삭제, 플러그인 재시작을 확인했습니다.</p></div>
-      <div class="card"><span class="status warn">● 미검증</span><strong>휴대폰 실기기</strong><p>모바일 화면은 데스크톱에서 폭을 흉내 내 확인했습니다. 실제 iOS·Android, OS 키보드, 두 기기 실시간 동기화는 직접 검증하지 않았습니다.</p></div>
+      <div class="v"><span class="lab ok">통과</span><b>1,685개</b><p>1.4.12 자동 검사 실패·생략 0, 타입 검사·배포 빌드 통과.</p></div>
+      <div class="v"><span class="lab ok">확인</span><b>데스크톱 앱</b><p>macOS Obsidian에서 모든 탭과 시험·암기, 평가·취소, 재시작을 확인했습니다.</p></div>
+      <div class="v"><span class="lab no">미검증</span><b>휴대폰 실기기</b><p>iOS·Android 실기기, OS 키보드, 두 기기 실시간 동기화는 직접 확인하지 않았습니다.</p></div>
     </div>
-    <p style="margin-top:18px"><a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/STATUS.md">버전별 검증 기록(STATUS.md)</a></p>
+    <p class="vlink"><a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/STATUS.md">버전별 검증 기록 STATUS.md →</a></p>
   </div>
 </section>
-
-<div class="wrap">
-  <div class="final">
-    <h2>오늘 공부한 질문부터 넣어 보세요</h2>
-    <p class="sub" style="margin:0 auto">무료이고, 질문은 내 보관함의 Markdown으로 남습니다.</p>
-    <div class="cta">
-      <a class="btn btn-primary" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/mia-study-1.4.12.zip" download>↓ 1.4.12 다운로드</a>
-      <a class="btn btn-ghost" href="https://github.com/kimchi-kang/mia-study-obsidian#readme">사용 안내 읽기</a>
-    </div>
-  </div>
-</div>
 </main>
 
 <footer>
   <div class="wrap">
-    <span>MIA Study 1.4.12 · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT</a> · 복습 일정은 <a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a>(FSRS-6) 사용</span>
+    <span class="fm" aria-hidden="true"><i class="c"></i><i class="s"></i><i class="t"></i></span>
+    <span>MIA Study 1.4.12 · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT</a> · 복습 일정: <a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a>(FSRS-6)</span>
     <span><a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/issues">문제 신고</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases">릴리스</a></span>
   </div>
 </footer>
