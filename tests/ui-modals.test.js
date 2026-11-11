@@ -39,7 +39,7 @@ vi.mock("obsidian", () => {
     addSearch(callback) { return this.addText(callback); }
     addButton(callback) {
       const button = this.parent.createEl("button");
-      callback({ buttonEl: button, setButtonText(text) { button.text = text; return this; }, setCta() { return this; }, setDisabled(value) { button.disabled = value; return this; }, onClick(handler) { button.addEventListener("click", handler); return this; } });
+      callback({ buttonEl: button, setButtonText(text) { button.text = text; return this; }, setCta() { return this; }, setWarning() { return this; }, setDisabled(value) { button.disabled = value; return this; }, onClick(handler) { button.addEventListener("click", handler); return this; } });
       return this;
     }
   }
@@ -138,6 +138,27 @@ describe("modal interaction regressions", () => {
       expect(modal.close).not.toHaveBeenCalled();
     } else expect(modal.close).toHaveBeenCalledTimes(1);
   });
+});
+
+it("asks before resetting a review and only clears it after confirmation", async () => {
+  const { ConfirmDeleteModal } = await import("../src/ui/manage-modals");
+  const opened = [];
+  ConfirmDeleteModal.prototype.open = function () { opened.push(this); this.modalEl.classList = { add() {} }; this.onOpen(); };
+  const resetReview = vi.fn().mockResolvedValue(undefined);
+  const saved = { history: [{}, {}, {}] };
+  const modal = new QuestionDetailModal({}, question, saved, [], new Map(), { resetReview });
+  await modal.onOpen();
+  modal.contentEl.find("학습 전으로 초기화").click();
+  expect(resetReview).not.toHaveBeenCalled();
+  expect(opened).toHaveLength(1);
+  const dialog = opened[0];
+  expect(dialog.contentEl.children[0].text).toContain("복습 기록 3회");
+  dialog.contentEl.find("취소").click();
+  expect(dialog.close).toHaveBeenCalledOnce();
+  expect(resetReview).not.toHaveBeenCalled();
+  await dialog.contentEl.find("초기화").handlers.get("click")();
+  expect(resetReview).toHaveBeenCalledOnce();
+  expect(modal.close).toHaveBeenCalledOnce();
 });
 
 it("allows undo directly from the final-question completion dialog", async () => {

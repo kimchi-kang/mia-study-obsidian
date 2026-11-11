@@ -7,6 +7,7 @@ import { QuestionRecord, QuestionReviewState } from "../core/models";
 import { QuestionRecommendation } from "../core/recommendation-engine";
 import { errorMessage } from "./error-message";
 import { GRADE_HINTS } from "./study-grades";
+import { ConfirmDeleteModal } from "./manage-modals";
 
 type RegisteredQuestion = QuestionRecord & { id: string };
 
@@ -79,10 +80,10 @@ export class QuestionDetailModal extends Modal {
       button.setAttribute("title", GRADE_HINTS[grade]);
       button.addEventListener("click", () => void this.perform(() => this.actions.rate(grade), "상태를 변경했습니다."));
     }
-    const reset = this.contentEl.createEl("button", { text: "학습 전으로 초기화", cls: "mia-source" });
+    const reset = this.contentEl.createEl("button", { text: "학습 전으로 초기화", cls: "mia-source mia-detail-reset" });
     reset.disabled = !this.review;
     this.mutationButtons.push(reset);
-    reset.addEventListener("click", () => void this.perform(this.actions.resetReview, "복습 기록을 초기화했습니다."));
+    reset.addEventListener("click", () => this.confirmReset());
 
     this.contentEl.createEl("h3", { text: `복습 기록 ${this.review?.history.length ?? 0}회` });
     const history = this.contentEl.createDiv({ cls: "mia-history" });
@@ -95,7 +96,7 @@ export class QuestionDetailModal extends Modal {
     this.contentEl.createEl("h3", { text: "관련 질문" });
     const related = this.contentEl.createDiv({ cls: "mia-related" });
     for (const recommendation of this.recommendations) {
-      const row = related.createDiv();
+      const row = related.createDiv({ cls: "mia-detail-related-row" });
       const question = recommendation.question;
       void renderQuestionTitle(this.app, question.heading, row.createSpan(), question.filePath, this.renderer);
       row.createSpan({ text: ` — ${recommendation.reasons.join(" · ")} (${recommendation.score}점)` });
@@ -119,6 +120,19 @@ export class QuestionDetailModal extends Modal {
       row.addEventListener("click", () => this.actions.showKeyword(keyword.target, keyword.label));
     }
     if (!keywords.length) list.createSpan({ text: "없음", cls: "mia-muted" });
+  }
+
+  private confirmReset(): void {
+    if (this.saving) return;
+    const count = this.review?.history.length ?? 0;
+    new ConfirmDeleteModal(
+      this.app,
+      "학습 기록 초기화",
+      `이 질문의 복습 기록 ${count}회와 다음 복습 일정이 모두 지워지고 새 문제로 돌아갑니다. 질문·정답·키워드·연결 질문은 그대로입니다. 되돌릴 수 없습니다.`,
+      "초기화",
+      () => this.perform(this.actions.resetReview, "복습 기록을 초기화했습니다."),
+      "초기화 실패",
+    ).open();
   }
 
   private actionButton(parent: HTMLElement, label: string, action: () => void, cls?: string): void {
