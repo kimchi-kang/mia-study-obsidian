@@ -1799,3 +1799,93 @@ body.theme-dark .mia-view button.mod-warning, body.theme-dark :is(.mia-keyboard-
 .mia-view .mia-undo-feedback { font-weight: 800; }
 :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(input, select, textarea):focus-visible { outline-offset: -3px; }
 :is(.mia-keyboard-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal) .mia-settings-group-title { padding: 10px 14px 8px; margin: 0; }
+
+/* ── 1.4.14 Tidy cards ──────────────────────────────────────────────
+   Subject, progress and keyword cards share one hierarchy: a single filled
+   lead action, one outlined secondary action, then a quiet footer for the
+   rest (edit, delete). Counts become inline stats instead of boxed tiles.
+   Markup, labels and handlers are unchanged; placement is done with grid
+   and `order`, so every action stays visible. */
+.mia-view {
+  --mia-hair: color-mix(in srgb, var(--mia-ink) 30%, transparent);
+  --mia-danger-text: var(--mia-red);
+}
+body.theme-dark .mia-view { --mia-danger-text: #ff7a70; }
+
+/* Lead action: filled. */
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:first-child,
+.mia-view.mia-view .mia-keyword > button:nth-of-type(2) { background: var(--mia-blue); color: var(--mia-on-color); border: 3px solid var(--mia-ink); }
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:first-child:not(:disabled):hover,
+.mia-view.mia-view .mia-keyword > button:nth-of-type(2):not(:disabled):hover { background: var(--mia-ink); color: var(--mia-bg); }
+
+/* Quiet footer actions: text only, thin rule above, delete stays red. */
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(n+3),
+.mia-view.mia-view .mia-keyword > button:nth-of-type(1),
+.mia-view.mia-view .mia-keyword > button.mod-warning {
+  background: transparent; border: 0; border-top: 2px solid var(--mia-hair); color: var(--mia-muted);
+  font-weight: 700; font-size: .86em; min-height: 40px; padding: 6px 8px; white-space: nowrap; box-shadow: none;
+}
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(n+3):not(:disabled):hover,
+.mia-view.mia-view .mia-keyword > button:nth-of-type(1):not(:disabled):hover,
+.mia-view.mia-view .mia-keyword > button.mod-warning:not(:disabled):hover { background: var(--mia-yellow); color: var(--mia-on-yellow); border-color: var(--mia-hair); }
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button.mod-warning,
+.mia-view.mia-view .mia-keyword > button.mod-warning { color: var(--mia-danger-text); border-left: 2px solid var(--mia-hair); }
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button.mod-warning:not(:disabled):hover,
+.mia-view.mia-view .mia-keyword > button.mod-warning:not(:disabled):hover { background: var(--mia-red); color: var(--mia-on-color); }
+
+/* Dashboard subject cards: [시험][암기] / [이름 수정 | 삭제] */
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button { width: 100%; margin: 0; min-height: 40px; white-space: nowrap; }
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(n+3) { margin-top: 4px; }
+
+/* Progress cards: inline stats with a marker, then [복습 시작][전체 문제] */
+.mia-view.mia-view .mia-progress-subject-values { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 4px 0 14px; border-top: 2px solid var(--mia-hair); border-bottom: 2px solid var(--mia-hair); }
+.mia-view.mia-view .mia-progress-subject-values > button {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 42px; margin: 0; padding: 6px 10px;
+  background: transparent; border: 0; border-left: 2px solid var(--mia-hair); box-shadow: none;
+  color: var(--mia-ink); font-weight: 700; text-align: left; white-space: nowrap; overflow-wrap: normal;
+}
+.mia-view.mia-view .mia-progress-subject-values > button:nth-child(3n+1) { border-left: 0; padding-left: 2px; }
+.mia-view.mia-view .mia-progress-subject-values > button:nth-child(n+4) { border-top: 2px solid var(--mia-hair); }
+.mia-view.mia-view .mia-progress-subject-values > button:not(:disabled):hover { background: var(--mia-yellow); color: var(--mia-on-yellow); }
+.mia-view .mia-progress-subject-values > button::before { content: ""; flex: none; width: 10px; height: 10px; background: var(--mia-muted); }
+.mia-view .mia-progress-subject-values > button:nth-child(1)::before { background: transparent; border: 2px solid var(--mia-muted); box-sizing: border-box; }
+.mia-view .mia-progress-subject-values > button:nth-child(2)::before { background: var(--mia-blue); border-radius: 50% !important; }
+.mia-view .mia-progress-subject-values > button:nth-child(3)::before { background: var(--mia-red); border-radius: 50% !important; }
+.mia-view .mia-progress-subject-values > button:nth-child(4)::before { background: var(--mia-yellow); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.mia-view .mia-progress-subject-values > button:nth-child(5)::before { background: var(--mia-ink); }
+.mia-view .mia-progress-subject-values > button:nth-child(6)::before { background: var(--mia-blue); }
+.mia-view.mia-view .mia-progress-subject > .mia-inline-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mia-view.mia-view .mia-progress-subject > .mia-inline-actions > button { width: 100%; margin: 0; min-height: 40px; white-space: nowrap; }
+
+/* Keyword cards: name, one-line meta, [시험][암기], disclosure, [수정 | 삭제] */
+.mia-view .mia-keyword-grid { grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); }
+.mia-view.mia-view .mia-keyword { display: grid; grid-template-columns: 1fr 1fr; column-gap: 8px; row-gap: 8px; align-content: start; }
+.mia-view .mia-keyword > strong { grid-column: 1 / -1; order: 0; }
+.mia-view .mia-keyword > span { grid-column: 1 / -1; order: 1; font-size: .86em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: -4px; }
+.mia-view .mia-keyword > button:nth-of-type(2) { order: 2; }
+.mia-view .mia-keyword > button:nth-of-type(3) { order: 3; }
+.mia-view .mia-keyword > details { grid-column: 1 / -1; order: 4; }
+.mia-view .mia-keyword > button:nth-of-type(1) { order: 5; margin-top: 4px; }
+.mia-view .mia-keyword > button.mod-warning { order: 6; margin-top: 4px; }
+.mia-view.mia-view .mia-keyword > button { width: 100%; min-height: 40px; margin: 0; }
+.mia-view.mia-view .mia-keyword > button:nth-of-type(1), .mia-view.mia-view .mia-keyword > button.mod-warning { margin-top: 4px; }
+.mia-view .mia-keyword-questions summary { margin: 0; padding: 4px 0; font-size: .9em; color: var(--mia-muted); }
+
+/* Touch: keep every action at least 44px tall. */
+.is-mobile .mia-view.mia-view :is(.mia-subject-card > .mia-inline-actions, .mia-progress-subject > .mia-inline-actions, .mia-keyword) > button,
+.is-mobile .mia-view.mia-view .mia-progress-subject-values > button { min-height: 44px; }
+@container mia-view (max-width: 600px) {
+  .mia-view.mia-view .mia-subject-card > .mia-inline-actions > button,
+  .mia-view.mia-view .mia-progress-subject > .mia-inline-actions > button,
+  .mia-view.mia-view .mia-keyword > button,
+  .mia-view.mia-view .mia-progress-subject-values > button { min-height: 44px; }
+  .mia-view.mia-view .mia-progress-subject-values { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mia-view.mia-view .mia-progress-subject-values > button { padding-inline: 6px; gap: 6px; font-size: .9em; }
+  .mia-view .mia-keyword-grid { grid-template-columns: 1fr; }
+}
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(3),
+.mia-view.mia-view .mia-keyword > button:nth-of-type(1) { width: calc(100% + 4px); margin-right: -4px; }
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(4),
+.mia-view.mia-view .mia-keyword > button.mod-warning { width: calc(100% + 4px); margin-left: -4px; }
+.mia-view.mia-view .mia-progress-subject-values > button { justify-content: flex-start; }
