@@ -12,7 +12,7 @@
 
 [**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.4.12 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/mia-study-1.4.12.zip) · [변경 내역](docs/releases/1.4.12.md) · [현재 상태](STATUS.md)
 
-<img src="docs/assets/screens/desktop-dashboard.jpg" alt="MIA Study 대시보드" width="860">
+<img src="docs/assets/screens/desktop-dashboard.jpg" alt="MIA Study 대시보드. 오늘의 복습·새 문제와 과목별 학습 카드" width="860">
 
 </div>
 
@@ -20,9 +20,9 @@ Obsidian 안에서 과목·질문·키워드를 폼으로 관리하면서 FSRS-6
 
 | 학습 화면 | 문제 목록 | 모바일 |
 |---|---|---|
-| <img src="docs/assets/screens/desktop-study.jpg" alt="시험 모드 학습 화면" width="320"> | <img src="docs/assets/screens/desktop-questions.jpg" alt="문제 목록" width="320"> | <img src="docs/assets/screens/mobile-study.jpg" alt="모바일 학습 화면" width="140"> |
+| <img src="docs/assets/screens/desktop-study.jpg" alt="시험 모드 학습 화면, 렌더링된 수식이 있는 모범 답안" width="320"> | <img src="docs/assets/screens/desktop-questions.jpg" alt="문제 목록, 수학 기초·요리 과학 예시 질문" width="320"> | <img src="docs/assets/screens/mobile-study.jpg" alt="모바일 학습 화면" width="140"> |
 
-화면은 1.4.12와 예시 문제로 찍었습니다. 모바일 화면은 데스크톱 Obsidian에서 휴대폰 폭을 흉내 낸 것입니다.
+화면은 1.4.12와 직접 만든 일반 상식 데모 보관함(수학 기초·세계 지리·요리 과학)으로 찍었습니다. 수식·이미지·표·코드 렌더링을 보여 주는 예시 질문이며 실제 학습 내용이 아닙니다. 모바일 화면은 데스크톱 Obsidian에서 휴대폰 폭을 흉내 낸 것입니다.
 
 [1.4.12 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.12) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.4.12 변경 내역](docs/releases/1.4.12.md) · [이전 버전 이력](docs/releases/HISTORY.md)
 

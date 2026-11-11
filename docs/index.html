@@ -206,7 +206,7 @@ footer a{color:var(--muted)}
 
     <div class="window">
       <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>Major Study · 대시보드</span></div>
-      <img src="assets/screens/desktop-dashboard.jpg" width="1600" height="1075" alt="MIA Study 대시보드. 오늘 출제할 복습 6개와 새 문제 5개, 이어하기 카드, 등록 문제·기억 안정 비율·오늘 평가 통계 타일이 보인다.">
+      <img src="assets/screens/desktop-dashboard.jpg" width="1600" height="1075" alt="MIA Study 대시보드. 오늘 출제할 복습 1개와 새 문제 6개, 이어하기 카드, 등록 문제 13개·기억 안정 비율·오늘 평가 통계 타일, 과목별 학습 카드가 보인다.">
     </div>
 
     <div class="facts">
@@ -235,10 +235,22 @@ footer a{color:var(--muted)}
           <li>Anki처럼 기한일 단위 출제 — 하루 시작 04:00부터 그날의 복습을 모두 냅니다</li>
         </ul>
       </div>
-      <figure class="shot"><img src="assets/screens/desktop-study.jpg" width="1600" height="1075" loading="lazy" alt="시험 모드 학습 화면. 부하 저항 선택에 관한 질문 아래 수식이 담긴 모범 답안과 네 가지 평가 버튼이 있다."></figure>
+      <figure class="shot"><img src="assets/screens/desktop-study.jpg" width="1600" height="1075" loading="lazy" alt="시험 모드 학습 화면. 시차 계산에 관한 질문 아래 분수 형태의 수식이 렌더링된 모범 답안과 네 가지 평가 버튼이 있다."></figure>
     </div>
 
     <div class="feature flip">
+      <div class="copy">
+        <h3>이미지·표·코드도 그대로</h3>
+        <p class="sub" style="margin:0">정답에 넣은 이미지(<code>![[첨부/그림.png]]</code>), 표, 목록, 코드 블록이 학습 화면에서 Obsidian 그대로 렌더링됩니다.</p>
+        <ul>
+          <li>이미지 크기 지정(<code>|300</code>)도 지원</li>
+          <li>화면의 예시는 모두 일반 상식 수준의 데모 질문입니다</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/screens/desktop-study-image.jpg" width="1600" height="1075" loading="lazy" alt="시험 모드 학습 화면. 막대그래프 질문의 모범 답안 안에 컬러 막대그래프 이미지가 삽입되어 렌더링되어 있다."></figure>
+    </div>
+
+    <div class="feature">
       <div class="copy">
         <h3>질문은 과목별 문제은행 하나에</h3>
         <p class="sub" style="margin:0">질문·정답·유형·핵심/보조 키워드를 입력하면 과목 폴더의 <code>문제은행.md</code>에 정리되고, 과목 노트도 자동으로 갱신됩니다.</p>
@@ -248,10 +260,10 @@ footer a{color:var(--muted)}
           <li>꼬리질문을 최대 50개까지 연결</li>
         </ul>
       </div>
-      <figure class="shot"><img src="assets/screens/desktop-questions.jpg" width="1600" height="1075" loading="lazy" alt="문제 목록 화면. 검색창과 과목·유형·상태 필터, 질문마다 학습·상세·편집·연결·삭제 버튼이 있다."></figure>
+      <figure class="shot"><img src="assets/screens/desktop-questions.jpg" width="1600" height="1075" loading="lazy" alt="문제 목록 화면. 수학 기초·요리 과학 예시 질문 13개와 검색창, 과목·유형·상태 필터, 질문마다 학습·상세·편집·연결·삭제 버튼이 있다."></figure>
     </div>
 
-    <div class="feature">
+    <div class="feature flip">
       <div class="copy">
         <h3>키워드로 개념끼리 연결</h3>
         <p class="sub" style="margin:0">키워드마다 의미 노트가 생기고, 같은 키워드를 쓰는 질문이 묶입니다. 학습 중에는 관련 문제를 추천받아 이어서 풀 수 있습니다.</p>
@@ -260,7 +272,7 @@ footer a{color:var(--muted)}
           <li>이름 변경·병합·삭제 시 모든 문제은행 링크를 함께 갱신</li>
         </ul>
       </div>
-      <figure class="shot"><img src="assets/screens/desktop-keywords.jpg" width="1600" height="1075" loading="lazy" alt="키워드 화면. 키워드마다 연결된 문제 수와 시험·암기·연결 질문 보기 버튼이 있다."></figure>
+      <figure class="shot"><img src="assets/screens/desktop-keywords.jpg" width="1600" height="1075" loading="lazy" alt="키워드 화면. 가우스·마이야르 반응·막대그래프 같은 키워드 카드마다 연결된 문제 수와 시험·암기·연결 질문 보기 버튼이 있다."></figure>
     </div>
 
     <div class="cards">
@@ -298,7 +310,7 @@ footer a{color:var(--muted)}
     <h2>휴대폰에서도 같은 흐름으로</h2>
     <p class="sub">좁은 화면에서는 탭이 한 줄로 줄고, 평가 버튼은 2×2로 커집니다. 키보드가 열리면 입력칸이 가려지지 않도록 창 높이를 맞춥니다. Obsidian 테마의 밝은·어두운 모드를 그대로 따릅니다.</p>
     <div class="phones">
-      <figure class="phone"><img src="assets/screens/mobile-dashboard.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 어두운 테마의 대시보드"><figcaption>대시보드 · 어두운 테마</figcaption></figure>
+      <figure class="phone"><img src="assets/screens/mobile-dashboard.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 어두운 테마의 대시보드. 복습·새 문제 대기 수와 이어하기 카드가 보인다."><figcaption>대시보드 · 어두운 테마</figcaption></figure>
       <figure class="phone"><img src="assets/screens/mobile-study.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 학습 화면. 평가 버튼이 2열로 배치되어 있다."><figcaption>학습 화면 · 2×2 평가 버튼</figcaption></figure>
       <figure class="phone"><img src="assets/screens/mobile-dashboard-light.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 밝은 테마의 대시보드"><figcaption>대시보드 · 밝은 테마</figcaption></figure>
     </div>
