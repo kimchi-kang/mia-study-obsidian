@@ -81,6 +81,7 @@ import { MarkdownRenderer } from "obsidian";
 import { StudyUiStore } from "../src/services/study-ui-store";
 import { MiaStudyView } from "../src/ui/study-view";
 import { MiaSettingTab } from "../src/ui/settings-tab";
+import { renderDeviceSyncSettings } from "../src/ui/device-sync-settings";
 import { StudyManagementModal } from "../src/ui/study-management-modal";
 import { MiaDataStore } from "../src/services/data-store";
 import { buildReviewQueue } from "../src/core/recommendation-engine";
@@ -1858,4 +1859,34 @@ describe("initial workspace session restoration", () => {
     await vi.waitFor(() => expect(ui.view.contentEl.querySelector(".mia-study-layout").scrollTop).toBe(0));
     expect(ui.view.contentEl.querySelector(".mia-study-concepts").open).toBe(false);
   });
+});
+
+
+describe("duplicate question file warning on the dashboard", () => {
+  const files = count => Array.from({ length: count }, (_, i) => ({ filePath: `문제/은행 (${i + 1}).md`, hiddenQuestions: 2, sharesWith: ["문제/은행.md"] }));
+  it("explains hidden questions, lists the files and says how to bring them back", () => {
+    const ui = setup({ start: false }); ui.plugin.index.crossFileDuplicates = { hiddenQuestions: 7, files: files(2) };
+    ui.view.showDashboard();
+    const text = ui.content();
+    expect(text).toContain("같은 문제가 둘 이상의 파일에 들어 있어 문제 7개가 목록과 학습에서 숨겨져 있습니다.");
+    expect(text).toContain("동기화 앱이 파일의 사본을 만들었을 때 흔히 생깁니다. 학습 기록은 그대로 보관되어 있으며, 불필요한 사본 파일을 삭제하거나 문제 폴더 밖으로 옮기면 문제가 다시 나타납니다.");
+    expect(text).toContain("문제/은행 (1).md"); expect(text).toContain("문제/은행 (2).md"); expect(text).not.toContain("파일 외");
+  });
+  it("caps the file list and says how many more there are", () => {
+    const ui = setup({ start: false }); ui.plugin.index.crossFileDuplicates = { hiddenQuestions: 40, files: files(11) };
+    ui.view.showDashboard();
+    expect(ui.content()).toContain("문제/은행 (8).md"); expect(ui.content()).not.toContain("문제/은행 (9).md"); expect(ui.content()).toContain("외 3개 파일");
+  });
+  it("shows no card when nothing is duplicated across files", () => {
+    const ui = setup({ start: false }); ui.plugin.index.crossFileDuplicates = { hiddenQuestions: 0, files: [] };
+    ui.view.showDashboard(); expect(ui.content()).not.toContain("숨겨져 있습니다");
+  });
+});
+
+describe("device sync settings warning for a sync folder that has not fully arrived", () => {
+  const render = flag => { const ui = setup({ start: false }); renderDeviceSyncSettings(ui.view.contentEl, { portableSyncActive: false, portableSyncIncomplete: flag }); return ui; };
+  it("shows the warning when legacy storage is used while the folder is arriving", () => {
+    expect(render(true).content()).toContain("동기화 폴더(MIA Study Sync)를 찾았지만 아직 모두 도착하지 않았습니다. 지금 남기는 평가는 이 기기에만 저장됩니다. 보관함 동기화를 마친 뒤 Obsidian을 다시 시작하세요.");
+  });
+  it("shows nothing extra otherwise", () => { expect(render(false).content()).not.toContain("찾았지만"); });
 });

@@ -23,7 +23,7 @@ import { SubjectNotes } from "./services/subject-notes";
 import { SubjectOperations } from "./services/subject-operations";
 import { exportSubjectWord, readExportImage } from "./services/subject-word-export";
 import { VerifiedPluginStorage, type PluginDataStorage } from "./services/verified-plugin-storage";
-import { PORTABLE_RESUME_PATH, preparePortableStudyStorage, selectPortableStudyStorage } from "./services/portable-study-storage";
+import { PORTABLE_RESUME_PATH, PORTABLE_SYNC_INCOMPLETE_WARNING, portableSyncPartiallyArrived, preparePortableStudyStorage, selectPortableStudyStorage } from "./services/portable-study-storage";
 import { QuestionIndex } from "./services/question-index";
 import { QuestionMetadataModal } from "./ui/metadata-modal";
 import { MiaSettingTab } from "./ui/settings-tab";
@@ -53,6 +53,8 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
   private fsrsKey = "";
   studyUi!: StudyUiStore;
   portableSyncActive = false;
+  /** Legacy storage is in use although a portable sync folder has started to arrive. */
+  portableSyncIncomplete = false;
   private legacyStudyStorage!: VerifiedPluginStorage;
   private activeStudyStorage!: PluginDataStorage;
   private legacyResumePath = "";
@@ -92,6 +94,11 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     this.activeStudyStorage = portable ?? this.legacyStudyStorage;
     this.portableSyncActive = portable !== null;
     if (portable) this.app.saveLocalStorage(this.portableSyncKey, true);
+    else {
+      this.portableSyncIncomplete = await portableSyncPartiallyArrived(this.app.vault.adapter);
+      if (this.unloadRequested) return;
+      if (this.portableSyncIncomplete) new Notice(`MIA Study: ${PORTABLE_SYNC_INCOMPLETE_WARNING}`, 60000);
+    }
     const storage: PluginDataStorage = {
       loadData: () => this.activeStudyStorage.loadData(),
       saveData: data => this.activeStudyStorage.saveData(data),
@@ -201,6 +208,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     await this.studyUi.load();
     this.app.saveLocalStorage(this.portableSyncKey, true);
     this.portableSyncActive = true;
+    this.portableSyncIncomplete = false;
   }
 
   /** Rebuilds the scheduler only when a setting it actually uses has changed. */

@@ -13,9 +13,22 @@ type Kind = "records" | "resume" | "mode";
 const prefix = (kind: Kind) => `<!-- mia-study-sync:${kind}:v1 -->\n\n이 파일은 MIA Study가 관리합니다. 직접 편집하지 마세요.\n\n\`\`\`json\n`;
 const suffix = "\n```\n";
 function encode(kind: Kind, value: unknown): string { return prefix(kind) + JSON.stringify(value, null, 2) + suffix; }
+/** Sync and editing tools may add a BOM, convert line endings or change the final newline. */
+function normalizeText(text: string): string {
+  return text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+}
+/** Same file ignoring only those transport changes; any other difference still counts as a change. */
+function sameContent(left: string, right: string): boolean {
+  return left === right || normalizeText(left).trimEnd() === normalizeText(right).trimEnd();
+}
 function decode(kind: Kind, text: string): unknown {
-  if (!text.startsWith(prefix(kind)) || !text.endsWith(suffix)) throw new Error("범용 동기화 파일 형식을 확인하세요. 원본을 덮어쓰지 않았습니다.");
-  return JSON.parse(text.slice(prefix(kind).length, -suffix.length));
+  const invalid = () => new Error("범용 동기화 파일 형식을 확인하세요. 원본을 덮어쓰지 않았습니다.");
+  const normalized = normalizeText(text);
+  if (!normalized.startsWith(prefix(kind))) throw invalid();
+  const body = normalized.slice(prefix(kind).length).trimEnd();
+  const closing = suffix.trimEnd();
+  if (!body.endsWith(closing)) throw invalid();
+  return JSON.parse(body.slice(0, -closing.length));
 }
 function parseRecords(raw: unknown) {
   if (!raw || typeof raw !== "object" || !("version" in raw) || raw.version === undefined || raw.version === null) throw new Error("범용 복습 기록 형식을 확인하세요.");
@@ -41,7 +54,7 @@ export class PortableStudyStorage implements PluginDataStorage {
   };
   private async writeVerified(path: string, text: string): Promise<void> {
     await this.adapter.write(path, text);
-    if (await this.adapter.read(path) !== text) throw new Error("범용 동기화 파일의 저장 결과가 달라졌습니다. 최신 기록을 확인하세요.");
+    if (!sameContent(await this.adapter.read(path), text)) throw new Error("범용 동기화 파일의 저장 결과가 달라졌습니다. 최신 기록을 확인하세요.");
   }
 }
 
@@ -54,6 +67,20 @@ export async function selectPortableStudyStorage(adapter: Adapter, previouslyEna
   if (!mode || typeof mode !== "object" || !("version" in mode) || mode.version !== 1) throw new Error("지원하지 않는 범용 동기화 버전입니다. 모든 기기의 MIA를 업데이트하세요.");
   for (const path of [PORTABLE_DATA_PATH, PORTABLE_RESUME_PATH]) if (!await adapter.exists(path)) throw new Error("범용 학습 파일이 아직 모두 도착하지 않았습니다. 보관함 동기화를 마친 뒤 다시 시작하세요.");
   return new PortableStudyStorage(adapter);
+}
+
+export const PORTABLE_SYNC_INCOMPLETE_WARNING = `동기화 폴더(${PORTABLE_STUDY_FOLDER})를 찾았지만 아직 모두 도착하지 않았습니다. 지금 남기는 평가는 이 기기에만 저장됩니다. 보관함 동기화를 마친 뒤 Obsidian을 다시 시작하세요.`;
+
+/**
+ * True when there is evidence that portable sync is in use elsewhere (the folder or one of its
+ * data files is present) but the mode file has not arrived. Never throws: a failed check is "no evidence".
+ */
+export async function portableSyncPartiallyArrived(adapter: Pick<DataAdapter, "exists">): Promise<boolean> {
+  try {
+    if (await adapter.exists(MODE_PATH)) return false;
+    for (const path of [PORTABLE_STUDY_FOLDER, PORTABLE_DATA_PATH, PORTABLE_RESUME_PATH]) if (await adapter.exists(path)) return true;
+    return false;
+  } catch { return false; }
 }
 
 /** Copy/merge first, publish the mode last; the legacy files remain intact. */
@@ -76,10 +103,10 @@ export async function preparePortableStudyStorage(adapter: Adapter, legacy: Plug
   if (!await adapter.exists(PORTABLE_STUDY_FOLDER)) await adapter.mkdir(PORTABLE_STUDY_FOLDER);
   const write = async (path: string, previous: string | null, text: string) => {
     const current = await adapter.exists(path) ? await adapter.read(path) : null;
-    if (current !== previous) throw new Error("다른 기기가 공유 파일을 변경했습니다. 다시 시도하세요.");
+    if (current === null || previous === null ? current !== previous : !sameContent(current, previous)) throw new Error("다른 기기가 공유 파일을 변경했습니다. 다시 시도하세요.");
     if (current === text) return;
     await adapter.write(path, text);
-    if (await adapter.read(path) !== text) throw new Error("공유 폴더 준비 중 저장 확인에 실패했습니다. 기존 기록은 유지됩니다.");
+    if (!sameContent(await adapter.read(path), text)) throw new Error("공유 폴더 준비 중 저장 확인에 실패했습니다. 기존 기록은 유지됩니다.");
   };
   await write(PORTABLE_DATA_PATH, oldData, encode("records", merged));
   await write(PORTABLE_RESUME_PATH, oldResume, encode("resume", chosenResume));

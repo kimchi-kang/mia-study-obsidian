@@ -1,6 +1,6 @@
 import { Notice } from "obsidian";
 import type MiaStudyPlugin from "../main";
-import { PORTABLE_STUDY_FOLDER } from "../services/portable-study-storage";
+import { PORTABLE_STUDY_FOLDER, PORTABLE_SYNC_INCOMPLETE_WARNING } from "../services/portable-study-storage";
 import { errorMessage } from "./error-message";
 
 export function renderDeviceSyncSettings(container: HTMLElement, plugin: MiaStudyPlugin): void {
@@ -10,12 +10,15 @@ export function renderDeviceSyncSettings(container: HTMLElement, plugin: MiaStud
   section.createEl("p", { text: "모든 기기에서 같은 최신 MIA를 사용하고, 같은 보관함을 동기화하세요. 폴더를 만든 뒤 다른 기기에서는 파일 수신을 마치고 MIA를 다시 시작하세요. 동기화 서비스 연결은 별도로 필요합니다. 학습 설정을 수정 중이면 먼저 저장하세요.", cls: "setting-item-description" });
   const status = section.createEl("p", { text: plugin.portableSyncActive ? "일반 보관함 폴더 사용 중" : "현재는 기존 플러그인 폴더를 사용 중입니다.", cls: "mia-muted" });
   status.setAttribute("role", "status");
+  const incomplete = plugin.portableSyncIncomplete ? section.createEl("p", { text: PORTABLE_SYNC_INCOMPLETE_WARNING, cls: "mia-warning" }) : null;
+  incomplete?.setAttribute("role", "alert");
   const button = section.createEl("button", { text: "범용 동기화 폴더 사용", attr: { type: "button" } });
   button.disabled = plugin.portableSyncActive;
   button.addEventListener("click", async () => {
     button.disabled = true;
     try {
       await plugin.enablePortableSync();
+      incomplete?.remove();
       status.setText("일반 보관함 폴더 사용 중 · 기존 파일은 보존했습니다.");
       new Notice("범용 동기화 폴더를 준비했습니다. 다른 기기에도 이 폴더를 동기화하세요.");
     } catch (error) {
