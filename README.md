@@ -12,17 +12,19 @@
 
 [**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.4.13 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.13/mia-study-1.4.13.zip) · [변경 내역](docs/releases/1.4.13.md) · [현재 상태](STATUS.md)
 
-<img src="docs/assets/screens/desktop-dashboard.jpg" alt="MIA Study 대시보드. 오늘의 복습·새 문제와 과목별 학습 카드" width="860">
+<img src="docs/assets/screens/desktop-dashboard.jpg" alt="MIA Study 대시보드. 1.4.13 바우하우스 디자인의 오늘 복습·새 문제 타일과 과목별 학습 카드" width="860">
 
 </div>
+
+1.4.13부터 플러그인 화면이 소개 페이지와 같은 바우하우스 스타일(원색, 두꺼운 테두리, 각진 모서리, 4색 평가 버튼)로 바뀌었습니다. 동작과 저장 형식은 그대로입니다.
 
 Obsidian 안에서 과목·질문·키워드를 폼으로 관리하면서 FSRS-6 복습, 핵심·보조 키워드, 키워드 의미 노트, 연관 문제 추천을 제공한다. Markdown을 직접 작성할 필요가 없고 문제 하나마다 노트를 만들지도 않는다.
 
 | 학습 화면 | 문제 목록 | 모바일 |
 |---|---|---|
-| <img src="docs/assets/screens/desktop-study.jpg" alt="시험 모드 학습 화면, 렌더링된 수식이 있는 모범 답안" width="320"> | <img src="docs/assets/screens/desktop-questions.jpg" alt="문제 목록, 수학 기초·요리 과학 예시 질문" width="320"> | <img src="docs/assets/screens/mobile-study.jpg" alt="모바일 학습 화면" width="140"> |
+| <img src="docs/assets/screens/desktop-study.jpg" alt="시험 모드 학습 화면, 렌더링된 수식이 있는 모범 답안" width="320"> | <img src="docs/assets/screens/desktop-questions.jpg" alt="문제 목록, 수학 기초·요리 과학 예시 질문" width="320"> | <img src="docs/assets/screens/mobile-study.jpg" alt="모바일 학습 화면, 평가 버튼 4색" width="140"> |
 
-화면은 1.4.12 디자인과 직접 만든 일반 상식 데모 보관함(수학 기초·세계 지리·요리 과학)으로 찍었습니다. 수식·이미지·표·코드 렌더링을 보여 주는 예시 질문이며 실제 학습 내용이 아닙니다. 모바일 화면은 데스크톱 Obsidian에서 휴대폰 폭을 흉내 낸 것입니다.
+화면은 1.4.13 바우하우스 디자인(빨강·노랑·파랑, 두꺼운 테두리, 각진 모서리)과 직접 만든 일반 상식 데모 보관함(수학 기초·세계 지리·요리 과학)으로 찍었습니다. 수식·이미지·표·코드 렌더링을 보여 주는 예시 질문이며 실제 학습 내용이 아닙니다. 모바일 화면은 데스크톱 Obsidian에서 휴대폰 폭을 흉내 낸 것입니다.
 
 [1.4.13 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.13) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.4.13 변경 내역](docs/releases/1.4.13.md) · [이전 버전 이력](docs/releases/HISTORY.md)
 
