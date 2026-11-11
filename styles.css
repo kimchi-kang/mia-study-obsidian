@@ -1532,3 +1532,270 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-keyboard-settings .mia-device-sync-settings > .mia-muted { border-radius: var(--mia-radius-s); }
 /* Obsidian's .modal:not(.mod-settings) .setting-item:first-child removes padding (0,5,0); tiles keep theirs. */
 .mia-study-management-settings .mia-settings-basic > .setting-item.setting-item:not(.setting-item-heading):is(:first-child, :not(:first-child)) { padding: 14px 16px; }
+
+/* ── 1.4.13 Bauhaus layer ───────────────────────────────────────────
+   Same vocabulary as the project page: flat primary colour blocks, thick
+   solid ink borders, square corners, hard offset shadows, geometric
+   markers. Visual properties only; layout, sizing, touch targets and the
+   responsive rules above stay authoritative. The palette is scoped to the
+   plugin's own view and modals, so the rest of Obsidian is untouched.
+   Headings use a local font stack only; nothing is fetched. */
+:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) {
+  --mia-bg: #f3efe4;
+  --mia-ink: #121212;
+  --mia-muted: #46433b;
+  --mia-panel: #fffdf6;
+  --mia-red: #d42a1f;
+  --mia-yellow: #f4c20d;
+  --mia-blue: #1f4fd8;
+  --mia-on-color: #ffffff;
+  --mia-on-yellow: #121212;
+  --mia-focus: #1f4fd8;
+  --mia-head: "Black Han Sans", "Do Hyeon", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", var(--font-interface), sans-serif;
+  --mia-radius: 0;
+  --mia-radius-s: 0;
+  --mia-line: var(--mia-ink);
+  --mia-surface: var(--mia-panel);
+  --mia-surface-hover: var(--mia-yellow);
+  --mia-accent-soft: var(--mia-panel);
+  --mia-accent-line: var(--mia-ink);
+  --mia-danger: var(--mia-red);
+  --mia-again: var(--mia-red);
+  --mia-hard: var(--mia-yellow);
+  --mia-good: var(--mia-ink);
+  --mia-easy: var(--mia-blue);
+  --mia-shadow: none;
+  color: var(--mia-ink);
+}
+body.theme-dark :is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) {
+  --mia-bg: #121212;
+  --mia-ink: #f3efe4;
+  --mia-muted: #c9c5b8;
+  --mia-panel: #1c1c1c;
+  --mia-blue: #3d63e8;
+  --mia-focus: #f4c20d;
+}
+.mia-view {
+  --mia-tone-review: var(--mia-blue);
+  --mia-tone-new: var(--mia-yellow);
+}
+body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view { background: var(--mia-bg); color: var(--mia-ink); }
+.mia-view [data-tone="again"] { --mia-tone: var(--mia-red); }
+.mia-view [data-tone="hard"] { --mia-tone: var(--mia-yellow); }
+.mia-view [data-tone="good"] { --mia-tone: var(--mia-ink); }
+.mia-view [data-tone="easy"] { --mia-tone: var(--mia-blue); }
+.mia-view [data-tone="total"], .mia-view [data-tone="idle"] { --mia-tone: var(--mia-muted); }
+
+/* Square corners everywhere in the plugin; switches keep their own shape. */
+:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact):not(.checkbox-container),
+:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) *:not(.checkbox-container):not(.checkbox-container *) {
+  border-radius: 0 !important;
+}
+
+/* Text */
+:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(h1, h2, h3, .modal-title) {
+  font-family: var(--mia-head);
+  font-weight: 700;
+  letter-spacing: -.01em;
+  color: var(--mia-ink);
+}
+.mia-view :is(.mia-muted, .mia-stat span, .mia-row small, .mia-keyword span, .mia-progress, .mia-subject-total, .mia-card-context, .mia-recall-prompt, .mia-hero-main > p:not(.mia-device-sync-hint), .mia-progress-subject-heading span, .mia-subject-card > span, .mia-related > p, .mia-related-open small, .mia-study-concepts summary, .mia-study-navigation button, .mia-grade-guidance, .mia-shortcut-hint, .mia-hero .mia-device-sync-hint, .mia-settings-status, .mia-device-sync-hint, .mia-touch-hint) { color: var(--mia-muted); }
+.mia-view .mia-card-label { color: var(--mia-ink); font-weight: 800; letter-spacing: .06em; }
+.mia-view :is(a, .internal-link, .external-link) { color: var(--mia-blue); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+body.theme-dark .mia-view :is(a, .internal-link, .external-link) { color: #8fa9ff; }
+.mia-view .mia-warning, .mia-view .mia-sync-warning, .mia-view .mia-storage-warning { color: var(--mia-ink); }
+.mia-view :is(code, kbd) { border: 2px solid var(--mia-ink); border-radius: 0; background: var(--mia-panel); color: var(--mia-ink); }
+.mia-view pre { border: 3px solid var(--mia-ink); background: var(--mia-panel); }
+
+/* Focus */
+:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(button, input, select, textarea, summary, a):focus-visible { outline: 4px solid var(--mia-focus); outline-offset: 2px; box-shadow: none; }
+
+/* Header: brand mark of two primary shapes, heavy rule below */
+.mia-view .mia-header { border-bottom: 4px solid var(--mia-ink); padding-bottom: 14px; }
+.mia-view .mia-header h2 { font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
+.mia-view .mia-header h2 .mia-home-button { display: inline-flex; align-items: center; gap: 10px; color: var(--mia-ink); font-family: var(--mia-head); font-weight: 800; }
+.mia-view .mia-header h2 .mia-home-button:hover { color: var(--mia-red); background: transparent; }
+.mia-view .mia-header .mia-home-button::before { content: ""; order: -2; width: 18px; height: 18px; border-radius: 50% !important; background: var(--mia-red); box-shadow: none; font-size: 0; }
+.mia-view .mia-header .mia-home-button::after { content: ""; order: -1; width: 16px; height: 16px; background: var(--mia-blue); margin-inline-start: -2px; }
+.mia-view .mia-header .mia-badge { background: var(--mia-ink); color: var(--mia-bg); font-weight: 800; letter-spacing: .04em; border-radius: 0; }
+.mia-view .mia-header .mia-version { color: var(--mia-muted); font-weight: 700; }
+
+/* Buttons: ink outline, flat, yellow on hover, red for the lead action */
+.mia-view button:where(:not(.mia-home-button, .mia-stat, .mia-nav button, .mia-progress-stat, .mia-keyword, .mia-grade-key)),
+.modal.mia-controls-modal button, :where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button:where(:not(.modal-close-button, .checkbox-container)),
+.mia-keyboard-settings button {
+  border: 3px solid var(--mia-ink);
+  background: var(--mia-panel);
+  color: var(--mia-ink);
+  box-shadow: none;
+  font-weight: 800;
+}
+.mia-view button:where(:not(.mia-home-button, .mia-stat, .mia-nav button, .mia-progress-stat, .mia-keyword, .mia-grade-key)):not(:disabled):hover,
+.mia-keyboard-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-detail-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-result-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-preview-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-appearance-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-study-management-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-confirm-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-recovery-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-controls-modal button:where(:not(.modal-close-button)):not(:disabled):hover,
+.mia-keyboard-settings button:not(:disabled):hover { background: var(--mia-yellow); color: var(--mia-on-yellow); border-color: var(--mia-ink); }
+.mia-view button.mod-cta, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-controls-modal) button.mod-cta, .mia-keyboard-settings button.mod-cta,
+.mia-view.mia-route-dashboard .mia-manage-actions button.mod-cta { background: var(--mia-red); color: var(--mia-on-color); border: 3px solid var(--mia-ink); box-shadow: none; }
+.mia-view button.mod-cta:not(:disabled):hover, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-controls-modal) button.mod-cta:not(:disabled):hover, .mia-keyboard-settings button.mod-cta:not(:disabled):hover,
+.mia-view.mia-route-dashboard .mia-manage-actions button.mod-cta:not(:disabled):hover { background: var(--mia-ink); color: var(--mia-bg); }
+.mia-view button.mod-warning, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button.mod-warning { background: var(--mia-panel); color: var(--mia-red); border-color: var(--mia-red); }
+body.theme-dark .mia-view button.mod-warning, body.theme-dark :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button.mod-warning { color: #ff7a70; border-color: #ff7a70; }
+.mia-view button.mod-warning:not(:disabled):hover { background: var(--mia-red); color: var(--mia-on-color); border-color: var(--mia-ink); }
+.mia-view button:disabled, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button:disabled { opacity: .45; }
+.mia-view .mia-row-actions > button:not(:first-child), .mia-view .mia-session-edit-actions button, .mia-view .mia-study-navigation button, .mia-view .mia-dock-utility .mia-skip, .mia-view .mia-settings-buttons > button { border-width: 3px; border-color: var(--mia-ink); background: var(--mia-panel); color: var(--mia-ink); }
+.mia-view .mia-study-navigation button, .mia-view .mia-dock-utility .mia-skip { border-color: transparent; background: transparent; }
+.mia-view .mia-study-navigation button:hover, .mia-view .mia-dock-utility .mia-skip:hover { background: var(--mia-yellow); color: var(--mia-on-yellow); border-color: var(--mia-ink); }
+
+/* Navigation: heavy underline tabs, active tab is an ink block */
+.mia-view .mia-nav { background: transparent; border: 0; padding: 0; gap: 4px; }
+.mia-view .mia-nav button { background: transparent; border: 0; border-bottom: 4px solid transparent; color: var(--mia-ink); font-weight: 800; box-shadow: none; padding: 8px 12px; }
+.mia-view .mia-nav button:hover { background: transparent; color: var(--mia-ink); border-bottom-color: var(--mia-red); }
+.mia-view .mia-nav button.mod-cta { background: var(--mia-ink); color: var(--mia-bg); border-bottom-color: var(--mia-ink); }
+.mia-view .mia-nav button.mod-cta:hover { background: var(--mia-ink); color: var(--mia-bg); border-bottom-color: var(--mia-red); }
+
+/* Inputs */
+:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) {
+  border: 3px solid var(--mia-ink);
+  background: var(--mia-panel);
+  color: var(--mia-ink);
+  box-shadow: none;
+}
+:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(input, select, textarea)::placeholder { color: var(--mia-muted); opacity: .8; }
+
+/* Surfaces: flat panels, thick ink borders */
+.mia-view :is(.mia-stat, .mia-primary-card, .mia-row, .mia-keyword, .mia-subject-card, .mia-progress-subject, .mia-resume-card, .mia-related, .mia-empty, .mia-candidate, .mia-history, .mia-settings-group, .mia-settings-summary, .mia-settings-changes, .mia-device-sync-settings, .mia-anki-settings-section, .mia-profile-row) {
+  border: 3px solid var(--mia-ink);
+  background: var(--mia-panel);
+  box-shadow: none;
+  color: var(--mia-ink);
+}
+.mia-view .mia-primary-card:not(.mia-hero) { border-color: var(--mia-ink); background: var(--mia-panel); }
+.mia-view .mia-resume-card { border-left-width: 12px; border-left-color: var(--mia-yellow); }
+.mia-view .mia-resume-card .mia-card-label { width: fit-content; justify-self: start; align-self: flex-start; flex: 0 0 auto; background: var(--mia-ink); color: var(--mia-bg); border: 0; padding: 2px 10px; display: inline-block; }
+.mia-view button.mia-stat:hover, .mia-view button.mia-progress-stat:hover, .mia-view button.mia-keyword:hover { background: var(--mia-yellow); color: var(--mia-on-yellow); border-color: var(--mia-ink); box-shadow: 6px 6px 0 var(--mia-ink); transform: translate(-2px, -2px); }
+.mia-view button.mia-stat:hover :is(strong, span), .mia-view button.mia-progress-stat:hover :is(strong, span) { color: var(--mia-on-yellow); }
+.mia-view .mia-row:hover { border-color: var(--mia-ink); background: var(--mia-panel); box-shadow: inset 8px 0 0 var(--mia-yellow); }
+
+/* Hero: heavy frame with hard shadow, red lead action, colour-block counts */
+.mia-view .mia-primary-card.mia-hero { background: var(--mia-panel); background-image: none; border: 4px solid var(--mia-ink); box-shadow: 8px 8px 0 var(--mia-ink); margin-bottom: 28px; }
+.mia-view .mia-hero-date { display: inline-block; background: var(--mia-ink); color: var(--mia-bg); padding: 3px 12px; font-size: 12px; font-weight: 800; letter-spacing: .06em; }
+.mia-view.mia-route-dashboard .mia-hero h3 { font-weight: 800; font-size: clamp(26px, 3.2cqi, 40px); line-height: 1.15; margin: 10px 0 10px; }
+.mia-view .mia-hero-count { border: 3px solid var(--mia-ink); background: var(--mia-blue); color: var(--mia-on-color); }
+.mia-view .mia-hero-count[data-tone="new"] { background: var(--mia-yellow); color: var(--mia-on-yellow); }
+.mia-view .mia-hero-count strong { color: inherit; font-family: var(--mia-head); font-weight: 800; font-size: 44px; letter-spacing: 0; }
+.mia-view .mia-hero-count span, .mia-view .mia-hero-count small { color: inherit; font-weight: 800; }
+.mia-view .mia-hero-count small { font-weight: 600; }
+
+/* Stat tiles: tone marker (circle / square / triangle) before the label */
+.mia-view .mia-stat strong { color: var(--mia-ink); font-family: var(--mia-head); font-weight: 800; letter-spacing: 0; }
+.mia-view .mia-stat:not([data-tone="total"]) strong { color: var(--mia-ink); }
+.mia-view .mia-stat span { color: var(--mia-ink); font-weight: 800; }
+.mia-view .mia-stat[data-tone] span::before { width: 12px; height: 12px; border-radius: 0; background: var(--mia-tone); }
+.mia-view .mia-stat[data-tone="review"] span::before, .mia-view .mia-stat[data-tone="again"] span::before { border-radius: 50%; }
+.mia-view .mia-stat[data-tone="hard"] span::before, .mia-view .mia-stat[data-tone="new"] span::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.mia-view .mia-stat[data-tone="total"] span::before, .mia-view .mia-stat[data-tone="idle"] span::before { background: var(--mia-ink); }
+.mia-view .mia-stability-stat::after { background: conic-gradient(var(--mia-red) var(--mia-stable-ratio, 0deg), var(--mia-muted) 0); }
+
+/* Section titles: heavy rule and a geometric marker */
+.mia-view :is(.mia-section-title, .mia-page-title) { border-top: 4px solid var(--mia-ink); padding-top: 14px; font-family: var(--mia-head); font-weight: 800; font-size: 22px; letter-spacing: -.01em; gap: 12px; }
+.mia-view :is(.mia-section-title, .mia-page-title)::after { display: none; }
+.mia-view :is(.mia-section-title, .mia-page-title)::before { content: ""; flex: none; width: 20px; height: 20px; background: var(--mia-red); border-radius: 50%; }
+.mia-view .mia-section-title ~ .mia-section-title::before { background: var(--mia-blue); border-radius: 0; }
+.mia-view .mia-page-title::before { background: var(--mia-yellow); border-radius: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.mia-view .mia-page-title { margin-bottom: 18px; }
+
+/* Quick actions */
+.mia-view.mia-route-dashboard .mia-manage-actions button { border: 3px solid var(--mia-ink); background: var(--mia-panel); color: var(--mia-ink); font-weight: 800; }
+
+/* Subject cards and counts */
+.mia-view .mia-subject-heading strong { font-family: var(--mia-head); font-weight: 800; font-size: 1.25em; }
+.mia-view .mia-meter { height: 14px; border: 3px solid var(--mia-ink); background: var(--mia-panel); }
+.mia-view .mia-meter-fill { background: var(--mia-red); }
+.mia-view .mia-session-meter { height: 10px; border: 3px solid var(--mia-ink); background: var(--mia-panel); }
+.mia-view .mia-session-meter-fill { background: var(--mia-red); }
+.mia-view .mia-rating-bar { height: 16px; gap: 0; border: 3px solid var(--mia-ink); }
+.mia-view .mia-rating-bar-part { background: var(--mia-tone); }
+.mia-view .mia-rating-bar-part + .mia-rating-bar-part { border-left: 3px solid var(--mia-ink); }
+.mia-view .mia-count-chip { border: 3px solid var(--mia-ink); background: var(--mia-panel); color: var(--mia-ink); font-weight: 800; padding: 1px 10px; }
+.mia-view .mia-count-chip[data-tone="review"] { background: var(--mia-blue); color: var(--mia-on-color); }
+.mia-view .mia-count-chip[data-tone="new"] { background: var(--mia-yellow); color: var(--mia-on-yellow); }
+.mia-view .mia-count-chip[data-tone="idle"] { background: transparent; color: var(--mia-muted); border-color: var(--mia-muted); font-weight: 600; }
+.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(n+3):not(.mod-warning) { color: var(--mia-ink); }
+.mia-view .mia-filter-chips button { border-width: 3px; font-weight: 800; }
+.mia-view .mia-badge, .mia-view .mia-settings-status, .mia-view .mia-settings-save-status { border-radius: 0; }
+
+/* Study */
+.mia-view .mia-study-card { border: 4px solid var(--mia-ink); background: var(--mia-panel); box-shadow: 8px 8px 0 var(--mia-ink); }
+.mia-view .mia-study-card .mia-question-section > h2 { font-family: var(--mia-head); font-weight: 800; letter-spacing: -.01em; line-height: 1.35; }
+.mia-view .mia-card-context { color: var(--mia-muted); font-weight: 800; }
+.mia-view .mia-study-card .mia-card-label { display: inline-block; background: var(--mia-ink); color: var(--mia-bg); border: 0; padding: 2px 10px; }
+.mia-view .mia-study-card .mia-answer-section { background: var(--mia-panel); border: 3px solid var(--mia-ink); border-left: 12px solid var(--mia-yellow); }
+.mia-view .mia-study-card .mia-answer-section .mia-card-label { background: var(--mia-yellow); color: var(--mia-on-yellow); border: 3px solid var(--mia-ink); }
+.mia-view .mia-study-navigation .mia-progress { color: var(--mia-on-yellow) !important; color: var(--mia-ink); font-weight: 800; border: 3px solid var(--mia-ink); background: var(--mia-yellow); color: var(--mia-on-yellow); padding: 2px 14px; }
+.mia-view .mia-study-concepts { border-top: 3px solid var(--mia-ink); }
+.mia-view .mia-study-concepts summary { color: var(--mia-ink); font-weight: 800; }
+.mia-view .mia-study-card .mia-markdown img { border: 3px solid var(--mia-ink); }
+.mia-view .mia-study-dock { background: var(--mia-bg); }
+.mia-view .mia-study-dock .mia-ratings button { border: 3px solid var(--mia-ink); border-top-width: 3px; background: var(--mia-ink); color: var(--mia-bg); font-weight: 800; box-shadow: none; }
+.mia-view .mia-study-dock .mia-ratings button:hover:not(:disabled) { box-shadow: 5px 5px 0 var(--mia-ink); transform: translate(-2px, -2px); }
+.mia-view .mia-study-dock .mia-ratings button:active:not(:disabled) { box-shadow: none; transform: none; }
+.mia-view .mia-study-dock .mia-ratings button[data-grade="1"] { background: var(--mia-red) !important; color: var(--mia-on-color) !important; }
+.mia-view .mia-study-dock .mia-ratings button[data-grade="2"] { background: var(--mia-yellow) !important; color: var(--mia-on-yellow) !important; }
+.mia-view .mia-study-dock .mia-ratings button[data-grade="3"] { background: var(--mia-ink) !important; color: var(--mia-bg) !important; }
+.mia-view .mia-study-dock .mia-ratings button[data-grade="4"] { background: var(--mia-blue) !important; color: var(--mia-on-color) !important; }
+.mia-view .mia-study-dock .mia-ratings strong, .mia-view .mia-study-dock .mia-ratings small { color: inherit; }
+.mia-view .mia-study-dock .mia-ratings strong { font-family: var(--mia-head); font-weight: 800; }
+.mia-view .mia-study-dock .mia-ratings small { font-weight: 700; }
+.mia-view .mia-grade-key { color: inherit; opacity: .85; border: 0; background: transparent; font-weight: 800; }
+.mia-view .mia-undo-feedback, .mia-view .mia-quick-undo, .mia-view .mia-dock-undo { border: 3px solid var(--mia-ink); background: var(--mia-yellow); color: var(--mia-on-yellow); }
+.mia-view .mia-undo-feedback { border-left-width: 12px; }
+.mia-view .mia-undo-feedback button, .mia-view button.mia-quick-undo, .mia-view button.mia-dock-undo { background: var(--mia-panel); color: var(--mia-ink); }
+.mia-view .mia-undo-feedback button:hover:not(:disabled) { background: var(--mia-ink); color: var(--mia-bg); }
+
+/* Modals: heavy frame with hard shadow on a flat panel */
+.modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) {
+  background: var(--mia-panel);
+  color: var(--mia-ink);
+  border: 4px solid var(--mia-ink);
+  box-shadow: 10px 10px 0 var(--mia-ink);
+}
+.modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) .modal-title { border-bottom: 4px solid var(--mia-ink); padding-bottom: 10px; font-size: 22px; font-weight: 800; }
+.modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) .modal-close-button { color: var(--mia-ink); }
+.modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(.setting-item, .setting-item-description, .setting-item-name) { color: var(--mia-ink); border-color: var(--mia-ink); }
+.modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) .setting-item-description { color: var(--mia-muted); }
+.modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) .setting-item-name { font-weight: 800; }
+:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) :is(.mia-settings-group, .mia-settings-summary, .mia-settings-changes, .mia-device-sync-settings, .mia-anki-settings-section, .mia-profile-row, .mia-step-row, .mia-step-editor, .mia-settings-modes, .mia-follow-up-picker, .mia-candidate, .mia-followup-option) { border: 3px solid var(--mia-ink); background: var(--mia-panel); box-shadow: none; }
+:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) :is(.mia-settings-group-title) { font-family: var(--mia-head); font-weight: 800; color: var(--mia-ink); }
+:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) .mia-settings-status { border: 3px solid var(--mia-ink); background: var(--mia-yellow); color: var(--mia-on-yellow); font-weight: 800; }
+:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) .mia-settings-modes button[aria-pressed="true"], :is(.mia-keyboard-modal, .mia-study-management-modal) .mia-settings-modes button.is-active { background: var(--mia-ink); color: var(--mia-bg); }
+.modal:is(.mia-keyboard-modal, .mia-study-management-modal, .mia-appearance-modal, .mia-controls-modal) .checkbox-container { border: 3px solid var(--mia-ink); background: var(--mia-panel); }
+.modal:is(.mia-keyboard-modal, .mia-study-management-modal, .mia-appearance-modal, .mia-controls-modal) .checkbox-container.is-enabled { background: var(--mia-blue); }
+.mia-view .checkbox-container { border: 3px solid var(--mia-ink); background: var(--mia-panel); }
+.mia-view .checkbox-container.is-enabled { background: var(--mia-blue); }
+
+/* The plugin's own settings tab */
+.mia-keyboard-settings { color: var(--mia-ink); }
+.mia-keyboard-settings :is(h1, h2, h3) { font-family: var(--mia-head); font-weight: 800; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mia-view *, .mia-view *::before, .mia-view *::after { transition: none !important; animation: none !important; }
+  .mia-view button:hover { transform: none !important; }
+}
+.mia-view .mia-row-actions > button:first-child, .mia-view .mia-row-actions > button:first-child:not(:disabled):hover { background: var(--mia-blue); color: var(--mia-on-color); border-color: var(--mia-ink); }
+.mia-view .mia-row-actions > button:first-child:not(:disabled):hover { background: var(--mia-ink); color: var(--mia-bg); }
+.is-mobile .mia-view .mia-filter-panel { border: 3px solid var(--mia-ink); background: var(--mia-panel); }
+.mia-view button.mod-cta, .modal button.mod-cta { box-shadow: none !important; }
+.mia-view .mia-progress-stat[data-tone] { border-top: 12px solid var(--mia-tone); }
+.mia-view .mia-progress-subject-values button { color: var(--mia-ink); font-weight: 800; }
+.mia-study-management-settings .mia-settings-status::before { background: var(--mia-ink); border-radius: 0; }
+.mia-study-management-settings .mia-settings-simple h4 { font-family: var(--mia-head); font-weight: 800; font-size: 17px; }
+.mia-study-management-settings .mia-settings-simple h4::before { width: 28px; height: 28px; border: 3px solid var(--mia-ink); background: var(--mia-red); color: var(--mia-on-color); font-family: var(--mia-head); font-size: 14px; border-radius: 50% !important; }
+.mia-study-management-settings .mia-settings-simple .mia-step-editor:nth-child(1) > h4::before { background: var(--mia-yellow); color: var(--mia-on-yellow); border-radius: 0 !important; }
+.mia-study-management-settings .mia-settings-simple .mia-step-editor:nth-child(2) > h4::before { background: var(--mia-blue); border-radius: 0 !important; }
+.mia-study-management-settings .mia-settings-simple .mia-settings-retention > h4::before { background: var(--mia-ink); color: var(--mia-bg); border-radius: 0 !important; }
+@container mia-view (max-width: 600px) {
+  .mia-view .mia-primary-card.mia-hero, .mia-view .mia-study-card { box-shadow: 4px 4px 0 var(--mia-ink); }
+}
+.mia-view .mia-undo-feedback, .mia-view .mia-undo-feedback :not(button, button *) { color: var(--mia-on-yellow) !important; }
+.mia-view .mia-undo-feedback { font-weight: 800; }
+:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(input, select, textarea):focus-visible { outline-offset: -3px; }
+:is(.mia-keyboard-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal) .mia-settings-group-title { padding: 10px 14px 8px; margin: 0; }
