@@ -4,172 +4,433 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<meta name="description" content="MIA Study 정식 1.4.12 다운로드와 검증 안내. Obsidian 문제은행, FSRS-6 복습, 키워드 연결과 Word 출력. 데스크톱 검증과 모바일·실제 동기화 미검증 범위를 구분합니다.">
-<title>MIA Study · 정식 1.4.12 · Obsidian 전공 공부 플러그인</title>
+<title>MIA Study · Obsidian 전공 공부 플러그인</title>
+<meta name="description" content="Obsidian 안에서 전공 질문을 모으고, 키워드로 연결하고, FSRS-6로 복습하는 플러그인. 정식 1.4.12 다운로드와 설치 안내.">
+<meta property="og:title" content="MIA Study · Obsidian 전공 공부 플러그인">
+<meta property="og:description" content="질문·키워드·FSRS-6 복습을 Obsidian 안에서. 정식 1.4.12.">
+<meta property="og:image" content="https://kimchi-kang.github.io/mia-study-obsidian/assets/screens/desktop-dashboard.jpg">
+<meta property="og:type" content="website">
 <style>
-:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.7;color:#202b39;background:#f6f8fb;color-scheme:light dark;--panel:#fff;--border:#dce3ed;--muted:#5c697b;--accent:#205bb0}*{box-sizing:border-box}body{margin:0;word-break:keep-all;overflow-wrap:anywhere}main{max-width:1040px;margin:auto;padding:64px 24px}header{max-width:780px;margin-bottom:28px}.eyebrow{color:#386480;font-weight:650;letter-spacing:.06em}h1{font-size:clamp(2.4rem,7vw,4rem);line-height:1.15;letter-spacing:-.04em;margin:12px 0 20px}h2{font-size:1.45rem;line-height:1.4;margin:0 0 14px}h3{font-size:1.05rem;line-height:1.5;margin:0 0 8px}p{margin:12px 0}a{color:#175cad;text-underline-offset:3px;overflow-wrap:anywhere}a:focus-visible,summary:focus-visible{outline:3px solid #a77b00;outline-offset:4px}section{padding:28px;border:1px solid var(--border);border-radius:16px;background:var(--panel);margin:24px 0;scroll-margin-top:20px}.notice{border-left:5px solid #b37714;background:#fff9ed}.actions{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0}.button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:11px 20px;border-radius:10px;background:var(--accent);color:white;text-decoration:none;font-size:1rem;font-weight:650;text-align:center}.secondary{background:#e7eef9;color:#184882}nav{display:flex;flex-wrap:wrap;gap:6px 20px;padding:16px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}nav a{padding:6px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{border:1px solid var(--border);border-radius:12px;padding:20px}.card p{margin:0;color:var(--muted)}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}.metric{border:1px solid var(--border);border-radius:12px;padding:18px}.metric strong{display:block;font-size:1.8rem;line-height:1.3}.metric span{display:block;color:var(--muted);font-size:.9rem;margin-top:6px}.changes{list-style:none;padding:0;margin:0}.changes li{padding:20px 0;border-top:1px solid var(--border)}.changes li:first-child{border-top:0;padding-top:0}.changes li:last-child{padding-bottom:0}.version{display:inline-block;font-weight:700;margin-right:10px}.changes p{margin:6px 0 0}.shots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}figure{margin:0;border:1px solid var(--border);border-radius:12px;overflow:hidden}figure img{display:block;width:100%;height:340px;object-fit:contain;background:#080808}figcaption{padding:12px 14px;font-size:.9rem;color:var(--muted)}ul,ol{padding-left:24px}li+li{margin-top:10px}code{overflow-wrap:anywhere;font-size:.9em}small,.muted,footer{color:var(--muted)}summary{cursor:pointer;font-weight:650;min-height:44px;padding:8px 0}details+details{border-top:1px solid var(--border);margin-top:8px;padding-top:8px}footer{margin-top:32px;font-size:.9rem}.skip{position:absolute;left:12px;top:-80px;background:var(--panel);padding:10px 16px;z-index:5}.skip:focus{top:12px}
-@media(max-width:640px){main{padding:36px 16px}section{padding:20px}.grid,.shots{grid-template-columns:1fr}.metrics{grid-template-columns:1fr}.metric strong{font-size:1.6rem}figure img{height:auto;max-height:440px}.actions{flex-direction:column}.button{width:100%}nav{gap:6px 16px}}
-@media(prefers-color-scheme:dark){:root{color:#e3e9f2;background:#131923;--panel:#1b2431;--border:#354153;--muted:#b0bed0;--accent:#205bb0}.notice{background:#30291b;border-left-color:#d5a545}a{color:#94c6ff}.eyebrow{color:#9ec9e1}.secondary{background:#2b3c56;color:#d1e4ff}}
+:root{
+  --bg:#f7f6fb;--bg-soft:#efedf7;--panel:#ffffff;--text:#1b1830;--muted:#5d5873;--faint:#8a85a0;
+  --border:#e2dfee;--accent:#7c5cf0;--accent-strong:#6342e0;--accent-soft:#ece6ff;--on-accent:#ffffff;
+  --red:#d9485f;--amber:#c47a12;--green:#2f9e5b;--blue:#2f6fe0;
+  --shadow:0 1px 2px rgba(27,24,48,.06),0 12px 40px -12px rgba(76,52,170,.22);
+  --radius:18px;
+  font-family:"Pretendard",system-ui,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121118;--bg-soft:#1a1823;--panel:#1d1b27;--text:#ece9f6;--muted:#aaa4c0;--faint:#7f7996;
+  --border:#2e2b3c;--accent:#9b82ff;--accent-strong:#b3a0ff;--accent-soft:#2a2442;--on-accent:#120f1f;
+  --red:#ff7a8a;--amber:#f0a947;--green:#5fd18f;--blue:#7aa7ff;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 18px 50px -18px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --bg:#121118;--bg-soft:#1a1823;--panel:#1d1b27;--text:#ece9f6;--muted:#aaa4c0;--faint:#7f7996;
+  --border:#2e2b3c;--accent:#9b82ff;--accent-strong:#b3a0ff;--accent-soft:#2a2442;--on-accent:#120f1f;
+  --red:#ff7a8a;--amber:#f0a947;--green:#5fd18f;--blue:#7aa7ff;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 18px 50px -18px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);line-height:1.7;word-break:keep-all;overflow-wrap:anywhere;-webkit-font-smoothing:antialiased}
+a{color:var(--accent-strong);text-underline-offset:3px}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:8px}
+img{max-width:100%;display:block}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;background:var(--bg-soft);border:1px solid var(--border);padding:.08em .4em;border-radius:6px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.skip{position:absolute;left:12px;top:-60px;background:var(--panel);padding:10px 16px;border-radius:10px;z-index:20}
+.skip:focus{top:12px}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--border)}
+.top .wrap{display:flex;align-items:center;gap:16px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;color:var(--text);text-decoration:none;letter-spacing:-.02em}
+.logo{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(135deg,#9b82ff,#6a45e8);color:#fff;font-weight:800;font-size:.95rem;box-shadow:0 4px 14px -4px rgba(124,92,240,.7)}
+.top nav{display:flex;gap:4px;margin-left:auto}
+.top nav a{color:var(--muted);text-decoration:none;font-size:.93rem;font-weight:600;padding:8px 12px;border-radius:9px}
+.top nav a:hover{color:var(--text);background:var(--bg-soft)}
+.theme-btn{border:1px solid var(--border);background:var(--panel);color:var(--text);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:1rem;display:grid;place-items:center}
+
+/* hero */
+.hero{position:relative;padding:72px 0 40px;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:-200px -10% auto;height:620px;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 26%,transparent),transparent 70%);pointer-events:none;z-index:-1}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;border-radius:999px;background:var(--panel);border:1px solid var(--border);font-size:.86rem;color:var(--muted);text-decoration:none;box-shadow:var(--shadow)}
+.pill b{background:var(--accent);color:var(--on-accent);border-radius:999px;padding:2px 9px;font-size:.78rem}
+h1{font-size:clamp(2.4rem,6.4vw,4.4rem);line-height:1.12;letter-spacing:-.045em;margin:22px 0 18px;font-weight:850}
+h1 .grad{background:linear-gradient(100deg,var(--accent-strong),#e35d9a 70%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:clamp(1.05rem,2.2vw,1.24rem);color:var(--muted);max-width:640px;margin:0}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:30px 0 14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:12px 22px;border-radius:13px;font-weight:700;font-size:1rem;text-decoration:none;border:1px solid transparent;transition:transform .15s ease,box-shadow .15s ease}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:var(--accent);color:var(--on-accent);box-shadow:0 10px 30px -10px color-mix(in srgb,var(--accent) 90%,transparent)}
+.btn-ghost{background:var(--panel);color:var(--text);border-color:var(--border)}
+.meta{font-size:.88rem;color:var(--faint)}
+.meta span+span::before{content:"·";margin:0 8px}
+
+.window{margin-top:44px;border-radius:16px;background:var(--panel);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+.window-bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--border);background:var(--bg-soft)}
+.window-bar i{width:11px;height:11px;border-radius:50%;background:#ff5f57}.window-bar i:nth-child(2){background:#febc2e}.window-bar i:nth-child(3){background:#28c840}
+.window-bar span{margin-left:10px;font-size:.8rem;color:var(--faint)}
+.window img{width:100%;height:auto;background:#1e1e1e}
+
+/* stats strip */
+.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:40px 0 0}
+.fact{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
+.fact strong{display:block;font-size:1.55rem;letter-spacing:-.03em;line-height:1.25}
+.fact span{color:var(--muted);font-size:.9rem}
+
+/* sections */
+section{padding:84px 0 0;scroll-margin-top:70px}
+.kicker{color:var(--accent-strong);font-weight:750;font-size:.84rem;letter-spacing:.1em;text-transform:uppercase}
+h2{font-size:clamp(1.7rem,3.8vw,2.5rem);line-height:1.25;letter-spacing:-.035em;margin:8px 0 14px;font-weight:820}
+h3{font-size:1.14rem;line-height:1.45;margin:0 0 6px;letter-spacing:-.015em}
+.sub{color:var(--muted);max-width:660px;margin:0 0 34px}
+
+/* feature rows */
+.feature{display:grid;grid-template-columns:1fr 1.35fr;gap:44px;align-items:center;margin:0 0 64px}
+.feature.flip{grid-template-columns:1.35fr 1fr}
+.feature.flip .copy{order:2}
+.feature .shot{border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow);background:#1e1e1e}
+.feature ul{list-style:none;padding:0;margin:16px 0 0}
+.feature li{position:relative;padding-left:28px;margin:10px 0;color:var(--muted)}
+.feature li::before{content:"";position:absolute;left:4px;top:.62em;width:10px;height:10px;border-radius:3px;background:var(--accent);transform:rotate(45deg)}
+.grades{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.grade{padding:6px 12px;border-radius:10px;font-weight:700;font-size:.88rem;border:1px solid currentColor;background:color-mix(in srgb,currentColor 10%,transparent)}
+.g1{color:var(--red)}.g2{color:var(--amber)}.g3{color:var(--green)}.g4{color:var(--blue)}
+
+/* card grid */
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.card .ico{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-strong);margin-bottom:14px}
+.card .ico svg{width:21px;height:21px}
+.card p{margin:0;color:var(--muted);font-size:.95rem}
+
+/* mobile phones */
+.phones{display:flex;justify-content:center;gap:22px;flex-wrap:wrap}
+.phone{width:min(240px,44vw);border-radius:30px;padding:9px;background:linear-gradient(160deg,#3a3550,#16141e);box-shadow:var(--shadow)}
+.phone img{border-radius:22px;width:100%;height:auto}
+.phone figcaption{text-align:center;font-size:.82rem;color:var(--faint);margin-top:10px}
+figure{margin:0}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;counter-reset:s}
+.step{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:24px;position:relative}
+.step::before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--on-accent);font-weight:800;margin-bottom:14px}
+.step p{margin:0;color:var(--muted);font-size:.95rem}
+
+/* install tabs */
+.install{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.box{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:26px}
+.box ol{margin:12px 0 0;padding-left:22px}
+.box li{margin:8px 0;color:var(--muted)}
+.box li strong{color:var(--text)}
+.tag{display:inline-block;font-size:.75rem;font-weight:750;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent-strong);margin-left:6px;vertical-align:2px}
+.note{margin-top:16px;padding:14px 16px;border-radius:12px;background:var(--bg-soft);border:1px solid var(--border);color:var(--muted);font-size:.92rem}
+
+/* changelog */
+.release{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow)}
+.release header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 14px;margin-bottom:6px}
+.release .v{font-size:1.5rem;font-weight:850;letter-spacing:-.03em}
+.release ul{margin:14px 0 0;padding-left:20px}
+.release li{margin:8px 0;color:var(--muted)}
+.timeline{list-style:none;margin:20px 0 0;padding:0;border-left:2px solid var(--border)}
+.timeline li{position:relative;padding:0 0 18px 22px}
+.timeline li::before{content:"";position:absolute;left:-7px;top:.55em;width:12px;height:12px;border-radius:50%;background:var(--panel);border:2px solid var(--accent)}
+.timeline b{margin-right:8px}
+.timeline p{margin:2px 0 0;color:var(--muted);font-size:.93rem}
+details.more{margin-top:18px}
+details.more summary{cursor:pointer;font-weight:700;color:var(--accent-strong);min-height:44px;display:flex;align-items:center}
+
+/* verify */
+.verify{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.verify .card strong{display:block;font-size:1.9rem;letter-spacing:-.03em;line-height:1.2;margin-bottom:4px}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:700;padding:3px 10px;border-radius:999px;margin-bottom:12px}
+.ok{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}
+.warn{background:color-mix(in srgb,var(--amber) 16%,transparent);color:var(--amber)}
+
+/* footer */
+.final{margin:92px 0 0;padding:52px 32px;border-radius:24px;text-align:center;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 22%,var(--panel)),var(--panel));border:1px solid var(--border)}
+.final h2{margin-top:0}
+.final .cta{justify-content:center}
+footer{padding:48px 0 60px;color:var(--faint);font-size:.88rem}
+footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between}
+footer a{color:var(--muted)}
+
+@media (max-width:900px){
+  .feature,.feature.flip{grid-template-columns:1fr;gap:22px}
+  .feature.flip .copy{order:0}
+  .cards,.verify{grid-template-columns:1fr 1fr}
+  .facts{grid-template-columns:1fr 1fr}
+}
+@media (max-width:640px){
+  .wrap{padding:0 16px}
+  .top nav{display:none}
+  .top .theme-btn{margin-left:auto}
+  .hero{padding-top:44px}
+  .btn{width:100%}
+  .cards,.verify,.steps,.install{grid-template-columns:1fr}
+  .facts{grid-template-columns:1fr 1fr}
+  .fact strong{font-size:1.3rem}
+  section{padding-top:64px}
+  .release,.box{padding:20px}
+  .final{padding:36px 18px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn{transition:none}}
 </style>
 </head>
 <body>
 <a class="skip" href="#features">본문으로 이동</a>
+
+<div class="top">
+  <div class="wrap">
+    <a class="brand" href="#"><span class="logo" aria-hidden="true">M</span>MIA Study</a>
+    <nav aria-label="페이지 안내">
+      <a href="#features">기능</a><a href="#mobile">모바일</a><a href="#install">설치</a><a href="#changes">업데이트</a><a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a>
+    </nav>
+    <button class="theme-btn" type="button" id="theme" aria-label="밝은·어두운 테마 전환">◐</button>
+  </div>
+</div>
+
 <main>
-<header>
-<span class="eyebrow">OBSIDIAN · MARKDOWN · FSRS-6</span>
-<h1>MIA Study</h1>
-<p>전공 문제를 모으고, 연결하고, 다음 복습까지 이어가세요. Obsidian 안에서 과목·질문·키워드를 관리하는 공부 플러그인입니다.</p>
-<small>정식 다운로드 <strong>1.4.12</strong> · 최신 소스 <strong>1.4.12</strong> · 2026년 11월 11일 갱신 · 최소 Obsidian 1.8.7</small>
-<div class="actions">
-<a class="button" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/mia-study-1.4.12.zip" download>1.4.12 다운로드 · ZIP</a>
-<a class="button secondary" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.12">정식 릴리스 보기</a>
+<div class="hero">
+  <div class="wrap">
+    <a class="pill" href="#changes"><b>1.4.12</b>동기화 충돌 복사본·부분 동기화 경고 →</a>
+    <h1>전공 질문을 모으고,<br><span class="grad">잊기 전에 다시 꺼내 보세요.</span></h1>
+    <p class="lead">MIA Study는 Obsidian 안에서 과목·질문·키워드를 화면으로 관리하고, FSRS-6 간격 반복으로 복습 시점을 잡아 주는 공부 플러그인입니다. 면접·시험 준비용 전공 질문을 Markdown 그대로 쌓아 두세요.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/mia-study-1.4.12.zip" download>↓ 1.4.12 다운로드</a>
+      <a class="btn btn-ghost" href="#install">BRAT으로 설치하기</a>
+    </div>
+    <p class="meta"><span>무료 · MIT 라이선스</span><span>데스크톱·모바일</span><span>Obsidian 1.8.7 이상</span><span>2026년 11월 11일 갱신</span></p>
+
+    <div class="window">
+      <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>Major Study · 대시보드</span></div>
+      <img src="assets/screens/desktop-dashboard.jpg" width="1600" height="1075" alt="MIA Study 대시보드. 오늘 출제할 복습 0개와 새 문제 5개, 이어하기 카드, 등록 문제·기억 안정 비율·오늘 평가 통계 타일이 보인다.">
+    </div>
+
+    <div class="facts">
+      <div class="fact"><strong>FSRS-6</strong><span>Anki와 같은 계열의 복습 알고리즘</span></div>
+      <div class="fact"><strong>노트 0개</strong><span>문제마다 파일을 만들지 않는 문제은행</span></div>
+      <div class="fact"><strong>4단계 평가</strong><span>못 암기 · 애매 · 암기 · 너무 쉬움</span></div>
+      <div class="fact"><strong>1,685개</strong><span>1.4.12 자동 검사 통과</span></div>
+    </div>
+  </div>
 </div>
-</header>
-<nav aria-label="페이지 안내">
-<a href="#features">주요 기능</a><a href="#changes">업데이트 내역</a><a href="#verification">검증 결과</a><a href="#screens">화면 보기</a><a href="#install">설치·업데이트</a>
-</nav>
-<section class="notice" aria-labelledby="release-title">
-<h2 id="release-title">1.4.12 정식 업데이트 · 동기화 충돌 복사본·부분 동기화 경고</h2>
-<p>같은 문제 ID가 여러 파일에 있으면(보통 동기화 앱이 만든 충돌 복사본) 대시보드가 파일 목록과 숨겨진 문제 수를 경고합니다. 동기화 파일의 CRLF·BOM·끝 줄바꿈 차이는 읽고, 동기화 폴더가 일부만 도착하면 시작할 때 알림과 설정 경고로 알립니다. 기기 안 임시 저장이 실패해도 평가는 보관함 파일에 저장합니다. 저장 형식은 바뀌지 않았습니다.</p>
-<p>자동 검사 1,685개와 타입 검사·빌드를 통과했습니다. 실제 Obsidian 앱·모바일 실기기에서는 따로 확인하지 않았습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.12">릴리스와 변경 내역</a></p>
-<h3>1.4.11 · 고정 간격 기한일과 기기 간 평가 취소 보관</h3>
-<p>평가 버튼에 하루 이상의 고정 간격을 설정한 카드(<code>학습 설정</code> → <code>고급</code>의 <code>평가 버튼 고정 간격</code>)는 이제 기한일 하루 동안 출제됩니다. 이전에는 하루 밀리거나 학습 화면이 <code>다음 복습 대기 중</code>에 머물렀습니다. 기기 두 대를 쓸 때, 한 기기의 직전 평가 취소가 이기면 다른 기기의 평가 기록을 버리지 않고 대시보드의 <code>보관된 평가 확인</code>에 보관합니다. 기본 설정의 복습 일정과 저장 형식은 바뀌지 않았습니다.</p>
-<p>자동 검사 1,633개와 타입 검사·빌드를 통과했고, 회귀 검사가 수정 전 코드에서 실패하는 것을 확인했습니다. 실제 Obsidian 앱·모바일 실기기에서는 따로 확인하지 않았습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.11">릴리스와 변경 내역</a></p>
-<h3>1.4.10 · 문제·키워드 저장 보호와 안내 개선</h3>
-<p>문제·키워드·과목 노트가 잘못 저장되거나 엉뚱한 파일을 건드리지 않도록 막았습니다. 코드 블록이 닫히지 않은 답안, 깨지는 키워드 링크, 범위가 겹치는 문제의 삭제는 저장 전에 거절하고, 키워드 뜻은 문제 파일과 자동 생성 과목 노트에 쓰지 않습니다. <code>편집</code>·<code>연결</code>·<code>질문 추가</code>가 실패하면 안내하고, 폴더 설정은 입력을 확정할 때 저장하며, 지금 학습할 수 없는 문제는 이유와 <code>암기 모드로 보기</code>를 보여 줍니다. 저장 형식과 복습 예약 방식은 바뀌지 않았습니다.</p>
-<p>자동 검사 1,612개와 타입 검사·빌드를 통과했고, 모든 수정의 회귀 검사가 수정 전 코드에서 실패하는 것을 확인했습니다. 실제 Obsidian 앱·모바일 실기기에서는 따로 확인하지 않았습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.10">릴리스와 변경 내역</a></p>
-<h3>1.4.9 · 복습 간격의 하루 기준과 이어하기 수정</h3>
-<p>복습 간격을 계산할 때 하루가 바뀌는 시각을 하루 시작 시각(기본 04:00)에 맞췄습니다. 이전에는 한국 시간 오전 9시에 날짜가 바뀌어, 밤에 본 문제를 다음 날 아침 일찍 다시 보면 같은 날 복습으로 처리되고 다음 간격이 짧아졌습니다. 시험 모드 이어하기에서는 다른 기기에서 이미 평가한 문제를 빼고, <code>오늘 평가</code>도 하루 시작 시각 기준으로 셉니다. 키워드 뜻 저장 순서와 과목 노트 갱신도 다듬었습니다.</p>
-<p>자동 검사 1,536개와 타입 검사·빌드를 통과했고, 새 회귀 검사 10개가 수정 전 코드에서 실패하는 것을 확인했습니다. 실제 Obsidian 앱·모바일 실기기에서는 따로 확인하지 않았습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.9">릴리스와 변경 내역</a></p>
-<h3>1.4.8 · 화면과 설정 디자인 새 단장</h3>
-<p>대시보드 위쪽에 오늘 출제할 복습·새 문제 수를 큰 숫자로 보여 주고, 통계·과목 카드·학습현황에 색과 진행 막대를 넣었습니다. 학습 화면의 문제는 별도 카드에 올렸습니다. 학습 설정은 간편 설정 항목에 번호를 달고 저장 버튼 줄을 창 맨 아래에 고정했으며, 보기 설정은 세 묶음으로 나눴습니다. 기능·버튼 이름·저장 방식은 그대로입니다.</p>
-<p>자동 검사 1,521개와 타입 검사·빌드를 통과했고, 브라우저 시뮬레이터에서 데스크톱·휴대폰 폭과 밝은·어두운 테마를 확인했습니다. 실제 Obsidian 앱·모바일 실기기에서는 따로 확인하지 않았습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.8">릴리스와 변경 내역</a></p>
-<h3>1.4.7 · 키워드 병합·삭제 후 끊어진 링크 수정</h3>
-<p>Obsidian에서 키워드 노트 이름을 바꾸면 링크가 짧은 형식으로 다시 써질 수 있는데, 이전에는 이런 링크를 알아보지 못해 키워드를 병합하거나 삭제한 뒤 질문에 끊어진 링크가 남았습니다. 이제 병합하면 대상 키워드를 가리키고 삭제하면 함께 지워집니다. 병합 후 같은 키워드 링크가 두 개 남던 문제와, 한글 링크의 유니코드 형식이 노트 이름과 다를 때 링크를 찾지 못하던 문제도 고쳤습니다. 키워드 이름만 바꿀 때는 이전처럼 Obsidian이 갱신한 링크를 그대로 둡니다.</p>
-<p>같은 소스를 격리된 보관함의 데스크톱 Obsidian 1.15.0에서 1.4.6과 비교해 확인했습니다. 모바일 실기기에서는 따로 확인하지 않았습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.7">릴리스와 변경 내역</a></p>
-<h3>1.4.6 · 복습이 하루씩 밀리던 문제 수정</h3>
-<p>이전에는 정규 복습이 예약된 정확한 시각이 지나야 나와서, 매일 비슷한 시간에 공부하면 복습이 기한일보다 하루씩 늦게 나왔습니다. 이제 Anki처럼 기한일의 하루 시작 시각(기본 04:00)부터 그날 기한인 복습을 모두 출제합니다. 학습 단계(1분·10분)는 지금처럼 정확한 시각을 따릅니다.</p>
-<p>실제 학습 화면으로 40문제를 45일 동안 학습하는 시뮬레이션에서 문제 누락·새 문제 한도·학습 단계·FSRS 저장 결과와 복습 지연 여부를 확인했습니다. 실제 Obsidian 앱·모바일 실기기에서는 따로 확인하지 않았습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.6">릴리스와 변경 내역</a></p>
-<h3>1.4.5 · 화면 디자인 정돈</h3>
-<p>기능과 화면 구성은 그대로 두고 디자인만 다듬었습니다. 상단 탭과 버튼의 무게를 정리해 화면마다 주된 버튼이 먼저 보이고, 삭제 버튼은 빨간 글자로 조용히 표시합니다. 통계 타일, 평가별 색, 모범 답안 패널을 새로 정돈했으며 사용 중인 Obsidian 테마 색을 그대로 따릅니다.</p>
-<p>자동 검사 1,477개와 타입 검사·빌드를 통과했고, 브라우저 시뮬레이터에서 데스크톱·휴대폰 폭과 밝은·어두운 테마를 확인했습니다. 실제 Obsidian 앱·모바일 실기기에서는 따로 확인하지 않았습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.5">릴리스와 변경 내역</a></p>
-<h3>1.4.4 · 키워드·과목 노트·문제 구분 수정</h3>
-<p>이름에 쉼표가 있는 키워드가 문제 편집 때 깨지던 문제, 과목 폴더에 문제 파일이 여럿일 때 과목 노트가 일부 문제만 보여 주던 문제, 표시 이름이 다른 키워드의 의미가 다른 노트에 저장되던 문제를 수정했습니다. 한 문제가 둘로 나뉘어 인식되는 <code>&gt; [!question]</code> 줄은 저장 전에 안내합니다.</p>
-<p>전체 검증(자동 검사 1,477개, 실패·생략 0, 타입 검사·빌드)을 통과했습니다. 이번 수정은 자동 검사로만 확인했으며 실제 Obsidian 앱·모바일 실기기·두 기기 동기화에서는 따로 검증하지 않았습니다. 학습 알고리즘·저장 형식·동기화 방식은 바뀌지 않았습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.4">릴리스와 변경 내역</a></p>
-<h3>1.4.3 · Anki 스타일 설정과 좁은 화면 개선</h3>
-<p>간편·고급 화면에서 목표 기억률, 학습·재학습 단계, 복습 한도와 순서를 설정할 수 있습니다. 입력 오류와 초점을 유지하고, 낮은 화면에서는 저장 버튼이 입력칸을 가리지 않도록 배치합니다. 긴 문제와 검색어가 좁은 목록을 밀지 않도록 했습니다.</p>
-<p>자동 검사 1,395개와 타입 검사·빌드를 통과했습니다. 실제 데스크톱 Obsidian에서 설정·출제·편집·재로드·이어하기를 확인했습니다. 모바일 화면은 브라우저 모의로 검증했습니다. 실기기·OS 키보드·두 기기 동기화는 미검증입니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/1.4.3-integration/README.md">통합 검증과 한계</a></p>
-<p>정식 릴리스에서 ZIP·개별 설치 파일·체크섬을 제공합니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.3">릴리스와 변경 내역</a></p>
+
+<section id="features">
+  <div class="wrap">
+    <span class="kicker">Features</span>
+    <h2>공부 흐름이 한 화면에서 이어집니다</h2>
+    <p class="sub">질문 등록부터 복습, 약점 확인, 정리본 출력까지 Markdown을 직접 쓰지 않고 폼과 버튼으로 진행합니다.</p>
+
+    <div class="feature">
+      <div class="copy">
+        <h3>떠올리고, 확인하고, 평가하기</h3>
+        <p class="sub" style="margin:0">시험 모드는 정답을 가린 채 시작합니다. 정답을 본 뒤 네 단계로 평가하면 다음 복습 시점이 버튼 위에 바로 보입니다.</p>
+        <div class="grades" aria-label="평가 단계"><span class="grade g1">못 암기 1분</span><span class="grade g2">애매 6분</span><span class="grade g3">암기 10분</span><span class="grade g4">너무 쉬움 1일</span></div>
+        <ul>
+          <li>LaTeX 수식(<code>$…$</code>, <code>$$…$$</code>)을 그대로 렌더링</li>
+          <li>직전 평가 취소, 이전·다음 문제 이동, 키보드 단축키(Space · 1–4 · U)</li>
+          <li>Anki처럼 기한일 단위 출제 — 하루 시작 04:00부터 그날의 복습을 모두 냅니다</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/screens/desktop-study.jpg" width="1600" height="1075" loading="lazy" alt="시험 모드 학습 화면. 최대 전력 전달 조건 질문 아래 수식이 담긴 모범 답안과 네 가지 평가 버튼이 있다."></figure>
+    </div>
+
+    <div class="feature flip">
+      <div class="copy">
+        <h3>질문은 과목별 문제은행 하나에</h3>
+        <p class="sub" style="margin:0">질문·정답·유형·핵심/보조 키워드를 입력하면 과목 폴더의 <code>문제은행.md</code>에 정리되고, 과목 노트도 자동으로 갱신됩니다.</p>
+        <ul>
+          <li>과목·유형·복습 상태·키워드로 검색하고 정렬</li>
+          <li>검색 결과만 골라 바로 시험·암기</li>
+          <li>꼬리질문을 최대 50개까지 연결</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/screens/desktop-questions.jpg" width="1600" height="1075" loading="lazy" alt="문제 목록 화면. 검색창과 과목·유형·상태 필터, 질문마다 학습·상세·편집·연결·삭제 버튼이 있다."></figure>
+    </div>
+
+    <div class="feature">
+      <div class="copy">
+        <h3>키워드로 개념끼리 연결</h3>
+        <p class="sub" style="margin:0">키워드마다 의미 노트가 생기고, 같은 키워드를 쓰는 질문이 묶입니다. 학습 중에는 관련 문제를 추천받아 이어서 풀 수 있습니다.</p>
+        <ul>
+          <li>키워드별 연결 문제 시험·암기</li>
+          <li>이름 변경·병합·삭제 시 모든 문제은행 링크를 함께 갱신</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/screens/desktop-keywords.jpg" width="1600" height="1075" loading="lazy" alt="키워드 화면. 키워드마다 연결된 문제 수와 시험·암기·연결 질문 보기 버튼이 있다."></figure>
+    </div>
+
+    <div class="cards">
+      <article class="card">
+        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-6"/></svg></div>
+        <h3>학습현황과 취약 문제</h3><p>과목별 진도, 최근 평가, 못 암기·애매 문제를 지연 시간까지 반영한 긴급도 순으로 보여 줍니다.</p>
+      </article>
+      <article class="card">
+        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1.3z"/></svg></div>
+        <h3>Anki 스타일 학습 설정</h3><p>하루 새 문제·복습 상한, 학습·재학습 단계, 목표 기억률, 버튼별 고정 간격을 간편·고급 화면에서 조정합니다.</p>
+      </article>
+      <article class="card">
+        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 14h6M9 18h4"/></svg></div>
+        <h3>과목별 Word 정리본</h3><p>과목의 질문·답변 전체를 A4 서식의 .docx로 출력합니다. 표·목록·코드·보관함 이미지를 포함합니다.</p>
+      </article>
+      <article class="card">
+        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg></div>
+        <h3>이어하기와 기기 간 동기화</h3><p>마지막 위치에서 다시 시작합니다. 같은 보관함을 동기화하면 복습 기록·설정·이어하기를 여러 기기에서 함께 씁니다.</p>
+      </article>
+      <article class="card">
+        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <h3>자료를 지키는 저장 방식</h3><p>같은 이름의 사용자 노트는 덮어쓰지 않고, 깨지는 답안·링크는 저장 전에 거절하며, 충돌한 평가는 버리지 않고 보관합니다.</p>
+      </article>
+      <article class="card">
+        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div>
+        <h3>Markdown 그대로</h3><p>질문 원문은 평범한 Markdown 콜아웃으로 남습니다. 플러그인 없이도 읽을 수 있고, GPT 등으로 문제를 만들 때는 <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/MIA-AGENT.md">작성 가이드</a>를 쓰세요.</p>
+      </article>
+    </div>
+  </div>
 </section>
-<section id="features" aria-labelledby="features-title">
-<h2 id="features-title">MIA Study에서 할 수 있는 일</h2>
-<div class="grid">
-<article class="card"><h3>과목·질문을 화면에서 관리</h3><p>과목과 질문을 추가·수정·이동·삭제합니다. 질문마다 별도 파일을 만들지 않고 Markdown 문제은행으로 관리합니다.</p></article>
-<article class="card"><h3>FSRS-6 복습과 평가</h3><p>못 암기·애매·암기·너무 쉬움으로 평가합니다. 직전 평가를 취소하고, 버튼별 복습 간격을 분·시간·일 단위로 지정할 수 있습니다.</p></article>
-<article class="card"><h3>시험·암기와 이어하기</h3><p>정답을 떠올리는 시험 모드와 정답을 함께 보는 암기 모드를 사용합니다. 암기 순서와 보기 설정을 고르고 저장한 위치에서 이어갑니다.</p></article>
-<article class="card"><h3>키워드와 이어볼 문제</h3><p>핵심·보조 키워드와 의미 노트를 연결합니다. 관련 문제를 추천받고, 직접 연결한 문제를 미리보며 학습 흐름을 이어갑니다.</p></article>
-<article class="card"><h3>검색·학습 현황 확인</h3><p>과목·유형·키워드·복습 상태로 문제를 찾고 정렬합니다. 취약 문제, 오늘 복습과 과목별 학습 현황을 확인합니다.</p></article>
-<article class="card"><h3>과목별 Word 정리본</h3><p>과목의 질문·답변을 Word 파일로 출력합니다. 질문 원문은 Markdown에, 복습 기록은 별도 데이터에 저장합니다.</p></article>
+
+<section id="mobile">
+  <div class="wrap">
+    <span class="kicker">Mobile</span>
+    <h2>휴대폰에서도 같은 흐름으로</h2>
+    <p class="sub">좁은 화면에서는 탭이 한 줄로 줄고, 평가 버튼은 2×2로 커집니다. 키보드가 열리면 입력칸이 가려지지 않도록 창 높이를 맞춥니다. Obsidian 테마의 밝은·어두운 모드를 그대로 따릅니다.</p>
+    <div class="phones">
+      <figure class="phone"><img src="assets/screens/mobile-dashboard.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 어두운 테마의 대시보드"><figcaption>대시보드 · 어두운 테마</figcaption></figure>
+      <figure class="phone"><img src="assets/screens/mobile-study.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 학습 화면. 평가 버튼이 2열로 배치되어 있다."><figcaption>학습 화면 · 2×2 평가 버튼</figcaption></figure>
+      <figure class="phone"><img src="assets/screens/mobile-dashboard-light.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 밝은 테마의 대시보드"><figcaption>대시보드 · 밝은 테마</figcaption></figure>
+    </div>
+    <p class="note" style="max-width:720px;margin:24px auto 0;text-align:center">화면은 1.4.12와 예시 문제로 데스크톱 Obsidian에서 휴대폰 폭(390px)을 흉내 내 찍었습니다. 실제 휴대폰 화면 캡처가 아닙니다.</p>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap">
+    <span class="kicker">Getting started</span>
+    <h2>세 단계면 첫 복습까지</h2>
+    <p class="sub">설치 후 리본의 뇌 아이콘 또는 명령 팔레트의 <code>MIA Study 열기</code>로 시작합니다.</p>
+    <div class="steps">
+      <div class="step"><h3>과목 추가</h3><p>과목 폴더와 문제은행 노트가 자동으로 생깁니다. 기본 위치는 <code>MIA/&lt;과목&gt;/</code>입니다.</p></div>
+      <div class="step"><h3>질문 추가</h3><p>질문·정답·유형과 핵심 키워드를 입력합니다. 키워드 의미 노트도 함께 만들어집니다.</p></div>
+      <div class="step"><h3>시험 모드 시작</h3><p>하루 새 문제 20개·복습 200회(기본값) 안에서 출제됩니다. 평가하면 다음 복습일이 정해집니다.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <span class="kicker">Install</span>
+    <h2>설치와 업데이트</h2>
+    <p class="sub">아직 Obsidian 커뮤니티 목록에는 없어서 BRAT 또는 ZIP으로 설치합니다.</p>
+    <div class="install">
+      <div class="box">
+        <h3>BRAT으로 설치 <span class="tag">추천</span></h3>
+        <ol>
+          <li>커뮤니티 플러그인에서 <strong>BRAT</strong>을 설치하고 켭니다.</li>
+          <li>명령 팔레트에서 <code>BRAT: Add a beta plugin for testing</code>을 실행합니다.</li>
+          <li><code>https://github.com/kimchi-kang/mia-study-obsidian</code>을 입력합니다.</li>
+          <li>커뮤니티 플러그인 목록에서 <strong>MIA Study</strong>를 켭니다.</li>
+        </ol>
+        <p class="note">업데이트도 BRAT에서 합니다. 설치 후 Major Study 제목 옆 버전이 <strong>v1.4.12</strong>인지 확인하세요.</p>
+      </div>
+      <div class="box">
+        <h3>ZIP으로 직접 설치·업데이트</h3>
+        <ol>
+          <li>보관함을 백업하고 Obsidian을 닫습니다.</li>
+          <li><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/mia-study-1.4.12.zip">mia-study-1.4.12.zip</a>의 <code>main.js</code>, <code>styles.css</code>, <code>manifest.json</code>을 <code>.obsidian/plugins/mia-study/</code>에 넣습니다.</li>
+          <li>기존 <code>data.json</code>, <code>ui-state.json</code>은 그대로 둡니다. 학습 기록과 이어하기가 여기 있습니다.</li>
+          <li>Obsidian을 다시 열고 버전을 확인합니다.</li>
+        </ol>
+        <p class="note">여러 기기에서 쓰면 모든 기기를 같은 버전으로 맞추세요. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/SHA256SUMS">SHA256SUMS</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/INSTALL.md">자세한 설치·복구 안내</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="changes">
+  <div class="wrap">
+    <span class="kicker">What's new</span>
+    <h2>업데이트 내역</h2>
+    <p class="sub">저장 형식은 1.4 계열 내내 바뀌지 않아, 기존 학습 기록을 그대로 이어 씁니다.</p>
+    <article class="release">
+      <header><span class="v">1.4.12</span><span class="status ok">● 최신 정식</span><span class="meta">2026년 11월 11일</span></header>
+      <h3>동기화 충돌 복사본·부분 동기화 경고</h3>
+      <ul>
+        <li>같은 문제 ID가 여러 파일에 있으면(동기화 앱이 만든 충돌 복사본) 대시보드가 파일 목록과 숨겨진 문제 수를 알려 줍니다.</li>
+        <li>동기화 파일의 CRLF·BOM·끝 줄바꿈 차이는 읽고, 잘리거나 바뀐 파일은 거절합니다.</li>
+        <li>동기화 폴더가 일부만 도착하면 시작할 때 알림과 설정 경고를 띄웁니다.</li>
+        <li>기기 안 임시 저장이 실패해도 평가는 보관함 파일에 저장하고 한 번만 경고합니다.</li>
+      </ul>
+      <p style="margin:14px 0 0"><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.12">릴리스 노트와 설치 파일 →</a></p>
+    </article>
+
+    <ol class="timeline" aria-label="이전 버전">
+      <li><b>1.4.11</b><span class="meta">11월 10일</span><p>하루 이상 고정 간격 카드를 기한일 하루 동안 출제하고, 기기 간 평가 취소 때 다른 기기의 평가를 보관합니다.</p></li>
+      <li><b>1.4.10</b><span class="meta">11월 10일</span><p>깨진 답안·키워드 링크와 엉뚱한 파일 덮어쓰기를 저장 전에 막고, 실패 안내를 늘렸습니다.</p></li>
+      <li><b>1.4.9</b><span class="meta">11월 10일</span><p>복습 간격의 하루 경계를 04:00 기준으로 계산하고, 다른 기기에서 평가한 문제를 이어하기에서 뺍니다.</p></li>
+      <li><b>1.4.8</b><span class="meta">11월 10일</span><p>대시보드·학습현황·학습 화면과 설정 창 디자인을 새로 정리했습니다.</p></li>
+      <li><b>1.4.6</b><span class="meta">11월 9일</span><p>정규 복습을 Anki처럼 기한일 단위로 출제해 복습이 하루씩 밀리지 않습니다.</p></li>
+    </ol>
+    <details class="more">
+      <summary>이전 버전 더 보기</summary>
+      <ol class="timeline">
+        <li><b>1.4.7</b><p>키워드 병합·삭제 후 끊어진 링크(짧은 형식, 한글 유니코드 형식)를 정리합니다.</p></li>
+        <li><b>1.4.5</b><p>탭·버튼 무게, 통계 타일, 평가별 색, 모범 답안 패널 디자인 정돈.</p></li>
+        <li><b>1.4.4</b><p>쉼표가 든 키워드, 과목 노트 범위, 키워드 의미 저장 위치 수정.</p></li>
+        <li><b>1.4.3</b><p>Anki 스타일 학습 설정(간편·고급)과 좁은 화면 입력 개선.</p></li>
+        <li><b>1.3.x</b><p>기기 간 동기화 모드, 학습 기록·설정 충돌 보관, 반응형 보강.</p></li>
+        <li><b>1.0.x</b><p>정식 공개, 수식 표시 수정, 실행 버전 표시.</p></li>
+      </ol>
+      <p><a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/releases/HISTORY.md">전체 변경 이력</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases">모든 릴리스</a></p>
+    </details>
+  </div>
+</section>
+
+<section id="verification">
+  <div class="wrap">
+    <span class="kicker">Quality</span>
+    <h2>어떻게 확인했나요</h2>
+    <p class="sub">확인한 범위와 확인하지 못한 범위를 나눠 적습니다.</p>
+    <div class="verify">
+      <div class="card"><span class="status ok">● 통과</span><strong>1,685개</strong><p>1.4.12 전체 자동 검사 실패·생략 0, 타입 검사와 배포 빌드 통과. 배포 파일은 소스 빌드와 해시가 같습니다.</p></div>
+      <div class="card"><span class="status ok">● 확인</span><strong>데스크톱 앱</strong><p>격리한 macOS Obsidian에서 1.4.12로 대시보드·모든 탭, 시험·암기, 평가와 직전 평가 취소, 질문·키워드 추가·편집·삭제, 플러그인 재시작을 확인했습니다.</p></div>
+      <div class="card"><span class="status warn">● 미검증</span><strong>휴대폰 실기기</strong><p>모바일 화면은 데스크톱에서 폭을 흉내 내 확인했습니다. 실제 iOS·Android, OS 키보드, 두 기기 실시간 동기화는 직접 검증하지 않았습니다.</p></div>
+    </div>
+    <p style="margin-top:18px"><a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/STATUS.md">버전별 검증 기록(STATUS.md)</a></p>
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="final">
+    <h2>오늘 공부한 질문부터 넣어 보세요</h2>
+    <p class="sub" style="margin:0 auto">무료이고, 질문은 내 보관함의 Markdown으로 남습니다.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/mia-study-1.4.12.zip" download>↓ 1.4.12 다운로드</a>
+      <a class="btn btn-ghost" href="https://github.com/kimchi-kang/mia-study-obsidian#readme">사용 안내 읽기</a>
+    </div>
+  </div>
 </div>
-<p><a href="https://github.com/kimchi-kang/mia-study-obsidian#readme">전체 사용 안내</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/MIA-AGENT.md">GPT·에이전트용 문제 작성 가이드</a></p>
-</section>
-<section id="changes" aria-labelledby="changes-title">
-<h2 id="changes-title">최근 업데이트 내역</h2>
-<ol class="changes">
-<li><span class="version">1.4.12 공개 정식</span><strong>동기화 충돌 복사본·부분 동기화 경고</strong><p>중복 문제 ID와 일부만 도착한 동기화 폴더를 알리고, 기기 안 저장 실패에도 평가를 보관함에 저장합니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.12">변경 내역</a></p></li>
-<li><span class="version">1.4.11 공개 정식</span><strong>고정 간격 기한일과 기기 간 평가 취소 보관</strong><p>하루 이상 고정 간격 카드를 기한일 하루 동안 출제하고, 기기 간 취소 때 사라지던 평가를 보관합니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.11">변경 내역</a></p></li>
-<li><span class="version">1.4.10 공개 정식</span><strong>문제·키워드 저장 보호와 안내 개선</strong><p>깨진 답안·키워드 링크와 엉뚱한 파일 덮어쓰기를 저장 전에 막고, 실패 안내를 늘렸습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.10">변경 내역</a></p></li>
-<li><span class="version">1.4.9 공개 정식</span><strong>복습 간격의 하루 기준과 이어하기 수정</strong><p>하루 경계를 04:00 기준으로 계산하고, 다른 기기에서 평가한 문제는 이어하기에서 뺍니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.9">변경 내역</a></p></li>
-<li><span class="version">1.4.8 공개 정식</span><strong>화면과 설정 디자인 새 단장</strong><p>오늘 출제 수를 큰 숫자로, 통계·과목 카드에 색과 진행 막대, 설정 창 정리. 기능은 그대로입니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.8">변경 내역</a></p></li>
-<li><span class="version">1.4.7 공개 정식</span><strong>키워드 병합·삭제 후 끊어진 링크 수정</strong><p>짧은 형식·한글 유니코드 형식이 다른 링크도 병합 대상으로 바꾸거나 함께 지웁니다. 병합 후 중복 링크도 정리합니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.7">변경 내역</a></p></li>
-<li><span class="version">1.4.6 공개 정식</span><strong>복습 기한일 단위 출제(Anki 방식)</strong><p>매일 같은 시간에 공부해도 복습이 하루씩 밀리지 않습니다. 학습 단계는 정확한 시각을 유지합니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.6">변경 내역</a></p></li>
-<li><span class="version">1.4.5 공개 정식</span><strong>화면 디자인 정돈</strong><p>탭·버튼 무게 정리, 통계 타일, 평가별 색, 모범 답안 패널. 기능과 화면 구성은 그대로입니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.5">변경 내역</a></p></li>
-<li><span class="version">1.4.4 공개 정식</span><strong>키워드 링크·과목 노트·문제 구분 수정</strong><p>쉼표가 든 키워드 보존, 과목 폴더 전체를 반영하는 과목 노트, 링크 대상에 저장하는 키워드 의미, 문제를 둘로 나누는 줄의 저장 전 안내. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.4">변경 내역</a></p></li>
-<li><span class="version">1.4.3 공개 정식</span><strong>Anki 스타일 학습 설정과 모바일 UI</strong><p>학습 단계·복습 한도·순서를 간편·고급 화면에서 설정하고 좁은 화면에서도 입력과 목록을 조작할 수 있습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.3">변경 내역</a></p></li>
-<li><span class="version">1.3.11 공개 정식</span><strong>학습 일정·재실행 복원</strong><p>일정 감사5건과 읽기·건너뜀 복원 결함을 수정했습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/releases/1.3.11.md">변경 내역</a></p></li>
-<li><span class="version">1.3.9 공개 정식</span><strong>저장 복구 후 완료 집계 보존</strong><p>이미 저장된 평가를 다시 계산하지 않고 완료 집계도 복구합니다. 1.3.8의 자료 보존·재시도 수정도 포함합니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/releases/1.3.9.md">누적 변경 내역</a></p></li>
-<li><span class="version">1.3.8 포함 변경</span><strong>키워드 의미 보존과 저장 실패 재시도</strong><p>답변만 편집할 때 기존 키워드 의미를 덮어쓰지 않고, 여러 줄·코드 블록을 보존합니다. 새 질문의 일부 저장 뒤 중복 생성과 과목 이동 후 재시도·이전 과목 갱신을 수정했습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/releases/1.3.8.md">변경 내역</a></p></li>
-<li><span class="version">1.3.7 공개 정식</span><strong>입력·저장 안내와 화면 제어 UI 보완</strong><p>오류 유지·저장 실패 안내, 충돌/복구/삭제 확인창, 설정 초점 복귀와 창 크기 변경 시 입력 가림을 보완했습니다. ZIP·개별 설치 파일·체크섬을 같은 릴리스에서 제공합니다.</p></li>
-<li><span class="version">1.3.6 포함 변경</span><strong>학습 설정·내 설정 관리와 정확한 간격 표시</strong><p>항목별 기본값·소수 시간/일 입력·내 설정 이름 편집과 표시를 보완했습니다. 이 기능은 현재 1.3.7 소스에 포함됩니다.</p></li>
-<li><span class="version">1.3.5 공개 정식</span><strong>학습 기록·설정 충돌 보관과 저장 복구</strong><p>설정 계보·충돌 사본·미완료 저장 보호를 포함합니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.3.5">공개 릴리스와 설치 파일</a></p></li>
-<li><span class="version">1.3.4 정식</span><strong>당시 기능과 반응형 수정을 정식 배포</strong><p>1.3.3 소스에서 검증한 설정 행·학습 탭·닫기 버튼 보강을 ZIP과 개별 설치 파일에 포함했습니다. 당시 학습 설정·보기 설정·기기 간 이어쓰기 기능도 포함했습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/1.3.4/README.md">정식 배포 검증</a></p></li>
-<li><span class="version">1.3.3 소스</span><strong>반응형 보강과 학습 본문 정리</strong><p>좁은 설정창의 간격 행·삭제 버튼과 학습 탭을 너비에 맞게 재배치하고 닫기 버튼의 터치 영역을 보강했습니다. 시험·암기 모드의 원문 출처 링크와 장식 테두리도 정리했습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/1.3.3-responsive/README.md">추가 점검 결과</a></p></li>
-<li><span class="version">1.3.2 소스</span><strong>키보드가 열린 설정창 개선</strong><p>키보드 닫기·저장·취소 버튼의 겹침을 없애고 실제 하단 높이에 맞춰 입력칸의 스크롤 여유를 확보했습니다. 태블릿의 키보드 높이 감소와 회전도 구분합니다.</p></li>
-<li><span class="version">1.3.0–1.3.1 소스</span><strong>범용 기기 동기화와 화면 일관성</strong><p>일반 보관함의 MIA Study Sync 폴더를 사용하는 선택 모드와 버튼·입력창·카드·팝업 표시 개선을 반영했습니다. 실제 파일 전송은 별도 보관함 동기화 도구가 필요합니다.</p></li>
-<li><span class="version">1.0.3</span><strong>Major Study 옆 실행 버전 표시</strong><p>화면 상단에서 현재 로드된 버전을 바로 확인합니다. 수식으로 작성한 RC 예제와 작은 화면의 버전 표시도 검증했습니다.</p></li>
-<li><span class="version">1.0.2</span><strong>이어하기·목록 수식 제목 수정</strong><p>이어하기 카드·추천·문제 목록·상세·연결 편집의 제목 렌더링을 통일하고, 제목 생성 시 수식이 손상되는 문제를 수정했습니다.</p></li>
-<li><span class="version">1.0.1</span><strong>수식 표시 수정</strong><p>수식만 있는 질문의 학습·미리보기 렌더링과 자동 과목 노트의 여러 줄 수식 보존을 수정했습니다.</p></li>
-<li><span class="version">1.0.0</span><strong>정식 버전 공개</strong><p>검증된 0.10.6과 같은 실행 코드·CSS를 사용합니다. 버전 정보와 업데이트 매핑, 정식 다운로드·설치 안내를 갱신했습니다.</p></li>
-<li><span class="version">0.10.6</span><strong>자료와 복습 기록을 보호하는 네 가지 수정</strong><ul><li>과목 삭제 범위를 실제 폴더로 제한해 다른 폴더의 동명 과목 복습 기록을 보존합니다.</li><li>하위 폴더의 키워드를 편집할 때 선택한 파일에 저장합니다.</li><li>과목 노트 저장 직전에 최신 내용이 자동 생성 노트인지 다시 확인합니다.</li><li>문제를 다른 과목으로 옮겨도 상대경로 이미지·문서 링크가 원래 대상을 가리키도록 바꿉니다. 코드 예제는 보존합니다.</li></ul></li>
-<li><span class="version">0.10.5</span><strong>직접 지정한 복습 간격을 정확하게 표시</strong><p>90분·36시간·45일 같은 고정 간격을 반올림하지 않고 표시합니다. 긴 값은 좁은 화면에서 줄바꿈합니다.</p></li>
-<li><span class="version">0.10.4</span><strong>버튼별 간격과 Major Study 화면</strong><p>평가 버튼별 복습 간격 설정, Major Study 제목과 학습 화면 정리를 반영했습니다. 빈 간격은 FSRS 자동 계산을 사용하며, 저장 이후 평가부터 적용합니다.</p></li>
-</ol>
-<p><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases">전체 릴리즈 내역</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/archive/RELEASE-QA.md">이전 변경·검증 기록</a></p>
-</section>
-<section id="verification" aria-labelledby="verification-title">
-<h2 id="verification-title">검증 결과</h2>
-<h3>1.4.12 정식 · 2026년 11월 11일</h3><p>전체 자동 검사 1,685개(실패·생략 0), 타입 검사·빌드 통과. 실제 Obsidian 앱과 모바일 실기기에서는 검증하지 않았습니다.</p>
-<h3>1.4.11 정식 · 2026년 11월 10일</h3><p>전체 자동 검사 1,633개(실패·생략 0), 타입 검사·빌드 통과. 회귀 검사가 수정 전 코드에서 실패함을 확인했고, 기본 설정 12가지 시나리오(문제 250개 × 150일)의 출제 결정과 저장 상태가 수정 전후 일치했습니다. 실제 Obsidian 앱과 모바일 실기기에서는 검증하지 않았습니다.</p>
-<h3>1.4.10 정식 · 2026년 11월 10일</h3><p>전체 자동 검사 1,612개(실패·생략 0), 타입 검사·빌드 통과. 모든 수정의 회귀 검사가 수정 전 코드에서 실패함을 확인했습니다. 실제 Obsidian 앱과 모바일 실기기에서는 검증하지 않았습니다.</p>
-<h3>1.4.9 정식 · 2026년 11월 10일</h3><p>전체 자동 검사 1,536개(실패·생략 0), 타입 검사·빌드 통과. 새 회귀 검사 10개(학습일 경과일, 다른 기기 평가 후 이어하기·새로고침, 이동 재시도 과목 노트, 과목 노트 재작성 생략, 학습일 기준 오늘 평가, 키워드 뜻 저장 순서, 복습 계산기 재생성)가 수정 전 코드에서 실패함을 확인했습니다. 40문제 45일 학습 시뮬레이션 통과. 실제 Obsidian 앱과 모바일 실기기에서는 검증하지 않았습니다.</p>
-<h3>1.4.8 정식 · 2026년 11월 10일</h3><p>전체 자동 검사 1,521개(실패·생략 0), 타입 검사·빌드 통과. 실제 Obsidian CSS를 쓰는 브라우저 시뮬레이터에서 1280px·390px 폭, 밝은·어두운 테마의 대시보드·학습현황·문제 목록·학습 화면(정답 전·후)과 학습 설정·보기 설정 창을 확인했고 가로 넘침과 44px 미만 버튼은 없었습니다. 실제 Obsidian 앱과 모바일 실기기에서는 검증하지 않았습니다.</p>
-<h3>1.4.7 정식 · 2026년 11월 9일</h3><p>전체 자동 검사 1,521개(실패·생략 0), 타입 검사·빌드 통과. 같은 소스를 격리된 보관함의 데스크톱 Obsidian 1.15.0에서 1.4.6과 비교해 과목·질문·키워드 관리, 연결 편집, Word 출력, 모든 화면, 정답 보기·평가·직전 평가 취소·이어하기와 키워드 링크 시나리오(짧은 형식, 제목 링크, 대소문자, 한글 유니코드 형식, 병합 후 중복, 이름 변경 시 링크 보존)를 확인했습니다. 질문 1,200개에서 키워드 삭제 확인 창 처리 시간 중앙값은 1.4.6 9.05ms, 1.4.7 7.95ms였습니다. 모바일 실기기에서는 검증하지 않았습니다.</p>
-<h3>1.4.6 정식 · 2026년 11월 9일</h3><p>전체 자동 검사 1,486개(실패·생략 0), 타입 검사·빌드 통과. 실제 학습 화면으로 40문제를 45일 동안 세 가지 공부 시간대로 학습하는 시뮬레이션에서 기한이 된 문제 누락 0, 새 문제 한도 준수, 학습 단계 재출제, 평가 결과의 FSRS 일치, 기한일보다 늦은 복습 0을 확인했습니다. 이전 규칙에서는 같은 검사가 모두 실패합니다. 실제 Obsidian 앱과 모바일 실기기에서는 검증하지 않았습니다.</p>
-<h3>1.4.5 정식 · 2026년 11월 9일</h3><p>전체 검증(자동 검사 1,477개, 실패·생략 0)과 타입 검사·프로덕션 빌드 통과. 실제 Obsidian CSS를 쓰는 브라우저 시뮬레이터에서 1200px·390px 폭, 밝은·어두운 테마의 대시보드·현황·문제·취약·키워드·학습 화면을 확인했고 가로 넘침과 44px 미만 버튼은 없었습니다. 실제 Obsidian 앱과 모바일 실기기에서는 검증하지 않았습니다.</p>
-<h3>1.4.4 정식 · 2026년 11월 9일</h3><p>전체 검증(자동 검사 1,477개, 실패·생략 0)과 타입 검사·프로덕션 빌드 통과. 고친 버그 4건마다 수정 전 코드에서 실패하는 회귀 검사를 추가했습니다. 실제 Obsidian 앱과 모바일 실기기에서는 검증하지 않았습니다.</p>
-<h3>1.4.3 정식 · 2026년 11월 8일</h3><p>자동 검사 1,395개와 타입 검사·빌드 통과. 격리 Obsidian에서 출제, 편집, 이어하기와 평가 예약을 확인했습니다. 브라우저 모의에서 낮은 화면의 입력·평가·저장 복구를 확인했습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/1.4.3-integration/README.md">상세 결과</a></p>
-<h3>1.3.11 정식 · 2026년11월6일</h3><p>76파일·1372검사, 실패·생략0, 타입·빌드 통과. 실제1분 기한 도래 후 재출제·한 번 평가·예약 저장, 최종 빌드 창 재실행 후 읽던 위치와 건너뜀 유지·정상 완료를 확인했습니다. 모바일/실제 두 기기 클라우드는 미검증입니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/1.3.11/README.md">최종 증거·제한</a></p>
-<h3>1.3.9 정식 · 2026년 11월 5일 실사용 검증</h3>
-<p>75개 파일·1,309개 검사에서 실패·생략 0, 타입 검사·프로덕션 빌드 통과. 실제 Obsidian 1.15.0에서 저장 복구 후 암기 1·이력 1회 증가를 확인했습니다. 재실행 후 시험 2/2와 기록·예약·보기 설정이 유지됐고, 마지막 완료 집계는 암기 1·너무 쉬움 1로 일치했습니다. 비교한 사용자 파일 736개는 동일합니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/1.3.9/README.md">시나리오별 결과와 남은 범위</a></p>
-<h3>1.3.8 소스 · 2026년 11월 4일 과거 검증</h3>
-<p>75개 파일·1,306개 검사에서 실패·생략 0, 타입 검사·프로덕션 빌드 통과. 기존 격리 Obsidian 1.15.0에서 합성 질문의 일부 저장 후 재시도, 이동 양쪽 과목 요약과 키워드 원문 보존을 확인했습니다. 당시 남았던 인덱스 보완분은 11월 5일 실제 앱의 이동·실패 주입·재시도로 후속 통과했습니다. 사용자 설치 폴더의 시작 시점 파일 7개는 모두 동일했습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/1.3.8/README.md">재현 조건·검증 범위·한계</a></p>
-<h3>1.3.7 정식·사용자 설치 · 2026년 11월 3일 검증</h3>
-<p>전체 검사 1,289개(실패·생략 0), 타입 검사·빌드와 macOS Obsidian 1.15.0의 요청된 데스크톱 UI 검증을 통과했습니다. 사용자 보관함 정상 재로드와 당시 이어하기 17/84·파일 736개 불변을 확인했습니다. 이 수치는 그날의 결과이며 현재 사용자 데이터를 새로 검사했다는 뜻은 아닙니다. 모바일 실기기·OS 키보드·실제 두 기기 클라우드 전달은 미검증이고, Mac 공유 파일 두 환경 대체 검증은 부분 완료입니다.</p>
-<p>아래는 버전별 과거 검증 기록입니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/STATUS.md">최신 범위와 근거</a></p>
-<h3>1.3.4 정식 릴리스 · 반응형 보강</h3>
-<p>1.3.4의 전체 자동 검사 1,087개와 타입 검사·빌드가 통과했습니다(기존 보관함 전용 조건부 2개 제외). 동일한 제품 코드·CSS의 1.3.3 소스에서 학습 화면의 260~1460픽셀 121개 너비, 설정창의 분기점 전후, 키보드 높이·안전 영역 모의를 확인했습니다. 실물 스마트폰·태블릿과 실제 OS 키보드는 직접 확인하지 않았습니다. <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/1.3.3-responsive/README.md">크기별 결과와 제약</a></p>
-<h3>1.0.3 정식 릴리스 · 이전 검증</h3>
-<p>1.0.3의 자동 검사와 빌드를 통과했습니다. Obsidian의 MathJax 엔진으로 수식 표시를 확인한 브라우저 모의환경 결과와 이전 버전의 검사 기록을 구분해 공개합니다.</p>
-<div class="metrics">
-<div class="metric"><strong>1,027개</strong>자동 검사 통과<span>기본 1,025개 + 별도 조건부 2개<br>타입 검사·배포 빌드 통과</span></div>
-<div class="metric"><strong>24개</strong>이전 실제 Mac 확인 항목<span>Obsidian 1.14.5 · 더미 보관함<br>평가·취소·파일 처리·재로딩</span></div>
-<div class="metric"><strong>6가지 화면</strong>이전 모바일 모의환경<span>평가·취소 24쌍 + 추가 확인 16개<br>320픽셀·가로 화면·태블릿 포함</span></div>
-</div>
-<ul><li>이전 1.0.1은 320·390·768·1280픽셀에서 수식 오류와 페이지 가로 넘침이 없었습니다. 실제 Mac·실물 휴대폰은 이번 패치에서 새로 검증하지 않았습니다.</li><li>이전 0.10.6의 실제 Mac에서 네 가지 수정 사항, 이동한 이미지 로드, 네 평가 버튼의 저장·취소, 화면 재로딩 후 기록과 이어하기를 확인했습니다.</li><li>이전 0.10.6 모바일 모의환경에서는 큰 글자·밝은/어두운 테마·좁은 화면에서 버튼 겹침과 화면 전체의 가로 넘침이 없었습니다. 설정 유지, 정확한 복습 간격, 이어하기와 합성 터치 이벤트도 확인했습니다.</li><li>1.0.3 배포 파일 7개의 서버 해시와 다운로드 파일을 대조했습니다. ZIP 내부 파일과 CRC도 검증했습니다.</li></ul>
-<p><a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/1.0.3/README.md">1.0.3 검증 기준</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/qa/0.10.6/README.md">실제 Mac·모바일 측정 기록</a></p>
-<details><summary>검증 범위와 알려진 제약</summary><p>모바일은 추출한 Obsidian CSS와 대체 파일·설정·Markdown API를 쓰는 브라우저 모의환경입니다. 터치는 합성 이벤트이며 키보드는 가용 화면 높이 축소로 근사했습니다. 실제 휴대폰의 Obsidian, iOS/Android WebView, 소프트키보드·safe-area·클라우드 동기화는 미검증입니다. 다른 OS와 실제 절전 복귀도 검증하지 않았습니다.</p><p>모의 키보드 전환 직후 검증 호스트의 클릭 위치와 스크롤이 어긋난 사례는 실기기 추가 확인 항목으로 남깁니다. Mac의 화면 재로딩은 프로세스 재시작과 구분합니다. 검증 후 컴퓨터 제어 연결 실패로 원래 창 복귀는 미확인이며, 개인 자료 보존은 별도로 대조했습니다.</p><p>1,000문제 단일 파일의 메타데이터 왕복 검사는 기본 5초 제한에서 약 6.3초가 걸렸고, 해당 검사만 30초 제한으로 재실행해 통과했습니다. 대용량 기록 저장과 복합 Word 출력의 처리 지연 제약은 유지합니다. 모바일 관련 자동 검사 59개는 위 검사 합계에 포함됩니다.</p></details>
-</section>
-<section id="screens" aria-labelledby="screens-title">
-<h2 id="screens-title">화면으로 확인하기</h2>
-<p>1.3.3 소스의 합성 데이터·브라우저 모의 화면입니다. 기기 실물의 스크린샷이 아닙니다.</p>
-<div class="shots">
-<figure><a href="qa/1.3.3-responsive/cover-study.png"><img src="qa/1.3.3-responsive/cover-study.png" alt="280픽셀 학습 화면에서 탭이 두 줄로 재배치된 모습" width="280" height="740" loading="lazy"></a><figcaption>280×740 · 좁은 학습 화면</figcaption></figure>
-<figure><a href="qa/1.3.3-responsive/narrow-settings.png"><img src="qa/1.3.3-responsive/narrow-settings.png" alt="좁은 설정창의 입력·단위와 다음 줄의 삭제 버튼" width="280" height="740" loading="lazy"></a><figcaption>280×740 · 설정 행 재배치</figcaption></figure>
-<figure><a href="qa/1.3.3-responsive/phone-keyboard.png"><img src="qa/1.3.3-responsive/phone-keyboard.png" alt="키보드 높이 모의 상태의 입력칸과 저장·취소·키보드 닫기" width="393" height="500" loading="lazy"></a><figcaption>393×500 · 키보드 높이 모의</figcaption></figure>
-</div>
-<h3>이전 1.0.3 정식 릴리스</h3>
-<p>1.0.3과 Obsidian MathJax로 실행 버전과 합성 RC 수식을 확인한 브라우저 모의환경입니다. 실제 휴대폰 화면이 아니며 상단 도구 모음은 검증용입니다. 파일·Markdown API는 대체 구현입니다.</p>
-<div class="shots">
-<figure><a href="qa/1.0.3/version-rc-1280.jpg"><img src="qa/1.0.3/version-rc-1280.jpg" alt="Major Study 옆 v1.0.3과 RC 미분식·충전식" width="1280" height="900" loading="lazy"></a><figcaption>태블릿 크기 · 버전과 RC 수식</figcaption></figure>
-<figure><a href="qa/1.0.3/version-rc-390.jpg"><img src="qa/1.0.3/version-rc-390.jpg" alt="390픽셀 화면의 버전 표시" width="390" height="844" loading="lazy"></a><figcaption>390픽셀 · 실행 버전 표시</figcaption></figure>
-<figure><a href="qa/1.0.3/version-rc-320.jpg"><img src="qa/1.0.3/version-rc-320.jpg" alt="320픽셀 작은 화면의 버전 표시" width="320" height="568" loading="lazy"></a><figcaption>320픽셀 · 제목 옆 버전 유지</figcaption></figure>
-</div>
-</section>
-<section id="install" aria-labelledby="install-title">
-<h2 id="install-title">설치·업데이트</h2>
-<h3>BRAT으로 설치</h3>
-<ol><li>Obsidian 커뮤니티 플러그인에서 BRAT을 설치하고 활성화합니다.</li><li>명령 팔레트에서 <code>BRAT: Add a beta plugin for testing</code>을 실행합니다.</li><li>저장소 주소 <a href="https://github.com/kimchi-kang/mia-study-obsidian">kimchi-kang/mia-study-obsidian</a>를 입력합니다. 기존 사용자는 BRAT에서 업데이트합니다.</li><li>설치 후 MIA Study를 활성화하고 선택한 패키지의 버전과 화면 표시가 일치하는지 확인합니다. 정식 릴리스와 main 소스는 1.4.3입니다. BRAT 원격 업데이트가 어느 파일을 받는지는 이번에 재검증하지 않았으므로 설치 후 버전을 확인하세요.</li></ol>
-<h3>ZIP으로 수동 업데이트</h3>
-<ol><li>대상 보관함을 백업하고 해당 보관함의 Obsidian을 닫습니다.</li><li>ZIP의 <code>main.js</code>, <code>styles.css</code>, <code>manifest.json</code>을 <code>.obsidian/plugins/mia-study/</code>에 넣습니다.</li><li>기존 <code>data.json</code>, <code>ui-state.json</code>과 학습 자료는 유지합니다.</li><li>사용할 기기를 모두 같은 패키지 버전으로 맞춘 뒤 Obsidian을 다시 열어 버전을 확인합니다.</li></ol>
-<p>최소 Obsidian 버전은 1.8.7입니다. 공유 보관함에서는 업데이트를 위해 활성화 스위치를 반복해서 바꾸면 꺼진 상태도 동기화될 수 있으므로, 해당 보관함을 닫고 파일을 교체하는 절차를 따르세요.</p>
-<p><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/BUILD-INFO.json">1.4.12 빌드 정보</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/SHA256SUMS">SHA256SUMS</a></p>
-</section>
-<section aria-labelledby="credits-title">
-<h2 id="credits-title">라이선스·알고리즘 출처</h2>
-<p>MIA Study 자체 코드는 <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT 라이선스</a>입니다. 라이선스와 외부 코드 고지는 실행 파일 및 배포 파일에 포함됩니다.</p>
-<p>복습에는 Anki에서도 지원하는 FSRS 계열의 FSRS-6을 사용합니다. 구현 라이브러리는 Open Spaced Repetition의 <a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a>입니다. <a href="https://docs.ankiweb.net/manual/deck-options#fsrs">Anki의 FSRS 안내</a></p>
-</section>
-<footer>MIA Study 정식 1.4.12 · <a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases">릴리즈 기록</a> · 2026년 11월 11일 갱신</footer>
 </main>
+
+<footer>
+  <div class="wrap">
+    <span>MIA Study 1.4.12 · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT</a> · 복습 일정은 <a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a>(FSRS-6) 사용</span>
+    <span><a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/issues">문제 신고</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases">릴리스</a></span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById("theme"),key="mia-site-theme";
+  try{var saved=localStorage.getItem(key);if(saved==="light"||saved==="dark")root.setAttribute("data-theme",saved);}catch(e){}
+  btn.addEventListener("click",function(){
+    var cur=root.getAttribute("data-theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+    var next=cur==="dark"?"light":"dark";root.setAttribute("data-theme",next);
+    try{localStorage.setItem(key,next);}catch(e){}
+  });
+})();
+</script>
 </body>
 </html>
