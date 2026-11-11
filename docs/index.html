@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>MIA Study · Obsidian 전공 공부 플러그인</title>
-<meta name="description" content="Obsidian 안에서 전공 질문을 모으고, 키워드로 연결하고, FSRS-6로 복습하는 플러그인. 정식 1.4.15 다운로드와 설치 안내.">
+<meta name="description" content="Obsidian 안에서 전공 질문을 모으고, 키워드로 연결하고, FSRS-6로 복습하는 플러그인. 정식 1.4.16 다운로드와 설치 안내.">
 <meta property="og:title" content="MIA Study · Obsidian 전공 공부 플러그인">
-<meta property="og:description" content="질문·키워드·FSRS-6 복습을 Obsidian 안에서. 정식 1.4.15.">
+<meta property="og:description" content="질문·키워드·FSRS-6 복습을 Obsidian 안에서. 정식 1.4.16.">
 <meta property="og:image" content="https://kimchi-kang.github.io/mia-study-obsidian/assets/screens/desktop-dashboard.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -279,11 +279,11 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
   <div class="wrap">
     <div class="hero-grid">
       <div>
-        <span class="ver">정식 1.4.15</span>
+        <span class="ver">정식 1.4.16</span>
         <h1>질문을 모으고,<br><em>잊기 전에</em><br>다시 꺼낸다.</h1>
         <p class="lead">Obsidian 안에서 과목·질문·키워드를 폼으로 관리하고, FSRS-6로 복습 시점을 잡아 주는 공부 플러그인. Markdown을 직접 쓰지 않아도 되고, 문제마다 노트를 만들지도 않습니다. 1.4.13부터 플러그인 화면도 이 페이지와 같은 바우하우스 스타일(빨강·노랑·파랑, 두꺼운 테두리, 각진 모서리)입니다.</p>
         <div class="cta">
-          <a class="btn btn-red" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.15/mia-study-1.4.15.zip" download>↓ 1.4.15 다운로드</a>
+          <a class="btn btn-red" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.16/mia-study-1.4.16.zip" download>↓ 1.4.16 다운로드</a>
           <a class="btn btn-line" href="#install">BRAT 설치</a>
         </div>
         <p class="meta"><span>무료 · MIT</span><span>데스크톱·모바일</span><span>Obsidian 1.8.7+</span></p>
@@ -298,7 +298,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
       </div>
     </div>
     <figure class="frame hero-shot">
-      <img src="assets/screens/desktop-dashboard.jpg" width="1600" height="1075" alt="바우하우스 스타일의 MIA Study 대시보드. 파란 복습 6개·노란 새 문제 6개 타일과 빨간 시험 모드 시작 버튼, 이어하기 카드, 등록 문제 13개·기억 안정 비율·오늘 평가 통계 타일, 과목별 학습 카드가 보인다.">
+      <img src="assets/screens/desktop-dashboard.jpg" width="1600" height="1075" alt="바우하우스 스타일의 MIA Study 오늘 화면. 큰 파란 복습 블록과 노란 새 문제 블록, 빨간 시험 모드 시작 버튼·전체 암기 모드·기록 새로고침이 있는 시작 패널, 이어하기 카드, 등록 문제 13개 등 통계 타일, 취약 문제 띠가 보인다.">
     </figure>
   </div>
 </div>
@@ -309,7 +309,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
     <div class="steps">
       <div class="step"><span class="n">1</span><h3>과목 추가</h3><p>리본의 뇌 아이콘이나 명령 팔레트의 <code>MIA Study 열기</code>로 시작해 과목을 만듭니다. 과목 폴더와 문제은행 노트가 자동으로 생깁니다.</p></div>
       <div class="step"><span class="n">2</span><h3>질문 추가</h3><p>과목·질문·정답·유형과 핵심·보조 키워드, 각 키워드의 의미를 폼에 입력합니다. 키워드 의미 노트도 함께 만들어집니다.</p></div>
-      <div class="step"><span class="n">3</span><h3>시험 시작</h3><p>대시보드의 <strong>시험 모드 시작</strong>을 누르면 오늘 복습할 문제와 새 문제가 나옵니다. 평가할 때마다 다음 복습일이 정해집니다.</p></div>
+      <div class="step"><span class="n">3</span><h3>시험 시작</h3><p><strong>오늘</strong> 화면의 <strong>시험 모드 시작</strong>을 누르면 오늘 복습할 문제와 새 문제가 나옵니다. 평가할 때마다 다음 복습일이 정해집니다.</p></div>
     </div>
     <p class="defaults">기본값: 하루 새 문제 20개 · 복습 200회 · 하루 시작 오전 4시 · 학습 단계 1분 → 10분 · 목표 기억률 90%</p>
   </div>
@@ -338,7 +338,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
         </ul>
         <p class="keys">Space 정답 · 1–4 평가 · ← → 이동 · U 직전 평가 취소</p>
       </div>
-      <figure class="frame"><img src="assets/screens/desktop-study.jpg" width="1600" height="1075" loading="lazy" alt="시험 모드 학습 화면. 시차 계산 질문 아래 분수 수식이 렌더링된 모범 답안과 빨강·노랑·흰색·파랑의 못 암기·애매·암기·너무 쉬움 평가 버튼이 보인다."></figure>
+      <figure class="frame"><img src="assets/screens/desktop-study.jpg" width="1600" height="1075" loading="lazy" alt="시험 모드 학습 화면. 시차 계산 질문 아래 분수 수식이 렌더링된 모범 답안과, 1–4 키 표시와 다음 간격이 붙은 빨강·노랑·흰색·파랑의 큰 평가 버튼이 보인다."></figure>
     </div>
 
     <div class="feat flip">
@@ -367,7 +367,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
           <li>질문마다 상세·편집·연결·삭제</li>
         </ul>
       </div>
-      <figure class="frame"><img src="assets/screens/desktop-questions.jpg" width="1600" height="1075" loading="lazy" alt="문제 목록 화면. 수학 기초·요리 과학 예시 질문 13개와 검색창, 과목·유형·상태 필터, 질문마다 학습·상세·편집·연결·삭제 버튼이 보인다."></figure>
+      <figure class="frame"><img src="assets/screens/desktop-questions.jpg" width="1600" height="1075" loading="lazy" alt="문제 목록 화면. 전체 13·오늘 복습 2·학습 전 10·▲ 취약 상태 칩과 검색창·필터, 질문마다 학습·상세·편집·연결 열과 빨간 삭제 글자, 오른쪽 상세 패널 영역이 보인다."></figure>
     </div>
 
     <div class="feat flip">
@@ -381,7 +381,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
           <li>학습 중 키워드·과목·유형·최근 평가로 관련 문제를 추천해 이어서 출제</li>
         </ul>
       </div>
-      <figure class="frame"><img src="assets/screens/desktop-keywords.jpg" width="1600" height="1075" loading="lazy" alt="키워드 화면. 가우스, 갈변, 경우의 수, 근의 공식, 끓는점, 마이야르 반응 같은 예시 키워드 카드마다 연결 문제 수와 키워드 수정·연결 문제 시험·암기·키워드 삭제 버튼이 보인다."></figure>
+      <figure class="frame"><img src="assets/screens/desktop-keywords.jpg" width="1600" height="1075" loading="lazy" alt="키워드 화면. 가우스, 갈변, 경우의 수, 계량, 고도, 근의 공식 같은 예시 키워드 카드마다 연결 문제 수와 연결 문제 시험·암기·편집·삭제 버튼이 보인다."></figure>
     </div>
 
     <div class="feat">
@@ -391,7 +391,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
         <p>전체·과목별로 학습 전, 오늘 복습, 기억 안정, 오늘 평가를 한눈에 보고, 숫자를 누르면 해당 문제만 모아 봅니다.</p>
         <ul class="pts">
           <li>최근 평가 분포를 네 가지 색 막대로 표시</li>
-          <li>취약 문제: 못 암기·애매 문제를 복습 지연 시간까지 반영한 긴급도 순으로 정렬해 바로 시험</li>
+          <li>취약 문제: 오늘 화면의 취약 띠와 문제 탭의 "▲ 취약" 필터에서 못 암기·애매 문제를 복습 지연 시간까지 반영한 긴급도 순으로 정렬해 바로 시험</li>
           <li>시험이 끝나면 평가별 개수·건너뜀·소요 시간 요약</li>
         </ul>
       </div>
@@ -402,7 +402,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
     <div class="more">
       <div><span class="dot c" aria-hidden="true"></span><h3>시험 모드 · 암기 모드</h3><p>시험은 정답을 가리고 상한·순서를 따릅니다. 암기는 정답을 처음부터 보여 주고 순서대로·랜덤을 고릅니다.</p></div>
       <div><span class="dot s" aria-hidden="true"></span><h3>직전 평가 취소</h3><p>잘못 누른 평가를 그 직전의 복습 상태와 학습 순서까지 그대로 되돌립니다.</p></div>
-      <div><span class="dot t" aria-hidden="true"></span><h3>이어하기</h3><p>마지막으로 본 위치를 저장해 대시보드에서 바로 이어갑니다.</p></div>
+      <div><span class="dot t" aria-hidden="true"></span><h3>이어하기</h3><p>마지막으로 본 위치를 저장해 오늘 화면에서 바로 이어갑니다.</p></div>
       <div><span class="dot c" aria-hidden="true"></span><h3>Anki 스타일 학습 설정</h3><p>하루 새 문제·복습 상한, 학습·재학습 단계, 목표 기억률, 출제 순서, 평가 버튼별 고정 간격을 간편·고급 화면에서 조정합니다.</p></div>
       <div><span class="dot s" aria-hidden="true"></span><h3>꼬리질문 연결</h3><p>기존 문제를 검색해 최대 50개까지 단방향·양방향으로 연결합니다.</p></div>
       <div><span class="dot t" aria-hidden="true"></span><h3>과목별 Word 정리본</h3><p>과목의 질문·답변 전체를 A4 서식의 .docx로 출력합니다. 표·목록·코드·보관함 이미지를 포함하고 수식은 LaTeX 표기로 보존합니다.</p></div>
@@ -424,7 +424,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
           <p class="honest">데스크톱 Obsidian에서 휴대폰 폭(390px)으로 찍은 화면입니다. 실제 휴대폰 캡처가 아닙니다.</p>
         </div>
         <div class="phones">
-          <figure class="phone"><img src="assets/screens/mobile-dashboard.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 어두운 테마의 대시보드. 파란 복습 6개·노란 새 문제 6개 타일, 시험 모드 시작 버튼, 이어하기 카드가 보인다."></figure>
+          <figure class="phone"><img src="assets/screens/mobile-dashboard.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 어두운 테마의 오늘 화면. 파란 복습·노란 새 문제 타일, 시험 모드 시작 버튼, 이어하기 카드와 아래쪽 탭 바(오늘·학습현황·문제·키워드)가 보인다."></figure>
           <figure class="phone"><img src="assets/screens/mobile-study.jpg" width="780" height="1688" loading="lazy" alt="390픽셀 폭 학습 화면. 수식이 렌더링된 모범 답안 아래에 빨강·노랑·흰색·파랑 평가 버튼 네 개가 2×2로 배치되어 있다."></figure>
         </div>
       </div>
@@ -483,11 +483,11 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
         <h3>ZIP 직접 설치</h3>
         <ol>
           <li>보관함을 백업하고 Obsidian을 닫습니다.</li>
-          <li><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.15/mia-study-1.4.15.zip">ZIP</a>의 <code>main.js</code> <code>styles.css</code> <code>manifest.json</code> 세 파일을 아래 폴더에 복사합니다.<code class="blk">.obsidian/<wbr>plugins/<wbr>mia-study/</code></li>
+          <li><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.16/mia-study-1.4.16.zip">ZIP</a>의 <code>main.js</code> <code>styles.css</code> <code>manifest.json</code> 세 파일을 아래 폴더에 복사합니다.<code class="blk">.obsidian/<wbr>plugins/<wbr>mia-study/</code></li>
           <li><code>data.json</code>, <code>ui-state.json</code>은 그대로 둡니다. 학습 기록이 여기 있습니다.</li>
           <li>Obsidian을 다시 엽니다.</li>
         </ol>
-        <p class="links"><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.15/SHA256SUMS">SHA256SUMS</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/INSTALL.md">INSTALL.md</a></p>
+        <p class="links"><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.16/SHA256SUMS">SHA256SUMS</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/INSTALL.md">INSTALL.md</a></p>
       </div>
     </div>
   </div>
@@ -498,17 +498,17 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
     <div class="sh"><span class="shape c" aria-hidden="true"></span><h2>최신 업데이트</h2><span class="num">06</span></div>
     <div class="upd">
       <div class="l">
-        <div class="big">1.4.15</div>
-        <p>2026년 11월 11일</p>
-        <p><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.15">릴리스 노트 →</a></p>
+        <div class="big">1.4.16</div>
+        <p>2026년 11월 12일</p>
+        <p><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.16">릴리스 노트 →</a></p>
       </div>
       <div class="r">
-        <h3>초기화 확인과 상세 창 버튼 정리</h3>
+        <h3>탭 4개로 줄인 새 화면 배치</h3>
         <ul>
-          <li>질문 상세 창의 "학습 전으로 초기화"가 실행 전에 기록 수를 보여 주고 되돌릴 수 없다고 안내하며 취소/초기화를 묻습니다.</li>
-          <li>평가 버튼에 색 막대, 초기화는 작은 빨간 글자 버튼, 삭제는 따로 분리. 휴대폰에서는 44px 터치 영역.</li>
+          <li>탭은 오늘 · 학습현황 · 문제 · 키워드. 취약 문제는 오늘의 취약 띠와 문제의 "▲ 취약" 필터로 옮겼습니다.</li>
+          <li>문제 목록은 열을 맞추고, 넓은 화면에서는 오른쪽 상세 패널로 엽니다. 학습 화면은 큰 색 평가 버튼과 키 안내, 휴대폰은 하단 탭 바와 44px 터치 영역.</li>
         </ul>
-        <p style="margin:0 0 12px"><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.14">1.4.14</a>: 과목·학습현황·키워드 카드의 버튼과 숫자를 한눈에 보이도록 정리.</p>
+        <p style="margin:0 0 12px"><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.15">1.4.15</a>: 질문 상세 창의 초기화 확인과 버튼 정리.</p>
         <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/releases/HISTORY.md">전체 변경 이력 →</a>
       </div>
     </div>
@@ -519,7 +519,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
   <div class="wrap">
     <div class="sh"><span class="shape s" aria-hidden="true"></span><h2>검증</h2><span class="num">07</span></div>
     <div class="verify">
-      <div class="v"><span class="lab ok">통과</span><b>1,686개</b><p>1.4.15 자동 검사 실패·생략 0, 타입 검사·배포 빌드 통과.</p></div>
+      <div class="v"><span class="lab ok">통과</span><b>1,712개</b><p>1.4.16 자동 검사 실패·생략 0, 타입 검사·배포 빌드 통과.</p></div>
       <div class="v"><span class="lab ok">확인</span><b>데스크톱 앱</b><p>macOS Obsidian에서 모든 탭과 시험·암기, 평가·취소, 재시작을 확인했습니다.</p></div>
       <div class="v"><span class="lab no">미검증</span><b>휴대폰 실기기</b><p>iOS·Android 실기기, OS 키보드, 두 기기 실시간 동기화는 직접 확인하지 않았습니다.</p></div>
     </div>
@@ -545,7 +545,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
 <footer>
   <div class="wrap">
     <span class="fm" aria-hidden="true"><i class="c"></i><i class="s"></i><i class="t"></i></span>
-    <span>MIA Study 1.4.15 · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT</a> · 복습 일정: <a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a>(FSRS-6)</span>
+    <span>MIA Study 1.4.16 · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT</a> · 복습 일정: <a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a>(FSRS-6)</span>
     <span><a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/issues">문제 신고</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases">릴리스</a></span>
   </div>
 </footer>
