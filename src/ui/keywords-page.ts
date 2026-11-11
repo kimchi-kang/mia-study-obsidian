@@ -57,7 +57,7 @@ export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
         target: item.keyword.target,
         filePath: `${item.keyword.target}.md`,
       };
-      const edit = card.createEl("button", { text: "키워드 수정" });
+      const edit = card.createEl("button", { text: "편집", attr: { "aria-label": `키워드 ${item.keyword.label} 편집` } });
       edit.addEventListener("click", (event) => {
         event.stopPropagation();
         ctx.plugin.openKeywordEditor(editEntry);
@@ -84,7 +84,7 @@ export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
           questionButton.addEventListener("click", () => void ctx.plugin.openQuestionDetail(question));
         }
       }
-      const remove = card.createEl("button", { text: "키워드 삭제", cls: "mod-warning" });
+      const remove = card.createEl("button", { text: "삭제", cls: "mod-warning", attr: { "aria-label": `키워드 ${item.keyword.label} 삭제` } });
       remove.addEventListener("click", (event) => {
         event.stopPropagation();
         ctx.plugin.confirmDeleteKeyword(editEntry);

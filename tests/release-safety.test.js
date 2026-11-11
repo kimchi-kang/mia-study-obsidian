@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Rating } from "ts-fsrs";
 
-const ui = vi.hoisted(() => ({ detail: null, notices: [] }));
+const ui = vi.hoisted(() => ({ detail: null, notices: [], opened: 0, onClosed: null }));
 vi.mock("obsidian", () => ({
   Plugin: class {}, Modal: class {}, ItemView: class {}, PluginSettingTab: class {},
   MarkdownView: class {}, Notice: class { constructor(message) { ui.notices.push(message); } },
@@ -10,8 +10,8 @@ vi.mock("obsidian", () => ({
 }));
 vi.mock("../src/ui/question-detail-modal", () => ({
   QuestionDetailModal: class {
-    constructor(_app, _question, review, _recommendations, _meanings, actions) { ui.detail = { review, actions }; }
-    open() {}
+    constructor(_app, _question, review, _recommendations, _meanings, actions, onClosed) { ui.detail = { review, actions }; ui.onClosed = onClosed; }
+    open() { ui.opened += 1; }
   },
 }));
 
@@ -35,7 +35,7 @@ function environment() {
   };
   return { device, read: () => structuredClone(disk), overwrite: value => { disk = structuredClone(value); } };
 }
-afterEach(() => { vi.useRealTimers(); ui.detail = null; ui.notices.length = 0; });
+afterEach(() => { vi.useRealTimers(); ui.detail = null; ui.notices.length = 0; ui.opened = 0; ui.onClosed = null; });
 
 describe("detail review conflict protection", () => {
   it.each(["rate", "reset"])("rejects stale %s after a different device saved, even if the local store was synchronized", async action => {
@@ -205,4 +205,16 @@ describe("portable subject and keyword writes", () => {
     await expect(plugin.saveKeywordReferenceMeaning("MIA/키워드/math", "math", "의미", "MIA/수학/문제은행.md")).rejects.toThrow(/표기|이름/);
     expect(process).not.toHaveBeenCalled(); expect(create).not.toHaveBeenCalled();
   });
+});
+
+it("opens one detail dialog per question even when 상세 is pressed twice, and allows it again once closed", async () => {
+  const question = { id: "q", heading: "질문", subject: "수학", coreKeywords: [], subKeywords: [], followUpIds: [] };
+  const plugin = new MiaStudyPlugin();
+  plugin.app = {}; plugin.store = { reviews: {}, getReview: () => undefined }; plugin.fsrs = fsrs;
+  plugin.index = { questionById: () => question, registered: [question] };
+  await Promise.all([plugin.openQuestionDetail(question), plugin.openQuestionDetail(question)]);
+  expect(ui.opened).toBe(1);
+  ui.onClosed();
+  await plugin.openQuestionDetail(question);
+  expect(ui.opened).toBe(2);
 });

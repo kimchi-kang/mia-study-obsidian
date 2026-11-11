@@ -1,3 +1,4 @@
+// "weakness" has no page of its own any more; the id stays so saved workspaces still restore (as the weak filter on "questions").
 export const MIA_ROUTES = ["dashboard", "progress", "questions", "weakness", "keywords", "study"] as const;
 export type MiaRoute = typeof MIA_ROUTES[number];
 export type MiaSessionMode = "recall" | "browse";

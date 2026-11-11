@@ -1,161 +1,40 @@
-import { withoutSourceAttribution } from "../core/source-attribution";
-import { renderQuestionTitle } from "./question-title";
-import { App, Component, MarkdownRenderer, Modal, Notice } from "obsidian";
-import { Rating } from "ts-fsrs";
-import { StudyGrade } from "../core/fsrs-service";
-import { QuestionRecord, QuestionReviewState } from "../core/models";
+import { App, Component, Modal } from "obsidian";
+import { QuestionReviewState } from "../core/models";
 import { QuestionRecommendation } from "../core/recommendation-engine";
-import { errorMessage } from "./error-message";
-import { GRADE_HINTS } from "./study-grades";
-import { ConfirmDeleteModal } from "./manage-modals";
+import { QuestionDetailActions, QuestionDetailView, RegisteredQuestion } from "./question-detail-view";
 
-type RegisteredQuestion = QuestionRecord & { id: string };
+export type { QuestionDetailActions } from "./question-detail-view";
 
-const RATING_LABELS: Record<number, string> = {
-  [Rating.Again]: "못 암기",
-  [Rating.Hard]: "애매",
-  [Rating.Good]: "암기",
-  [Rating.Easy]: "너무 쉬움",
-};
-
-export interface QuestionDetailActions {
-  study: () => void;
-  edit: () => void;
-  connections: () => void;
-  remove: () => void;
-  showKeyword: (target: string, label: string) => void;
-  rate: (grade: StudyGrade) => Promise<void>;
-  resetReview: () => Promise<void>;
-}
-
+/** The question detail as a dialog; the body is shared with the question-list side panel. */
 export class QuestionDetailModal extends Modal {
   private renderer: Component | null = null;
-  private saving = false;
-  private mutationButtons: HTMLButtonElement[] = [];
   private renderRevision = 0;
+  private readonly detail: QuestionDetailView;
 
   constructor(
     app: App,
-    private readonly question: RegisteredQuestion,
-    private readonly review: QuestionReviewState | undefined,
-    private readonly recommendations: readonly QuestionRecommendation[],
-    private readonly meanings: ReadonlyMap<string, string>,
-    private readonly actions: QuestionDetailActions,
+    question: RegisteredQuestion,
+    review: QuestionReviewState | undefined,
+    recommendations: readonly QuestionRecommendation[],
+    meanings: ReadonlyMap<string, string>,
+    actions: QuestionDetailActions,
+    private readonly onClosed?: () => void,
   ) {
     super(app);
+    this.detail = new QuestionDetailView(app, { question, review, recommendations, meanings, actions }, {
+      afterAction: () => this.close(),
+      afterMutation: () => this.close(),
+    });
     this.setTitle(question.heading);
   }
 
   async onOpen(): Promise<void> {
     const revision = ++this.renderRevision;
     this.contentEl.empty();
-    this.mutationButtons = [];
     this.modalEl.addClass("mia-detail-modal");
     this.renderer = new Component();
     this.renderer.load();
-    const titleRender = renderQuestionTitle(this.app, this.question.heading, this.titleEl, this.question.filePath, this.renderer);
-    const metadata = this.contentEl.createDiv({ cls: "mia-detail-meta" });
-    metadata.createSpan({ text: this.question.subject });
-    metadata.createSpan({ text: this.question.questionType });
-    if (this.question.createdAt) metadata.createSpan({ text: `생성 ${new Date(this.question.createdAt).toLocaleString("ko-KR")}` });
-    if (this.question.updatedAt) metadata.createSpan({ text: `수정 ${new Date(this.question.updatedAt).toLocaleString("ko-KR")}` });
-
-    this.contentEl.createEl("h3", { text: "질문" });
-    const prompt = this.contentEl.createDiv({ cls: "mia-markdown" });
-    await Promise.all([titleRender, MarkdownRenderer.render(this.app, withoutSourceAttribution(this.question.questionMarkdown), prompt, this.question.filePath, this.renderer)]);
-    if (revision !== this.renderRevision) return;
-    this.contentEl.createEl("h3", { text: "정답" });
-    const answer = this.contentEl.createDiv({ cls: "mia-markdown mia-answer" });
-    await MarkdownRenderer.render(this.app, withoutSourceAttribution(this.question.answerMarkdown), answer, this.question.filePath, this.renderer);
-    if (revision !== this.renderRevision) return;
-
-    this.renderKeywords("핵심 키워드", this.question.coreKeywords);
-    this.renderKeywords("보조 키워드", this.question.subKeywords);
-
-    this.contentEl.createEl("h3", { text: "현재 상태 변경" });
-    const ratings = this.contentEl.createDiv({ cls: "mia-ratings" });
-    for (const grade of [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as StudyGrade[]) {
-      const button = ratings.createEl("button", { text: RATING_LABELS[grade] ?? String(grade) });
-      this.mutationButtons.push(button);
-      button.setAttribute("title", GRADE_HINTS[grade]);
-      button.addEventListener("click", () => void this.perform(() => this.actions.rate(grade), "상태를 변경했습니다."));
-    }
-    const reset = this.contentEl.createEl("button", { text: "학습 전으로 초기화", cls: "mia-source mia-detail-reset" });
-    reset.disabled = !this.review;
-    this.mutationButtons.push(reset);
-    reset.addEventListener("click", () => this.confirmReset());
-
-    this.contentEl.createEl("h3", { text: `복습 기록 ${this.review?.history.length ?? 0}회` });
-    const history = this.contentEl.createDiv({ cls: "mia-history" });
-    for (const entry of [...(this.review?.history ?? [])].reverse()) {
-      // ts-fsrs log.due is last_review || due, not the preceding scheduled due.
-      history.createDiv({ text: `${new Date(entry.review).toLocaleString("ko-KR")} · ${RATING_LABELS[entry.rating] ?? entry.rating} · 계산 기준 ${new Date(entry.due).toLocaleString("ko-KR")}` });
-    }
-    if (!this.review?.history.length) history.createEl("p", { text: "아직 복습 기록이 없습니다.", cls: "mia-muted" });
-
-    this.contentEl.createEl("h3", { text: "관련 질문" });
-    const related = this.contentEl.createDiv({ cls: "mia-related" });
-    for (const recommendation of this.recommendations) {
-      const row = related.createDiv({ cls: "mia-detail-related-row" });
-      const question = recommendation.question;
-      void renderQuestionTitle(this.app, question.heading, row.createSpan(), question.filePath, this.renderer);
-      row.createSpan({ text: ` — ${recommendation.reasons.join(" · ")} (${recommendation.score}점)` });
-    }
-    if (!this.recommendations.length) related.createEl("p", { text: "추천할 관련 질문이 없습니다.", cls: "mia-muted" });
-
-    const controls = this.contentEl.createDiv({ cls: "mia-inline-actions mia-detail-actions" });
-    this.actionButton(controls, "학습", this.actions.study);
-    this.actionButton(controls, "질문 수정", this.actions.edit);
-    this.actionButton(controls, "연결 관리", this.actions.connections);
-    this.actionButton(controls, "삭제", this.actions.remove, "mod-warning");
-  }
-
-  private renderKeywords(title: string, keywords: RegisteredQuestion["coreKeywords"]): void {
-    this.contentEl.createEl("h3", { text: title });
-    const list = this.contentEl.createDiv({ cls: "mia-keyword-detail-list" });
-    for (const keyword of keywords) {
-      const row = list.createEl("button");
-      row.createEl("strong", { text: keyword.label });
-      row.createEl("small", { text: this.meanings.get(keyword.target) || "의미 없음" });
-      row.addEventListener("click", () => this.actions.showKeyword(keyword.target, keyword.label));
-    }
-    if (!keywords.length) list.createSpan({ text: "없음", cls: "mia-muted" });
-  }
-
-  private confirmReset(): void {
-    if (this.saving) return;
-    const count = this.review?.history.length ?? 0;
-    new ConfirmDeleteModal(
-      this.app,
-      "학습 기록 초기화",
-      `이 질문의 복습 기록 ${count}회와 다음 복습 일정이 모두 지워지고 새 문제로 돌아갑니다. 질문·정답·키워드·연결 질문은 그대로입니다. 되돌릴 수 없습니다.`,
-      "초기화",
-      () => this.perform(this.actions.resetReview, "복습 기록을 초기화했습니다."),
-      "초기화 실패",
-    ).open();
-  }
-
-  private actionButton(parent: HTMLElement, label: string, action: () => void, cls?: string): void {
-    const button = parent.createEl("button", { text: label, ...(cls ? { cls } : {}) });
-    this.mutationButtons.push(button);
-    button.addEventListener("click", () => { if (!this.saving) { this.close(); action(); } });
-  }
-
-  private async perform(action: () => Promise<void>, success: string): Promise<void> {
-    if (this.saving) return;
-    this.saving = true;
-    const disabled = this.mutationButtons.map((item) => item.disabled);
-    this.mutationButtons.forEach((item) => { item.disabled = true; });
-    try {
-      await action();
-      new Notice(success);
-      this.close();
-    } catch (error) {
-      new Notice(`변경 실패: ${errorMessage(error)}`);
-      this.mutationButtons.forEach((item, index) => { item.disabled = disabled[index] ?? false; });
-    } finally {
-      this.saving = false;
-    }
+    await this.detail.render(this.contentEl, this.titleEl, this.renderer, () => revision === this.renderRevision);
   }
 
   onClose(): void {
@@ -164,5 +43,6 @@ export class QuestionDetailModal extends Modal {
     this.renderer = null;
     this.modalEl.removeClass("mia-detail-modal");
     this.contentEl.empty();
+    this.onClosed?.();
   }
 }

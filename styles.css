@@ -75,12 +75,11 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-inline-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .mia-inline-actions > button { min-width: 0; height: auto; white-space: normal; overflow-wrap: anywhere; }
 .mia-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-.mia-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; }
+.mia-row { padding: 12px 14px; }
 .mia-row-body { display: flex; flex-direction: column; gap: 5px; min-width: 0; overflow-wrap: anywhere; }
 .mia-row-prompt { max-height: 7em; overflow: hidden; }
 .mia-row-prompt > :first-child { margin-top: 0; }
 .mia-row-prompt > :last-child { margin-bottom: 0; }
-.mia-row-actions { display: flex; gap: 5px; flex-shrink: 0; }
 .mia-candidates { margin-top: 22px; }
 .mia-candidate { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--background-modifier-border); }
 .mia-candidate-label { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
@@ -215,20 +214,6 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   .mia-header h2 { font-size: 1.08em; line-height: 1.2; }
   .mia-badge { padding: 2px 7px; font-size: 10px; }
 
-  .mia-nav {
-    width: 100%;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    gap: 5px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-  .mia-nav::-webkit-scrollbar { display: none; }
-  .mia-nav button { flex: 1 0 58px; min-width: 58px; padding-inline: 9px; font-size: 0; white-space: nowrap; }
-  .mia-nav button::after { content: attr(data-short-label); font-size: var(--font-ui-small); }
-
   .mia-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
   .mia-stat { min-width: 0; min-height: 76px; padding: 10px 11px; justify-content: center; }
   .mia-stat strong { font-size: 1.4em; line-height: 1.1; }
@@ -268,14 +253,12 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   .mia-result-bar button { min-width: 0; padding-inline: 7px; font-size: var(--font-ui-smaller); }
 
   .mia-list { gap: 7px; }
-  .mia-row, .mia-candidate { align-items: stretch; flex-direction: column; }
-  .mia-row { gap: 9px; padding: 11px; }
+  .mia-candidate { align-items: stretch; flex-direction: column; }
+  .mia-row { padding: 11px; }
   .mia-row-body { gap: 4px; }
   .mia-row-body > strong { font-size: 1em; line-height: 1.3; }
   .mia-row-body > small { font-size: 11px; line-height: 1.35; }
   .mia-row-prompt { max-height: 3.8em; font-size: var(--font-ui-small); }
-  .mia-row-actions { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
-  .mia-row-actions button { min-width: 0; min-height: 40px; padding-inline: 5px; font-size: var(--font-ui-smaller); }
   .mia-candidate { gap: 8px; }
   .mia-candidate > .mia-inline-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .mia-candidate-search { width: 100%; }
@@ -313,7 +296,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 /* Obsidian panes can be narrower than the device viewport, so dashboard layout follows the pane itself. */
 @container mia-view (max-width: 1050px) {
   .mia-header { align-items: stretch; flex-direction: column; gap: 10px; }
-  .mia-nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; overflow: visible; }
+  .mia-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; overflow: visible; }
   .mia-nav button { width: 100%; }
   .mia-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .mia-subject-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -322,8 +305,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 @container mia-view (max-width: 600px) {
   .mia-header { gap: 8px; margin-bottom: 12px; padding-bottom: 8px; }
   .mia-nav { gap: 5px; }
-  .mia-nav button { min-width: 0; padding-inline: 6px; font-size: 0; }
-  .mia-nav button::after { content: attr(data-short-label); font-size: var(--font-ui-small); }
+  .mia-nav button { min-width: 0; padding-inline: 6px; }
   .mia-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
   .mia-stat { min-height: 76px; padding: 10px 11px; }
   .mia-stat strong { font-size: 1.4em; }
@@ -386,7 +368,6 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .is-phone .mia-result-modal .modal-close-button { width: 44px; height: 44px; }
 .is-phone .mia-followup-list { max-height: 42dvh; }
 .is-phone .mia-followup-option { min-height: 48px; padding: 10px; }
-.is-phone .mia-detail-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .is-phone .mia-result-actions { display: grid; grid-template-columns: 1fr; }
 .is-phone .mia-result-modal .mia-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
@@ -532,7 +513,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-route-study .mia-undo { float: none; display: block; max-width: var(--mia-study-width); margin: -12px auto 12px; color: var(--text-muted); font-size: 11px; background: transparent; box-shadow: none; }
 
 @container mia-view (min-width: 1000px) {
-  .mia-study-layout:has(.mia-related) { grid-template-columns: minmax(0, 1fr) 270px; }
+  .mia-study-layout:has(.mia-related) { grid-template-columns: minmax(0, 1fr) 340px; }
 }
 @container mia-view (max-width: 600px) {
   .mia-study-navigation { grid-template-columns: 1fr 1fr; gap: 4px; }
@@ -574,7 +555,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   .mia-study-dock .mia-dock-utility { margin-top: 5px; }
 }
 @container mia-view (max-width: 600px) {
-  .mia-route-study .mia-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; }
+  .mia-route-study .mia-nav { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; }
   .mia-route-study .mia-nav button { min-width: 0; padding-inline: 4px; }
 }
 
@@ -917,7 +898,6 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .is-mobile :is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) button:not(.modal-close-button, .mia-home-button, .mia-nav button) {
   font-size: max(14px, var(--font-ui-small));
 }
-.mia-view .mia-nav button::after { font-size: max(13px, var(--font-ui-small)); }
 .mia-view .mia-study-dock .mia-ratings strong { font-size: max(14px, var(--font-ui-small)); }
 .mia-view .mia-study-dock .mia-ratings small { font-size: max(12px, var(--font-ui-smaller)); }
 
@@ -1113,7 +1093,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-view .mia-nav button.mod-cta:hover { background: var(--background-primary); color: var(--interactive-accent); font-weight: 700; box-shadow: 0 1px 2px rgb(0 0 0 / 12%), 0 0 0 1px var(--mia-accent-line); }
 
 /* Library screens line up with the header column like the dashboard does. */
-.mia-view:is(.mia-route-questions, .mia-route-weakness, .mia-route-keywords) > :not(.mia-header) { max-width: var(--mia-study-width); margin-left: auto; margin-right: auto; }
+.mia-view:is(.mia-route-questions, .mia-route-keywords) > :not(.mia-header) { max-width: var(--mia-study-width); margin-left: auto; margin-right: auto; }
 
 /* Shared surfaces. */
 .mia-view :is(.mia-stat, .mia-row, .mia-keyword, .mia-subject-card, .mia-progress-subject) { background: var(--mia-surface); border-color: var(--mia-line); border-radius: var(--mia-radius); }
@@ -1140,11 +1120,9 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-view :is(.mia-sync-warning, .mia-storage-warning) { border: 1px solid var(--mia-line); border-left: 3px solid var(--text-warning); border-radius: var(--mia-radius-s); background: color-mix(in srgb, var(--text-warning) 7%, var(--background-primary)); }
 
 /* Secondary actions are quiet; destructive ones say so without shouting. */
-.mia-view :is(.mia-row-actions, .mia-subject-card .mia-inline-actions, .mia-keyword) > button:not(.mod-cta),
+.mia-view :is(.mia-subject-card .mia-inline-actions, .mia-keyword) > button:not(.mod-cta),
 :is(.mia-detail-modal) .mia-detail-actions button:not(.mod-cta) { background: transparent; box-shadow: none; border: 1px solid var(--mia-line); border-radius: var(--mia-radius-s); }
-.mia-view :is(.mia-row-actions, .mia-subject-card .mia-inline-actions) > button:not(.mod-cta, .mod-warning):hover { background: var(--mia-surface-hover); }
-.mia-view .mia-row-actions > button:first-child { background: var(--mia-accent-soft); border-color: var(--mia-accent-line); color: var(--interactive-accent); font-weight: 650; }
-.mia-view .mia-row-actions > button:first-child:hover { background: color-mix(in srgb, var(--interactive-accent) 20%, transparent); }
+.mia-view :is(.mia-subject-card .mia-inline-actions) > button:not(.mod-cta, .mod-warning):hover { background: var(--mia-surface-hover); }
 :is(.mia-view, .mia-detail-modal) button.mod-warning { background: transparent; box-shadow: none; color: var(--mia-danger); border: 1px solid color-mix(in srgb, var(--mia-danger) 40%, var(--mia-line)); }
 :is(.mia-view, .mia-detail-modal) button.mod-warning:hover { background: color-mix(in srgb, var(--mia-danger) 12%, transparent); color: var(--mia-danger); }
 .mia-view .mia-row-body > strong { font-weight: 650; letter-spacing: -.01em; }
@@ -1291,8 +1269,8 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   border: 1px solid color-mix(in srgb, var(--mia-tone) 35%, var(--mia-line));
   background: color-mix(in srgb, var(--mia-tone) 10%, var(--background-primary));
 }
-.mia-view .mia-hero-count strong { color: var(--mia-tone); font-size: 40px; font-weight: 800; line-height: 1.05; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
-.mia-view .mia-hero-count span { font-size: 13px; font-weight: 700; color: var(--text-normal); }
+.mia-view .mia-hero-count strong { color: var(--mia-tone); font-weight: 800; line-height: 1.05; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.mia-view .mia-hero-count span { font-weight: 700; color: var(--text-normal); }
 .mia-view .mia-hero-count small { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 
 /* Stat tiles: a tone dot before the label, the number in the tone colour. */
@@ -1327,13 +1305,8 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-view.mia-route-dashboard .mia-manage-actions { gap: 8px; }
 .mia-view.mia-route-dashboard .mia-manage-actions button.mod-cta { border-style: solid; border-color: var(--mia-accent-line); background: var(--mia-accent-soft); color: var(--interactive-accent); font-weight: 650; }
 
-/* Question list: one accented action, the rest are text until hovered. */
+/* Question list rows: padding here, the column layout is in the 1.4.16 block. */
 .mia-view .mia-row { padding: 14px 16px; }
-.mia-view .mia-row-actions { gap: 2px; }
-.mia-view .mia-row-actions > button:not(:first-child) { border-color: transparent; color: var(--text-muted); padding-inline: 10px; }
-.mia-view .mia-row-actions > button:not(:first-child):hover { border-color: var(--mia-line); color: var(--text-normal); }
-.mia-view .mia-row-actions > button.mod-warning:not(:hover) { color: color-mix(in srgb, var(--mia-danger) 75%, var(--text-muted)); border-color: transparent; }
-.mia-view .mia-row-actions > button:first-child { margin-inline-end: 6px; }
 
 /* Study: the question sits on its own card above the answer panel. */
 .mia-view .mia-study-card {
@@ -1350,28 +1323,14 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-view .mia-session-meter { height: 4px; }
 .mia-view .mia-session-edit-actions button { background: transparent; box-shadow: none; border: 1px solid var(--mia-line); border-radius: var(--mia-radius-s); color: var(--text-muted); }
 .mia-view .mia-session-edit-actions button:hover { color: var(--text-normal); background: var(--mia-surface-hover); }
-@container mia-view (min-width: 601px) {
-  /* The edit action moves to the card corner so the question reads straight into its body. */
-  .mia-view .mia-study-card .mia-session-edit-actions { position: absolute; top: clamp(14px, 2.4cqi, 26px); right: clamp(14px, 2.4cqi, 26px); margin: 0; }
-  .mia-view .mia-study-card .mia-card-context { padding-inline-end: 110px; }
-}
 .mia-view .mia-related { padding: 16px; border: 1px solid var(--mia-line); border-radius: var(--mia-radius); background: var(--mia-surface); }
 .mia-view .mia-study-layout .mia-related { padding: 16px; border: 1px solid var(--mia-line); border-radius: var(--mia-radius); background: var(--mia-surface); }
 .mia-view .mia-primary-card:not(.mia-hero) { border-radius: calc(var(--mia-radius) + 4px); border-color: var(--mia-line); background: var(--mia-surface); }
 
-@container mia-view (max-width: 760px) {
-  .mia-view .mia-hero { grid-template-columns: minmax(0, 1fr); }
-  .mia-view .mia-hero-counts { grid-row: 1; }
-}
 @container mia-view (max-width: 600px) {
-  .mia-view .mia-hero-count { padding: 12px 14px; }
-  .mia-view .mia-hero-count strong { font-size: 30px; }
   .mia-view .mia-hero-main > .mia-inline-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .mia-view .mia-subject-card, .mia-view .mia-progress-subject { padding: 14px; }
   .mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(3) { margin-inline-start: 0; }
-  .mia-view .mia-row-actions { gap: 4px; }
-  .mia-view .mia-row-actions > button:first-child { margin-inline-end: 0; }
-  .mia-view .mia-row-actions > button:not(:first-child) { border-color: var(--mia-line); }
   .mia-view .mia-study-card { padding: 16px; border-radius: var(--mia-radius); }
 }
 @container mia-view (max-width: 280px) {
@@ -1641,7 +1600,7 @@ body.theme-dark .mia-view :is(a, .internal-link, .external-link) { color: #8fa9f
 body.theme-dark .mia-view button.mod-warning, body.theme-dark :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button.mod-warning { color: #ff7a70; border-color: #ff7a70; }
 .mia-view button.mod-warning:not(:disabled):hover { background: var(--mia-red); color: var(--mia-on-color); border-color: var(--mia-ink); }
 .mia-view button:disabled, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button:disabled { opacity: .45; }
-.mia-view .mia-row-actions > button:not(:first-child), .mia-view .mia-session-edit-actions button, .mia-view .mia-study-navigation button, .mia-view .mia-dock-utility .mia-skip, .mia-view .mia-settings-buttons > button { border-width: 3px; border-color: var(--mia-ink); background: var(--mia-panel); color: var(--mia-ink); }
+.mia-view .mia-session-edit-actions button, .mia-view .mia-study-navigation button, .mia-view .mia-dock-utility .mia-skip, .mia-view .mia-settings-buttons > button { border-width: 3px; border-color: var(--mia-ink); background: var(--mia-panel); color: var(--mia-ink); }
 .mia-view .mia-study-navigation button, .mia-view .mia-dock-utility .mia-skip { border-color: transparent; background: transparent; }
 .mia-view .mia-study-navigation button:hover, .mia-view .mia-dock-utility .mia-skip:hover { background: var(--mia-yellow); color: var(--mia-on-yellow); border-color: var(--mia-ink); }
 
@@ -1681,7 +1640,7 @@ body.theme-dark .mia-view button.mod-warning, body.theme-dark :is(.mia-keyboard-
 .mia-view.mia-route-dashboard .mia-hero h3 { font-weight: 800; font-size: clamp(26px, 3.2cqi, 40px); line-height: 1.15; margin: 10px 0 10px; }
 .mia-view .mia-hero-count { border: 3px solid var(--mia-ink); background: var(--mia-blue); color: var(--mia-on-color); }
 .mia-view .mia-hero-count[data-tone="new"] { background: var(--mia-yellow); color: var(--mia-on-yellow); }
-.mia-view .mia-hero-count strong { color: inherit; font-family: var(--mia-head); font-weight: 800; font-size: 44px; letter-spacing: 0; }
+.mia-view .mia-hero-count strong { color: inherit; font-family: var(--mia-head); font-weight: 800; letter-spacing: 0; }
 .mia-view .mia-hero-count span, .mia-view .mia-hero-count small { color: inherit; font-weight: 800; }
 .mia-view .mia-hero-count small { font-weight: 600; }
 
@@ -1780,8 +1739,6 @@ body.theme-dark .mia-view button.mod-warning, body.theme-dark :is(.mia-keyboard-
   .mia-view *, .mia-view *::before, .mia-view *::after { transition: none !important; animation: none !important; }
   .mia-view button:hover { transform: none !important; }
 }
-.mia-view .mia-row-actions > button:first-child, .mia-view .mia-row-actions > button:first-child:not(:disabled):hover { background: var(--mia-blue); color: var(--mia-on-color); border-color: var(--mia-ink); }
-.mia-view .mia-row-actions > button:first-child:not(:disabled):hover { background: var(--mia-ink); color: var(--mia-bg); }
 .is-mobile .mia-view .mia-filter-panel { border: 3px solid var(--mia-ink); background: var(--mia-panel); }
 .mia-view button.mod-cta, .modal button.mod-cta { box-shadow: none !important; }
 .mia-view .mia-progress-stat[data-tone] { border-top: 12px solid var(--mia-tone); }
@@ -1890,69 +1847,276 @@ body.theme-dark .mia-view { --mia-danger-text: #ff7a70; }
 .mia-view.mia-view .mia-keyword > button.mod-warning { width: calc(100% + 4px); margin-left: -4px; }
 .mia-view.mia-view .mia-progress-subject-values > button { justify-content: flex-start; }
 
-/* ── Detail modal button layout ────────────────────────────────────
-   Scoped to .mia-detail-modal. Grade buttons carry the study-screen colours
-   (red / yellow / ink / blue) as a thick top bar; the reset sits below a thin
-   rule as a quiet destructive text action; the question's own actions
-   (학습, 질문 수정, 연결 관리) share one row and 삭제 is set apart on the
-   right. Markup, labels and handlers are unchanged. */
+/* ── 1.4.16 Re-layout ──────────────────────────────────────────────
+   Layout only: markup, labels and handlers keep their behaviour. Fixed
+   positions on every screen: the lead action (학습 / 시작) at the left, 편집 and
+   연결 in the middle, 삭제 and 초기화 at the far right as small red text.
+   Three weights: a filled lead button, outlined secondary buttons, and red
+   text for anything destructive. Repeated row buttons line up like table
+   columns. Nothing sits behind a menu. Colours are the Bauhaus tokens above,
+   so light and dark follow the theme. */
 .modal.mia-detail-modal {
   --mia-hair: color-mix(in srgb, var(--mia-ink) 30%, transparent);
   --mia-danger-text: var(--mia-red);
 }
 body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
+.mia-view .mia-row-state[data-tone="total"] { background: var(--mia-panel); }
 
-.modal.mia-detail-modal .mia-ratings { gap: 8px; margin-top: 12px; }
-.modal.mia-detail-modal .mia-ratings button {
-  --mia-grade: var(--mia-muted);
-  min-height: 48px; padding: 8px 6px; white-space: nowrap;
-  border: 3px solid var(--mia-ink); border-top: 8px solid var(--mia-grade);
-  background: var(--mia-panel); color: var(--mia-ink);
-}
-.modal.mia-detail-modal .mia-ratings button:nth-child(1) { --mia-grade: var(--mia-again); }
-.modal.mia-detail-modal .mia-ratings button:nth-child(2) { --mia-grade: var(--mia-hard); }
-.modal.mia-detail-modal .mia-ratings button:nth-child(3) { --mia-grade: var(--mia-good); }
-.modal.mia-detail-modal .mia-ratings button:nth-child(4) { --mia-grade: var(--mia-easy); }
-.modal.mia-detail-modal .mia-ratings button:not(:disabled):hover { background: color-mix(in srgb, var(--mia-grade) 22%, var(--mia-panel)); color: var(--mia-ink); }
-
-/* Reset: separated, quiet, destructive. */
-.modal.mia-detail-modal button.mia-detail-reset {
-  display: block; width: 100%; margin: 16px 0 0; padding: 6px 8px; min-height: 40px;
-  background: transparent; border: 0; border-top: 2px solid var(--mia-hair);
-  color: var(--mia-danger-text); font-size: .86em; font-weight: 700; text-align: right; box-shadow: none;
-}
-.modal.mia-detail-modal button.mia-detail-reset:not(:disabled):hover { background: var(--mia-red); color: var(--mia-on-color); border-color: var(--mia-hair); }
-.modal.mia-detail-modal button.mia-detail-reset:disabled { color: var(--mia-muted); }
-
-/* Related questions: each row is a ruled block. */
-.modal.mia-detail-modal .mia-detail-related-row { padding: 6px 0 6px 10px; border-left: 4px solid var(--mia-ink); line-height: 1.5; }
-
-/* Question actions: [학습 | 질문 수정 | 연결 관리] ........ [삭제] */
-.modal.mia-detail-modal .mia-detail-actions {
-  display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px;
-  margin-top: 24px; padding-top: 16px; border-top: 2px solid var(--mia-hair);
-}
-.modal.mia-detail-modal .mia-detail-actions > button { min-height: 40px; padding-inline: 16px; white-space: nowrap; }
-.modal.mia-detail-modal .mia-detail-actions > button:first-child { background: var(--mia-blue); color: var(--mia-on-color); border: 3px solid var(--mia-ink); }
-.modal.mia-detail-modal .mia-detail-actions > button:first-child:not(:disabled):hover { background: var(--mia-ink); color: var(--mia-bg); }
-.modal.mia-detail-modal .mia-detail-actions > button.mod-warning {
-  margin-inline-start: auto; background: transparent; border: 0; box-shadow: none;
+/* Shared small controls: outlined secondary buttons and red text actions. */
+.mia-view.mia-view button.mia-row-delete,
+:is(.modal.mia-detail-modal, .mia-detail-panel) button.mia-detail-reset {
+  background: transparent; border: 0; box-shadow: none; padding: 0 6px; white-space: nowrap;
   color: var(--mia-danger-text); font-size: .86em; font-weight: 700;
 }
-.modal.mia-detail-modal .mia-detail-actions > button.mod-warning:not(:disabled):hover { background: var(--mia-red); color: var(--mia-on-color); }
+.mia-view.mia-view button.mia-row-delete:not(:disabled):hover,
+:is(.modal.mia-detail-modal, .mia-detail-panel) button.mia-detail-reset:not(:disabled):hover { background: var(--mia-red); color: var(--mia-on-color); }
+:is(.modal.mia-detail-modal, .mia-detail-panel) button.mia-detail-reset:disabled { color: var(--mia-muted); }
 
-/* Phones: four grade buttons in one row, three actions in a row, delete below. */
-.is-phone .modal.mia-detail-modal .mia-ratings { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
-.is-phone .modal.mia-detail-modal .mia-ratings button { min-height: 52px; padding: 6px 2px; white-space: normal; word-break: keep-all; }
-.is-phone .modal.mia-detail-modal button.mia-detail-reset { min-height: 44px; }
-.is-phone .modal.mia-detail-modal .mia-detail-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.is-phone .modal.mia-detail-modal .mia-detail-actions > button { min-height: 44px; padding-inline: 4px; }
-.is-phone .modal.mia-detail-modal .mia-detail-actions > button.mod-warning { grid-column: 1 / -1; margin: 6px 0 0; border-top: 2px solid var(--mia-hair); text-align: right; padding-inline: 8px; }
+/* Navigation: four tabs, all labelled. */
+.mia-view .mia-nav { display: grid; grid-template-columns: repeat(4, auto); }
+.mia-view .mia-nav button { min-width: 0; }
+
+/* ── 오늘 (dashboard): two colour blocks, then the start panel ── */
+.mia-view.mia-route-dashboard .mia-primary-card.mia-hero {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: stretch;
+  padding: 0; border: 0; background: transparent; box-shadow: none;
+}
+.mia-view .mia-hero:not(:has(> .mia-hero-counts)) { grid-template-columns: minmax(0, 1fr); }
+.mia-view .mia-hero-counts { grid-template-columns: repeat(2, 200px); gap: 20px; }
+.mia-view .mia-hero-count {
+  box-sizing: border-box; min-height: 200px; padding: 20px; border-width: 4px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+}
+.mia-view .mia-hero-count { max-height: 320px; }
+.mia-view .mia-hero-count span { order: 0; font-size: 16px; }
+.mia-view .mia-hero-count small { order: 1; }
+.mia-view .mia-hero-count strong { order: 2; margin-top: auto; font-size: 88px; line-height: 1; }
+.mia-view .mia-hero-main {
+  box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; justify-content: center;
+  padding: 20px 24px; border: 4px solid var(--mia-ink); background: var(--mia-panel);
+}
+.mia-view.mia-route-dashboard .mia-hero-main h3 { margin: 6px 0 0; font-size: clamp(20px, 2.2cqi, 28px); }
+.mia-view .mia-hero-main > p { margin: 0; }
+.mia-view .mia-hero-main > .mia-inline-actions { margin-top: 8px; gap: 8px; align-items: stretch; }
+.mia-view .mia-hero-main > .mia-inline-actions > button { min-height: 44px; border-width: 3px; }
+.mia-view .mia-hero-main > .mia-inline-actions > button.mod-cta { flex: 2 1 240px; min-height: 52px; font-size: 18px; font-weight: 900; }
+.mia-view .mia-hero-main > .mia-inline-actions > button:not(.mod-cta) { flex: 1 1 130px; }
+.mia-view .mia-hero .mia-resume-card { display: grid; margin: 4px 0 0; padding: 12px 16px; border-width: 3px; border-left-width: 12px; }
+.mia-view .mia-hero .mia-resume-card > button.mod-cta { background: var(--mia-panel); color: var(--mia-ink); min-height: 44px; }
+.mia-view .mia-hero .mia-resume-card > button.mod-cta:not(:disabled):hover { background: var(--mia-yellow); color: var(--mia-on-yellow); }
+.mia-view .mia-hero .mia-device-sync-hint { margin: 4px 0 0; }
+
+/* The weak-question strip: the study action and the way into the ordered list. */
+.mia-view .mia-weak-strip {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 18px;
+  padding: 14px 20px; border: 3px solid var(--mia-ink); background: var(--mia-panel);
+}
+.mia-view .mia-weak-mark { flex: none; width: 0; height: 0; border-inline: 10px solid transparent; border-bottom: 16px solid var(--mia-red); }
+.mia-view .mia-weak-strip > strong { font-size: 16px; font-weight: 900; }
+.mia-view .mia-weak-hint { flex: 1 1 240px; font-size: 14px; }
+.mia-view .mia-weak-strip .mia-inline-actions { flex-wrap: nowrap; margin-inline-start: auto; }
+.mia-view .mia-weak-strip .mia-inline-actions > button { min-height: 44px; padding-inline: 18px; white-space: nowrap; }
+.mia-view .mia-count-chip[data-tone="again"] { background: var(--mia-red); color: var(--mia-on-color); }
+
+/* Subject cards: [시험][암기] on top, [이름 수정 ... 삭제] below the rule. */
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(-n+2) { min-height: 44px; }
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(2) { background: var(--mia-panel); color: var(--mia-ink); border: 3px solid var(--mia-ink); }
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(2):not(:disabled):hover { background: var(--mia-yellow); color: var(--mia-on-yellow); }
+
+/* ── 문제 (list): rows as table columns, detail in a right-hand panel ── */
+.mia-view.mia-route-questions { --mia-study-width: 1360px; }
+.mia-view .mia-questions-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+.mia-view .mia-questions-main { min-width: 0; }
+.mia-view .mia-detail-panel { display: none; }
+.mia-view .mia-status-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.mia-view .mia-status-chips button { min-height: 44px; padding-inline: 14px; border-width: 2px; font-weight: 700; white-space: nowrap; }
+.mia-view .mia-status-chips button[aria-pressed="true"] { background: var(--mia-ink); color: var(--mia-bg); }
+.mia-view .mia-status-chips button.mia-chip-weak { border-color: var(--mia-red); color: var(--mia-danger-text); }
+.mia-view .mia-status-chips button.mia-chip-weak[aria-pressed="true"] { background: var(--mia-red); color: var(--mia-on-color); }
+.mia-view .mia-weak-note { margin: 0 0 10px; }
+.mia-view .mia-weak-note:empty { display: none; }
+.mia-view .mia-list { gap: 6px; }
+.mia-view .mia-row {
+  display: grid; grid-template-columns: 14px minmax(0, 1fr) 272px 52px; grid-template-areas: "dot body actions delete";
+  align-items: center; gap: 8px 12px; padding: 8px 10px; border-width: 2px; cursor: pointer;
+}
+.mia-view .mia-row-state { grid-area: dot; width: 12px; height: 12px; border: 2px solid var(--mia-ink); border-radius: 50% !important; background: var(--mia-tone, var(--mia-ink)); }
+.mia-view .mia-row-body { grid-area: body; }
+.mia-view .mia-row-prompt { max-height: 3.6em; }
+.mia-view .mia-row-urgency { font-weight: 700; }
+.mia-view .mia-row-actions { grid-area: actions; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.mia-view .mia-row-actions > button { min-width: 0; min-height: 34px; padding-inline: 4px; border-width: 2px; white-space: nowrap; }
+.mia-view .mia-row-delete { grid-area: delete; justify-self: end; min-height: 34px; }
+.mia-view .mia-row.mia-row-selected { border-color: var(--mia-ink); background: color-mix(in srgb, var(--mia-yellow) 24%, var(--mia-panel)); box-shadow: inset 8px 0 0 var(--mia-blue); }
+.mia-view .mia-row.mia-row-selected .mia-row-actions > button:first-child { background: var(--mia-blue); color: var(--mia-on-color); }
+@container mia-view (max-width: 760px) {
+  .mia-view .mia-row { grid-template-columns: 14px minmax(0, 1fr) 56px; grid-template-areas: "dot body body" "actions actions delete"; padding: 12px; }
+  .mia-view .mia-row-actions > button, .mia-view .mia-row-delete { min-height: 44px; }
+}
+@container mia-view (min-width: 1000px) {
+  .mia-view .mia-questions-layout { grid-template-columns: minmax(0, 1fr) 400px; }
+  .mia-view .mia-detail-panel {
+    /* Sized to fit below the header when the page is at the top, and kept in view while scrolling. */
+    position: sticky; top: 12px; display: flex; flex-direction: column; min-width: 0;
+    max-height: calc(100vh - var(--mia-pane-top, 0px) - var(--mia-pane-bottom-gap, 0px) - 130px);
+    border: 4px solid var(--mia-ink); background: var(--mia-panel);
+  }
+}
+.mia-view .mia-detail-placeholder { margin: 0; padding: 24px 20px; }
+.mia-view .mia-detail-title { flex: none; margin: 0; padding: 18px 20px; border-bottom: 3px solid var(--mia-ink); font-size: 20px; line-height: 1.35; overflow-wrap: anywhere; }
+
+/* ── 문제 상세: the same body in the side panel and in the dialog ── */
+.modal.mia-detail-modal { display: flex; flex-direction: column; }
+.modal.mia-detail-modal .modal-content { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; padding-bottom: 0; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px 20px 8px; }
+.modal.mia-detail-modal .mia-detail-scroll { padding-inline: 0; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-scroll > h3 { font-size: 12px; margin: 16px 0 6px; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-meta span { border-width: 2px; border-color: var(--mia-ink); background: transparent; color: var(--mia-ink); font-weight: 700; font-size: 12px; padding: 2px 8px; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-related { padding: 0; border: 0; background: transparent; margin: 0; max-width: none; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-related-row { padding: 6px 0 6px 10px; border-left: 4px solid var(--mia-ink); line-height: 1.5; }
+
+/* Direct status change: four grades with the study-screen colour on top; 초기화 at the far right. */
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-status { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button {
+  --mia-grade: var(--mia-muted);
+  min-height: 40px; padding: 4px 4px; white-space: nowrap; border: 3px solid var(--mia-ink); border-top: 8px solid var(--mia-grade);
+  background: var(--mia-panel); color: var(--mia-ink); font-size: 12px;
+}
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button:nth-child(1) { --mia-grade: var(--mia-again); }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button:nth-child(2) { --mia-grade: var(--mia-hard); }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button:nth-child(3) { --mia-grade: var(--mia-good); }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button:nth-child(4) { --mia-grade: var(--mia-easy); }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button:not(:disabled):hover { background: color-mix(in srgb, var(--mia-grade) 22%, var(--mia-panel)); color: var(--mia-ink); }
+
+/* Action bar, always visible below the scrolling body: [학습 | 편집 | 연결] ........ [삭제] */
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions {
+  flex: none; display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; margin: 0; padding: 12px 20px;
+  border-top: 3px solid var(--mia-ink); background: var(--mia-panel);
+}
+.modal.mia-detail-modal .mia-detail-actions { padding-inline: 0; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button { min-height: 44px; padding-inline: 16px; white-space: nowrap; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button:first-child { background: var(--mia-blue); color: var(--mia-on-color); border: 3px solid var(--mia-ink); padding-inline: 22px; font-weight: 900; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button:first-child:not(:disabled):hover { background: var(--mia-ink); color: var(--mia-bg); }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button.mod-warning {
+  margin-inline-start: auto; padding-inline: 8px; background: transparent; border: 0; box-shadow: none;
+  color: var(--mia-danger-text); font-size: .86em; font-weight: 700;
+}
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button.mod-warning:not(:disabled):hover { background: var(--mia-red); color: var(--mia-on-color); }
+
+/* ── 학습 (study) ── */
+.mia-view .mia-card-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 3px solid var(--mia-ink); }
+.mia-view .mia-card-header .mia-card-context { margin: 0; }
+.mia-view .mia-card-header .mia-session-edit-actions { margin: 0; }
+.mia-view .mia-card-header .mia-session-edit-actions button { min-height: 36px; border-width: 2px; }
+.mia-view .mia-study-layout .mia-related { border: 3px solid var(--mia-ink); }
+.mia-view .mia-related-item { flex-direction: column; flex-wrap: nowrap; gap: 8px; padding: 10px 12px; border: 3px solid var(--mia-ink); background: var(--mia-panel); }
+.mia-view .mia-related-item:last-child { padding-bottom: 10px; border: 3px solid var(--mia-ink); }
+.mia-view .mia-related-item .mia-related-open { flex-direction: column-reverse; padding: 0; border: 0; }
+.mia-view .mia-related-item > button:not(.mia-related-open) { width: 100%; min-height: 36px; border-width: 2px; font-size: 13px; }
+.mia-view .mia-study-dock .mia-ratings { gap: 12px; }
+.mia-view .mia-study-dock .mia-ratings button { min-height: 72px; border-width: 3px; }
+.mia-view .mia-study-dock .mia-ratings strong { font-size: 18px; font-weight: 900; }
+.mia-view .mia-study-dock .mia-ratings small { font-size: 12px; }
+.mia-view .mia-study-dock .mia-ratings .mia-grade-key { top: 8px; right: auto; left: 10px; padding: 0 5px; border: 2px solid currentColor; font-size: 11px; line-height: 1.4; }
+.mia-view button[aria-keyshortcuts]:not([data-grade])::before {
+  content: attr(aria-keyshortcuts) / ""; margin-inline-end: 8px; padding: 0 5px; border: 2px solid currentColor;
+  font-size: 11px; font-weight: 800; line-height: 1.4;
+}
+@media (pointer: coarse) { .mia-view button[aria-keyshortcuts]:not([data-grade])::before { content: none; } }
+@container mia-view (max-width: 600px) {
+  .mia-view .mia-study-dock .mia-ratings { gap: 8px; }
+  .mia-view button[aria-keyshortcuts]:not([data-grade])::before { content: none; }
+}
+
+/* ── Narrow panes: stacked dashboard ── */
+@container mia-view (max-width: 900px) {
+  .mia-view.mia-route-dashboard .mia-primary-card.mia-hero { grid-template-columns: minmax(0, 1fr); }
+  .mia-view .mia-hero-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .mia-view .mia-hero-count { min-height: 120px; }
+  .mia-view .mia-hero-count strong { font-size: 56px; }
+}
+@container mia-view (max-width: 600px) {
+  .mia-view .mia-hero-counts { gap: 10px; }
+  .mia-view .mia-hero-count { min-height: 0; flex-direction: row; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; padding: 10px 12px; border-width: 3px; }
+  .mia-view .mia-hero-count strong { order: 1; margin-top: 0; font-size: 40px; }
+  .mia-view .mia-hero-count span { font-size: 13px; }
+  .mia-view .mia-hero-count small { order: 2; flex-basis: 100%; }
+  .mia-view .mia-hero-main { padding: 14px; border-width: 3px; }
+  .mia-view .mia-hero-main > .mia-inline-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mia-view .mia-hero-main > .mia-inline-actions > button { white-space: nowrap; }
+  .mia-view .mia-hero-main > .mia-inline-actions > button.mod-cta { grid-column: 1 / -1; }
+  .mia-view .mia-weak-strip { border-color: var(--mia-red); padding: 8px 8px 8px 12px; }
+  .mia-view .mia-weak-strip .mia-inline-actions { flex: 1 1 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── Phones: a bottom tab bar inside the view, 44px+ targets ──
+   The header collapses (`display: contents`) so its title row and the tab bar
+   become flex items of the view; the tab bar sticks to the bottom edge. In a
+   study session the bar follows the existing focus setting: hidden with focus
+   mode on (as before), shown at the bottom with it off. */
+@media (max-width: 640px) {
+  .mia-view {
+    --mia-bleed-left: var(--mia-pane-gutter); --mia-bleed-right: var(--mia-pane-gutter);
+  }
+  .mia-view[data-device="phone"] {
+    --mia-bleed-left: calc(var(--mia-pane-gutter) + var(--mia-edge-left)); --mia-bleed-right: calc(var(--mia-pane-gutter) + var(--mia-edge-right));
+  }
+  .mia-view:not(.mia-route-study) {
+    display: flex; flex-direction: column; padding-bottom: 0;
+    padding-inline: var(--mia-bleed-left) var(--mia-bleed-right);
+  }
+  .mia-view:not(.mia-route-study) > * { flex: 0 0 auto; width: 100%; box-sizing: border-box; }
+  .mia-view:not(.mia-route-study)::after { content: ""; order: 98; flex: 1 0 12px; }
+  .mia-view:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-header { display: contents; }
+  .mia-view:not(.mia-route-study) .mia-header > div:first-child { order: -1; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 3px solid var(--mia-ink); }
+  .mia-view:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-nav {
+    order: 99; position: sticky; bottom: 0; z-index: 5; width: auto; margin-inline: calc(-1 * var(--mia-bleed-left)) calc(-1 * var(--mia-bleed-right));
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; overflow: visible;
+    padding: 0 0 max(0px, var(--mia-edge-bottom, 0px)); border: 0; border-top: 3px solid var(--mia-ink); background: var(--mia-panel);
+  }
+  .mia-view:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-nav button { min-height: 56px; padding-inline: 4px; border-bottom: 0; font-size: 13px; }
+  .mia-view.mia-route-study[data-focus="false"] { padding-bottom: 0; }
+  /* The show rule above uses :where(), so this plain rule outranks it. */
+  .mia-view.mia-keyboard-open .mia-nav { display: none; }
+  .mia-view .mia-status-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mia-view .mia-status-chips button { min-width: 0; padding-inline: 8px; }
+  .mia-view .mia-study-dock .mia-ratings, .mia-view[data-device="phone"] .mia-study-dock .mia-ratings { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .mia-view .mia-study-dock .mia-ratings button, .mia-view[data-device="phone"] .mia-study-dock .mia-ratings button { min-height: 64px; }
+  .mia-view .mia-study-dock .mia-ratings strong { font-size: 17px; }
+  .mia-view .mia-related-item { flex-direction: row; align-items: center; padding: 4px 4px 4px 10px; }
+  .mia-view .mia-related-item .mia-related-open { flex: 1 1 auto; }
+  .mia-view .mia-related-item > button:not(.mia-related-open) { width: auto; min-height: 44px; flex: 0 0 auto; }
+}
+@container mia-view (max-width: 280px) {
+  .mia-view .mia-hero-counts { grid-template-columns: 1fr; }
+}
+
+/* Phone detail: full screen with the action bar fixed at the bottom. */
+.is-phone .modal-container:not(.mia-keyboard-open):has(> .modal.mia-detail-modal) { padding: 0; }
+.is-phone .modal-container:not(.mia-keyboard-open) > .modal.mia-detail-modal {
+  width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh !important; border-width: 0; box-shadow: none;
+}
+.is-phone .modal.mia-detail-modal .modal-content { padding-inline: 16px; }
+
+/* ── QA fixes ── */
+.mia-view .mia-study-dock .mia-undo-feedback { margin-top: 12px; }
+:is(.mia-view, .modal.mia-detail-modal) .mia-history { padding: 10px 12px; }
+
+/* Touch targets: 44px at phone widths. */
+@media (max-width: 640px) {
+  .mia-view.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button,
+  .mia-view.mia-view.mia-view .mia-keyword > button,
+  .mia-view .mia-card-header .mia-session-edit-actions button { min-height: 44px; }
+}
+
+/* The detail dialog on any narrow window (a phone or a small desktop pane): 2x2 grades, reset on its own row, roomy action bar. */
 @media (max-width: 480px) {
-  .modal.mia-detail-modal .mia-ratings { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
-  .modal.mia-detail-modal .mia-ratings button { min-height: 52px; padding: 6px 2px; white-space: normal; word-break: keep-all; }
-  .modal.mia-detail-modal button.mia-detail-reset { min-height: 44px; }
-  .modal.mia-detail-modal .mia-detail-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-  .modal.mia-detail-modal .mia-detail-actions > button { min-height: 44px; padding-inline: 4px; }
-  .modal.mia-detail-modal .mia-detail-actions > button.mod-warning { grid-column: 1 / -1; margin: 6px 0 0; border-top: 2px solid var(--mia-hair); text-align: right; padding-inline: 8px; }
+  .modal.mia-detail-modal .mia-detail-status { grid-template-columns: minmax(0, 1fr); }
+  .modal.mia-detail-modal .mia-ratings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .modal.mia-detail-modal .mia-ratings button { min-height: 48px; white-space: normal; word-break: keep-all; }
+  .modal.mia-detail-modal button.mia-detail-reset { justify-self: end; min-height: 44px; }
+  .modal.mia-detail-modal .mia-detail-actions { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 6px; padding-bottom: max(12px, var(--safe-area-inset-bottom, 0px)); }
+  .modal.mia-detail-modal .mia-detail-actions > button { min-height: 52px; padding-inline: 4px; }
+  .modal.mia-detail-modal .mia-detail-actions > button.mod-warning { min-width: 56px; padding-inline: 10px; }
 }

@@ -24,7 +24,6 @@ import { renderDashboard, renderProgress } from "./progress-pages";
 import { QuestionListState, renderQuestionsPage } from "./question-list-page";
 import { renderQuestionHeading } from "./question-row";
 import type { StudyPageContext } from "./study-page-context";
-import { renderWeakness } from "./weakness-page";
 
 export const MIA_VIEW_TYPE = "mia-study-view";
 
@@ -255,6 +254,8 @@ export class MiaStudyView extends ItemView {
     const initialRestore = !this.stateRestored;
     this.flushReadingPosition();
     const next = parseMiaNavigationState(state);
+    // The weak-question page became a filter on the question list; saved workspaces may still name it.
+    if (next.route === "weakness") { this.questionList.show("weak"); next.route = "questions"; }
     // Workspace navigation supersedes any editor that is still loading.
     if (this.editingSessionQuestion) {
       this.editingSessionQuestion = null;
@@ -573,7 +574,7 @@ export class MiaStudyView extends ItemView {
     const position = `${this.route}:${this.queueIndex}:${this.queue[this.queueIndex] ?? ""}`;
     if (position !== this.renderedPosition) { root.scrollTop = 0; this.hintVisible = false; }
     this.renderedPosition = position;
-    root.removeClass("mia-route-dashboard", "mia-route-progress", "mia-route-questions", "mia-route-weakness", "mia-route-keywords", "mia-route-study");
+    root.removeClass("mia-route-dashboard", "mia-route-progress", "mia-route-questions", "mia-route-keywords", "mia-route-study");
     root.addClass("mia-view");
     root.addClass(`mia-route-${this.route}`);
     this.renderHeader(root);
@@ -584,7 +585,6 @@ export class MiaStudyView extends ItemView {
     if (this.route === "dashboard") renderDashboard(this.pages, root);
     if (this.route === "progress") renderProgress(this.pages, root);
     if (this.route === "questions") this.renderQuestionsRoute(root);
-    if (this.route === "weakness") renderWeakness(this.pages, root);
     if (this.route === "keywords") renderKeywords(this.pages, root);
     if (this.route === "study") {
       this.renderStudy(root);
@@ -636,23 +636,15 @@ export class MiaStudyView extends ItemView {
     appearance.addEventListener("click", () => new StudyAppearanceModal(this.app, this.plugin.studyUi, () => this.refreshAppearance(), () => this.restoreSettingsFocus(".mia-appearance-button")).open());
     if (this.route === "study") title.createEl("button", { text: "학습 나가기", cls: "mia-focus-exit" }).addEventListener("click", () => this.navigate("dashboard"));
     const nav = header.createDiv({ cls: "mia-nav" });
-    this.navButton(nav, "대시보드", "dashboard");
+    // Weak questions live on the dashboard strip and as the 취약 filter on 문제, so there is no tab of their own.
+    this.navButton(nav, "오늘", "dashboard");
     this.navButton(nav, "학습현황", "progress");
     this.navButton(nav, "문제", "questions");
-    this.navButton(nav, "취약 문제", "weakness");
     this.navButton(nav, "키워드", "keywords");
   }
 
   private navButton(parent: HTMLElement, label: string, route: MiaRoute): void {
     const button = parent.createEl("button", { text: label, cls: this.route === route ? "mod-cta" : "" });
-    const shortLabels: Record<Exclude<MiaRoute, "study">, string> = {
-      dashboard: "홈",
-      progress: "현황",
-      questions: "문제",
-      weakness: "취약",
-      keywords: "키워드",
-    };
-    if (route !== "study") button.dataset.shortLabel = shortLabels[route];
     button.setAttr("aria-label", label);
     button.addEventListener("click", () => this.navigate(route));
   }
@@ -816,16 +808,17 @@ export class MiaStudyView extends ItemView {
     layout.tabIndex = 0;
     layout.setAttr("aria-label", "질문과 정답 영역");
     const card = layout.createDiv({ cls: "mia-study-card" });
-    card.createDiv({ text: `${question.subject} / ${question.questionType}`, cls: "mia-card-context" });
+    const cardHeader = card.createDiv({ cls: "mia-card-header" });
+    cardHeader.createDiv({ text: `${question.subject} / ${question.questionType}`, cls: "mia-card-context" });
+    const editActions = cardHeader.createDiv({ cls: "mia-session-edit-actions" });
+    const edit = editActions.createEl("button", { text: "편집" });
+    edit.disabled = this.isMutatingReview;
+    edit.addEventListener("click", () => void this.editSessionQuestion(question.id));
     const questionSection = card.createDiv({ cls: "mia-question-section" });
     questionSection.createDiv({ text: "질문", cls: "mia-card-label" });
     const heading = questionSection.createEl("h2");
     const headingIsPrompt = question.questionMarkdown.trim() === question.heading.trim();
     this.renderQuestionHeading(heading, question);
-    const editActions = questionSection.createDiv({ cls: "mia-session-edit-actions" });
-    const edit = editActions.createEl("button", { text: "문제 편집" });
-    edit.disabled = this.isMutatingReview;
-    edit.addEventListener("click", () => void this.editSessionQuestion(question.id));
     if (this.changedGradedAnswers.has(question.id)) questionSection.createEl("p", { text: "정답 수정 후에도 기존 평가는 유지됩니다. 자동 재채점되지 않습니다. 확인 후 필요하면 직접 다시 평가하세요.", cls: "mia-warning" });
     const sessionGrade = this.sessionAttempts.get(this.queueIndex)?.grade;
     if (sessionGrade) questionSection.createEl("p", { text: `이번 학습 평가: ${GRADE_LABELS[sessionGrade]} · 다른 평가를 누르면 기존 기록을 대체합니다.`, cls: "mia-session-rating" });
@@ -940,7 +933,7 @@ export class MiaStudyView extends ItemView {
       const feedback = dock.createDiv({ cls: "mia-undo-feedback" });
       const status = feedback.createEl("span", { text: this.undoFeedback });
       status.setAttr("role", "status"); status.setAttr("aria-live", "polite");
-      this.renderUndoButton(feedback, "mia-quick-undo");
+      // The undo button (and its U shortcut) lives once, in the utility row below.
     }
     const utility = dock.createDiv({ cls: "mia-dock-utility mia-thumb-navigation" });
     const back = utility.createEl("button", { text: "← 이전", cls: "mia-thumb-previous" });

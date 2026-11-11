@@ -31,6 +31,7 @@ import { MIA_VIEW_TYPE, MiaStudyView } from "./ui/study-view";
 import { KeywordMeaningModal } from "./ui/keyword-modal";
 import { FollowUpModal } from "./ui/follow-up-modal";
 import { QuestionDetailModal } from "./ui/question-detail-modal";
+import type { QuestionDetailSource } from "./ui/question-detail-view";
 import { recommendQuestions } from "./core/recommendation-engine";
 import {
   ConfirmDeleteModal,
@@ -435,20 +436,42 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     new QuestionPreviewModal(this.app, current, () => void this.openQuestionDetail(current), restore, this.studyUi.appearance).open();
   }
 
-  async openQuestionDetail(question: QuestionRecord & { id: string }): Promise<void> {
+  /** Resolves a question's detail (status, keyword meanings, related questions) and its actions. */
+  async questionDetailSource(question: QuestionRecord & { id: string }): Promise<QuestionDetailSource> {
     const current = this.index.questionById(question.id) ?? question;
     const meanings = await this.loadKeywordMeanings(current);
     const recommendations = recommendQuestions(current, this.index.registered, this.store.reviews, this.fsrs);
     const review = this.store.getReview(current.id);
-    new QuestionDetailModal(this.app, current, review, recommendations, meanings, {
-      study: () => { void this.activateView([current.id]); },
-      edit: () => openEditorWithNotice("문제 편집", () => this.openManagedQuestionEditor(current)),
-      connections: () => openEditorWithNotice("문제 연결", () => this.openFollowUpEditor(current)),
-      remove: () => this.confirmDeleteQuestion(current),
-      showKeyword: (target, label) => this.showKeywordMeaning(target, label, current.filePath),
-      rate: (grade) => this.rateQuestionDirectly(current.id, grade, review),
-      resetReview: () => this.store.removeReview(current.id, { state: review }),
-    }).open();
+    return {
+      question: current,
+      review,
+      recommendations,
+      meanings,
+      actions: {
+        study: () => { void this.activateView([current.id]); },
+        edit: () => openEditorWithNotice("문제 편집", () => this.openManagedQuestionEditor(current)),
+        connections: () => openEditorWithNotice("문제 연결", () => this.openFollowUpEditor(current)),
+        remove: () => this.confirmDeleteQuestion(current),
+        showKeyword: (target, label) => this.showKeywordMeaning(target, label, current.filePath),
+        rate: (grade) => this.rateQuestionDirectly(current.id, grade, review),
+        resetReview: () => this.store.removeReview(current.id, { state: review }),
+      },
+    };
+  }
+
+  /** Question ids whose detail dialog is open or opening, so a double click cannot stack two of them. */
+  private readonly detailDialogs = new Set<string>();
+
+  async openQuestionDetail(question: QuestionRecord & { id: string }): Promise<void> {
+    if (this.detailDialogs.has(question.id)) return;
+    this.detailDialogs.add(question.id);
+    try {
+      const { question: current, review, recommendations, meanings, actions } = await this.questionDetailSource(question);
+      new QuestionDetailModal(this.app, current, review, recommendations, meanings, actions, () => this.detailDialogs.delete(question.id)).open();
+    } catch (error) {
+      this.detailDialogs.delete(question.id);
+      throw error;
+    }
   }
 
   private questionAtLine(path: string, line: number): QuestionRecord | undefined {

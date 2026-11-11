@@ -6,9 +6,53 @@ const view = await readFile(new URL("../src/ui/study-view.ts", import.meta.url),
 const questionList = await readFile(new URL("../src/ui/question-list-page.ts", import.meta.url), "utf8");
 
 describe("mobile UI contract", () => {
-  it("uses compact mobile navigation labels without wrapping", () => {
-    expect(view).toContain("dataset.shortLabel");
-    expect(styles).toMatch(/@media \(max-width: 640px\)[\s\S]*?\.mia-nav\s*\{[^}]*flex-wrap:\s*nowrap/);
+  it("shows every tab label in a bottom bar on phones", () => {
+    // Full labels, not abbreviations: nothing is hidden by font-size or a short-label attribute.
+    expect(view).not.toContain("shortLabel");
+    expect(styles).not.toContain("data-short-label");
+    expect(styles).toMatch(/@media \(max-width: 640px\)[\s\S]*?\.mia-nav\s*\{[^}]*position:\s*sticky;\s*bottom:\s*0/);
+  });
+
+  it("keeps the study-route nav governed by the focus setting on phones", () => {
+    const phone = styles.slice(styles.indexOf("/* ── Phones: a bottom tab bar"), styles.indexOf("/* Phone detail: full screen"));
+    // Never hidden unconditionally in study: focus mode on hides it (existing rule), focus off shows the bottom bar.
+    expect(phone).not.toMatch(/\.mia-route-study\s+\.mia-nav\s*\{\s*display:\s*none/);
+    expect(phone).toContain('.mia-route-study[data-focus="false"]) .mia-nav');
+    expect(styles).toContain('.mia-route-study[data-focus="true"] .mia-header .mia-nav { display: none; }');
+    expect(phone).toContain(".mia-view.mia-keyboard-open .mia-nav { display: none; }");
+  });
+
+  it("hides the bottom nav over the keyboard with a rule that outranks and follows the show rule", () => {
+    const phone = styles.slice(styles.indexOf("/* ── Phones: a bottom tab bar"), styles.indexOf("/* Phone detail: full screen"));
+    const rules = [...phone.matchAll(/^\s*([^{}\n][^{}]*)\{([^}]*)\}/gm)].map(([, selector, body], order) => ({ selector: selector!.trim(), body: body!, order }));
+    // :where() adds no specificity: drop its (balanced) argument list.
+    const stripWhere = (selector: string): string => {
+      const start = selector.indexOf(":where(");
+      if (start < 0) return selector;
+      let depth = 0, end = start + 6;
+      for (; end < selector.length; end += 1) { if (selector[end] === "(") depth += 1; if (selector[end] === ")" && --depth === 0) break; }
+      return stripWhere(selector.slice(0, start) + selector.slice(end + 1));
+    };
+    // Specificity as a class count: classes and attributes (also inside :not()) add 1; :is() counts as its heaviest argument.
+    const weight = (selector: string): number => {
+      selector = stripWhere(selector);
+      const start = selector.indexOf(":is(");
+      if (start < 0) return (selector.match(/\.[\w-]+|\[[^\]]+\]/g) ?? []).length;
+      let depth = 0, end = start + 3;
+      for (; end < selector.length; end += 1) { if (selector[end] === "(") depth += 1; if (selector[end] === ")" && --depth === 0) break; }
+      const inner = selector.slice(start + 4, end);
+      const args: string[] = []; let level = 0, from = 0;
+      for (let at = 0; at <= inner.length; at += 1) {
+        if (inner[at] === "(") level += 1; if (inner[at] === ")") level -= 1;
+        if (at === inner.length || (inner[at] === "," && level === 0)) { args.push(inner.slice(from, at)); from = at + 1; }
+      }
+      return Math.max(...args.map(weight)) + weight(selector.slice(0, start) + selector.slice(end + 1));
+    };
+    const show = rules.find((rule) => rule.selector.endsWith(".mia-nav") && /position:\s*sticky/.test(rule.body))!;
+    const hide = rules.find((rule) => rule.selector.includes(".mia-keyboard-open .mia-nav"))!;
+    expect(hide.body).toContain("display: none");
+    expect(hide.order).toBeGreaterThan(show.order);
+    expect(weight(hide.selector)).toBeGreaterThan(weight(show.selector));
   });
 
   it("collapses the dense question filter panel on mobile", () => {

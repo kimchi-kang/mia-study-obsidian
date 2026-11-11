@@ -24,17 +24,18 @@ vi.mock("obsidian", () => {
     get tagName() { return this.tag?.toUpperCase(); }
     removeAttribute(name) { delete this.attrs[name]; }
     setText(text) { this.text = text; }
-    addClass() {} removeClass() {} setAttr(name,value) { this.attrs[name]=value; } focus() { this.focused=true; }
+    addClass() {} removeClass() {} toggleClass(name,on) { this.toggled = { ...this.toggled, [name]: on }; } setAttr(name,value) { this.attrs[name]=value; } focus() { this.focused=true; }
     contains(element) { return this===element || this.children.some(child=>child.contains(element)); }
     querySelectorAll(selector) { const tags=selector.split(",").map(tag=>tag.trim()); return this.children.flatMap(child=>[...(tags.includes(child.tag)?[child]:[]),...child.querySelectorAll(selector)]); }
     querySelector(selector) {
-      if([".mia-learning-button", ".mia-appearance-button", ".mia-study-layout", ".mia-study-concepts"].includes(selector)) { const visit=el=>el.cls.split(" ").includes(selector.slice(1))?el:el.children.map(visit).find(Boolean);return visit(this)??null; }
+      if([".mia-learning-button", ".mia-appearance-button", ".mia-study-layout", ".mia-study-concepts", ".mia-detail-scroll", ".mia-detail-title"].includes(selector)) { const visit=el=>el.cls.split(" ").includes(selector.slice(1))?el:el.children.map(visit).find(Boolean);return visit(this)??null; }
       if(selector===".mia-session-edit-actions button") { const find=el=>el.cls.split(" ").includes("mia-session-edit-actions")?el.children.find(child=>child.tag==="button"):el.children.map(find).find(Boolean);return find(this)??null; }
       if(selector!==".mia-save-status")return null;
       const visit=element=>{for(const child of element.children){if(child.cls.split(" ").includes("mia-save-status"))return child;const found=visit(child);if(found)return found;}return null;};return visit(this);
     }
     scrollIntoView() {}
     scrollTo() {}
+    closest(tag) { for (let node = this; node; node = node.parent) if (node.tag === tag) return node; return null; }
     remove(){if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this);}
     addEventListener(name, handler) { this.handlers.set(name, handler); }
     get content() { return [this.text, ...this.children.map(child => child.content)].join(" "); }
@@ -794,7 +795,7 @@ describe("study view scheduling integration", () => {
     });
     await ui.button("정답 보기").click();
     const pending = ui.button("너무 쉬움").click();
-    await ui.button("대시보드").click();
+    await ui.button("오늘").click();
     ui.view.startReview([], "browse");
     await ui.view.setState({ route: "dashboard", queue: [], queueIndex: 0 }, {});
     expect(ui.view.getState()).toMatchObject({ route: "study", queue: ["q"], queueIndex: 0, sessionMode: "recall" });
@@ -1348,7 +1349,7 @@ describe("edit the current saved question from an active session", () => {
       const state = structuredClone(ui.view.getState());
       const startedAt = ui.view.sessionStartedAt;
       expect(ui.content().includes("모범 답안")).toBe(mode === "browse");
-      await ui.exactButton("문제 편집").click();
+      await ui.exactButton("편집").click();
       const [original, closed, saved] = ui.plugin.openManagedQuestionEditor.mock.calls[0];
       expect(original.id).toBe("related");
       expect(ui.content()).toContain("현재 학습 문제");
@@ -1370,11 +1371,11 @@ describe("edit the current saved question from an active session", () => {
       const ui = setup(); ui.view.startReview(["q"], mode);
       ui.view.sessionAttempts.set(0, {id:"q",grade:Rating.Good});
       const attempts = structuredClone([...ui.view.sessionAttempts]);
-      await ui.exactButton("문제 편집").click();
+      await ui.exactButton("편집").click();
       ui.plugin.openManagedQuestionEditor.mock.calls[0][1]();
       expect(ui.plugin.index.questionById("q").answerMarkdown).toBe("정답");
       expect([...ui.view.sessionAttempts]).toEqual(attempts);
-      await ui.exactButton("문제 편집").click();
+      await ui.exactButton("편집").click();
       const [,closed,saved] = ui.plugin.openManagedQuestionEditor.mock.calls[1];
       ui.plugin.index.registered[0] = {...ui.plugin.index.registered[0],answerMarkdown:"새 정답"}; saved(); closed();
       expect([...ui.view.sessionAttempts]).toEqual(attempts);
@@ -1382,7 +1383,7 @@ describe("edit the current saved question from an active session", () => {
     });
     it(`${mode}: a deleted source never redirects to another question`, async () => {
       const ui = setup({linked:true}); ui.view.startReview(["q","related"], mode);
-      await ui.exactButton("문제 편집").click();
+      await ui.exactButton("편집").click();
       ui.plugin.index.registered.splice(0,1);
       ui.plugin.openManagedQuestionEditor.mock.calls[0][1]();
       expect(ui.view.queueIndex).toBe(0);
@@ -1402,7 +1403,7 @@ describe("edit the current saved question from an active session", () => {
 it("warns about retained historical ratings when editing an answer before rating in this session",async()=>{
   const ui=setup();ui.reviews.q=ui.plugin.fsrs.rate(undefined,Rating.Good,new Date(),"q");
   const before=structuredClone(ui.reviews.q);
-  await ui.exactButton("문제 편집").click();const [,closed,saved]=ui.plugin.openManagedQuestionEditor.mock.calls[0];
+  await ui.exactButton("편집").click();const [,closed,saved]=ui.plugin.openManagedQuestionEditor.mock.calls[0];
   ui.plugin.index.registered[0]={...ui.plugin.index.registered[0],answerMarkdown:"고친 정답"};saved();closed();
   expect(ui.reviews.q).toEqual(before);expect(ui.content()).toContain("자동 재채점되지 않습니다");
 });
@@ -1462,8 +1463,8 @@ describe("repeated session editing",()=>{
 });
 
 it("retains the returned edit button focus when a later index notification rerenders the same question",()=>{
-  const ui=setup();const button=ui.exactButton("문제 편집");ui.view.contentEl.ownerDocument={activeElement:button};
-  ui.view.render();const replacement=ui.exactButton("문제 편집");expect(replacement).not.toBe(button);expect(replacement.focused).toBe(true);
+  const ui=setup();const button=ui.exactButton("편집");ui.view.contentEl.ownerDocument={activeElement:button};
+  ui.view.render();const replacement=ui.exactButton("편집");expect(replacement).not.toBe(button);expect(replacement.focused).toBe(true);
 });
 
 // Literal workloads and hand-authored mixed records exercise the view and real
@@ -1634,7 +1635,7 @@ describe("bounded question results and Markdown resource lifetime", () => {
     const ui = library(), seen = [];
     for (const count of [50, 50, 21]) {
       expect(ui.rows()).toHaveLength(count);
-      seen.push(...ui.rows().map(row => row.children[0].children[0].text));
+      seen.push(...ui.rows().map(row => row.children.find(child => child.cls === "mia-row-body").children[0].text));
       if (count === 50) await ui.exactButton("다음 50개").click();
     }
     expect(seen).toEqual(ui.plugin.index.registered.map(q => q.heading));
@@ -1889,4 +1890,220 @@ describe("device sync settings warning for a sync folder that has not fully arri
     expect(render(true).content()).toContain("동기화 폴더(MIA Study Sync)를 찾았지만 아직 모두 도착하지 않았습니다. 지금 남기는 평가는 이 기기에만 저장됩니다. 보관함 동기화를 마친 뒤 Obsidian을 다시 시작하세요.");
   });
   it("shows nothing extra otherwise", () => { expect(render(false).content()).not.toContain("찾았지만"); });
+});
+
+describe("weak questions after the 취약 문제 tab was folded into the dashboard and the question list", () => {
+  /** Two questions: "q" was last graded Again, "ok" was graded Good. */
+  function weakSetup() {
+    const ui = setup({ start: false });
+    const base = ui.plugin.index.registered[0];
+    ui.plugin.index.registered = [base, { ...base, id: "ok", heading: "잘 아는 문제" }];
+    ui.reviews.q = ui.plugin.fsrs.rate(undefined, Rating.Again, new Date(), "q");
+    ui.reviews.ok = ui.plugin.fsrs.rate(undefined, Rating.Good, new Date(), "ok");
+    return ui;
+  }
+  it("has no 취약 문제 tab; the other tabs keep their ids", () => {
+    const ui = weakSetup(); ui.view.showDashboard();
+    for (const label of ["오늘", "학습현황", "문제", "키워드"]) expect(ui.exactButton(label)).toBeDefined();
+    expect(ui.exactButton("취약 문제")).toBeUndefined();
+  });
+  it("starts a study of every weak question from the dashboard strip", async () => {
+    const ui = weakSetup(); ui.view.showDashboard();
+    expect(ui.content()).toContain("취약 문제 1개");
+    const start = vi.spyOn(ui.view, "startReview").mockImplementation(() => {});
+    await ui.exactButton("취약 문제 시험").click();
+    expect(start).toHaveBeenCalledWith(["q"], undefined);
+  });
+  it("keeps the strip's action disabled, not missing, when nothing is weak", () => {
+    const ui = setup({ start: false }); ui.view.showDashboard();
+    expect(ui.content()).toContain("취약 문제 0개"); expect(ui.exactButton("취약 문제 시험").disabled).toBe(true);
+  });
+  it("opens the urgency-ordered weak list from the strip and shows each row's urgency and last grade", async () => {
+    const ui = weakSetup(); ui.view.showDashboard();
+    await ui.exactButton("목록 보기").click();
+    expect(ui.view.questionList.review).toBe("weak"); expect(ui.view.questionList.sort).toBe("weak");
+    expect(ui.content()).toContain("긴급도"); expect(ui.content()).toContain("못 암기");
+    expect(ui.content()).toContain("긴급도 순으로 표시합니다");
+    expect(ui.content()).not.toContain("잘 아는 문제");
+  });
+  it("offers 학습 and 상세 on a weak row and a study action for the whole filtered list", async () => {
+    const ui = weakSetup(); ui.view.showQuestions("weak");
+    const start = vi.spyOn(ui.view, "startReview").mockImplementation(() => {});
+    await ui.exactButton("학습").click(); expect(start).toHaveBeenLastCalledWith(["q"], undefined);
+    await ui.exactButton("검색 결과 시험").click(); expect(start).toHaveBeenLastCalledWith(["q"], undefined);
+    expect(ui.exactButton("상세")).toBeDefined();
+  });
+  it("filters from the ▲ 취약 chip and returns to the default order when another chip is chosen", async () => {
+    const ui = weakSetup(); ui.view.showQuestions("all");
+    expect(ui.content()).toContain("잘 아는 문제");
+    await ui.exactButton("▲ 취약 1").click();
+    expect(ui.view.questionList.review).toBe("weak"); expect(ui.view.questionList.sort).toBe("weak");
+    expect(ui.content()).not.toContain("잘 아는 문제");
+    await ui.exactButton("전체 2").click();
+    expect(ui.view.questionList.review).toBe("all"); expect(ui.view.questionList.sort).toBe("review");
+    expect(ui.content()).toContain("잘 아는 문제");
+  });
+  it("applies the same weak/sort rule from the review dropdown as from the chip, and shows the note only with both", () => {
+    const ui = weakSetup(); ui.view.showQuestions("all");
+    const select = ui.view.contentEl.querySelectorAll("select").find(node => node.attrs["aria-label"] === "복습 상태 필터");
+    select.value = "weak"; select.handlers.get("change")();
+    expect(ui.view.questionList.sort).toBe("weak"); expect(ui.content()).toContain("긴급도 순으로 표시합니다");
+    select.value = "all"; select.handlers.get("change")();
+    expect(ui.view.questionList.sort).toBe("review"); expect(ui.content()).not.toContain("긴급도 순으로 표시합니다");
+  });
+  it("restores a saved workspace on the old weakness route as the weak question list", async () => {
+    const ui = weakSetup();
+    await ui.view.setState({ route: "weakness", queue: [], queueIndex: 0, answerVisible: false, sessionMode: "recall" }, {});
+    expect(ui.view.getState().route).toBe("questions"); expect(ui.view.questionList.review).toBe("weak");
+  });
+});
+
+describe("question detail side panel", () => {
+  function panelSetup(width) {
+    const ui = setup({ start: false });
+    const question = ui.plugin.index.registered[0];
+    const actions = { study: vi.fn(), edit: vi.fn(), connections: vi.fn(), remove: vi.fn(), showKeyword: vi.fn(), rate: vi.fn(async () => {}), resetReview: vi.fn(async () => {}) };
+    ui.plugin.questionDetailSource = vi.fn(async q => ({ question: q, review: undefined, recommendations: [], meanings: new Map(), actions }));
+    ui.plugin.openQuestionDetail = vi.fn();
+    // The stylesheet decides whether the panel is shown; the fake DOM reports its computed display.
+    const visible = { value: width >= 1000 };
+    const doc = { activeElement: null, body: {}, modal: false, querySelector() { return doc.modal ? {} : null; },
+      defaultView: { getComputedStyle: () => ({ display: visible.value ? "flex" : "none" }) } };
+    const attach = () => {
+      const visit = node => node.children.flatMap(child => [child, ...visit(child)]);
+      const aside = visit(ui.view.contentEl).find(node => node.tag === "aside");
+      aside.isConnected = true;
+      aside.ownerDocument = doc;
+    };
+    ui.view.showQuestions("all"); attach();
+    const row = () => { const visit = node => node.children.flatMap(child => [child, ...visit(child)]); return visit(ui.view.contentEl).find(node => node.cls === "mia-row"); };
+    return { ...ui, question, actions, row, visible, attach, doc };
+  }
+  const flush = () => new Promise(resolve => setTimeout(resolve, 0));
+  it("opens the detail beside the list on a wide pane instead of the dialog", async () => {
+    const ui = panelSetup(1280);
+    await ui.row().find("상세", true).click(); await vi.runAllTimersAsync();
+    expect(ui.plugin.questionDetailSource).toHaveBeenCalledWith(expect.objectContaining({ id: "q" }));
+    expect(ui.plugin.openQuestionDetail).not.toHaveBeenCalled();
+    expect(ui.view.questionList.selectedId).toBe("q");
+    const text = ui.content();
+    for (const label of ["현재 상태 변경", "학습 전으로 초기화", "복습 기록", "관련 질문"]) expect(text).toContain(label);
+    expect(ui.row().toggled["mia-row-selected"]).toBe(true);
+  });
+  it("shares the dialog's actions and rating path", async () => {
+    const ui = panelSetup(1280);
+    await ui.row().find("상세", true).click(); await vi.runAllTimersAsync();
+    const panel = () => { const visit = node => node.children.flatMap(child => [child, ...visit(child)]); return visit(ui.view.contentEl).find(node => node.tag === "aside"); };
+    const find = (text) => panel().find(text, true);
+    for (const label of ["학습", "편집", "연결", "삭제"]) await find(label).click();
+    expect(ui.actions.study).toHaveBeenCalledOnce(); expect(ui.actions.edit).toHaveBeenCalledOnce();
+    expect(ui.actions.connections).toHaveBeenCalledOnce(); expect(ui.actions.remove).toHaveBeenCalledOnce();
+    await find("암기").click(); await vi.runAllTimersAsync();
+    expect(ui.actions.rate).toHaveBeenCalledWith(Rating.Good);
+  });
+  const panelOf = ui => { const visit = node => node.children.flatMap(child => [child, ...visit(child)]); return visit(ui.view.contentEl).find(node => node.tag === "aside"); };
+  it("restores focus to the control last pressed, by identity, after the panel is rebuilt", async () => {
+    const ui = panelSetup(1280);
+    await ui.row().find("상세", true).click(); await vi.runAllTimersAsync();
+    const good = panelOf(ui).find("암기", true);
+    panelOf(ui).handlers.get("pointerdown")({ target: good });
+    expect(ui.view.questionList.panelFocus).toBe("rate-3");
+    ui.view.render(); ui.attach(); await vi.runAllTimersAsync();
+    expect(panelOf(ui).find("암기", true).focused).toBe(true);
+  });
+  it("hands focus to the nearest enabled control when the remembered one is disabled", async () => {
+    const ui = panelSetup(1280);
+    await ui.row().find("상세", true).click(); await vi.runAllTimersAsync();
+    ui.view.questionList.panelFocus = "reset";
+    ui.view.render(); ui.attach(); await vi.runAllTimersAsync();
+    const reset = panelOf(ui).find("학습 전으로 초기화", true);
+    expect(reset.disabled).toBe(true); expect(reset.focused).not.toBe(true);
+    expect(panelOf(ui).find("너무 쉬움", true).focused).toBe(true);
+  });
+  it("does not take focus from an element outside the view when the page re-renders", async () => {
+    const ui = panelSetup(1280);
+    await ui.row().find("상세", true).click(); await vi.runAllTimersAsync();
+    ui.view.questionList.panelFocus = "rate-3";
+    ui.doc.activeElement = { name: "editor in another pane" };
+    ui.view.render(); ui.attach(); await vi.runAllTimersAsync();
+    expect(panelOf(ui).find("암기", true).focused).not.toBe(true);
+  });
+  it("does not move focus while a dialog is open", async () => {
+    const ui = panelSetup(1280);
+    await ui.row().find("상세", true).click(); await vi.runAllTimersAsync();
+    ui.view.questionList.panelFocus = "rate-3"; ui.doc.modal = true;
+    ui.view.render(); ui.attach(); await vi.runAllTimersAsync();
+    expect(panelOf(ui).find("암기", true).focused).not.toBe(true);
+  });
+  it("falls back to the title when the remembered control no longer exists", async () => {
+    const ui = panelSetup(1280);
+    await ui.row().find("상세", true).click(); await vi.runAllTimersAsync();
+    ui.view.questionList.panelFocus = "keyword-gone";
+    ui.view.render(); ui.attach(); await vi.runAllTimersAsync();
+    const visit = node => node.children.flatMap(child => [child, ...visit(child)]);
+    expect(visit(panelOf(ui)).find(node => node.cls === "mia-detail-title").focused).toBe(true);
+  });
+  it("keeps the panel's scroll position for the same question and resets it for another", async () => {
+    const ui = panelSetup(1280);
+    await ui.row().find("상세", true).click(); await vi.runAllTimersAsync();
+    panelOf(ui).handlers.get("scroll")({ target: { classList: { contains: () => true }, scrollTop: 240 } });
+    ui.view.render(); ui.attach(); await vi.runAllTimersAsync();
+    const visit = node => node.children.flatMap(child => [child, ...visit(child)]);
+    expect(visit(panelOf(ui)).find(node => node.cls === "mia-detail-scroll").scrollTop).toBe(240);
+    ui.view.questionList.selectedId = "other"; ui.view.questionList.panelScroll = { id: "other", top: 5 };
+    await ui.row().find("상세", true).click(); await vi.runAllTimersAsync();
+    expect(visit(panelOf(ui)).find(node => node.cls === "mia-detail-scroll").scrollTop).toBe(0);
+  });
+  it("opens the dialog when the stylesheet hides the panel, whatever the pane width", async () => {
+    const ui = panelSetup(1020); ui.visible.value = false;
+    await ui.row().find("상세", true).click();
+    expect(ui.plugin.openQuestionDetail).toHaveBeenCalledWith(expect.objectContaining({ id: "q" }));
+    expect(ui.plugin.questionDetailSource).not.toHaveBeenCalled(); expect(ui.view.questionList.selectedId).toBeNull();
+  });
+  it("rebuilds the panel from the selection after a store change and sets aria-current", async () => {
+    const ui = panelSetup(1280);
+    await ui.row().find("상세", true).click(); await vi.runAllTimersAsync();
+    expect(ui.plugin.questionDetailSource).toHaveBeenCalledTimes(1);
+    ui.view.render(); ui.attach(); await vi.runAllTimersAsync();
+    expect(ui.plugin.questionDetailSource).toHaveBeenCalledTimes(2);
+    expect(ui.content()).toContain("현재 상태 변경");
+    expect(ui.row().attrs["aria-current"]).toBe("true");
+  });
+  it("falls back to the placeholder and clears the selection when the selected question is gone", async () => {
+    const ui = panelSetup(1280);
+    await ui.row().find("상세", true).click(); await vi.runAllTimersAsync();
+    ui.plugin.index.registered.splice(0);
+    ui.view.render(); ui.attach(); await vi.runAllTimersAsync();
+    expect(ui.view.questionList.selectedId).toBeNull();
+    expect(ui.content()).toContain("문제를 누르면 여기에 상세가 열립니다.");
+  });
+  it("marks the active status chip with aria-pressed", async () => {
+    const ui = panelSetup(1280);
+    const chip = label => ui.view.contentEl.find(label);
+    expect(chip("전체").attrs["aria-pressed"]).toBe("true"); expect(chip("▲ 취약").attrs["aria-pressed"]).toBe("false");
+    await chip("▲ 취약").click();
+    expect(ui.view.contentEl.find("▲ 취약").attrs["aria-pressed"]).toBe("true"); expect(ui.view.contentEl.find("전체").attrs["aria-pressed"]).toBe("false");
+  });
+  it("keeps the dialog on narrow panes", async () => {
+    const ui = panelSetup(700);
+    await ui.row().find("상세", true).click();
+    expect(ui.plugin.openQuestionDetail).toHaveBeenCalledWith(expect.objectContaining({ id: "q" }));
+    expect(ui.plugin.questionDetailSource).not.toHaveBeenCalled();
+    expect(ui.view.questionList.selectedId).toBeNull();
+  });
+  it("opens the detail when the row itself is pressed, but not when one of its buttons or links is", async () => {
+    const ui = panelSetup(1280), row = ui.row();
+    row.ownerDocument = { getSelection: () => null };
+    const press = target => row.handlers.get("click")({ target });
+    press({ closest: () => ({}) });
+    expect(ui.plugin.questionDetailSource).not.toHaveBeenCalled();
+    press({ closest: () => null }); await vi.runAllTimersAsync();
+    expect(ui.plugin.questionDetailSource).toHaveBeenCalledOnce();
+  });
+  it("does not open the detail when text in the row is being selected", () => {
+    const ui = panelSetup(1280), row = ui.row();
+    row.ownerDocument = { getSelection: () => ({ toString: () => "선택한 글" }) };
+    row.handlers.get("click")({ target: { closest: () => null } });
+    expect(ui.plugin.questionDetailSource).not.toHaveBeenCalled();
+  });
 });
