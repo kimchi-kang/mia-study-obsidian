@@ -1,6 +1,28 @@
+<div align="center">
+
 # MIA Study for Obsidian
 
+**전공 질문을 모으고, 키워드로 연결하고, FSRS-6로 잊기 전에 다시 복습하는 Obsidian 플러그인**
+
+[![Release](https://img.shields.io/github/v/release/kimchi-kang/mia-study-obsidian?label=release&color=7c5cf0)](https://github.com/kimchi-kang/mia-study-obsidian/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/kimchi-kang/mia-study-obsidian/total?color=7c5cf0)](https://github.com/kimchi-kang/mia-study-obsidian/releases)
+![Obsidian](https://img.shields.io/badge/Obsidian-1.8.7%2B-483699?logo=obsidian&logoColor=white)
+![Platforms](https://img.shields.io/badge/desktop%20%C2%B7%20mobile-supported-2f9e5b)
+[![License](https://img.shields.io/github/license/kimchi-kang/mia-study-obsidian?color=555)](LICENSE)
+
+[**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.4.12 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.12/mia-study-1.4.12.zip) · [변경 내역](docs/releases/1.4.12.md) · [현재 상태](STATUS.md)
+
+<img src="docs/assets/screens/desktop-dashboard.jpg" alt="MIA Study 대시보드" width="860">
+
+</div>
+
 Obsidian 안에서 과목·질문·키워드를 폼으로 관리하면서 FSRS-6 복습, 핵심·보조 키워드, 키워드 의미 노트, 연관 문제 추천을 제공한다. Markdown을 직접 작성할 필요가 없고 문제 하나마다 노트를 만들지도 않는다.
+
+| 학습 화면 | 문제 목록 | 모바일 |
+|---|---|---|
+| <img src="docs/assets/screens/desktop-study.jpg" alt="시험 모드 학습 화면" width="320"> | <img src="docs/assets/screens/desktop-questions.jpg" alt="문제 목록" width="320"> | <img src="docs/assets/screens/mobile-study.jpg" alt="모바일 학습 화면" width="140"> |
+
+화면은 1.4.12와 예시 문제로 찍었습니다. 모바일 화면은 데스크톱 Obsidian에서 휴대폰 폭을 흉내 낸 것입니다.
 
 [1.4.12 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.12) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.4.12 변경 내역](docs/releases/1.4.12.md) · [이전 버전 이력](docs/releases/HISTORY.md)
 
