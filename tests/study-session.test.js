@@ -2122,3 +2122,41 @@ describe("phone study layout hides no function", () => {
     });
   }
 });
+
+describe("question list filters keep their order rule and keyboard focus", () => {
+  function weakList() {
+    const ui = setup({ start: false });
+    const base = ui.plugin.index.registered[0];
+    ui.plugin.index.registered = [base, { ...base, id: "ok", heading: "잘 아는 문제" }];
+    ui.reviews.q = ui.plugin.fsrs.rate(undefined, Rating.Again, new Date(), "q");
+    ui.reviews.ok = ui.plugin.fsrs.rate(undefined, Rating.Good, new Date(), "ok");
+    ui.view.showQuestions("all");
+    return ui;
+  }
+  it("returns to the default order when the 상태 chip's × clears the weak filter", async () => {
+    const ui = weakList();
+    await ui.exactButton("▲ 취약 1").click(); expect(ui.view.questionList.sort).toBe("weak");
+    await ui.button("상태: 취약 문제").click();
+    expect(ui.view.questionList.review).toBe("all"); expect(ui.view.questionList.sort).toBe("review");
+    const dropdown = ui.view.contentEl.querySelectorAll("select").find(node => node.attrs["aria-label"] === "정렬");
+    expect(dropdown.value).toBe("review");
+  });
+  it("returns to the default order through 필터 전체 해제 with several filters active", async () => {
+    const ui = weakList();
+    await ui.exactButton("▲ 취약 1").click();
+    const search = ui.view.contentEl.querySelectorAll("input").find(node => node.attrs["aria-label"] === "질문 검색");
+    search.value = "질문"; search.handlers.get("input")();
+    await ui.exactButton("필터 전체 해제").click();
+    expect(ui.view.questionList.review).toBe("all"); expect(ui.view.questionList.sort).toBe("review"); expect(ui.view.questionList.text).toBe("");
+  });
+  it("keeps the same status chip element, connected and focused, when it is pressed", async () => {
+    const ui = weakList();
+    const chip = ui.exactButton("전체 2"); chip.focus();
+    const before = ui.exactButton("▲ 취약 1");
+    await before.click();
+    expect(ui.exactButton("▲ 취약 1")).toBe(before);
+    expect(ui.view.contentEl.contains(before)).toBe(true);
+    expect(before.attrs["aria-pressed"]).toBe("true");
+    expect(ui.exactButton("전체 2")).toBe(chip);
+  });
+});
