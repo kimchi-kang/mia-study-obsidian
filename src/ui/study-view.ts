@@ -630,11 +630,12 @@ export class MiaStudyView extends ItemView {
     const version = brand.createEl("span", { text: `v${this.plugin.manifest.version}`, cls: "mia-version" });
     version.setAttr("aria-label", `실행 중인 MIA Study 버전 ${this.plugin.manifest.version}`);
     title.createEl("span", { text: "FSRS-6", cls: "mia-badge" });
+    // In a session the exit button comes first so reading order matches the slim bar: exit, progress, settings.
+    if (this.route === "study") title.createEl("button", { text: "학습 나가기", cls: "mia-focus-exit" }).addEventListener("click", () => this.navigate("dashboard"));
     const settingsButtons = title.createDiv({ cls: "mia-settings-buttons" });
     settingsButtons.createEl("button", { text: "학습 설정", cls: "mia-learning-button" }).addEventListener("click", () => this.openStudySettings());
     const appearance = settingsButtons.createEl("button", { text: "보기 설정", cls: "mia-appearance-button" });
     appearance.addEventListener("click", () => new StudyAppearanceModal(this.app, this.plugin.studyUi, () => this.refreshAppearance(), () => this.restoreSettingsFocus(".mia-appearance-button")).open());
-    if (this.route === "study") title.createEl("button", { text: "학습 나가기", cls: "mia-focus-exit" }).addEventListener("click", () => this.navigate("dashboard"));
     const nav = header.createDiv({ cls: "mia-nav" });
     // Weak questions live on the dashboard strip and as the 취약 filter on 문제, so there is no tab of their own.
     this.navButton(nav, "오늘", "dashboard");
@@ -788,7 +789,11 @@ export class MiaStudyView extends ItemView {
     previous.disabled = this.queueIndex === 0;
     previous.addEventListener("click", () => this.moveToQuestion(this.queueIndex - 1));
     this.studyShortcuts.set("ArrowLeft", previous);
-    navigation.createEl("div", { text: `${this.sessionMode === "recall" ? "시험 모드" : "암기 모드"} · ${this.queueIndex + 1} / ${this.queue.length} · ${question.subject} · ${question.questionType}`, cls: "mia-progress" });
+    // Split so a narrow bar can drop the subject and shorten the mode, but never the position.
+    const progress = navigation.createEl("div", { cls: "mia-progress" });
+    progress.createSpan({ text: this.sessionMode === "recall" ? "시험 모드" : "암기 모드", cls: "mia-progress-mode" });
+    progress.createSpan({ text: ` · ${this.queueIndex + 1} / ${this.queue.length}`, cls: "mia-progress-count" });
+    progress.createSpan({ text: ` · ${question.subject} · ${question.questionType}`, cls: "mia-progress-subject" });
     const next = navigation.createEl("button", { text: "다음 문제 →" });
     next.addEventListener("click", () => {
       if (this.isMutatingReview) return;

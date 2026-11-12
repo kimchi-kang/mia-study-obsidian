@@ -320,7 +320,7 @@ describe("study view scheduling integration", () => {
     const next = studyDayStart(new Date(review.card.due), DEFAULT_SETTINGS.studyManagement.dayStartsAt);
     expect(ui.content()).toContain(next.toLocaleString("ko-KR"));
     await ui.exactButton("암기 모드로 보기").click();
-    expect(ui.content()).toContain("암기 모드 · 1 / 1");
+    expect(ui.content()).toMatch(/암기 모드\s+·\s+1 \/ 1/);
     expect(ui.content()).toContain("모범 답안");
     for (const label of ["못 암기", "애매", "암기", "너무 쉬움"]) expect(ui.exactButton(label)).toBeUndefined();
     expect(ui.reviews.q).toEqual(review);
@@ -2106,4 +2106,19 @@ describe("question detail side panel", () => {
     row.handlers.get("click")({ target: { closest: () => null } });
     expect(ui.plugin.questionDetailSource).not.toHaveBeenCalled();
   });
+});
+
+describe("phone study layout hides no function", () => {
+  const labels = ["학습 나가기", "← 이전", "다음 →", "학습 설정", "보기 설정", "편집", "조작 안내"];
+  for (const focus of [true, false]) for (const revealed of [false, true]) {
+    it(`keeps every control in the DOM (focus ${focus ? "on" : "off"}, ${revealed ? "answer shown" : "question only"})`, async () => {
+      const ui = setup(); ui.plugin.studyUi.appearance.focus = focus;
+      ui.view.render();
+      if (revealed) { await ui.exactButton("정답 보기").click(); }
+      for (const label of labels) expect(ui.exactButton(label), label).toBeDefined();
+      if (revealed) for (const grade of ["못 암기", "애매", "암기", "너무 쉬움"]) expect(ui.button(grade), grade).toBeDefined();
+      // Position and progress stay readable text, split so a narrow bar can drop only the subject.
+      expect(ui.content()).toMatch(/1 \/ 1/);
+    });
+  }
 });
