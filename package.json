@@ -23,6 +23,7 @@
     "jsdom": "^26.1.0",
     "jszip": "^3.10.2",
     "obsidian": "^1.13.1",
+    "postcss": "^8.5.26",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
   },

@@ -127,22 +127,26 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
     : queryQuestions(registered, ctx.plugin.store.reviews, ctx.plugin.fsrs, { text: "", subject: "all", questionType: "all", review: filter, keyword: "", sort: "title" }).length;
   const chipCounts = new Map(STATUS_CHIPS.map(({ review: filter }) => [filter, countFor(filter)]));
   /** One rule for the chips and the dropdown: weak reads most-urgent first, leaving it restores the default order. */
-  const setReviewFilter = (filter: ReviewFilter) => {
+  const applyReview = (filter: ReviewFilter) => {
     state.review = filter;
     if (filter === "weak") state.sort = "weak";
     else if (state.sort === "weak") state.sort = "review";
-    state.page = 0;
     review.value = filter;
     sort.value = state.sort;
+  };
+  const setReviewFilter = (filter: ReviewFilter) => {
+    applyReview(filter);
+    state.page = 0;
     renderList();
   };
+  // Created once so a chip keeps keyboard focus (and its element) when the list re-renders.
+  const statusChipButtons = STATUS_CHIPS.map(({ review: filter, label }) => {
+    const chip = statusChips.createEl("button", { text: `${label} ${chipCounts.get(filter) ?? 0}`, cls: filter === "weak" ? "mia-chip-weak" : "" });
+    chip.addEventListener("click", () => setReviewFilter(filter));
+    return { filter, chip };
+  });
   const renderStatusChips = () => {
-    statusChips.empty();
-    for (const { review: filter, label } of STATUS_CHIPS) {
-      const chip = statusChips.createEl("button", { text: `${label} ${chipCounts.get(filter) ?? 0}`, cls: filter === "weak" ? "mia-chip-weak" : "" });
-      chip.setAttr("aria-pressed", String(state.review === filter));
-      chip.addEventListener("click", () => setReviewFilter(filter));
-    }
+    for (const { filter, chip } of statusChipButtons) chip.setAttr("aria-pressed", String(state.review === filter));
   };
   const weakNote = root.createEl("p", { cls: "mia-muted mia-weak-note" });
   const resultBar = root.createDiv({ cls: "mia-result-bar" });
@@ -158,19 +162,21 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
     if (state.text) active.push([`검색: ${state.text}`, () => { state.text = ""; search.value = ""; }]);
     if (state.subject !== "all") active.push([`과목: ${state.subject}`, () => { state.subject = "all"; subject.value = "all"; }]);
     if (state.type !== "all") active.push([`유형: ${state.type}`, () => { state.type = "all"; type.value = "all"; }]);
-    if (state.review !== "all") active.push([`상태: ${reviewOptions.find(([value]) => value === state.review)?.[1] ?? state.review}`, () => { state.review = "all"; review.value = "all"; }]);
+    if (state.review !== "all") active.push([`상태: ${reviewOptions.find(([value]) => value === state.review)?.[1] ?? state.review}`, () => applyReview("all")]);
     if (state.keyword) active.push([`키워드: ${state.keyword}`, () => { state.keyword = ""; keyword.value = ""; }]);
     for (const [label, clear] of active) {
       const chip = chips.createEl("button", { text: `${label} ×` });
-      chip.addEventListener("click", () => { clear(); state.page = 0; renderList(); });
+      chip.addEventListener("click", () => { clear(); state.page = 0; renderList(); (chips.querySelector<HTMLElement>("button") ?? search).focus({ preventScroll: true }); });
     }
     if (active.length > 1) {
       const reset = chips.createEl("button", { text: "필터 전체 해제", cls: "mod-warning" });
       reset.addEventListener("click", () => {
         state.text = ""; state.subject = "all"; state.type = "all";
-        state.review = "all"; state.keyword = ""; state.page = 0;
-        search.value = ""; subject.value = "all"; type.value = "all"; review.value = "all"; keyword.value = "";
+        state.keyword = ""; state.page = 0;
+        applyReview("all");
+        search.value = ""; subject.value = "all"; type.value = "all"; keyword.value = "";
         renderList();
+        search.focus({ preventScroll: true });
       });
     }
   };
@@ -329,11 +335,11 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
     if (pageCount > 1) {
       const previous = pagination.createEl("button", { text: `이전 ${QUESTION_PAGE_SIZE}개` });
       previous.disabled = state.page === 0;
-      previous.addEventListener("click", () => { state.page -= 1; renderList(); scroller.scrollTo({ top: 0, behavior: "smooth" }); });
+      previous.addEventListener("click", () => { state.page -= 1; renderList(); scroller.scrollTo({ top: 0, behavior: "smooth" }); pagination.querySelector<HTMLElement>("button:not(:disabled)")?.focus({ preventScroll: true }); });
       pagination.createSpan({ text: `${state.page + 1} / ${pageCount}` });
       const next = pagination.createEl("button", { text: `다음 ${QUESTION_PAGE_SIZE}개` });
       next.disabled = state.page >= pageCount - 1;
-      next.addEventListener("click", () => { state.page += 1; renderList(); scroller.scrollTo({ top: 0, behavior: "smooth" }); });
+      next.addEventListener("click", () => { state.page += 1; renderList(); scroller.scrollTo({ top: 0, behavior: "smooth" }); pagination.querySelector<HTMLElement>("button:not(:disabled)")?.focus({ preventScroll: true }); });
     }
     if (!questions.length) list.createEl("p", {
       text: ctx.plugin.index.registered.length ? "검색·필터 조건에 맞는 문제가 없습니다." : "등록된 문제가 없습니다.",
