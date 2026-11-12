@@ -19,7 +19,7 @@ describe("mobile UI contract", () => {
     expect(phone).not.toMatch(/\.mia-route-study\s+\.mia-nav\s*\{\s*display:\s*none/);
     expect(phone).toContain('.mia-route-study[data-focus="false"]) .mia-nav');
     expect(styles).toContain('.mia-route-study[data-focus="true"] .mia-header .mia-nav { display: none; }');
-    expect(phone).toContain(".mia-view.mia-keyboard-open .mia-nav { display: none; }");
+    expect(phone).toContain(".mia-keyboard-open .mia-nav { display: none; }");
   });
 
   it("hides the bottom nav over the keyboard with a rule that outranks and follows the show rule", () => {
@@ -53,6 +53,47 @@ describe("mobile UI contract", () => {
     expect(hide.body).toContain("display: none");
     expect(hide.order).toBeGreaterThan(show.order);
     expect(weight(hide.selector)).toBeGreaterThan(weight(show.selector));
+  });
+
+  it("keeps the bottom tab bar exactly full width with safe-area insets", () => {
+    const phone = styles.slice(styles.indexOf("/* ── Phones: a bottom tab bar"), styles.indexOf("/* ── Study on a phone"));
+    const bar = phone.match(/\.mia-nav\s*\{([^}]*)\}/g)!.find((rule) => rule.includes("position: sticky"))!;
+    // `.mia-nav` is capped at max-width: 100% elsewhere; the bleed margins only widen the bar if that cap is lifted.
+    expect(bar).toContain("max-width: none");
+    expect(bar).toMatch(/margin-inline:\s*calc\(-1 \* var\(--mia-bleed-left\)\) calc\(-1 \* var\(--mia-bleed-right\)\)/);
+    expect(bar).toMatch(/padding:\s*0 var\(--mia-edge-right[^)]*\)\s+max\(0px, var\(--mia-edge-bottom[^)]*\)\)\s+var\(--mia-edge-left/);
+    expect(bar).toContain("repeat(4, minmax(0, 1fr))");
+  });
+
+  it("keeps the full-screen phone detail dialog below the status bar and Dynamic Island", () => {
+    // The insets are max(--safe-area-inset-*, env(safe-area-inset-*)) so both Obsidian's variables and env() work.
+    expect(styles).toMatch(/--mia-modal-top:\s*max\(var\(--safe-area-inset-top, 0px\), env\(safe-area-inset-top, 0px\)\)/);
+    expect(styles).toMatch(/\.is-phone \.modal-container:not\(\.mia-keyboard-open\):has\(> \.modal\.mia-detail-modal\)\s*\{\s*padding:\s*var\(--mia-modal-top, 0px\) var\(--mia-modal-right, 0px\) var\(--mia-modal-bottom, 0px\) var\(--mia-modal-left, 0px\)/);
+  });
+
+  it("collapses the study header into one slim 44px bar on phones", () => {
+    const study = styles.slice(styles.indexOf("/* ── Study on a phone"), styles.indexOf("/* Phone detail: full screen"));
+    expect(study).toContain("display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto");
+    expect(study).toMatch(/\.mia-settings-buttons > button \{\s*grid-row: 1; min-height: 44px/);
+    expect(study).toContain("repeat(4, minmax(0, 1fr))");
+  });
+
+  it("applies the bottom safe-area inset once in the phone study layout, never inside the dock", () => {
+    const study = styles.slice(styles.indexOf("/* ── Study on a phone"), styles.indexOf("/* Phone detail: full screen"));
+    const rules = [...study.replace(/^@media[^{]*\{/m, "").matchAll(/^\s*([^{}\n][^{}]*)\{([^}]*)\}/gm)].map(([, selector, body]) => ({ selector: selector!.trim(), body: body! }));
+    for (const rule of rules.filter(({ selector }) => selector.includes(".mia-study-dock"))) {
+      expect(rule.body, rule.selector).not.toMatch(/--mia-edge-bottom|safe-area/);
+    }
+    const root = rules.find(({ selector }) => /route-study:has\(\.mia-study-layout\)$/.test(selector) && selector.includes("data-device"))!;
+    expect(root.body).toContain("padding-bottom: calc(6px + var(--mia-edge-bottom, 0px))");
+  });
+
+  it("keeps the phone tab bar and study bar keyed to the device so a narrow desktop window is unchanged", () => {
+    const phone = styles.slice(styles.indexOf("/* ── Phones: a bottom tab bar"), styles.indexOf("/* Phone detail: full screen"));
+    expect(phone).toContain("@media (max-width: 640px), (max-height: 500px) and (pointer: coarse)");
+    for (const rule of phone.match(/^\s*\.mia-view[^{}\n]*(?:\.mia-nav|\.mia-header|route-study)[^{}\n]*\{/gm) ?? []) {
+      expect(rule, rule).toContain('[data-device="phone"]');
+    }
   });
 
   it("collapses the dense question filter panel on mobile", () => {

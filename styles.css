@@ -1968,7 +1968,7 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 /* ── 문제 상세: the same body in the side panel and in the dialog ── */
 .modal.mia-detail-modal { display: flex; flex-direction: column; }
 .modal.mia-detail-modal .modal-content { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; padding-bottom: 0; }
-:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px 20px 8px; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px 20px 16px; scroll-padding-block: 16px; }
 .modal.mia-detail-modal .mia-detail-scroll { padding-inline: 0; }
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-scroll > h3 { font-size: 12px; margin: 16px 0 6px; }
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-meta span { border-width: 2px; border-color: var(--mia-ink); background: transparent; color: var(--mia-ink); font-weight: 700; font-size: 12px; padding: 2px 8px; }
@@ -2051,39 +2051,42 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 }
 
 /* ── Phones: a bottom tab bar inside the view, 44px+ targets ──
+   Keyed to the device (`data-device="phone"`, from Platform.isPhone) so a narrow desktop window keeps the
+   regular top tabs; the media query adds phones in landscape (short and touch).
    The header collapses (`display: contents`) so its title row and the tab bar
    become flex items of the view; the tab bar sticks to the bottom edge. In a
    study session the bar follows the existing focus setting: hidden with focus
    mode on (as before), shown at the bottom with it off. */
-@media (max-width: 640px) {
+@media (max-width: 640px), (max-height: 500px) and (pointer: coarse) {
   .mia-view {
     --mia-bleed-left: var(--mia-pane-gutter); --mia-bleed-right: var(--mia-pane-gutter);
   }
   .mia-view[data-device="phone"] {
     --mia-bleed-left: calc(var(--mia-pane-gutter) + var(--mia-edge-left)); --mia-bleed-right: calc(var(--mia-pane-gutter) + var(--mia-edge-right));
   }
-  .mia-view:not(.mia-route-study) {
+  .mia-view[data-device="phone"]:not(.mia-route-study) {
     display: flex; flex-direction: column; padding-bottom: 0;
     padding-inline: var(--mia-bleed-left) var(--mia-bleed-right);
   }
-  .mia-view:not(.mia-route-study) > * { flex: 0 0 auto; width: 100%; box-sizing: border-box; }
-  .mia-view:not(.mia-route-study)::after { content: ""; order: 98; flex: 1 0 12px; }
-  .mia-view:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-header { display: contents; }
-  .mia-view:not(.mia-route-study) .mia-header > div:first-child { order: -1; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 3px solid var(--mia-ink); }
-  .mia-view:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-nav {
-    order: 99; position: sticky; bottom: 0; z-index: 5; width: auto; margin-inline: calc(-1 * var(--mia-bleed-left)) calc(-1 * var(--mia-bleed-right));
+  .mia-view[data-device="phone"]:not(.mia-route-study) > * { flex: 0 0 auto; width: 100%; box-sizing: border-box; }
+  .mia-view[data-device="phone"]:not(.mia-route-study)::after { content: ""; order: 98; flex: 1 0 12px; }
+  .mia-view[data-device="phone"]:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-header { display: contents; }
+  .mia-view[data-device="phone"]:not(.mia-route-study) .mia-header > div:first-child { order: -1; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 3px solid var(--mia-ink); }
+  .mia-view[data-device="phone"]:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-nav {
+    /* `.mia-nav` carries `max-width: 100%` (content width); without lifting it the bleed margins only shift the bar. */
+    order: 99; position: sticky; bottom: 0; z-index: 5; width: auto; max-width: none; box-sizing: border-box;
+    margin-inline: calc(-1 * var(--mia-bleed-left)) calc(-1 * var(--mia-bleed-right));
     display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; overflow: visible;
-    padding: 0 0 max(0px, var(--mia-edge-bottom, 0px)); border: 0; border-top: 3px solid var(--mia-ink); background: var(--mia-panel);
+    /* Equal columns inside the notch/home-indicator insets; the bar's own background and rule stay full width. */
+    padding: 0 var(--mia-edge-right, 0px) max(0px, var(--mia-edge-bottom, 0px)) var(--mia-edge-left, 0px);
+    border: 0; border-top: 3px solid var(--mia-ink); background: var(--mia-panel);
   }
-  .mia-view:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-nav button { min-height: 56px; padding-inline: 4px; border-bottom: 0; font-size: 13px; }
-  .mia-view.mia-route-study[data-focus="false"] { padding-bottom: 0; }
+  .mia-view[data-device="phone"]:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-nav button { min-height: 56px; padding-inline: 4px; border-bottom: 0; font-size: 13px; }
+  .mia-view[data-device="phone"].mia-route-study[data-focus="false"] { padding-bottom: 0; }
   /* The show rule above uses :where(), so this plain rule outranks it. */
-  .mia-view.mia-keyboard-open .mia-nav { display: none; }
+  .mia-view[data-device="phone"].mia-keyboard-open .mia-nav { display: none; }
   .mia-view .mia-status-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .mia-view .mia-status-chips button { min-width: 0; padding-inline: 8px; }
-  .mia-view .mia-study-dock .mia-ratings, .mia-view[data-device="phone"] .mia-study-dock .mia-ratings { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .mia-view .mia-study-dock .mia-ratings button, .mia-view[data-device="phone"] .mia-study-dock .mia-ratings button { min-height: 64px; }
-  .mia-view .mia-study-dock .mia-ratings strong { font-size: 17px; }
   .mia-view .mia-related-item { flex-direction: row; align-items: center; padding: 4px 4px 4px 10px; }
   .mia-view .mia-related-item .mia-related-open { flex: 1 1 auto; }
   .mia-view .mia-related-item > button:not(.mia-related-open) { width: auto; min-height: 44px; flex: 0 0 auto; }
@@ -2092,10 +2095,87 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
   .mia-view .mia-hero-counts { grid-template-columns: 1fr; }
 }
 
+/* ── Study on a phone: one slim top bar, so the question and the answer fit on one screen ──
+   [학습 나가기] [mode · n / total · subject] [학습 설정] [보기 설정] in a single 44px row, with the progress as a
+   thin line under it. The header and its title row collapse (`display: contents`) so their buttons become grid
+   cells of the view; the big logo row is dropped here (the app name is in Obsidian's own header). Every
+   function stays visible: settings, exit, edit, prev/next, 조작 안내, grades with intervals, undo. */
+@media (max-width: 640px), (max-height: 500px) and (pointer: coarse) {
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+    align-content: start; column-gap: 6px;
+    padding-inline: var(--mia-bleed-left) var(--mia-bleed-right);
+    padding-top: calc(6px + var(--mia-edge-top, 0px));
+    padding-bottom: calc(6px + var(--mia-edge-bottom, 0px)); /* the only place the bottom inset is applied */
+  }
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) :is(.mia-header, .mia-header > div:first-child, .mia-settings-buttons, .mia-study-navigation) { display: contents; }
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) :is(.mia-brand, .mia-badge, .mia-study-navigation > button, .mia-shortcut-hint, .mia-progress-subject) { display: none; }
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-focus-exit,
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-settings-buttons > button {
+    grid-row: 1; min-height: 44px; margin: 0; padding-inline: 8px; font-size: 12px; white-space: nowrap;
+  }
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-focus-exit { grid-column: 1; display: inline-flex; align-items: center; }
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-learning-button { grid-column: 3; }
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-appearance-button { grid-column: 4; }
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-study-navigation .mia-progress {
+    grid-area: 1 / 2; justify-self: stretch; min-width: 0; margin: 0; padding: 2px 8px; font-size: 12px; text-align: center; align-self: center;
+    display: flex; white-space: nowrap;
+  }
+  /* Only the mode text may be cut short; the position (n / total) always shows. */
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-progress-mode { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-progress-count { flex: none; margin-inline-start: .3em; white-space: nowrap; }
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-session-meter { grid-area: 2 / 1 / 3 / -1; max-width: none; height: 4px; margin: 2px 0 6px; border: 0; background: var(--mia-hair); }
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-study-layout { grid-area: 3 / 1 / 4 / -1; padding: 0 0 6px; }
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-study-dock { grid-area: 4 / 1 / 5 / -1; margin-top: 4px; padding: 6px 0; }
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-nav { grid-area: 5 / 1 / 6 / -1; }
+  .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) > .mia-save-status { grid-area: 6 / 1 / 7 / -1; }
+  .mia-view[data-device="phone"].mia-route-study[data-focus="false"]:has(.mia-study-layout) { padding-bottom: 0; }
+
+  /* Card: less padding and border, the header inline in small type. */
+  .mia-view[data-device="phone"].mia-route-study .mia-study-card { padding: 10px 12px; border-width: 3px; box-shadow: none; }
+  /* The header row disappears: 편집 is pinned to the card corner (still 44px) and the subject / type floats as
+     small text on the 질문 label line, so nothing is hidden and the title starts higher. */
+  .mia-view[data-device="phone"].mia-route-study .mia-study-card { position: relative; }
+  .mia-view[data-device="phone"].mia-route-study .mia-card-header { display: contents; }
+  .mia-view[data-device="phone"].mia-route-study .mia-card-header .mia-session-edit-actions { position: absolute; top: 8px; right: 8px; margin: 0; z-index: 1; }
+  .mia-view[data-device="phone"].mia-route-study .mia-card-header .mia-card-context {
+    float: right; box-sizing: border-box; max-width: calc(100% - 150px); margin: 2px 52px 0 8px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; font-size: 11px;
+  }
+  .mia-view[data-device="phone"].mia-route-study .mia-study-card .mia-question-section > h2 { padding-right: 56px; }
+  .mia-view[data-device="phone"].mia-route-study .mia-study-card .mia-card-label { margin-bottom: 4px; }
+  .mia-view[data-device="phone"].mia-route-study .mia-study-card .mia-question-section > h2 { margin: 0 0 8px; font-size: clamp(19px, 5.4vw, 22px); line-height: 1.35; }
+  .mia-view[data-device="phone"].mia-route-study .mia-recall-prompt { margin: 8px 0 4px; }
+  /* The answer is one flat block: a yellow rule at the left, the label inline with the first paragraph. */
+  .mia-view[data-device="phone"].mia-route-study .mia-study-card .mia-answer-section { margin-top: 8px; padding: 6px 0 6px 10px; border: 0; border-left: 4px solid var(--mia-yellow); }
+  .mia-view[data-device="phone"].mia-route-study .mia-answer-section .mia-card-label { display: inline-block; margin: 0 6px 0 0; }
+  .mia-view[data-device="phone"].mia-route-study .mia-answer-section .mia-answer > p:first-child { display: inline; }
+  .mia-view[data-device="phone"].mia-route-study :is(.mia-answer, .mia-study-card .mia-markdown) { line-height: 1.6; }
+  .mia-view[data-device="phone"].mia-route-study .mia-study-concepts { margin-top: 8px; padding-top: 4px; }
+
+  /* Grades: one row of four, intervals visible; navigation row and hint compact. */
+  .mia-view[data-device="phone"].mia-route-study .mia-study-dock .mia-ratings { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .mia-view[data-device="phone"].mia-route-study .mia-study-dock .mia-ratings button { min-height: 56px; padding: 4px 2px; border-width: 3px; }
+  .mia-view[data-device="phone"].mia-route-study .mia-study-dock .mia-ratings strong { font-size: 14px; word-break: keep-all; }
+  .mia-view[data-device="phone"].mia-route-study .mia-study-dock .mia-ratings small { font-size: 11px; }
+  .mia-view[data-device="phone"].mia-route-study .mia-thumb-navigation { margin-top: 6px; }
+  /* The swipe hint is also in 조작 안내 ("화면 왼쪽 가장자리에서 … 쓸면 …"), so it is not repeated here. */
+  .mia-view[data-device="phone"].mia-route-study .mia-touch-hint { display: none; }
+  .mia-view[data-device="phone"].mia-route-study .mia-study-dock .mia-undo-feedback { margin: 6px 0 0; padding: 4px 8px; }
+}
+
 /* Phone detail: full screen with the action bar fixed at the bottom. */
-.is-phone .modal-container:not(.mia-keyboard-open):has(> .modal.mia-detail-modal) { padding: 0; }
+/* The container keeps the safe-area insets (--mia-modal-* = max(--safe-area-inset-*, env(safe-area-inset-*)),
+   defined on it above), so the title and close button sit below the clock and Dynamic Island. */
+.is-phone .modal-container:not(.mia-keyboard-open):has(> .modal.mia-detail-modal) {
+  padding: var(--mia-modal-top, 0px) var(--mia-modal-right, 0px) var(--mia-modal-bottom, 0px) var(--mia-modal-left, 0px);
+}
 .is-phone .modal-container:not(.mia-keyboard-open) > .modal.mia-detail-modal {
-  width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh !important; border-width: 0; box-shadow: none;
+  width: 100%; max-width: 100%;
+  height: calc(100vh - var(--mia-modal-top, 0px) - var(--mia-modal-bottom, 0px));
+  height: calc(100dvh - var(--mia-modal-top, 0px) - var(--mia-modal-bottom, 0px));
+  max-height: calc(100vh - var(--mia-modal-top, 0px) - var(--mia-modal-bottom, 0px)) !important;
+  max-height: calc(100dvh - var(--mia-modal-top, 0px) - var(--mia-modal-bottom, 0px)) !important; border-width: 0; box-shadow: none;
 }
 .is-phone .modal.mia-detail-modal .modal-content { padding-inline: 16px; }
 
@@ -2116,7 +2196,7 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
   .modal.mia-detail-modal .mia-ratings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .modal.mia-detail-modal .mia-ratings button { min-height: 48px; white-space: normal; word-break: keep-all; }
   .modal.mia-detail-modal button.mia-detail-reset { justify-self: end; min-height: 44px; }
-  .modal.mia-detail-modal .mia-detail-actions { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 6px; padding-bottom: max(12px, var(--safe-area-inset-bottom, 0px)); }
+  .modal.mia-detail-modal .mia-detail-actions { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 6px; padding-bottom: 12px; }
   .modal.mia-detail-modal .mia-detail-actions > button { min-height: 52px; padding-inline: 4px; }
   .modal.mia-detail-modal .mia-detail-actions > button.mod-warning { min-width: 56px; padding-inline: 10px; }
 }
