@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>MIA Study · Obsidian 전공 공부 플러그인</title>
-<meta name="description" content="Obsidian 안에서 전공 질문을 모으고, 키워드로 연결하고, FSRS-6로 복습하는 플러그인. 정식 1.4.20 다운로드와 설치 안내.">
+<meta name="description" content="Obsidian 안에서 전공 질문을 모으고, 키워드로 연결하고, FSRS-6로 복습하는 플러그인. 정식 1.4.21 다운로드와 설치 안내.">
 <meta property="og:title" content="MIA Study · Obsidian 전공 공부 플러그인">
-<meta property="og:description" content="질문·키워드·FSRS-6 복습을 Obsidian 안에서. 정식 1.4.20.">
+<meta property="og:description" content="질문·키워드·FSRS-6 복습을 Obsidian 안에서. 정식 1.4.21.">
 <meta property="og:image" content="https://kimchi-kang.github.io/mia-study-obsidian/assets/screens/desktop-dashboard.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -332,11 +332,11 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
   <div class="wrap">
     <div class="hero-grid">
       <div>
-        <span class="ver">정식 1.4.20</span>
+        <span class="ver">정식 1.4.21</span>
         <h1>질문을 모으고,<br><em>잊기 전에</em><br>다시 꺼낸다.</h1>
         <p class="lead">Obsidian 안에서 과목·질문·키워드를 폼으로 관리하고, FSRS-6로 복습 시점을 잡아 주는 공부 플러그인. Markdown을 직접 쓰지 않아도 되고, 문제마다 노트를 만들지도 않습니다. 1.4.13부터 플러그인 화면도 이 페이지와 같은 바우하우스 스타일(빨강·노랑·파랑, 두꺼운 테두리, 각진 모서리)입니다.</p>
         <div class="cta">
-          <a class="btn btn-red" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.20/mia-study-1.4.20.zip" download>↓ 1.4.20 다운로드</a>
+          <a class="btn btn-red" href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.21/mia-study-1.4.21.zip" download>↓ 1.4.21 다운로드</a>
           <a class="btn btn-line" href="#install">BRAT 설치</a>
         </div>
         <p class="meta"><span>무료 · MIT</span><span>데스크톱·모바일</span><span>Obsidian 1.8.7+</span></p>
@@ -364,7 +364,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
       <p>MIA Study는 개인이 AI 코딩 도구(Claude·Codex 등)로 대부분을 만들었습니다. 매 버전 자동 검사를 돌리지만, 안정성이나 데이터 보존을 <strong>보장하지 않습니다</strong>. 버그로 문제은행이나 복습 기록이 손상되거나 사라질 수 있습니다.</p>
       <ul>
         <li>설치·업데이트 전과 평소에도 주기적으로 <strong>보관함과 다른 장소</strong>(외장 드라이브, 다른 클라우드, Git 저장소 등)에 복사해 두세요.</li>
-        <li>백업 대상: 과목 폴더의 <code>문제은행.md</code>, 키워드 노트, 학습 기록 <code>.obsidian/<wbr>plugins/<wbr>mia-study/<wbr>data.json</code>·<code>ui-state.json</code>.</li>
+        <li>백업 대상: 과목 폴더의 <code>문제은행.md</code>, 키워드 노트, 학습 기록 <code>.obsidian/<wbr>plugins/<wbr>mia-study/<wbr>data.json</code>·<code>ui-state.json</code>, 기기 간 동기화를 켰다면 <code>MIA Study Sync/</code> 폴더.</li>
         <li>백업 파일이 실제로 열리는지도 가끔 확인하세요.</li>
       </ul>
       <p class="why">iCloud·Obsidian Sync 같은 동기화는 백업이 아닙니다. 한 기기에서 파일이 손상되거나 지워지면 그 상태가 다른 기기로 그대로 퍼집니다.</p>
@@ -581,11 +581,11 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
         <h3>ZIP 직접 설치</h3>
         <ol>
           <li>보관함을 백업하고 Obsidian을 닫습니다.</li>
-          <li><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.20/mia-study-1.4.20.zip">ZIP</a>의 <code>main.js</code> <code>styles.css</code> <code>manifest.json</code> 세 파일을 아래 폴더에 복사합니다.<code class="blk">.obsidian/<wbr>plugins/<wbr>mia-study/</code></li>
+          <li><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.21/mia-study-1.4.21.zip">ZIP</a>의 <code>main.js</code> <code>styles.css</code> <code>manifest.json</code> 세 파일을 아래 폴더에 복사합니다.<code class="blk">.obsidian/<wbr>plugins/<wbr>mia-study/</code></li>
           <li><code>data.json</code>, <code>ui-state.json</code>은 그대로 둡니다. 학습 기록이 여기 있습니다.</li>
           <li>Obsidian을 다시 엽니다.</li>
         </ol>
-        <p class="links"><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.20/SHA256SUMS">SHA256SUMS</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/INSTALL.md">INSTALL.md</a></p>
+        <p class="links"><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.21/SHA256SUMS">SHA256SUMS</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/INSTALL.md">INSTALL.md</a></p>
       </div>
     </div>
   </div>
@@ -596,17 +596,17 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
     <div class="sh"><span class="shape c" aria-hidden="true"></span><h2>최신 업데이트</h2><span class="num">07</span></div>
     <div class="upd">
       <div class="l">
-        <div class="big">1.4.20</div>
+        <div class="big">1.4.21</div>
         <p>2026년 11월 14일</p>
-        <p><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.20">릴리스 노트 →</a></p>
+        <p><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.21">릴리스 노트 →</a></p>
       </div>
       <div class="r">
-        <h3>읽기 전용 암기 모드</h3>
+        <h3>최종 점검 안정화</h3>
         <ul>
-          <li>암기 모드는 질문과 정답만 보여 주고 평가·복습일을 기록하지 않습니다. 일정 갱신은 시험 모드만 합니다.</li>
-          <li>토글·암기 화면·설정 컨트롤을 바우하우스 스타일로 통일했습니다.</li>
+          <li>1.4.19 이전 버전이 남긴 설정 충돌 사본 때문에 시작이 실패할 수 있던 문제를 고쳤습니다.</li>
+          <li>이어하기 위치를 저장한 뒤 다시 읽어 실제로 저장됐는지 확인합니다.</li>
         </ul>
-        <p style="margin:0 0 12px"><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.19">1.4.19</a>: 미리 학습과 FSRS 최적화.</p>
+        <p style="margin:0 0 12px"><a href="https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.20">1.4.20</a>: 읽기 전용 암기 모드.</p>
         <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/docs/releases/HISTORY.md">전체 변경 이력 →</a>
       </div>
     </div>
@@ -617,7 +617,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
   <div class="wrap">
     <div class="sh"><span class="shape s" aria-hidden="true"></span><h2>검증</h2><span class="num">08</span></div>
     <div class="verify">
-      <div class="v"><span class="lab ok">통과</span><b>1,786개</b><p>1.4.20 자동 검사 실패 0·생략 2, 타입 검사·배포 빌드 통과.</p></div>
+      <div class="v"><span class="lab ok">통과</span><b>1,794개</b><p>1.4.21 자동 검사 통과 1,792·실패 0·생략 2, 타입 검사·배포 빌드 통과.</p></div>
       <div class="v"><span class="lab ok">확인</span><b>데스크톱 앱</b><p>macOS Obsidian에서 모든 탭과 시험·암기, 평가·취소, 재시작을 확인했습니다.</p></div>
       <div class="v"><span class="lab no">미검증</span><b>휴대폰 실기기</b><p>iOS·Android 실기기, OS 키보드, 두 기기 실시간 동기화는 직접 확인하지 않았습니다.</p></div>
     </div>
@@ -629,12 +629,14 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
   <div class="wrap">
     <div class="sh"><span class="shape t" aria-hidden="true"></span><h2>자주 묻는 질문</h2><span class="num">09</span></div>
     <div class="faq">
-      <details><summary>업데이트하면 기존 복습 기록이 사라지나요?</summary><p>아니요. 기록과 설정은 <code>data.json</code>·<code>ui-state.json</code>에 있고, 업데이트는 <code>main.js</code>·<code>styles.css</code>·<code>manifest.json</code>만 바꿉니다. 1.4 계열은 저장 형식이 바뀌지 않았습니다. 그래도 업데이트 전에 보관함을 백업해 두세요.</p></details>
+      <details><summary>업데이트하면 기존 복습 기록이 사라지나요?</summary><p>아니요. 기록과 설정은 <code>data.json</code>·<code>ui-state.json</code>에 있고, 업데이트는 <code>main.js</code>·<code>styles.css</code>·<code>manifest.json</code>만 바꿉니다. 1.4 계열은 기록 형식을 바꾸지 않았고, 1.4.19에서 늘어난 설정 항목(미리 학습)은 값이 없으면 기본값으로 읽습니다. 그래도 업데이트 전에 보관함을 백업해 두세요.</p></details>
       <details><summary>수식이 수식으로 안 보이고 글자 그대로 나와요.</summary><p>원문에 <code>$...$</code> 또는 <code>$$...$$</code> 구분자와 TeX 문법이 있어야 수식으로 표시됩니다. <code>vC(t) = Vs(1 - e^(-t/RC))</code>처럼 구분자가 없는 문장은 자동으로 수식이 되지 않습니다.</p></details>
       <details><summary>새 버전을 깔았는데 화면이 그대로예요.</summary><p>Obsidian을 완전히 껐다 다시 켜야 새 파일을 불러옵니다. 실행 중인 버전은 Major Study 제목 옆에 표시됩니다.</p></details>
       <details><summary>휴대폰과 컴퓨터에서 같이 쓸 수 있나요?</summary><p>같은 보관함을 Obsidian Sync·iCloud 등으로 동기화하면 복습 기록·학습 설정·이어하기를 함께 씁니다. 모든 기기를 같은 MIA 버전으로 맞추세요. 실제 두 기기 동기화는 아직 직접 검증하지 않았습니다.</p></details>
       <details><summary>Anki와 무엇이 다른가요?</summary><p>복습 알고리즘(FSRS-6)과 학습 단계·하루 경계·미리 학습·매개변수 최적화는 같은 방식입니다. 카드가 Obsidian 보관함의 Markdown으로 남고 키워드 노트로 개념끼리 연결된다는 점이 다르고, 덱 계층·카드 정지 같은 일부 기능은 없습니다. <a href="#anki">Anki와 비교</a> 표를 보세요.</p></details>
-      <details><summary>백업은 어떻게 하나요?</summary><p>과목 폴더의 <code>문제은행.md</code>, 키워드 노트, <code>.obsidian/<wbr>plugins/<wbr>mia-study/</code>의 <code>data.json</code>·<code>ui-state.json</code>을 보관함 밖의 다른 장소(외장 드라이브, 다른 클라우드, Git 등)에 주기적으로 복사하세요. 동기화는 백업이 아닙니다. <a href="#backup">주의 사항</a>을 보세요.</p></details>
+      <details><summary>백업은 어떻게 하나요?</summary><p>과목 폴더의 <code>문제은행.md</code>, 키워드 노트, <code>.obsidian/<wbr>plugins/<wbr>mia-study/</code>의 <code>data.json</code>·<code>ui-state.json</code>(기기 간 동기화를 켰다면 <code>MIA Study Sync/</code> 폴더도)을 보관함 밖의 다른 장소(외장 드라이브, 다른 클라우드, Git 등)에 주기적으로 복사하세요. 동기화는 백업이 아닙니다. <a href="#backup">주의 사항</a>을 보세요.</p></details>
+      <details><summary>이미 정리해 둔 문제를 한꺼번에 넣을 수 있나요?</summary><p>문제 자료와 <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/MIA-AGENT.md">MIA-AGENT.md</a>를 GPT나 파일을 편집하는 AI 에이전트에 함께 주면 MIA 형식의 문제은행으로 정리해 줍니다. 기존 Markdown 문제는 <strong>문제</strong> 화면의 <strong>등록하지 않은 문제 후보</strong>에서 등록할 수 있습니다. 외부에서 고친 뒤에는 명령 팔레트의 <code>MIA Study: 과목 노트 다시 동기화</code>를 실행하세요.</p></details>
+      <details><summary>버그는 어디에 알리나요?</summary><p><a href="https://github.com/kimchi-kang/mia-study-obsidian/issues">GitHub Issues</a>에 남겨 주세요. 명령 팔레트의 <code>MIA Study: 시작 상태 확인</code> 결과와 기기·Obsidian 버전을 함께 적으면 원인을 찾기 쉽습니다. 개인 문제·답안 파일은 올리지 마세요.</p></details>
       <details><summary>Obsidian 커뮤니티 플러그인 목록에서 찾을 수 있나요?</summary><p>아직 등록 전이라 BRAT 또는 ZIP으로 설치합니다.</p></details>
     </div>
   </div>
@@ -683,7 +685,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
 <footer>
   <div class="wrap">
     <span class="fm" aria-hidden="true"><i class="c"></i><i class="s"></i><i class="t"></i></span>
-    <span>MIA Study 1.4.20 · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT</a> · 복습 일정: <a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a>(FSRS-6) · <a href="#credits">출처</a></span>
+    <span>MIA Study 1.4.21 · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT</a> · 복습 일정: <a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a>(FSRS-6) · <a href="#credits">출처</a></span>
     <span><a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/issues">문제 신고</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases">릴리스</a></span>
   </div>
 </footer>

@@ -10,7 +10,7 @@
 ![Platforms](https://img.shields.io/badge/desktop%20%C2%B7%20mobile-supported-2f9e5b)
 [![License](https://img.shields.io/github/license/kimchi-kang/mia-study-obsidian?color=555)](LICENSE)
 
-[**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.4.20 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.20/mia-study-1.4.20.zip) · [변경 내역](docs/releases/1.4.20.md) · [현재 상태](STATUS.md)
+[**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.4.21 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.21/mia-study-1.4.21.zip) · [변경 내역](docs/releases/1.4.21.md) · [현재 상태](STATUS.md)
 
 <img src="docs/assets/screens/desktop-dashboard.jpg" alt="MIA Study 오늘 화면. 바우하우스 디자인의 복습·새 문제 블록, 시작 패널, 취약 문제 띠와 과목별 학습 카드" width="860">
 
@@ -26,9 +26,14 @@ Obsidian 안에서 과목·질문·키워드를 폼으로 관리하면서 FSRS-6
 
 화면은 1.4.13 바우하우스 디자인(빨강·노랑·파랑, 두꺼운 테두리, 각진 모서리)과 직접 만든 일반 상식 데모 보관함(수학 기초·세계 지리·요리 과학)으로 찍었습니다. 수식·이미지·표·코드 렌더링을 보여 주는 예시 질문이며 실제 학습 내용이 아닙니다. 모바일 화면은 데스크톱 Obsidian에서 휴대폰 폭을 흉내 낸 것입니다.
 
-[1.4.20 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.20) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.4.20 변경 내역](docs/releases/1.4.20.md) · [이전 버전 이력](docs/releases/HISTORY.md)
+[1.4.21 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.21) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.4.21 변경 내역](docs/releases/1.4.21.md) · [이전 버전 이력](docs/releases/HISTORY.md)
 
 Major Study 제목 바로 옆에서 현재 실행 중인 버전을 확인할 수 있습니다. 업데이트한 파일을 로드하려면 Obsidian을 다시 시작하세요. 수식은 원문에 `$...$` 또는 `$$...$$` 구분자와 TeX 문법이 있어야 표시됩니다. 예를 들어 `vC(t) = Vs(1 - e^(-t/RC))` 같은 일반 문장은 자동으로 수식으로 바뀌지 않습니다.
+
+> [!WARNING]
+> MIA Study는 개인이 AI 코딩 도구로 대부분을 만든 프로젝트로, 안정성과 데이터 보존을 보장하지 않는다. 과목 폴더의 `문제은행.md`, 키워드 노트, `.obsidian/plugins/mia-study/data.json`·`ui-state.json`, 기기 간 동기화를 켰다면 `MIA Study Sync/` 폴더를 **보관함 밖의 다른 장소에 주기적으로 백업**한다. iCloud·Obsidian Sync 같은 동기화는 백업이 아니다.
+
+Anki와의 같은 점·다른 점은 [소개 페이지의 비교 표](https://kimchi-kang.github.io/mia-study-obsidian/#anki)와 [ANKI-SETTINGS.md](docs/ANKI-SETTINGS.md)에 정리했다. 버그나 제안은 [Issues](https://github.com/kimchi-kang/mia-study-obsidian/issues)에 남긴다. 신고할 때 명령 팔레트의 `MIA Study: 시작 상태 확인` 결과를 함께 적으면 원인을 찾기 쉽다(개인 문제·답안은 올리지 않는다).
 
 ## 설치
 
@@ -53,11 +58,11 @@ Major Study 제목 바로 옆에서 현재 실행 중인 버전을 확인할 수
 6. `오늘` 화면의 과목 카드에서 과목 이름을 수정하거나 과목을 삭제하고, 키워드 화면에서 키워드의 이름·의미를 수정하거나 삭제한다.
 7. `오늘` 화면의 `시험 모드 시작`은 정답을 가리고, 시험은 상세 학습관리의 상한과 순서를 따른다. `전체 암기 모드`는 평가 없이 질문과 정답을 넘겨 보는 모드이며 복습일과 학습 기록은 바뀌지 않는다. 암기는 복습 기한과 하루 상한에 관계없이 대상 문제 전체를 표시한다. MIA 플러그인 설정 또는 `보기 설정`의 `암기 모드 순서`에서 `순서대로` / `랜덤`을 선택한다(기본 랜덤, 기기별 저장). `순서대로`는 현재 문제 목록 순서를 따르며 변경한 순서는 새 학습부터 적용한다. 암기는 항상 간결하게 표시하며 `정보량` 설정은 시험 모드에만 적용한다. 두 모드 모두 문제 위치와 스크롤을 이어갈 수 있다.
 8. 시험 모드에서 정답을 본 뒤 `못 암기`, `애매`, `암기`, `너무 쉬움` 중 하나를 고른다. `애매`는 정답을 기억했지만 어려웠다는 뜻이다. 떠올리지 못했다면 `못 암기`를 고른다. 시험 모드의 일일 상한은 상세 학습관리에서 조정한다.
-9. 학습·재학습 중인 문제는 예정 시각이 되면 같은 세션에서 다시 출제된다. 다른 문제가 없으면 다음 복습 시각까지 대기하고 자동으로 재개한다. 다음날 이후의 정규 복습은 Anki처럼 **기한일 단위**로 출제한다. 하루 시작 시각(기본 04:00)부터 그날이 기한인 복습은 예약 시각 전이라도 출제하므로, 매일 비슷한 시간에 공부해도 복습이 하루씩 밀리지 않는다. 1분·10분 같은 학습 단계와 하루 미만의 고정 간격은 정확한 시각을 따른다.
+9. 학습·재학습 중인 문제는 예정 시각이 되면 같은 세션에서 다시 출제된다. 다른 문제가 없으면 다음 복습 시각까지 대기하고 자동으로 재개한다. 다음날 이후의 정규 복습은 Anki처럼 **기한일 단위**로 출제한다. 하루 시작 시각(기본 04:00)부터 그날이 기한인 복습은 예약 시각 전이라도 출제하므로, 매일 비슷한 시간에 공부해도 복습이 하루씩 밀리지 않는다. 1분·10분 같은 학습 단계와 하루 미만의 고정 간격은 정확한 시각을 따른다. 세션에 남은 카드가 없으면 `미리 학습 한계(분)`(기본 20분, 0이면 예정 시각까지 기다림) 안에 예정된 학습 단계 카드를 기다리지 않고 바로 보여 준다(Anki의 학습 한계와 같은 동작).
 10. 화면 왼쪽 가장자리에서 중앙 방향으로 쓸면 학습을 시작한 화면으로 돌아간다. 이어하기로 같은 위치를 복원할 수 있다. 제스처로 문제를 넘기지 않으며 이전·다음 버튼을 사용한다. `보기 설정`에서 뒤로가기 제스처와 민감도를 조정할 수 있다.
 11. 이전 문제로 돌아가 같은 출제를 다시 평가하면 해당 평가를 대체한다. 예정 시각에 다시 출제된 문제는 현재 FSRS 상태에서 새 평가를 누적한다. `직전 평가 취소`는 그 평가 직전의 상태와 학습 순서를 복구한다.
 
-일정 계산은 기존 [TS-FSRS](https://github.com/open-spaced-repetition/ts-fsrs) 구현을 사용한다. 날짜 분산과 평가 의미는 [Anki 학습 설명](https://docs.ankiweb.net/manual/studying), 망각 가능성에 따른 정렬은 [Anki 덱 옵션](https://docs.ankiweb.net/manual/deck-options)을 참고했다. 개인별 FSRS 가중치 최적화는 포함하지 않는다.
+일정 계산은 기존 [TS-FSRS](https://github.com/open-spaced-repetition/ts-fsrs) 구현을 사용한다. 날짜 분산과 평가 의미는 [Anki 학습 설명](https://docs.ankiweb.net/manual/studying), 망각 가능성에 따른 정렬은 [Anki 덱 옵션](https://docs.ankiweb.net/manual/deck-options)을 참고했다. 1.4.19부터 학습 설정의 `내 기록으로 최적화`로 내 복습 기록에 맞춘 FSRS 가중치를 계산할 수 있다(선택 기능). 기존·새 가중치의 log loss를 비교해(RMSE는 참고로 표시) 나아지지 않으면 적용하지 않고, `학습 설정 저장` 뒤에만 반영하며 이미 정해진 복습일은 다시 계산하지 않는다.
 
 추가 기능:
 
@@ -90,7 +95,7 @@ Major Study 제목 바로 옆에서 현재 실행 중인 버전을 확인할 수
 
 ## 학습 설정
 
-MIA 첫 화면의 `학습 설정` 또는 Obsidian 설정 → MIA Study에서 하루 학습량, 학습·재학습 단계, 목표 기억률, 출제 순서, FSRS 가중치를 바꾼다. 변경은 `학습 설정 저장`을 눌러야 적용된다. 기본값은 새 문제 20개/일, 복습 200회/일, 하루 시작 오전 4시, 학습 `1m 10m`, 재학습 `10m`, 목표 기억률 90%다.
+MIA 첫 화면의 `학습 설정` 또는 Obsidian 설정 → MIA Study에서 하루 학습량, 학습·재학습 단계, 목표 기억률, 출제 순서, FSRS 가중치를 바꾼다. 변경은 `학습 설정 저장`을 눌러야 적용된다. 기본값은 새 문제 20개/일, 복습 200회/일, 하루 시작 오전 4시, 학습 `1m 10m`, 재학습 `10m`, 목표 기억률 90%, 미리 학습 20분이다. 복습 기록이 쌓이면 `내 기록으로 최적화`로 FSRS 가중치를 내 기록에 맞출 수 있다.
 
 - Anki 설정과의 대응·차이: [docs/ANKI-SETTINGS.md](docs/ANKI-SETTINGS.md)
 - 학습 단계·일정 정책: [docs/SCHEDULER-POLICIES.md](docs/SCHEDULER-POLICIES.md)
