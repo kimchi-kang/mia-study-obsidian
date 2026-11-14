@@ -28,7 +28,7 @@ export class StudyAppearanceModal extends Modal {
       dropdown.addOption("small", "작게").addOption("medium", "보통").addOption("large", "크게").setValue(this.draft.size);
       dropdown.onChange((value) => { if (value === "small" || value === "medium" || value === "large") this.change({ size: value }); });
     });
-    new Setting(screen).setName("정보량").setDesc("간결하게: 질문·답안에 집중합니다. 자세하게: 키워드와 이어볼 문제도 함께 표시합니다.").addDropdown((dropdown) => {
+    new Setting(screen).setName("정보량").setDesc("시험 모드에만 적용합니다. 암기 모드는 항상 간결하게 표시합니다. 간결하게: 질문·답안에 집중합니다. 자세하게: 키워드와 이어볼 문제도 함께 표시합니다.").addDropdown((dropdown) => {
       dropdown.addOption("compact", "간결하게").addOption("detailed", "자세하게").setValue(this.draft.density);
       dropdown.onChange((value) => { if (value === "compact" || value === "detailed") this.change({ density: value }); });
     });
