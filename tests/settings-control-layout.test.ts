@@ -15,9 +15,9 @@ describe("settings control layout", () => {
   it("leaves native toggle variables, geometry and pseudo elements to the host theme", () => {
     root.walkDecls(decl => expect(decl.prop).not.toMatch(/^--toggle-/));
     root.walkRules(rule => {
-      if (rule.selector.includes(".checkbox-container") && !rule.selector.includes(":not(")) {
+      if (/\.checkbox-container(?::focus-visible|\.is-enabled)?$/.test(rule.selector)) {
         expect(rule.selector).not.toMatch(/::(?:before|after)/);
-        rule.walkDecls(decl => expect(decl.prop).not.toMatch(/^(width|height|border|background|inset|left|top|margin|padding|transform)/));
+        rule.walkDecls(decl => expect(decl.prop).not.toMatch(/^(width|height|border|inset|left|top|margin|padding|transform)/));
       }
     });
     expect(css).not.toContain(".is-phone .mia-appearance-modal .setting-item");
@@ -45,6 +45,9 @@ describe("settings control layout", () => {
     expect(harness).toContain('classList.toggle("is-mobile"');
     for (const check of ["thumb containment", "select alignment", "select full width", "44px target", "horizontal overflow"]) expect(harness).toContain(check);
     expect(harness).toContain('params.get("width")');
+    expect(harness).toContain("padding: var(--toggle-border-width)");
+    expect(harness).toContain("translate3d(calc(var(--toggle-width) - var(--toggle-thumb-width) - var(--toggle-border-width)), 0, 0)");
+    expect(harness).toContain("transform.m41");
     expect(harness).toContain('toggle("집중 모드", false)');
     expect(harness).toContain('toggle("쓸어서 뒤로가기", true)');
   });

@@ -1517,6 +1517,20 @@ body.theme-dark .mia-view :is(a, .internal-link, .external-link) { color: #8fa9f
 /* Focus */
 :is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(button, input, select, textarea, summary, a):focus-visible { outline: 4px solid var(--mia-focus); outline-offset: 2px; box-shadow: none; }
 
+/* Paint switches without changing the host's border, padding or thumb geometry. */
+:is(.mia-view, .mia-keyboard-settings, .modal:is(.mia-keyboard-modal, .mia-study-management-modal, .mia-appearance-modal, .mia-controls-modal)) .checkbox-container {
+  background-color: var(--mia-panel);
+  box-shadow: 0 0 0 3px var(--mia-ink);
+}
+:is(.mia-view, .mia-keyboard-settings, .modal:is(.mia-keyboard-modal, .mia-study-management-modal, .mia-appearance-modal, .mia-controls-modal)) .checkbox-container.is-enabled {
+  background-color: var(--mia-blue);
+}
+:is(.mia-view, .mia-keyboard-settings, .modal:is(.mia-keyboard-modal, .mia-study-management-modal, .mia-appearance-modal, .mia-controls-modal)) .checkbox-container:focus-visible {
+  box-shadow: 0 0 0 3px var(--mia-ink);
+  outline: 4px solid var(--mia-focus);
+  outline-offset: 5px;
+}
+
 /* Header: brand mark of two primary shapes, heavy rule below */
 .mia-view .mia-header { border-bottom: 4px solid var(--mia-ink); padding-bottom: 14px; }
 .mia-view .mia-header h2 { font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
@@ -2201,3 +2215,38 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 }
 /* Keep the tablet overlay compact even when Obsidian's mobile modal is full width. */
 .modal-container > .modal.mia-appearance-modal { width: min(480px, calc(100vw - 28px)); }
+
+/* The same utility row also serves memorization, with no empty grade slot. */
+.mia-view .mia-thumb-navigation:not(:has(.mia-dock-undo, .mia-controls-help)) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  margin-top: 0;
+}
+.mia-view .mia-primary-card > .mia-inline-actions > button { min-height: 44px; }
+.mia-view .mia-hero-main > .mia-inline-actions + .mia-muted {
+  margin: 8px 0 0;
+  font-size: var(--font-ui-small);
+}
+/* Fallbacks keep these controls intact in plugin dialogs outside the Bauhaus palette (e.g. follow-up links). */
+.mia-setting-controls .setting-item-control > :is(input:not([type="checkbox"], [type="radio"], [type="range"]), select, textarea) {
+  box-sizing: border-box;
+  min-height: 44px;
+  border: 3px solid var(--mia-ink, var(--background-modifier-border));
+  border-radius: var(--mia-radius, var(--radius-s));
+  background: var(--mia-panel, var(--background-primary));
+  color: var(--mia-ink, var(--text-normal));
+}
+.mia-setting-controls .setting-item-control > button:not(.mod-cta, .mod-warning, .checkbox-container) {
+  min-height: 44px;
+  border: 3px solid var(--mia-ink, var(--background-modifier-border));
+  border-radius: var(--mia-radius, var(--radius-s));
+  background: var(--mia-panel, var(--background-primary));
+  color: var(--mia-ink, var(--text-normal));
+}
+.mia-setting-controls .setting-item-control > button:not(.mod-cta, .mod-warning, .checkbox-container):not(:disabled):hover {
+  background: var(--mia-yellow, var(--background-modifier-hover));
+  color: var(--mia-on-yellow, var(--text-normal));
+}
+.mia-study-management-settings .mia-anki-settings-section > .setting-item-description {
+  color: var(--mia-muted);
+  overflow-wrap: anywhere;
+}
