@@ -1,6 +1,7 @@
 import { App, Component, Modal } from "obsidian";
 import { QuestionReviewState } from "../core/models";
 import { QuestionRecommendation } from "../core/recommendation-engine";
+import { ModalOpenGuard } from "./modal-open-guard";
 import { QuestionDetailActions, QuestionDetailView, RegisteredQuestion } from "./question-detail-view";
 
 export type { QuestionDetailActions } from "./question-detail-view";
@@ -18,13 +19,13 @@ export class QuestionDetailModal extends Modal {
     recommendations: readonly QuestionRecommendation[],
     meanings: ReadonlyMap<string, string>,
     actions: QuestionDetailActions,
-    private readonly onClosed?: () => void,
+    modalOpenGuard = new ModalOpenGuard(),
   ) {
     super(app);
     this.detail = new QuestionDetailView(app, { question, review, recommendations, meanings, actions }, {
       afterAction: () => this.close(),
       afterMutation: () => this.close(),
-    });
+    }, modalOpenGuard);
     this.setTitle(question.heading);
   }
 
@@ -43,6 +44,5 @@ export class QuestionDetailModal extends Modal {
     this.renderer = null;
     this.modalEl.removeClass("mia-detail-modal");
     this.contentEl.empty();
-    this.onClosed?.();
   }
 }

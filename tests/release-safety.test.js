@@ -10,7 +10,8 @@ vi.mock("obsidian", () => ({
 }));
 vi.mock("../src/ui/question-detail-modal", () => ({
   QuestionDetailModal: class {
-    constructor(_app, _question, review, _recommendations, _meanings, actions, onClosed) { ui.detail = { review, actions }; ui.onClosed = onClosed; }
+    constructor(_app, _question, review, _recommendations, _meanings, actions) { ui.detail = { review, actions }; ui.onClosed = () => this.onClose(); }
+    onClose() {}
     open() { ui.opened += 1; }
   },
 }));

@@ -58,10 +58,27 @@ import { StudyAppearanceModal } from "../src/ui/study-appearance-modal";
 import { StudyUiStore } from "../src/services/study-ui-store";
 import { QuestionDetailModal } from "../src/ui/question-detail-modal";
 import { QuestionMetadataModal } from "../src/ui/metadata-modal";
+import { ConfirmDeleteModal } from "../src/ui/manage-modals";
 
 const question = { id: "base", heading: "질문", questionMarkdown: "문제", answerMarkdown: "정답", subject: "과목", questionType: "정의형", filePath: "과목A/문제은행.md", coreKeywords: [{ target: "키워드", raw: "키워드", label: "키워드" }], subKeywords: [], followUpIds: ["other"] };
 
 describe("modal interaction regressions", () => {
+  it("runs a delete confirmation action only once while it is pending", async () => {
+    let finish;
+    const confirm = vi.fn(() => new Promise(resolve => { finish = resolve; }));
+    const modal = new ConfirmDeleteModal({}, "삭제", "설명", "삭제", confirm);
+    modal.modalEl.classList = { add: vi.fn() };
+    modal.onOpen();
+    const button = modal.contentEl.children.at(-1);
+    const click = button.handlers.get("click");
+    const pending = click();
+    await click();
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(button.disabled).toBe(true);
+    finish();
+    await pending;
+  });
+
   it("does not rebuild a closed detail modal after a slow markdown render", async () => {
     let finish;
     const render = vi.spyOn(MarkdownRenderer, "render").mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));

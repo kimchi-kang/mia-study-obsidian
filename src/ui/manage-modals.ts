@@ -10,6 +10,8 @@ import { KeyboardAwareModal } from "./mobile-keyboard";
 export type { ManagedQuestionDraft };
 
 export class ConfirmDeleteModal extends Modal {
+  private confirming = false;
+
   constructor(
     app: App,
     title: string,
@@ -28,12 +30,15 @@ export class ConfirmDeleteModal extends Modal {
     const actions = new Setting(this.contentEl);
     actions.addButton((button) => button.setButtonText("취소").onClick(() => this.close()));
     actions.addButton((button) => button.setButtonText(this.confirmLabel).setWarning().onClick(async () => {
+      if (this.confirming) return;
+      this.confirming = true;
       button.setDisabled(true);
       try {
         await this.onConfirm();
         this.close();
       } catch (error) {
         new Notice(`${this.failureLabel}: ${errorMessage(error)}`);
+        this.confirming = false;
         button.setDisabled(false);
       }
     }));

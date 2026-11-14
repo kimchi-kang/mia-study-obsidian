@@ -89,6 +89,7 @@ import { buildReviewQueue } from "../src/core/recommendation-engine";
 import { DEFAULT_SETTINGS } from "../src/core/models";
 import { calculateProgress } from "../src/core/progress";
 import { studyDayStart } from "../src/core/study-management";
+import { ModalOpenGuard } from "../src/ui/modal-open-guard";
 
 function setup({ failSave = false, start = true, linked = false } = {}) {
   const question = { id: "q", heading: "질문", questionMarkdown: "질문", answerMarkdown: "정답", subject: "과목", questionType: "정의형", filePath: "bank.md", coreKeywords: [], subKeywords: [], followUpIds: [] };
@@ -98,6 +99,7 @@ function setup({ failSave = false, start = true, linked = false } = {}) {
   const studyApp = { loadLocalStorage: () => null, saveLocalStorage() {}, vault: { adapter: { exists: async path => files.has(path), read: async path => files.get(path), write: async (path, data) => { files.set(path, data); } } } };
   const plugin = {
     manifest: { version: "1.0.3" },
+    modalOpenGuard: new ModalOpenGuard(),
     studyUi: new StudyUiStore(studyApp, "ui-state.json"),
     openQuestionPreview: vi.fn().mockResolvedValue(undefined),
     openManagedQuestionEditor: vi.fn().mockResolvedValue(undefined),
