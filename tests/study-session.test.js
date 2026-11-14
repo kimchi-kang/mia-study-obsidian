@@ -88,7 +88,7 @@ import { MiaDataStore } from "../src/services/data-store";
 import { buildReviewQueue } from "../src/core/recommendation-engine";
 import { DEFAULT_SETTINGS } from "../src/core/models";
 import { calculateProgress } from "../src/core/progress";
-import { studyDayStart } from "../src/core/study-management";
+import { dailyStudyCounts, studyDayStart } from "../src/core/study-management";
 import { ModalOpenGuard } from "../src/ui/modal-open-guard";
 
 function setup({ failSave = false, start = true, linked = false, learnAheadMinutes = 20 } = {}) {
@@ -128,6 +128,137 @@ beforeEach(() => {
   vi.stubGlobal("window", { setTimeout, clearTimeout });
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+describe("read-only memorization", () => {
+  function browseLibrary() {
+    const ui = setup({ start: false, linked: true });
+    ui.plugin.listKeywordNotes = () => [];
+    ui.plugin.index.registered[0].coreKeywords = [{ target: "개념", label: "개념", raw: "[[개념]]" }];
+    ui.reviews.q = ui.plugin.fsrs.rate(undefined, Rating.Easy);
+    ui.plugin.store.settings.studyManagement.newCardsPerDay = 0;
+    ui.plugin.store.settings.studyManagement.reviewsPerDay = 0;
+    ui.plugin.studyUi.updateAppearance({ memorizationOrder: "sequential", density: "detailed" });
+    return ui;
+  }
+
+  it.each([
+    ["dashboard", "전체 암기 모드", ["q", "related"]],
+    ["dashboard", "암기", ["q", "related"]],
+    ["questions", "검색 결과 암기", ["q", "related"]],
+    ["keywords", "연결 문제 암기", ["q"]],
+    ["blocked", "암기 모드로 보기", ["q"]],
+  ])("starts %s / %s read-only with the entire target scope", async (route, label, ids) => {
+    const ui = browseLibrary();
+    const before = structuredClone(ui.reviews);
+    const setReview = vi.spyOn(ui.plugin.store, "setReview");
+    const removeReview = vi.spyOn(ui.plugin.store, "removeReview");
+    if (route === "blocked") ui.view.startReview(["q"]);
+    else ui.view.navigate(route);
+    const button = ui.exactButton(label);
+    expect(button.disabled).toBe(false);
+    await button.handlers.get("click")?.({ stopPropagation() {} });
+    if (button.onclick) await button.onclick();
+    expect(ui.view.getState()).toMatchObject({ sessionMode: "browse", queue: ids, answerVisible: true });
+    expect(ui.content()).toContain("모범 답안");
+    expect(ui.view.contentEl.dataset.density).toBe("compact");
+    for (const text of ["못 암기", "애매", "암기", "너무 쉬움", "정답 보기", "직전 평가 취소", "조작 안내"]) expect(ui.exactButton(text)).toBeUndefined();
+    for (const text of ["핵심 개념 확인", "이어볼 문제", "Space 정답", "U 취소"]) expect(ui.content()).not.toContain(text);
+    const state = ui.view.getState();
+    for (const key of [" ", "1", "2", "3", "4", "u", "U"]) {
+      ui.view.handleStudyShortcut({ key, target: ui.exactButton("다음 →"), preventDefault() {} });
+    }
+    ui.view.handleStudyShortcut({ key: "ㅕ", code: "KeyU", preventDefault() {} });
+    await ui.view.undoLastRating();
+    expect(ui.view.getState()).toEqual(state);
+    expect(ui.reviews).toEqual(before);
+    expect(setReview).not.toHaveBeenCalled();
+    expect(removeReview).not.toHaveBeenCalled();
+  });
+
+  it("saves the full queue, index and scroll across a fresh view and retains arrow navigation", async () => {
+    const ui = browseLibrary();
+    ui.view.startReview(undefined, "browse");
+    ui.view.handleStudyShortcut({ key: "ArrowRight", preventDefault() {} });
+    await Promise.resolve();
+    ui.view.contentEl.querySelector(".mia-study-layout").scrollTop = 345;
+    ui.view.contentEl.scrollTop = 12;
+    ui.view.scheduleReadingSave();
+    await vi.advanceTimersByTimeAsync(400);
+    await ui.plugin.studyUi.load();
+    const saved = ui.plugin.studyUi.resume;
+    expect(saved).toMatchObject({ queue: ["q", "related"], queueIndex: 1, scrollTop: 345, pageScrollTop: 12, sessionMode: "browse" });
+    expect(saved.sessionSummary).toBeUndefined();
+    expect(saved.reviewCheckpoint).toBeUndefined();
+    const next = browseLibrary();
+    await next.plugin.studyUi.saveResume(saved);
+    await next.view.resumeStudy();
+    await vi.waitFor(() => expect(next.view.contentEl.querySelector(".mia-study-layout").scrollTop).toBe(345));
+    expect(next.view.contentEl.scrollTop).toBe(12);
+    expect(next.view.getState()).toMatchObject({ queue: saved.queue, queueIndex: 1, answerVisible: true });
+    next.view.handleStudyShortcut({ key: "ArrowLeft", preventDefault() {} });
+    expect(next.view.getState().queueIndex).toBe(0);
+  });
+
+  it.each(["resume", "workspace"])("ignores legacy browse grades and outdated review checkpoints on %s restore", async source => {
+    const ui = browseLibrary();
+    const saved = { queue: ["q", "related"], seed: ["q", "related"], skipped: [], queueIndex: 0, answerVisible: false, sessionMode: "browse", updatedAt: new Date().toISOString(), scrollTop: 234, pageScrollTop: 12, conceptsOpen: true,
+      sessionSummary: { startedAt: Date.now() - 1000, grades: [{ id: "q", grade: 4 }] }, reviewCheckpoint: { id: "q", version: "old" } };
+    await ui.plugin.studyUi.saveResume(saved);
+    const before = structuredClone(ui.reviews);
+    const write = vi.spyOn(ui.plugin.store, "setReview");
+    if (source === "resume") await ui.view.resumeStudy();
+    else await ui.view.setState({ ...saved, route: "study" }, {});
+    await vi.waitFor(() => expect(ui.view.contentEl.querySelector(".mia-study-layout").scrollTop).toBe(234));
+    expect(ui.view.getState()).toMatchObject({ queueIndex: 0, answerVisible: true, sessionMode: "browse" });
+    expect(ui.view.sessionGrades.size).toBe(0);
+    expect(ui.content()).not.toContain("이번 학습 평가");
+    expect(ui.content()).not.toContain("핵심 개념 확인");
+    expect(ui.exactButton("직전 평가 취소")).toBeUndefined();
+    expect(ui.plugin.studyUi.resume.sessionSummary).toEqual(saved.sessionSummary);
+    expect(ui.reviews).toEqual(before);
+    expect(write).not.toHaveBeenCalled();
+  });
+
+  it("ends without learning waits or result modals, and restarts the same scope", async () => {
+    const ui = browseLibrary();
+    ui.reviews.q = ui.plugin.fsrs.rate(undefined, Rating.Again);
+    const before = structuredClone(ui.reviews);
+    const at = new Date();
+    const progress = calculateProgress(ui.plugin.index.registered, ui.reviews, ui.plugin.fsrs, at);
+    const counts = dailyStudyCounts(ui.reviews, ui.plugin.store.settings.studyManagement, at);
+    const write = vi.spyOn(ui.plugin.store, "setReview");
+    ui.view.startReview(undefined, "browse");
+    await ui.exactButton("다음 →").click();
+    await ui.exactButton("← 이전").click();
+    await ui.exactButton("다음 →").click();
+    await ui.exactButton("다음 →").click();
+    expect(ui.content()).toContain("끝까지 봤습니다");
+    for (const text of ["다음 복습 대기", "학습 완료", "건너뜀", "평가"]) expect(ui.content()).not.toContain(text);
+    await vi.advanceTimersByTimeAsync(600000);
+    expect(modalBoundary.instances).toHaveLength(0);
+    expect(ui.reviews).toEqual(before);
+    expect(calculateProgress(ui.plugin.index.registered, ui.reviews, ui.plugin.fsrs, at)).toEqual(progress);
+    expect(dailyStudyCounts(ui.reviews, ui.plugin.store.settings.studyManagement, at)).toEqual(counts);
+    expect(write).not.toHaveBeenCalled();
+    await ui.exactButton("처음부터 다시").click();
+    expect(ui.view.getState()).toMatchObject({ queueIndex: 0, queue: ["q", "related"], answerVisible: true });
+    await ui.exactButton("다음 →").click();
+    await ui.exactButton("다음 →").click();
+    await ui.exactButton("학습 전 화면으로").click();
+    expect(ui.view.getState().route).toBe("dashboard");
+  });
+
+  it("rejects a detached recall rating button after switching to browse with the same question", async () => {
+    const ui = setup();
+    await ui.exactButton("정답 보기").click();
+    const stale = ui.button("너무 쉬움");
+    const write = vi.spyOn(ui.plugin.store, "setReview");
+    ui.view.startReview(["q"], "browse");
+    await stale.handlers.get("click")();
+    expect(write).not.toHaveBeenCalled();
+    expect(ui.reviews).toEqual({});
+  });
+});
 
 describe("learning settings dialog", () => {
   const field = (ui, label) => {
@@ -326,7 +457,7 @@ describe("study view scheduling integration", () => {
     expect(ui.content()).toContain("모범 답안");
     for (const label of ["못 암기", "애매", "암기", "너무 쉬움"]) expect(ui.exactButton(label)).toBeUndefined();
     expect(ui.reviews.q).toEqual(review);
-    expect(ui.plugin.studyUi.resume).toBeNull();
+    expect(ui.plugin.studyUi.resume).toMatchObject({ sessionMode: "browse", queue: ["q"] });
   });
 
   it("counts mixed reasons only when the selected recall queue is empty", () => {
@@ -379,7 +510,7 @@ describe("study view scheduling integration", () => {
   it.each([
     ["시험 모드 시작", "recall", false], ["전체 암기 모드", "browse", false],
     ["시험", "recall", true], ["암기", "browse", true],
-  ])("uses due-first randomized eligibility from %s", async (label, mode, subjectOnly) => {
+  ])("uses mode-specific scope and ordering from %s", async (label, mode, subjectOnly) => {
     const ui = setup({ start: false }); const template = ui.plugin.index.registered[0];
     const ids = ["new-a", "due-a", "future", "due-b", "new-b", "other"];
     ui.plugin.index.registered.splice(0, 1, ...ids.map(id => ({ ...template, id, heading: id, subject: id === "other" ? "다른 과목" : "과목" })));
@@ -391,20 +522,25 @@ describe("study view scheduling integration", () => {
     const state = ui.view.getState();
     expect(state.sessionMode).toBe(mode);
     expect(state.answerVisible).toBe(mode === "browse");
-    expect(state.queue.slice(0, 2)).toEqual(["due-b", "due-a"]);
-    expect(state.queue.slice(2)).toEqual(subjectOnly ? ["new-b", "new-a"] : ["new-b", "other", "new-a"]);
-    expect(state.queue).not.toContain("future");
+    if (mode === "browse") {
+      expect([...state.queue].sort()).toEqual((subjectOnly ? ids.filter(id => id !== "other") : ids).sort());
+      expect(ui.button("암기")).toBeUndefined();
+    } else {
+      expect(state.queue.slice(0, 2)).toEqual(["due-b", "due-a"]);
+      expect(state.queue.slice(2)).toEqual(subjectOnly ? ["new-b", "new-a"] : ["new-b", "other", "new-a"]);
+      expect(state.queue).not.toContain("future");
+    }
     const fixed = [...state.queue];
     await ui.view.setState(ui.view.getState(), {});
     expect(ui.view.getState().queue).toEqual(fixed);
     ui.view.showDashboard(); await ui.button("이어하기").click();
     expect(ui.view.getState().queue).toEqual(fixed);
-    expect(ui.reviews[fixed[0]].history).toHaveLength(1);
+    expect(ui.reviews).toEqual({ "due-a": mature, "due-b": mature, future: expect.any(Object) });
   });
 
-  it.each(["시험 모드 시작", "전체 암기 모드", "시험", "암기"])("disables %s when every review is still in the future", label => {
+  it.each(["시험 모드 시작", "전체 암기 모드", "시험", "암기"])("only disables recall %s when every review is still in the future", label => {
     const ui = setup({ start: false }); ui.reviews.q = ui.plugin.fsrs.rate(undefined, Rating.Easy);
-    ui.view.showDashboard(); expect(ui.exactButton(label).disabled).toBe(true);
+    ui.view.showDashboard(); expect(ui.exactButton(label).disabled).toBe(["시험 모드 시작", "시험"].includes(label));
   });
 
   it("graduates Again → Good → Good and clears resume without pulling a future review into today", async () => {
@@ -733,15 +869,14 @@ describe("study view scheduling integration", () => {
     expect(ui.reviews).toEqual({});
   });
 
-  it("opens an already queued follow-up in browse mode without changing the current session or review", async () => {
+  it("hides follow-ups in browse while retaining the queue and reviews", () => {
     const ui = setup({ linked: true });
     ui.view.startReview(["q", "related"], "browse");
-    const before = ui.view.getState();
-    expect(ui.button("이미 학습에 포함됨").disabled).toBe(true);
-    expect(ui.button("꼬리질문").disabled).toBe(false);
-    await ui.button("꼬리질문").click();
-    expect(ui.plugin.openQuestionPreview).toHaveBeenCalledWith(expect.objectContaining({ id: "related" }), expect.any(Function));
-    expect(ui.view.getState()).toEqual(before);
+    expect(ui.view.getState().queue).toEqual(["q", "related"]);
+    expect(ui.button("이미 학습에 포함됨")).toBeUndefined();
+    expect(ui.button("꼬리질문")).toBeUndefined();
+    expect(ui.content()).not.toContain("이어볼 문제");
+    expect(ui.plugin.openQuestionPreview).not.toHaveBeenCalled();
     expect(ui.reviews).toEqual({});
   });
 
@@ -777,8 +912,10 @@ describe("study view scheduling integration", () => {
   it("appends a new follow-up while revisiting history so recorded positions stay attached to their questions", async () => {
     const ui = setup({ linked: true });
     ui.plugin.index.registered.push({ ...ui.plugin.index.registered[0], id: "third", heading: "기존 다음 질문" });
-    ui.view.startReview(["q", "third"], "browse");
+    ui.view.startReview(["q", "third"], "recall");
+    await ui.button("정답 보기").click();
     await ui.button("너무 쉬움").click();
+    await ui.button("정답 보기").click();
     await ui.button("너무 쉬움").click();
     await ui.view.setState({ ...ui.view.getState(), queueIndex: 0, answerVisible: true }, {});
     await ui.button("학습 끝에 추가").click();
@@ -959,7 +1096,8 @@ async function persistentSession(){
   const native={loadData:async()=>structuredClone(disk),saveData:async value=>{disk=structuredClone(value);}};
   const store=new MiaDataStore(native);await store.load();ui.plugin.store=store;
   const remote=new MiaDataStore(native);await remote.load();
-  ui.view.startReview(["q"],"browse");
+  ui.view.startReview(["q"],"recall");
+  await ui.button("정답 보기").click();
   return {...ui,store,remote,native,disk:()=>structuredClone(disk)};
 }
 
@@ -1009,7 +1147,7 @@ describe("late input and clock changes",()=>{
   it("ignores a queued click from the previous question after navigating",async()=>{
     const ui=await persistentSession();
     ui.plugin.index.registered.push({...ui.plugin.index.registered[0],id:"other",heading:"다음 질문"});
-    ui.view.startReview(["q","other"],"browse");const stale=ui.button("너무 쉬움");
+    ui.view.startReview(["q","other"],"recall");await ui.button("정답 보기").click();const stale=ui.button("너무 쉬움");
     await ui.button("다음 문제 →").click();await stale.handlers.get("click")();
     expect(ui.store.getReview("q")).toBeUndefined();expect(ui.store.getReview("other")).toBeUndefined();
     expect(ui.view.getState().queueIndex).toBe(1);
@@ -1028,7 +1166,7 @@ describe("exact baseline undo for mature reviews",()=>{
  it.each([-86400000,0,3*86400000])("restores the exact original due and history when rated %s ms relative to due",async offset=>{
   const ui=await persistentSession();const original=ui.plugin.fsrs.rate(undefined,Rating.Easy,new Date("2026-09-01T00:00:00Z"),"q");
   await ui.store.setReview("q",original);vi.setSystemTime(new Date(Date.parse(original.card.due)+offset));
-  await ui.view.setState({route:"study",queue:["q"],queueIndex:0,answerVisible:true,sessionMode:"browse"},{});
+  await ui.view.setState({route:"study",queue:["q"],queueIndex:0,answerVisible:true,sessionMode:"recall"},{});
   await ui.button("못 암기").click();expect(ui.store.getReview("q").history).toHaveLength(2);
   await ui.button("직전 평가 취소").click();await vi.waitFor(()=>expect(ui.view.isMutatingReview).toBe(false));
   expect(ui.store.getReview("q")).toEqual(original);expect(ui.disk().reviews.q).toEqual(original);
@@ -1160,10 +1298,10 @@ describe("memorization ordering and back navigation", () => {
     ui.reviews.future = ui.plugin.fsrs.rate(undefined, Rating.Easy);
     ui.plugin.studyUi.updateAppearance({ memorizationOrder: "sequential" });
     ui.view.startReview(undefined, "browse");
-    expect(ui.view.getState().queue).toEqual(["new-b", "due-z", "new-a", "due-a"]);
+    expect(ui.view.getState().queue).toEqual(["new-b", "future", "due-z", "new-a", "due-a"]);
     ui.plugin.studyUi.updateAppearance({ memorizationOrder: "random" });
     ui.view.showDashboard(); await ui.button("이어하기").click();
-    expect(ui.view.getState().queue).toEqual(["new-b", "due-z", "new-a", "due-a"]);
+    expect(ui.view.getState().queue).toEqual(["new-b", "future", "due-z", "new-a", "due-a"]);
     ui.plugin.studyUi.updateAppearance({ memorizationOrder: "sequential" });
     Math.random.mockReturnValue(0);
     ui.view.startReview(undefined, "recall");
@@ -1197,7 +1335,8 @@ it("completes recall and clears resume after a new card is graded Good with a fi
 it.each([[90, "90분"], [36 * 60, "36시간"], [45 * 1440, "45일"], [36500 * 1440 - 1, "52559999분"], [1440, "1일"]])("shows a fixed interval of %s minutes exactly and saves that duration", async (minutes, label) => {
   const ui = setup({ start: false });
   ui.plugin.fsrs = new FsrsService({ targetRetention: .9, maximumIntervalDays: 36500, gradeIntervalsMinutes: { 3: minutes } });
-  ui.view.startReview(["q"], "browse");
+  ui.view.startReview(["q"], "recall");
+  await ui.button("정답 보기").click();
   expect(ui.button("암기").content).toContain(label);
   const now = Date.now();
   await ui.button("암기").click();
@@ -1289,7 +1428,7 @@ it.each(["recall", "browse"])("hides generated source attribution in %s without 
   expect(ui.content()).not.toContain("원문:");
   expect(ui.exactButton("원문 열기")).toBeUndefined();
   expect(question.answerMarkdown).toBe(stored);
-  expect(ui.button("암기")).toBeDefined();
+  expect(Boolean(ui.button("암기"))).toBe(mode === "recall");
 });
 
 describe("dashboard task guidance", () => {
@@ -1370,7 +1509,7 @@ describe("edit the current saved question from an active session", () => {
       expect(ui.view.questionList.sort).toBe("updated");
       expect(ui.plugin.index.registered[0].answerMarkdown).toBe("정답");
     });
-    it(`${mode}: cancellation preserves content and prior ratings, changed answers explicitly retain grades`, async () => {
+    it(`${mode}: editing preserves content and prior ratings, only recall shows grading guidance`, async () => {
       const ui = setup(); ui.view.startReview(["q"], mode);
       ui.view.sessionAttempts.set(0, {id:"q",grade:Rating.Good});
       const attempts = structuredClone([...ui.view.sessionAttempts]);
@@ -1382,7 +1521,7 @@ describe("edit the current saved question from an active session", () => {
       const [,closed,saved] = ui.plugin.openManagedQuestionEditor.mock.calls[1];
       ui.plugin.index.registered[0] = {...ui.plugin.index.registered[0],answerMarkdown:"새 정답"}; saved(); closed();
       expect([...ui.view.sessionAttempts]).toEqual(attempts);
-      expect(ui.content()).toContain("자동 재채점되지 않습니다");
+      expect(ui.content().includes("자동 재채점되지 않습니다")).toBe(mode === "recall");
     });
     it(`${mode}: a deleted source never redirects to another question`, async () => {
       const ui = setup({linked:true}); ui.view.startReview(["q","related"], mode);
@@ -1584,12 +1723,18 @@ describe("scheduler audit through rating buttons and durable storage",()=>{
       vi.setSystemTime(dueFrom);ui.start();expect(ui.view.getState().queue).toEqual(["q"]);
     }
   });
-  it.each(["recall","browse"])("%s: revealing and skipping never grade; rating does, with recoverable write failure",async mode=>{
+  it.each(["recall","browse"])("%s: reading never grades; only recall saves ratings with recoverable write failure",async mode=>{
     const ui=await durable(mode);ui.start();const before=JSON.stringify(ui.disk().reviews);
     if(mode==="recall")await ui.exactButton("정답 보기").click();
     expect(JSON.stringify(ui.disk().reviews)).toBe(before);
     await ui.exactButton("다음 →").click();expect(JSON.stringify(ui.disk().reviews)).toBe(before);
     ui.start();if(mode==="recall")await ui.exactButton("정답 보기").click();
+    if (mode === "browse") {
+      for (const label of ["못 암기", "애매", "암기", "너무 쉬움", "직전 평가 취소", "정답 보기"]) expect(ui.exactButton(label)).toBeUndefined();
+      for (const key of ["1", "2", "3", "4", "u", " "]) ui.view.handleStudyShortcut({ key, preventDefault() {} });
+      await ui.reload(); expect(JSON.stringify(ui.disk().reviews)).toBe(before);
+      return;
+    }
     ui.fail(true);await ui.button("못 암기").click();expect(JSON.stringify(ui.disk().reviews)).toBe(before);expect(ui.view.getState().queueIndex).toBe(0);
     ui.fail(false);await ui.button("못 암기").click();await ui.reload();
     expect(ui.plugin.store.getReview("q").history).toHaveLength(1);expect(ui.plugin.store.getReview("q").card.state).toBe(1);
@@ -1807,7 +1952,7 @@ it("refreshes an expired interval at the study-day boundary before accepting a c
   const baseline = ui.plugin.fsrs.rate(undefined, Rating.Easy, reviewedAt, "q");
   ui.reviews.q = baseline;
   expect(baseline.card.due).toBe(new Date(reviewedAt.getTime() + 120 * 60000).toISOString());
-  await ui.view.setState({ route: "study", queue: ["q"], queueIndex: 0, answerVisible: true, sessionMode: "browse" }, {});
+  await ui.view.setState({ route: "study", queue: ["q"], queueIndex: 0, answerVisible: true, sessionMode: "recall" }, {});
   // One study day elapsed before the boundary, two after it.
   expect(ui.button("암기").attrs["aria-label"]).toContain("다음 복습 13일");
   const shown = ui.button("암기");
@@ -1825,8 +1970,8 @@ it("refreshes an expired interval at the study-day boundary before accepting a c
 describe("initial workspace session restoration", () => {
   it("restores the saved scroll and expanded concepts when opening the same workspace session", async () => {
     const ui = setup({ start: false });
-    await ui.plugin.studyUi.saveResume({ queue: ["q"], seed: ["q"], skipped: [], queueIndex: 0, answerVisible: true, sessionMode: "browse", updatedAt: new Date().toISOString(), scrollTop: 345, pageScrollTop: 12, conceptsOpen: true });
-    await ui.view.setState({ route: "study", queue: ["q"], queueIndex: 0, answerVisible: true, sessionMode: "browse" }, {});
+    await ui.plugin.studyUi.saveResume({ queue: ["q"], seed: ["q"], skipped: [], queueIndex: 0, answerVisible: true, sessionMode: "recall", updatedAt: new Date().toISOString(), scrollTop: 345, pageScrollTop: 12, conceptsOpen: true });
+    await ui.view.setState({ route: "study", queue: ["q"], queueIndex: 0, answerVisible: true, sessionMode: "recall" }, {});
     await vi.waitFor(() => expect(ui.view.contentEl.querySelector(".mia-study-layout").scrollTop).toBe(345));
     expect(ui.view.contentEl.querySelector(".mia-study-concepts").open).toBe(true);
     expect(ui.view.contentEl.scrollTop).toBe(12);
@@ -1834,8 +1979,8 @@ describe("initial workspace session restoration", () => {
   it("does not requeue a skipped learning card after the same workspace session reopens", async () => {
     const ui = setup({ start: false, linked: true });
     ui.reviews.q = ui.plugin.fsrs.rate(undefined, Rating.Again, new Date(Date.now() - 120000), "q");
-    await ui.plugin.studyUi.saveResume({ queue: ["q", "related"], seed: ["q", "related"], skipped: ["q"], queueIndex: 1, answerVisible: true, sessionMode: "browse", updatedAt: new Date().toISOString() });
-    await ui.view.setState({ route: "study", queue: ["q", "related"], queueIndex: 1, answerVisible: true, sessionMode: "browse" }, {});
+    await ui.plugin.studyUi.saveResume({ queue: ["q", "related"], seed: ["q", "related"], skipped: ["q"], queueIndex: 1, answerVisible: true, sessionMode: "recall", updatedAt: new Date().toISOString() });
+    await ui.view.setState({ route: "study", queue: ["q", "related"], queueIndex: 1, answerVisible: true, sessionMode: "recall" }, {});
     expect(ui.view.getState().queue).toEqual(["q", "related"]);
     await ui.button("너무 쉬움").click();
     expect(ui.content()).toContain("학습 완료");
@@ -1845,10 +1990,10 @@ describe("initial workspace session restoration", () => {
   it("preserves skipped cards while the startup question index is still loading", async () => {
     const ui = setup({ start: false, linked: true });
     ui.reviews.q = ui.plugin.fsrs.rate(undefined, Rating.Again, new Date(Date.now() - 120000), "q");
-    await ui.plugin.studyUi.saveResume({ queue: ["q", "related"], seed: ["q", "related"], skipped: ["q"], queueIndex: 1, answerVisible: true, sessionMode: "browse", updatedAt: new Date().toISOString() });
+    await ui.plugin.studyUi.saveResume({ queue: ["q", "related"], seed: ["q", "related"], skipped: ["q"], queueIndex: 1, answerVisible: true, sessionMode: "recall", updatedAt: new Date().toISOString() });
     const questions = ui.plugin.index.registered.splice(0);
     ui.plugin.index.isReady = false;
-    await ui.view.setState({ route: "study", queue: ["q", "related"], queueIndex: 1, answerVisible: true, sessionMode: "browse" }, {});
+    await ui.view.setState({ route: "study", queue: ["q", "related"], queueIndex: 1, answerVisible: true, sessionMode: "recall" }, {});
     ui.plugin.index.registered.push(...questions);
     ui.plugin.index.isReady = true;
     ui.view.render();
@@ -1859,8 +2004,8 @@ describe("initial workspace session restoration", () => {
   });
   it("does not apply another session's saved reading state to a different workspace queue", async () => {
     const ui = setup({ start: false, linked: true });
-    await ui.plugin.studyUi.saveResume({ queue: ["related"], seed: ["related"], skipped: [], queueIndex: 0, answerVisible: true, sessionMode: "browse", updatedAt: new Date().toISOString(), scrollTop: 345, conceptsOpen: true });
-    await ui.view.setState({ route: "study", queue: ["q"], queueIndex: 0, answerVisible: true, sessionMode: "browse" }, {});
+    await ui.plugin.studyUi.saveResume({ queue: ["related"], seed: ["related"], skipped: [], queueIndex: 0, answerVisible: true, sessionMode: "recall", updatedAt: new Date().toISOString(), scrollTop: 345, conceptsOpen: true });
+    await ui.view.setState({ route: "study", queue: ["q"], queueIndex: 0, answerVisible: true, sessionMode: "recall" }, {});
     await vi.waitFor(() => expect(ui.view.contentEl.querySelector(".mia-study-layout").scrollTop).toBe(0));
     expect(ui.view.contentEl.querySelector(".mia-study-concepts").open).toBe(false);
   });

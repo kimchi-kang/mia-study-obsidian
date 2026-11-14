@@ -109,9 +109,10 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
     start.disabled = available.length === 0;
     start.addEventListener("click", () => ctx.startReview());
     const browse = actions.createEl("button", { text: "전체 암기 모드" });
-    browse.disabled = due + fresh === 0;
+    browse.disabled = questions.length === 0;
     browse.addEventListener("click", () => ctx.startReview(questions.map((question) => question.id), "browse"));
   }
+  action.createEl("p", { text: "암기 모드는 평가 없이 질문과 정답을 넘겨 보는 모드입니다. 복습일은 바뀌지 않습니다.", cls: "mia-muted" });
   const saved = ctx.plugin.studyUi.resume;
   if (saved) {
     // 이어하기 sits with the start actions, not in a card of its own.
@@ -121,7 +122,7 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
     const heading = resume.createEl("h3");
     if (current) renderQuestionHeading(ctx, heading, current);
     else heading.setText("저장된 학습");
-    resume.createEl("p", { text: `${current?.subject ?? ""} · ${saved.sessionMode === "recall" ? "시험" : "암기"} · ${Math.min(saved.queueIndex + 1, saved.queue.length)} / ${saved.queue.length}${saved.queueIndex >= saved.queue.length ? " · 다음 복습 대기" : ""}` });
+    resume.createEl("p", { text: `${current?.subject ?? ""} · ${saved.sessionMode === "recall" ? "시험" : "암기"} · ${Math.min(saved.queueIndex + 1, saved.queue.length)} / ${saved.queue.length}${saved.queueIndex >= saved.queue.length && saved.sessionMode === "recall" ? " · 다음 복습 대기" : ""}` });
     resume.createEl("small", { text: `${new Date(saved.updatedAt).toLocaleString("ko-KR")} 저장`, cls: "mia-muted" });
     resume.createEl("button", { text: "이어하기", cls: "mod-cta" }).addEventListener("click", () => ctx.resumeStudy());
   }
@@ -191,7 +192,7 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
       review.disabled = reviewIds.length === 0;
       review.addEventListener("click", () => ctx.startReview(reviewIds));
       const memorize = subjectActions.createEl("button", { text: "암기" });
-      memorize.disabled = subjectDue + subjectNew === 0;
+      memorize.disabled = items.length === 0;
       memorize.addEventListener("click", () => {
         ctx.startReview(items.map((question) => question.id), "browse");
       });

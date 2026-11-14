@@ -64,7 +64,7 @@ export class MiaSettingTab extends PluginSettingTab {
       text.setValue(settings.keywordFolder);
       bindFolder(text.inputEl, "keywordFolder", "키워드 노트 폴더");
     });
-    new Setting(containerEl).setName("암기 모드 순서").setDesc("이 기기에 저장하며 새 암기 학습부터 적용합니다. 순서대로는 문제 목록 순서를 따릅니다.").addDropdown((dropdown) => {
+    new Setting(containerEl).setName("암기 모드 순서").setDesc("암기 모드는 평가 없이 질문과 정답을 넘겨 보며 복습일은 바뀌지 않습니다. 순서는 이 기기에 저장하며 새 암기 학습부터 적용합니다. 순서대로는 문제 목록 순서를 따릅니다.").addDropdown((dropdown) => {
       dropdown.addOption("sequential", "순서대로").addOption("random", "랜덤").setValue(this.miaPlugin.studyUi.appearance.memorizationOrder);
       dropdown.onChange(async (value) => {
         if (value === "sequential" || value === "random") await this.save(async () => { this.miaPlugin.studyUi.updateAppearance({ memorizationOrder: value }); });
