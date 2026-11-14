@@ -270,4 +270,6 @@ MIA_AUDIT_VAULT=tests/fixtures/vault npm test
 
 MIA Study 자체 코드는 [MIT](LICENSE)로 배포한다. 외부 코드의 저작권·라이선스는 [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)에 보존한다.
 
-복습 일정은 **Anki에서도 지원하는 FSRS 계열의 FSRS-6 알고리즘**을 사용한다. 실제 구현은 Open Spaced Repetition의 [ts-fsrs 5.4.1](https://github.com/open-spaced-repetition/ts-fsrs)(MIT)이다. [Anki의 FSRS 안내](https://docs.ankiweb.net/manual/deck-options#fsrs)와 [FSRS-6 알고리즘 설명](https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm#fsrs-6)을 참고할 수 있다. 이는 Anki 소스 코드를 복사했다는 의미나 Anki와 일정이 완전히 같다는 보장이 아니다. 개인별 FSRS 가중치 최적화는 포함하지 않는다.
+복습 일정은 **Anki에서도 지원하는 FSRS 계열의 FSRS-6 알고리즘**을 사용한다. 실제 구현은 Open Spaced Repetition의 [ts-fsrs 5.4.1](https://github.com/open-spaced-repetition/ts-fsrs)(MIT)이다. [Anki의 FSRS 안내](https://docs.ankiweb.net/manual/deck-options#fsrs)와 [FSRS-6 알고리즘 설명](https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm#fsrs-6)을 참고할 수 있다. 이는 Anki 소스 코드를 복사했다는 의미나 Anki와 일정이 완전히 같다는 보장이 아니다. 1.4.19의 "내 기록으로 최적화"는 [fsrs-rs](https://github.com/open-spaced-repetition/fsrs-rs)(BSD-3-Clause)의 FSRS-6 학습 절차를 TypeScript로 다시 구현한 것이며, 라이선스 고지는 THIRD-PARTY-NOTICES.txt에 있다.
+
+FSRS 논문, 참고한 앱(Anki), 플러그인에 포함된 라이브러리, 소개 페이지 글꼴, 개발에 쓴 AI 도구까지 모든 출처는 [CREDITS.md](CREDITS.md)에 정리했다. 이 플러그인은 대부분 AI 코딩 도구로 만들어 안정성을 보장하지 않으므로, 원본 파일은 반드시 보관함 밖의 다른 장소에 백업한다.
