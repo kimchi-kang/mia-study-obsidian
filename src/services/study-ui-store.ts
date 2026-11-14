@@ -177,7 +177,21 @@ export class StudyUiStore {
           throw new Error("다른 기기의 더 최근 이어하기 위치가 있어 덮어쓰지 않았습니다. 시작 화면에서 이어하기를 다시 선택하세요.");
         }
       }
-      await adapter.write(this.path, payload);
+      const verify = async (): Promise<void> => {
+        const raw: unknown = JSON.parse(await adapter.read(this.path));
+        if (!raw || typeof raw !== "object" || !("version" in raw) || raw.version !== 1
+          || !("resume" in raw) || !("updatedAt" in raw) || raw.updatedAt !== editTime
+          || (raw.resume !== null && !parseStudyResume(raw.resume))
+          || JSON.stringify(parseStudyResume(raw.resume)) !== JSON.stringify(parseStudyResume(snapshot))) {
+          throw new Error("이어하기 위치를 저장한 뒤 파일에서 같은 내용을 확인하지 못했습니다. 최신 위치를 확인한 뒤 다시 시도하세요.");
+        }
+      };
+      try { await adapter.write(this.path, payload); }
+      catch (error) {
+        // A rejected write may already be durable; do not roll its checkpoint back.
+        try { await verify(); } catch { throw error; }
+      }
+      await verify();
       this.committedResume = snapshot;
       this.committedUpdatedAt = editTime;
       this.filePresent = true;

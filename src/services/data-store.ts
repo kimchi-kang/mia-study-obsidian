@@ -223,6 +223,10 @@ export function parsePluginData(raw: unknown): MiaPluginData {
       if (isRecord(original.studyManagement) && !Object.hasOwn(original.studyManagement, "interdayLearningOrder")) {
         original.studyManagement.interdayLearningOrder = DEFAULT_SETTINGS.studyManagement.interdayLearningOrder;
       }
+      // Learn-ahead was added in 1.4.19; older archived branches use its default too.
+      if (isRecord(original.studyManagement) && !Object.hasOwn(original.studyManagement, "learnAheadMinutes")) {
+        original.studyManagement.learnAheadMinutes = DEFAULT_SETTINGS.studyManagement.learnAheadMinutes;
+      }
       const settings = parseSettings(original);
       if (settingsKey(settings) !== settingsKey(original)) throw new InvalidReviewDataError("보관된 설정이 손상되어 저장을 중단했습니다.");
       return { id: item.id, ancestors: [...item.ancestors], settings };

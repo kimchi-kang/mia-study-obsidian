@@ -125,6 +125,34 @@ describe("overlapping saves", () => {
 });
 
 describe('pre-1.4 archived settings migration',()=>{
+ it('loads pre-1.4.19 conflict snapshots and can restore them without losing reviews', async () => {
+  const { DEFAULT_SETTINGS } = await import('../src/core/models');
+  const old = structuredClone(DEFAULT_SETTINGS);
+  delete (old.studyManagement as Partial<typeof old.studyManagement>).learnAheadMinutes;
+  old.studyManagement.newCardsPerDay = 7;
+  const review = new FsrsService(DEFAULT_SETTINGS).rate(undefined, Rating.Good);
+  let disk: unknown = { version: 1, settings: DEFAULT_SETTINGS, reviews: { one: review },
+    settingsSync: { id: 'current', ancestors: [], conflicts: [{ id: 'old-peer', ancestors: ['older'], settings: old }] } };
+  const original = structuredClone(disk);
+  const store = new MiaDataStore({ loadData: async () => structuredClone(disk), saveData: async value => { disk = structuredClone(value); } });
+  await store.load();
+  expect(disk).toEqual(original);
+  expect(store.settingsConflicts[0]).toMatchObject({ id: 'old-peer', ancestors: ['older'],
+    settings: { studyManagement: { newCardsPerDay: 7, learnAheadMinutes: 20 } } });
+  await store.restoreSettingsConflict('old-peer');
+  expect(store.settings.studyManagement.newCardsPerDay).toBe(7);
+  expect(store.getReview('one')).toEqual(review);
+ });
+
+ it.each([null, -1, 1441, '20'])('rejects an explicitly invalid archived learn-ahead value: %s', async learnAheadMinutes => {
+  const { DEFAULT_SETTINGS } = await import('../src/core/models');
+  const settings = { ...structuredClone(DEFAULT_SETTINGS), studyManagement: { ...DEFAULT_SETTINGS.studyManagement, learnAheadMinutes } };
+  const store = new MiaDataStore({ loadData: async () => ({ version: 1, settings: DEFAULT_SETTINGS, reviews: {},
+    settingsSync: { id: 'current', ancestors: [], conflicts: [{ id: 'old-peer', ancestors: [], settings }] } }),
+    saveData: async () => { throw Error('must not write'); } });
+  await expect(store.load()).rejects.toThrow('보관된 설정');
+ });
+
  it('loads and preserves older conflict snapshots without writing or discarding their identities',async()=>{
   const {DEFAULT_SETTINGS}=await import('../src/core/models');
   const old=structuredClone(DEFAULT_SETTINGS);delete (old.studyManagement as Partial<typeof old.studyManagement>).interdayLearningOrder;
