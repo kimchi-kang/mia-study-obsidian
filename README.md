@@ -26,7 +26,7 @@ Obsidian 안에서 과목·질문·키워드를 폼으로 관리하면서 FSRS-6
 
 화면은 1.4.13 바우하우스 디자인(빨강·노랑·파랑, 두꺼운 테두리, 각진 모서리)과 직접 만든 일반 상식 데모 보관함(수학 기초·세계 지리·요리 과학)으로 찍었습니다. 수식·이미지·표·코드 렌더링을 보여 주는 예시 질문이며 실제 학습 내용이 아닙니다. 모바일 화면은 데스크톱 Obsidian에서 휴대폰 폭을 흉내 낸 것입니다.
 
-[1.4.19 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.19) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.4.19 변경 내역](docs/releases/1.4.19.md) · [이전 버전 이력](docs/releases/HISTORY.md)
+[1.4.20 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.4.20) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.4.20 변경 내역](docs/releases/1.4.20.md) · [이전 버전 이력](docs/releases/HISTORY.md)
 
 Major Study 제목 바로 옆에서 현재 실행 중인 버전을 확인할 수 있습니다. 업데이트한 파일을 로드하려면 Obsidian을 다시 시작하세요. 수식은 원문에 `$...$` 또는 `$$...$$` 구분자와 TeX 문법이 있어야 표시됩니다. 예를 들어 `vC(t) = Vs(1 - e^(-t/RC))` 같은 일반 문장은 자동으로 수식으로 바뀌지 않습니다.
 
