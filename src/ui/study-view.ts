@@ -435,8 +435,8 @@ export class MiaStudyView extends ItemView {
     if (expectedResume !== undefined && JSON.stringify(this.plugin.studyUi.resume) !== expectedResume) return;
     if (!this.closed) this.captureReadingPosition();
     const reading = this.readingPosition.key === this.readingKey() ? this.readingPosition : { scrollTop: 0, pageScrollTop: 0, conceptsOpen: false };
-    const plan = planLearningQueue(this.queue, this.queueIndex, this.sessionSeed, this.plugin.store.reviews, this.sessionSkipped);
-    const complete = !this.queue.length || (this.queueIndex >= this.queue.length && !plan.nextDue && plan.queue.length <= this.queueIndex);
+    const plan = planLearningQueue(this.queue, this.queueIndex, this.sessionSeed, this.plugin.store.reviews, this.sessionSkipped, new Date(), this.plugin.store.settings.studyManagement.learnAheadMinutes * 60_000);
+    const complete = !plan.nextDue && plan.queue.length <= this.queueIndex;
     void this.plugin.studyUi.saveResume(complete ? null : {
       queue: [...this.queue], seed: [...this.sessionSeed], skipped: [...this.sessionSkipped], queueIndex: this.queueIndex,
       answerVisible: this.answerVisible, sessionMode: this.sessionMode, updatedAt: new Date().toISOString(),
@@ -1171,7 +1171,7 @@ export class MiaStudyView extends ItemView {
   private refreshLearningQueue(): Date | null {
     if (this.readOnlyBrowse) return null;
     const scope = [...new Set([...this.sessionSeed, ...this.queue])].filter((id) => this.plugin.index.questionById(id));
-    const plan = planLearningQueue(this.queue, this.queueIndex, scope, this.plugin.store.reviews, this.sessionSkipped);
+    const plan = planLearningQueue(this.queue, this.queueIndex, scope, this.plugin.store.reviews, this.sessionSkipped, new Date(), this.plugin.store.settings.studyManagement.learnAheadMinutes * 60_000);
     // Revisiting history must not shift the positions of recorded attempts.
     if (![...this.sessionAttempts.keys()].some((index) => index >= this.queueIndex)) this.queue = plan.queue;
     return plan.nextDue;

@@ -94,3 +94,45 @@ describe("Anki-style learning steps within a session", () => {
       .toEqual({ queue: ["a"], nextDue: new Date(again.card.due) });
   });
 });
+
+describe("learn ahead only after exhausting other cards", () => {
+  const limit = 20 * 60_000;
+  const learner = (minutes: number, state = State.Learning) => {
+    const review = fsrs.rate(undefined, Rating.Again, start);
+    review.card.due = new Date(start.getTime() + minutes * 60_000).toISOString();
+    review.card.state = state;
+    return review;
+  };
+  it("does not pull ahead while new/review/currently due cards remain", () => {
+    const reviews = { a: learner(19), due: learner(0) };
+    for (const id of ["new", "review"]) expect(planLearningQueue(["a", id], 1, ["a", id], reviews, none, start, limit).queue).toEqual(["a", id]);
+    expect(planLearningQueue(["a"], 1, ["a", "due"], reviews, none, start, limit).queue).toEqual(["a", "due"]);
+  });
+  it.each([State.Learning, State.Relearning])("pulls 19 and 20 minute learners in due order, leaves 21 minutes waiting (state %s)", state => {
+    const reviews = { late: learner(21, state), boundary: learner(20, state), early: learner(19, state) };
+    expect(planLearningQueue(["early"], 1, Object.keys(reviews), reviews, none, start, limit)).toEqual({ queue: ["early", "early", "boundary"], nextDue: new Date(reviews.late.card.due) });
+  });
+  it("preserves precise waiting with a zero limit", () => {
+    const reviews = { a: learner(19) };
+    expect(planLearningQueue(["a"], 1, ["a"], reviews, none, start, 0)).toEqual({ queue: ["a"], nextDue: new Date(reviews.a.card.due) });
+  });
+  it("excludes skipped and interday learners even inside the limit", () => {
+    const reviews = { skipped: learner(19), interday: learner(19) };
+    reviews.interday.card.scheduled_days = 1;
+    expect(planLearningQueue([], 0, Object.keys(reviews), reviews, new Set(["skipped"]), start, limit)).toEqual({ queue: [], nextDue: null });
+  });
+  it("retains an early learner after refresh and then waits for its new due", () => {
+    const reviews = { a: learner(19) };
+    const first = planLearningQueue(["a"], 1, ["a"], reviews, none, start, limit);
+    expect(planLearningQueue(first.queue, 1, ["a"], reviews, none, start, limit)).toEqual(first);
+    reviews.a = learner(21);
+    expect(planLearningQueue(first.queue, 2, ["a"], reviews, none, start, limit)).toEqual({ queue: ["a", "a"], nextDue: new Date(reviews.a.card.due) });
+  });
+});
+
+describe("planLearningQueue keeps skipped questions ahead", () => {
+  it("does not drop a skipped question that is still after the current index", () => {
+    const plan = planLearningQueue(["a", "b", "c"], 1, ["a", "b", "c"], {}, new Set(["c"]), new Date(), 20 * 60_000);
+    expect(plan.queue).toEqual(["a", "b", "c"]);
+  });
+});

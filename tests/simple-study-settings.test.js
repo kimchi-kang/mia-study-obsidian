@@ -540,3 +540,59 @@ it('keeps raw step validation visible across unrelated edits and clears it after
  const ui=await setup(DEFAULT_SETTINGS);ui.edit('처음 배우는 문제 단계 공백 입력','0m');await ui.save();const input=ui.find('처음 배우는 문제 단계 공백 입력');ui.edit('목표 기억률(%)',94);
  expect(input.getAttribute('aria-invalid')).toBe('true');ui.edit('처음 배우는 문제 단계 공백 입력','1 10');expect(input.hasAttribute('aria-invalid')).toBe(false);expect(ui.plugin.updateSettings).not.toHaveBeenCalled();
 });
+
+it("edits learn ahead as an advanced draft and persists it only on save", async () => {
+  const ui = await setup();
+  expect(ui.find("미리 학습 한계(분)").value).toBe("20");
+  ui.edit("미리 학습 한계(분)", 0);
+  expect(ui.root.textContent).toContain("고급 설정: 사용자 지정");
+  expect(ui.store.settings.studyManagement.learnAheadMinutes).toBe(20);
+  await ui.save();
+  expect((await ui.restart()).settings.studyManagement.learnAheadMinutes).toBe(0);
+});
+
+import * as optimizer from "../src/core/fsrs-optimizer";
+import { default_w } from "ts-fsrs";
+
+it.each(["improved", "unchanged"])("optimizer UI shows progress/results and only saves improved weights on explicit save: %s", async status => {
+  let finish;
+  const weights = [...default_w]; weights[8] = 1.8;
+  const spy = vi.spyOn(optimizer, "optimizeFsrs").mockImplementation((_items, _previous, options) => {
+    options.onProgress(25);
+    return new Promise(resolve => { finish = () => resolve({ status, parameters: weights, count: 400, previous: { logLoss: .4, rmseBins: .1 }, optimized: { logLoss: status === "improved" ? .3 : .5, rmseBins: .09 } }); });
+  });
+  try {
+    const ui = await setup(); const before = ui.disk();
+    ui.click("내 기록으로 최적화");
+    expect(ui.root.textContent).toContain("최적화 중 25%");
+    expect(ui.find("FSRS-6 매개변수").disabled).toBe(true);
+    ui.click("학습 설정 저장");
+    expect(ui.root.textContent).toContain("최적화가 끝난 뒤 저장하세요");
+    expect(ui.disk()).toEqual(before);
+    finish(); await vi.waitFor(() => expect(ui.root.textContent).toContain("기존: log loss"));
+    expect(ui.root.textContent).toContain("RMSE(bins)");
+    expect(ui.disk()).toEqual(before); expect(ui.plugin.updateSettings).not.toHaveBeenCalled();
+    if (status === "improved") {
+      expect(ui.find("FSRS-6 매개변수").value.split(", ").map(Number)).toEqual(weights);
+      await ui.save(); expect((await ui.restart()).settings.studyManagement.fsrsParameters).toEqual(weights);
+    } else {
+      expect(ui.find("FSRS-6 매개변수").value).toBe("");
+      expect(ui.root.textContent).toContain("적용하지 않았습니다");
+    }
+  } finally { spy.mockRestore(); }
+});
+
+it("optimizer UI cancels, reports insufficient data, and leaves the disk untouched", async () => {
+  const ui = await setup(); const before = ui.disk();
+  const spy = vi.spyOn(optimizer, "optimizeFsrs").mockImplementation((_items, _previous, options) => new Promise((_resolve, reject) => {
+    options.onProgress(10); options.signal.addEventListener("abort", () => reject(new DOMException("취소", "AbortError")));
+  }));
+  try {
+    ui.click("내 기록으로 최적화"); ui.click("최적화 취소");
+    await vi.waitFor(() => expect(ui.root.textContent).toContain("최적화를 취소했습니다"));
+    expect(ui.find("FSRS-6 매개변수").disabled).toBe(false); expect(ui.disk()).toEqual(before);
+  } finally { spy.mockRestore(); }
+  ui.click("내 기록으로 최적화");
+  await vi.waitFor(() => expect(ui.root.textContent).toContain("복습 기록이 부족해 기본 매개변수를 유지합니다(현재 0건)"));
+  expect(ui.disk()).toEqual(before);
+});

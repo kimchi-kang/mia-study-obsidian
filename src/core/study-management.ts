@@ -33,7 +33,7 @@ export function validParameters(value: unknown): value is number[] {
 export function parseStudyManagement(value: unknown): StudyManagementSettings {
   const raw: Record<string, unknown> = typeof value === "object" && value !== null ? Object.fromEntries(Object.entries(value)) : {};
   const defaults = DEFAULT_STUDY_MANAGEMENT;
-  const integer = (key: "newCardsPerDay" | "reviewsPerDay" | "dayStartsAt", max: number) => {
+  const integer = (key: "newCardsPerDay" | "reviewsPerDay" | "dayStartsAt" | "learnAheadMinutes", max: number) => {
     const item = raw[key];
     return typeof item === "number" && Number.isInteger(item) && item >= 0 && item <= max ? item : defaults[key];
   };
@@ -44,6 +44,7 @@ export function parseStudyManagement(value: unknown): StudyManagementSettings {
     newCardsPerDay: integer("newCardsPerDay", 9999),
     reviewsPerDay: integer("reviewsPerDay", 9999),
     dayStartsAt: integer("dayStartsAt", 23),
+    learnAheadMinutes: integer("learnAheadMinutes", 1440),
     newCardsIgnoreReviewLimit: typeof raw.newCardsIgnoreReviewLimit === "boolean" ? raw.newCardsIgnoreReviewLimit : defaults.newCardsIgnoreReviewLimit,
     learningSteps: steps("learningSteps"), relearningSteps: steps("relearningSteps"),
     newCardOrder: choice(raw.newCardOrder, ["sequential", "random"], defaults.newCardOrder),

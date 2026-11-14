@@ -1,3 +1,4 @@
+import { optimizeFsrs, reviewsToOptimizerItems } from "../core/fsrs-optimizer";
 import { learningStepGuidance } from "./study-policy";
 import { Notice, Setting } from "obsidian";
 import type MiaStudyPlugin from "../main";
@@ -14,8 +15,11 @@ type Save = (action: () => Promise<void>) => Promise<void>;
  * so the dialog's sticky bar stays the last element in its scroll area.
  */
 export function renderStudyManagementSettings(container: HTMLElement, plugin: MiaStudyPlugin, save: Save, cancel?: () => void, beforeActions?: (parent: HTMLElement) => void): void {
+  container.addClass("mia-setting-controls");
   let baseline = structuredClone(plugin.store.settings);
+  let optimizerController: AbortController | undefined;
   const render = (initial: StudyManagementSettings) => {
+    optimizerController?.abort();
     container.empty();
     const draft = structuredClone(initial);
     let retention = baseline.targetRetention;
@@ -121,7 +125,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       new Notice(message);
       return false;
     };
-    const number = (root: HTMLElement, key: "newCardsPerDay" | "reviewsPerDay" | "dayStartsAt", name: string, desc: string, max: number) => {
+    const number = (root: HTMLElement, key: "newCardsPerDay" | "reviewsPerDay" | "dayStartsAt" | "learnAheadMinutes", name: string, desc: string, max: number) => {
       let input!: HTMLInputElement;
       const setting = new Setting(root).setName(name).setDesc(desc).addText(text => {
         input = text.inputEl;
@@ -200,7 +204,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       budgetNote.setText(`하루 제한은 기기 시간 기준 ${draft.dayStartsAt < 12 ? "오전" : "오후"} ${draft.dayStartsAt % 12 || 12}시에 새로 계산합니다. 세션을 다시 시작해도 당일 공부한 양은 차감됩니다. 같은 날의 짧은 반복은 상한에 포함되지 않습니다. 상한을 넘은 예정 복습은 이후 학습으로 밀려 쌓일 수 있습니다. ${draft.newCardsIgnoreReviewLimit ? "새 문제는 복습 상한과 별도로 셉니다." : "새 문제도 복습 상한을 함께 사용하므로, 복습이 상한을 채우면 새 문제는 나오지 않습니다."} 이 상한은 시험 모드를 새로 시작할 때의 자동 출제에 적용됩니다. 이어하기와 직접 추가한 문제는 기존 목록을 유지하며, 자유 암기에는 적용되지 않습니다.`);
       advancedNote.setText(`${hasCustomAdvancedSettings({ ...baseline, studyManagement: draft, maximumIntervalDays: maximumInterval, gradeIntervalsMinutes: gradeIntervals }) ? "고급 설정: 사용자 지정. 기존 세부 값을 유지합니다." : "고급 설정: 기본값."} ${Object.keys(gradeIntervals).length ? "평가 버튼에 지정된 고정 간격이 우선하므로 해당 버튼에는 빈도 선택이 적용되지 않습니다." : "기존 복습일은 바뀌지 않고, 다음 평가에서 새 간격을 계산합니다."}`);
       const patch = studySettingsPatch(baseline, draft, retention, plugin.store.settings);
-      const labels: Record<keyof StudyManagementSettings, string> = { newCardsPerDay: "새 문제 상한", reviewsPerDay: "복습 상한", interdayLearningOrder: "날짜를 넘긴 학습/복습 순서", newCardsIgnoreReviewLimit: "새 문제와 복습 상한의 관계", dayStartsAt: "하루 시작 시각", learningSteps: "처음 배우는 문제의 반복 간격", relearningSteps: "틀린 문제의 반복 간격", newCardOrder: "새 문제 순서", newReviewOrder: "새 문제와 복습 순서", reviewOrder: "복습 순서", enableFuzz: "복습일 분산", fsrsParameters: "FSRS 매개변수" };
+      const labels: Record<keyof StudyManagementSettings, string> = { newCardsPerDay: "새 문제 상한", reviewsPerDay: "복습 상한", interdayLearningOrder: "날짜를 넘긴 학습/복습 순서", newCardsIgnoreReviewLimit: "새 문제와 복습 상한의 관계", dayStartsAt: "하루 시작 시각", learnAheadMinutes: "미리 학습 한계(분)", learningSteps: "처음 배우는 문제의 반복 간격", relearningSteps: "틀린 문제의 반복 간격", newCardOrder: "새 문제 순서", newReviewOrder: "새 문제와 복습 순서", reviewOrder: "복습 순서", enableFuzz: "복습일 분산", fsrsParameters: "FSRS 매개변수" };
       const display = (value: StudyManagementSettings[keyof StudyManagementSettings]) => Array.isArray(value) ? value.join(" / ") || "자동·기본" : typeof value === "boolean" ? value ? "켜짐" : "꺼짐" : String(value);
       const fields = Object.keys(draft).filter(key => JSON.stringify(draft[key as keyof StudyManagementSettings]) !== JSON.stringify(baseline.studyManagement[key as keyof StudyManagementSettings])).map(key => { const field = key as keyof StudyManagementSettings; return `${labels[field]} ${display(baseline.studyManagement[field])} → ${display(draft[field])}`; });
       if (maximumInterval !== baseline.maximumIntervalDays) fields.push(`최대 복습주기 ${baseline.maximumIntervalDays} → ${maximumInterval}일`);
@@ -341,6 +345,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       row.addToggle(control => control.setValue(draft[key]).onChange(value => { draft[key] = value; state.setText(value ? "켜짐" : "꺼짐"); changed(); }));
     };
     number(extra, "dayStartsAt", "하루를 새로 시작하는 시각", "기기 시간 기준 · 기본 오전 4시", 23);
+    number(extra, "learnAheadMinutes", "미리 학습 한계(분)", "Anki: 학습 한계 미리 당기기. 남은 문제가 없을 때 이 시간 안에 돌아올 반복 문제를 바로 출제합니다. 0이면 예정 시각까지 기다립니다.", 1440);
     toggle("newCardsIgnoreReviewLimit", "복습 상한과 별개로 새 문제 학습", "켜면 복습 횟수를 다 채워도 새 문제를 배울 수 있습니다.");
     choice("newCardOrder", "새 카드 정렬 순서 · 새 문제 순서", { sequential: "문제 목록 순서", random: "무작위" });
     choice("newReviewOrder", "새/복습 카드 순서", { before: "새 문제 먼저", after: "복습 먼저", mix: "섞어서" });
@@ -349,7 +354,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
     orderArea.createEl("p", { text: "다음 시험 세션의 대상을 고를 때 적용합니다. 같은 날의 짧은 학습 반복이 먼저 나오며 날짜를 넘긴 단계는 복습 예산을 사용합니다. 현재 이어하기 큐는 재정렬하지 않습니다. MIA에는 덱별 수집 순서나 형제 카드 순서가 없고, 무작위/회상 확률의 계산은 Anki와 완전히 같지 않습니다.", cls: "setting-item-description" });
     toggle("enableFuzz", "복습일 나누기 · MIA 전용", "비슷한 문제의 복습이 같은 날에 몰리지 않게 분산합니다. Anki에는 이 분산을 끄는 같은 입력칸이 없습니다. 분산/난수 구현까지 동일하다는 뜻은 아닙니다.");
     let parameters = draft.fsrsParameters.join(", "); let parameterInput!: HTMLTextAreaElement;
-    new Setting(fsrsArea).setName("FSRS 인자 · FSRS-6 매개변수").setDesc("FSRS-6의 유효한 가중치 21개만 지원합니다. 비우면 라이브러리 기본값입니다. Anki의 다른 세대 가중치를 자동 변환하거나 개인 설정을 가져오지 않습니다.").addTextArea(text => {
+    new Setting(fsrsArea).setName("FSRS 인자 · FSRS-6 매개변수").setDesc("FSRS-6의 유효한 가중치 21개만 지원합니다. 비우면 라이브러리 기본값입니다. Anki의 다른 세대 가중치를 자동 변환하거나 개인 설정을 가져오지 않습니다. Anki: 최적화 후 재예약 안 함. 기존 복습일은 자동으로 바꾸지 않습니다.").addTextArea(text => {
       parameterInput = text.inputEl;
       text.setValue(parameters).setPlaceholder("기본값 사용").onChange(value => {
         parameters = value;
@@ -358,6 +363,42 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
         changed();
       });
       text.inputEl.setAttribute("aria-label", "FSRS-6 매개변수");
+    });
+    const optimizerRow = new Setting(fsrsArea).setName("Anki: FSRS 매개변수 최적화").setDesc("복습 기록으로 FSRS-6 값을 학습합니다. 결과는 학습 설정 저장을 눌러야 적용됩니다.");
+    const optimizeButton = optimizerRow.controlEl.createEl("button", { text: "내 기록으로 최적화", attr: { type: "button" } });
+    const cancelOptimization = optimizerRow.controlEl.createEl("button", { text: "최적화 취소", attr: { type: "button" } });
+    cancelOptimization.hidden = true;
+    const optimizationStatus = fsrsArea.createEl("p", { cls: "setting-item-description", attr: { role: "status", "aria-live": "polite" } });
+    cancelOptimization.addEventListener("click", () => optimizerController?.abort());
+    optimizeButton.addEventListener("click", async () => {
+      if (optimizeButton.disabled) return;
+      const current = parameters.trim() ? parameters.trim().replace(/^\[|\]$/g, "").split(/[\s,]+/).map(Number) : [];
+      if (!validParameters(current)) { optimizationStatus.setText("먼저 유효한 FSRS 매개변수를 입력하세요."); return; }
+      const controller = new AbortController(); optimizerController = controller;
+      const originalText = parameters;
+      optimizeButton.disabled = true; cancelOptimization.hidden = false; parameterInput.disabled = true;
+      try {
+        const items = reviewsToOptimizerItems(plugin.store.reviews, draft.dayStartsAt);
+        const result = await optimizeFsrs(items, current, { signal: controller.signal, numRelearningSteps: draft.relearningSteps.length,
+          onProgress: percent => optimizationStatus.setText(`최적화 중 ${percent}%`) });
+        if (controller.signal.aborted) return;
+        if (result.status === "insufficient") {
+          optimizationStatus.setText(`복습 기록이 부족해 기본 매개변수를 유지합니다(현재 ${result.count}건). 기존 입력값을 유지합니다.`);
+          return;
+        }
+        const metric = (m: typeof result.previous) => `log loss ${m.logLoss.toFixed(6)} · RMSE(bins) ${m.rmseBins.toFixed(6)}`;
+        const comparison = `기존: ${metric(result.previous)} / 새 값: ${metric(result.optimized)}.`;
+        if (result.status !== "improved") { optimizationStatus.setText(`${comparison} 새 값이 더 좋지 않아 적용하지 않았습니다.`); return; }
+        if (parameters !== originalText) { optimizationStatus.setText(`${comparison} 입력값이 바뀌어 적용하지 않았습니다.`); return; }
+        draft.fsrsParameters = [...result.parameters];
+        parameters = result.parameters.join(", "); parameterInput.value = parameters; changed();
+        optimizationStatus.setText(`${comparison} 새 값을 준비했습니다. 학습 설정 저장을 누르면 적용됩니다. 기존 복습일은 유지합니다.`);
+      } catch (error) {
+        optimizationStatus.setText(controller.signal.aborted ? "최적화를 취소했습니다." : `최적화 실패: ${error instanceof Error ? error.message : String(error)}`);
+      } finally {
+        optimizeButton.disabled = false; cancelOptimization.hidden = true; parameterInput.disabled = false;
+        if (optimizerController === controller) optimizerController = undefined;
+      }
     });
     validators.push(() => {
       const value = parameters.trim();
@@ -391,7 +432,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       const validFixed = () => !input.value.trim() || parsed() !== null;
       validators.push(() => validFixed() || fail(`${label}: 1분–36500일 범위의 정확한 분 단위 간격 또는 빈칸을 입력하세요.`, input, true, validFixed));
     }
-    help(extra, "Anki와 다른 적용 범위 · 미지원 항목", "일일 한도는 전체 과목 공통이며 시험 모드의 새 시작에 적용됩니다. 덱 계층·오늘만 한도·노트 형제 묻기·자동 실패 카드 중단은 없습니다. 타이머·자동 진행·오디오 제어·쉬운 요일·SM-2도 지원하지 않습니다. 1m 10m의 첫 Hard(애매)는 설치 Anki에서 5분30초, MIA에서 6분입니다. MIA 입력은 분 단위이며 Anki의 초 단계를 지원하지 않습니다. 하루 경계를 넘는 단계는 Anki의 날짜 단위 변환과 달리 절대 예약 시각을 유지하며 24시간 이상 단계는 ts-fsrs의 정규 복습 상태로 전환됩니다. 고정 평가 간격이 있으면 단계/FSRS보다 우선합니다.");
+    help(extra, "Anki와 다른 적용 범위 · 미지원 항목", "Anki: 내 기록으로 FSRS-6 매개변수를 최적화하고, 세션의 남은 문제가 없으면 미리 학습 한계 안의 당일 반복을 당깁니다. 일일 한도는 전체 과목 공통이며 시험 모드의 새 시작에 적용됩니다. 덱 계층·오늘만 한도·노트 형제 묻기·자동 실패 카드 중단은 없습니다. 타이머·자동 진행·오디오 제어·쉬운 요일·SM-2도 지원하지 않습니다. 1m 10m의 첫 Hard(애매)는 설치 Anki에서 5분30초, MIA에서 6분입니다. MIA 입력은 분 단위이며 Anki의 초 단계를 지원하지 않습니다. 하루 경계를 넘는 단계는 Anki의 날짜 단위 변환과 달리 절대 예약 시각을 유지하며 24시간 이상 단계는 ts-fsrs의 정규 복습 상태로 전환됩니다. 고정 평가 간격이 있으면 단계/FSRS보다 우선합니다.");
     simple.append(basic, budgetHelp, stepGroups, retentionGroup, advancedNote);
     const library = container.createEl("details", { cls: "mia-settings-help mia-study-profiles" });
     library.createEl("summary", { text: "내 설정 · 저장한 조합 관리" });
@@ -489,9 +530,10 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       retentionInput.value = String(retention); retentionPercentInput.value = String(Number((retention * 100).toFixed(10)));
       changed();
     });
-    if (cancel) actions.createEl("button", { text: "취소", attr: { type: "button" } }).addEventListener("click", cancel);
+    if (cancel) actions.createEl("button", { text: "취소", attr: { type: "button" } }).addEventListener("click", () => { optimizerController?.abort(); cancel(); });
     const button = actions.createEl("button", { text: "학습 설정 저장", cls: "mod-cta", attr: { type: "button" } });
     button.addEventListener("click", async () => {
+      if (optimizerController) { status.setText("최적화가 끝난 뒤 저장하세요. 먼저 취소할 수도 있습니다."); return; }
       if (!validators.every(validate => validate())) return;
       const controls = Array.from(container.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>("button, input, select, textarea"));
       const disabledBefore = controls.map(control => control.disabled);
