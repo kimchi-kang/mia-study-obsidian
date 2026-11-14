@@ -90,6 +90,7 @@ export interface StudyManagementSettings {
   reviewsPerDay: number;
   newCardsIgnoreReviewLimit: boolean;
   dayStartsAt: number;
+  learnAheadMinutes: number;
   learningSteps: import("ts-fsrs").StepUnit[];
   relearningSteps: import("ts-fsrs").StepUnit[];
   newCardOrder: "sequential" | "random";
@@ -105,6 +106,7 @@ export const DEFAULT_STUDY_MANAGEMENT: StudyManagementSettings = {
   reviewsPerDay: 200,
   newCardsIgnoreReviewLimit: false,
   dayStartsAt: 4,
+  learnAheadMinutes: 20,
   learningSteps: ["1m", "10m"],
   relearningSteps: ["10m"],
   newCardOrder: "sequential",

@@ -91,7 +91,7 @@ import { calculateProgress } from "../src/core/progress";
 import { studyDayStart } from "../src/core/study-management";
 import { ModalOpenGuard } from "../src/ui/modal-open-guard";
 
-function setup({ failSave = false, start = true, linked = false } = {}) {
+function setup({ failSave = false, start = true, linked = false, learnAheadMinutes = 20 } = {}) {
   const question = { id: "q", heading: "질문", questionMarkdown: "질문", answerMarkdown: "정답", subject: "과목", questionType: "정의형", filePath: "bank.md", coreKeywords: [], subKeywords: [], followUpIds: [] };
   const reviews = {};
   const questions = linked ? [{ ...question, followUpIds: ["related"] }, { ...question, id: "related", heading: "꼬리질문" }] : [question];
@@ -107,7 +107,7 @@ function setup({ failSave = false, start = true, linked = false } = {}) {
     fsrs: new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500 }),
     index: { diagnostics: [], candidates: [], isReady: true, registered: questions, questionById: id => questions.find(item => item.id === id) },
     store: {
-      settings: { ...structuredClone(DEFAULT_SETTINGS), studyManagement: { ...structuredClone(DEFAULT_SETTINGS.studyManagement), newCardOrder: "random", newReviewOrder: "after", reviewOrder: "random" } },
+      settings: { ...structuredClone(DEFAULT_SETTINGS), studyManagement: { ...structuredClone(DEFAULT_SETTINGS.studyManagement), learnAheadMinutes, newCardOrder: "random", newReviewOrder: "after", reviewOrder: "random" } },
       reviews, getReview: id => reviews[id],
       getReviewVersion: id => reviews[id] ? JSON.stringify(reviews[id]) : null,
       setReview: async (id, state) => { if (failSave) throw Error("disk full"); reviews[id] = state; },
@@ -408,7 +408,7 @@ describe("study view scheduling integration", () => {
   });
 
   it("graduates Again → Good → Good and clears resume without pulling a future review into today", async () => {
-    const ui = setup();
+    const ui = setup({ learnAheadMinutes: 0 });
     for (const label of ["못 암기", "암기", "암기"]) {
       await ui.button("정답 보기").click(); await ui.button(label).click();
       if (label !== "암기" || ui.reviews.q.history.length < 3) {
@@ -425,7 +425,7 @@ describe("study view scheduling integration", () => {
   });
 
   it("retries a failed rating without skipping a question or duplicating its history", async () => {
-    const ui = setup(); let saves = 0;
+    const ui = setup({ learnAheadMinutes: 0 }); let saves = 0;
     ui.plugin.store.setReview = async (id, state) => { if (++saves === 1) throw Error("disk full"); ui.reviews[id] = state; };
     await ui.button("정답 보기").click(); await ui.button("너무 쉬움").click();
     expect(ui.view.getState()).toMatchObject({ queueIndex: 0, answerVisible: true });
@@ -482,7 +482,7 @@ describe("study view scheduling integration", () => {
   });
 
   it.each([0, 60_000])("retains pending learning when the last remaining question is deleted after %s ms", async elapsed => {
-    const ui = setup({ linked: true }); ui.view.startReview(["q", "related"]);
+    const ui = setup({ linked: true, learnAheadMinutes: 0 }); ui.view.startReview(["q", "related"]);
     await ui.button("정답 보기").click(); await ui.button("못 암기").click();
     vi.setSystemTime(Date.now() + elapsed);
     ui.plugin.index.registered.splice(1, 1);
@@ -498,7 +498,7 @@ describe("study view scheduling integration", () => {
   });
 
   it("preserves a scheduled retry when moving forward through an already rated question", async () => {
-    const ui = setup({ linked: true }); ui.view.startReview(["q", "related"]);
+    const ui = setup({ linked: true, learnAheadMinutes: 0 }); ui.view.startReview(["q", "related"]);
     await ui.button("정답 보기").click(); await ui.button("못 암기").click();
     await ui.button("← 이전 문제").click();
     expect(ui.view.getState().answerVisible).toBe(true);
@@ -866,7 +866,7 @@ describe("study view scheduling integration", () => {
   });
 
   it("waits after Again, automatically hides the answer on reappearance, accumulates Good and undoes just that attempt", async () => {
-    const ui = setup();
+    const ui = setup({ learnAheadMinutes: 0 });
     await ui.button("정답 보기").click();
     await ui.button("못 암기").click();
     expect(ui.content()).toContain("다음 복습 대기 중");
@@ -1103,6 +1103,7 @@ it.each(["grade", "undo"])("does not replace a reloaded instance's session after
 
 it.each(["resume", "workspace"])("does not replay a committed rating from an older %s position", async source => {
   const first = await persistentSession(); await first.plugin.studyUi.load();
+  await first.store.updateSettings({ studyManagement: { ...first.store.settings.studyManagement, learnAheadMinutes: 0 } });
   const workspace = first.view.getState(), resume = first.plugin.studyUi.resume;
   // Primary commit succeeds; the process stops before the next UI checkpoint.
   const accepted = first.plugin.fsrs.rate(undefined, Rating.Good, new Date(), "q");
@@ -1771,6 +1772,7 @@ describe('configured step duration is not rounded in rating buttons',()=>{
 
 it.each(["resume", "workspace"])("counts a durable rating once when recovering an older %s position", async source => {
   const first = await persistentSession(); await first.plugin.studyUi.load();
+  await first.store.updateSettings({ studyManagement: { ...first.store.settings.studyManagement, learnAheadMinutes: 0 } });
   const workspace = first.view.getState(), resume = first.plugin.studyUi.resume;
   const accepted = first.plugin.fsrs.rate(undefined, Rating.Easy, new Date(), "q");
   await first.store.setReview("q", accepted);
@@ -2161,4 +2163,33 @@ describe("question list filters keep their order rule and keyboard focus", () =>
     expect(before.attrs["aria-pressed"]).toBe("true");
     expect(ui.exactButton("전체 2")).toBe(chip);
   });
+});
+
+it("learns ahead with the default 20 minute limit, keeps resume, and rates at actual now", async () => {
+  const ui = setup(); const now = Date.now();
+  for (const label of ["못 암기", "암기", "암기"]) {
+    await ui.button("정답 보기").click(); await ui.button(label).click();
+    expect(Date.now()).toBe(now);
+    if (ui.reviews.q.history.length < 3) {
+      expect(ui.content()).not.toContain("다음 복습 대기 중");
+      expect(ui.button("정답 보기")).toBeDefined();
+      await ui.plugin.studyUi.load(); expect(ui.plugin.studyUi.resume).not.toBeNull();
+    }
+  }
+  expect(ui.reviews.q.history.every(log => Date.parse(log.review) === now)).toBe(true);
+  expect(ui.content()).toContain("학습 완료");
+  await ui.plugin.studyUi.load(); expect(ui.plugin.studyUi.resume).toBeNull();
+});
+
+it("waits to learn ahead until the remaining new card has been graded", async () => {
+  const ui = setup({ linked: true }); ui.view.startReview(["q", "related"]);
+  await ui.button("정답 보기").click(); await ui.button("못 암기").click();
+  let state = ui.view.getState(); expect(state.queue[state.queueIndex]).toBe("related");
+  await ui.button("정답 보기").click(); await ui.button("너무 쉬움").click();
+  state = ui.view.getState(); expect(state.queue[state.queueIndex]).toBe("q");
+  expect(ui.reviews.q.history).toHaveLength(1);
+  const restored = setup({ start: false }); restored.plugin.store.reviews.q = ui.reviews.q;
+  await restored.view.setState(state, {});
+  expect(restored.view.getState().queueIndex).toBe(state.queueIndex);
+  expect(restored.view.getState().queue[state.queueIndex]).toBe("q");
 });

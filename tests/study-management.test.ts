@@ -178,3 +178,21 @@ describe('explicit interday placement and compatible legacy defaults', () => {
     expect(run('retrievability-descending')).toEqual([...run('retrievability')].reverse());
   });
 });
+
+it("parses learn ahead limits with safe integer defaults", () => {
+  for (const value of [undefined, null, NaN, Infinity, -1, 1441, .5, "20"]) expect(parseStudyManagement({ learnAheadMinutes: value }).learnAheadMinutes).toBe(20);
+  for (const value of [0, 19, 20, 1440]) expect(parseStudyManagement({ learnAheadMinutes: value }).learnAheadMinutes).toBe(value);
+});
+
+import { hasCustomAdvancedSettings } from "../src/core/simple-study-settings";
+import { rebaseSettings, settingsKey } from "../src/core/settings-sync";
+it("detects learn ahead edits in advanced settings and three-way sync conflicts", () => {
+  const baseline = structuredClone(DEFAULT_SETTINGS);
+  const local = structuredClone(baseline), remote = structuredClone(baseline);
+  local.studyManagement.learnAheadMinutes = 0;
+  remote.studyManagement.learnAheadMinutes = 30;
+  expect(hasCustomAdvancedSettings(local)).toBe(true);
+  expect(settingsKey(local)).not.toBe(settingsKey(remote));
+  expect(rebaseSettings(baseline, local, remote).conflicts).toEqual(["studyManagement.learnAheadMinutes"]);
+  expect(rebaseSettings(baseline, local, baseline).value).toEqual(local);
+});
