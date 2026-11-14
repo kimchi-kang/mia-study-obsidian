@@ -49,7 +49,7 @@ it('replaces an asset link itself without overwriting its external target',async
 it('installs, reinstalls, updates and restores older asset fixtures without rewriting any study or activation files',async()=>{
  const{root,vault,plugin}=await setup(),old=await pack(root,'old'),current=await pack(root),data=await preserved(vault,plugin);
  for(const candidate of [old,current,current,old,current]){expect(install(candidate,vault).status).toBe(0);await installed(candidate,plugin);await unchanged(data);expect((await readdir(plugin)).filter(n=>n.endsWith('.tmp'))).toEqual([]);}
-});
+}, 20_000); // Spawns several installer runs; slow under a full parallel suite.
 it.each(['missing','empty','version'])('rejects %s source input before altering installed assets or study files',async kind=>{
  const{root,vault,plugin}=await setup(),old=await pack(root,'old'),current=await pack(root),data=await preserved(vault,plugin);expect(install(old,vault).status).toBe(0);
  if(kind==='missing')await rm(join(current,'styles.css'));else if(kind==='empty')await writeFile(join(current,'styles.css'),'');else await writeFile(join(current,'package.json'),'{"version":"wrong"}');
