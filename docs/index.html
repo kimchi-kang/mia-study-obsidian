@@ -237,6 +237,12 @@ section{padding:88px 0 0;scroll-margin-top:12px}
 .cmp-note{margin:16px 0 0;font-size:.92rem;color:var(--muted)}
 .cmp-own{margin-top:32px}
 .cmp-own .lead2{margin:-8px 0 18px;color:var(--muted);font-size:.95rem}
+.sync .lead2{margin:-8px 0 22px;color:var(--muted);font-size:.95rem;max-width:62ch}
+.sync-part{margin-top:32px}
+.sync .paths{margin-bottom:0}
+.sync .box p.tip{margin:14px 0 0;font-size:.9rem;color:var(--muted)}
+.sync .box code.blk{white-space:pre}
+.sync .honest{margin:18px 0 0;font-size:.92rem;color:var(--muted);border-left:6px solid var(--red);padding:4px 0 4px 14px}
 .cmp-miss{margin-top:24px;border:4px solid var(--ink);background:var(--panel);padding:20px 24px}
 .cmp-miss h3{font-size:1.1rem;margin:0 0 8px}
 .cmp-miss p{margin:0;font-size:.92rem;color:var(--muted)}
@@ -323,7 +329,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
   <div class="wrap">
     <a class="brand" href="#"><span class="mark" aria-hidden="true"><i class="c"></i><i class="s"></i><i class="t"></i></span>MIA Study</a>
     <nav aria-label="페이지 안내">
-      <a href="#start">시작</a><a href="#features">기능</a><a href="#anki">Anki 비교</a><a href="#mobile">모바일</a><a href="#install">설치</a><a href="#faq">FAQ</a><a href="#credits">출처</a><a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a>
+      <a href="#start">시작</a><a href="#features">기능</a><a href="#anki">Anki 비교</a><a href="#mobile">모바일</a><a href="#sync">동기화</a><a href="#install">설치</a><a href="#faq">FAQ</a><a href="#credits">출처</a><a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a>
     </nav>
     <button class="theme-btn" type="button" id="theme" aria-label="밝은·어두운 테마 전환">◐</button>
   </div>
@@ -577,9 +583,71 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
   </div>
 </section>
 
+<section id="sync" class="sync">
+  <div class="wrap">
+    <div class="sh"><span class="shape sq-y" aria-hidden="true"></span><h2>여러 기기에서 쓰기</h2><span class="num">06</span></div>
+    <p class="lead2">MIA는 파일을 직접 전송하지 않습니다. 기록이 보관함 안의 평범한 파일에 저장되므로, 보관함 폴더를 기기 사이에 맞춰 주는 도구라면 무엇이든 같은 원리로 씁니다.</p>
+    <div class="paths">
+      <div><b>Mac + iPhone·iPad</b><span>iCloud Drive에 보관함을 둡니다.</span></div>
+      <div><b>Windows + Android</b><span><a href="https://syncthing.net/">Syncthing</a>(무료, 기기끼리 직접), Obsidian Sync(유료), <a href="https://github.com/remotely-save/remotely-save">Remotely Save</a>(OneDrive·Dropbox·WebDAV)</span></div>
+      <div><b>모든 기기 공통</b><span>Obsidian Sync가 가장 무난합니다. Windows용 iCloud는 Obsidian과 궁합이 불안정하고, Android에서는 iCloud를 쓸 수 없습니다.</span></div>
+    </div>
+
+    <div class="sync-part install">
+      <div class="box">
+        <h3>범용 동기화 폴더 켜기</h3>
+        <ol>
+          <li>모든 기기에 같은 최신 MIA를 설치합니다.</li>
+          <li>한 기기에서 <strong>학습 설정 → 내 기기 간 동기화 → 범용 동기화 폴더 사용</strong>을 누릅니다. 기존 기록을 복사·병합하고 원래 파일은 보존합니다.</li>
+          <li>보관함에 <code>MIA Study Sync/</code> 폴더(Markdown 3개)가 생깁니다. 숨김 <code>.obsidian</code> 폴더를 옮기지 않는 도구로도 노트와 함께 전달됩니다.</li>
+          <li>다른 기기에서 파일 수신이 끝나면 Obsidian을 다시 시작합니다. 공유 폴더를 자동으로 인식합니다.</li>
+        </ol>
+      </div>
+      <div class="box">
+        <h3>Windows + Android <small>Syncthing</small></h3>
+        <ol>
+          <li>Windows에 Syncthing, Android에 <strong>Syncthing-Fork</strong>를 설치합니다(공식 Android 앱은 개발 종료).</li>
+          <li>Android 보관함은 <strong>공용 저장소</strong>(예: <code>Documents/<wbr>Obsidian/</code>)에 두고, 앱에 모든 파일 접근 권한을 주며 <strong>배터리 최적화에서 제외</strong>합니다.</li>
+          <li>두 기기를 서로 추가하고 보관함 폴더 전체를 공유합니다. 양쪽에 자료가 있으면 먼저 백업합니다.</li>
+          <li>무시 패턴에 화면 배치 파일을 넣습니다.<code class="blk">.obsidian/workspace.json
+.obsidian/workspace-mobile.json</code></li>
+          <li>한 기기에서 범용 동기화 폴더를 켭니다.</li>
+        </ol>
+        <p class="tip">Syncthing은 두 기기가 동시에 켜져 연결돼 있을 때만 전송합니다. 노트북을 덮은 채 폰에서 한 학습은 노트북을 켠 뒤 넘어갑니다.</p>
+      </div>
+    </div>
+
+    <div class="sync-part">
+      <h3 class="subh">동기화가 이루어지는 방식</h3>
+      <p class="lead2">동기화 도구는 파일을 통째로 옮기기만 하고, 기록을 합치는 일은 MIA가 합니다.</p>
+      <div class="more">
+        <div><span class="dot c" aria-hidden="true"></span><h3>저장하고 확인</h3><p>평가할 때마다 기록 파일에 저장하고, 다시 읽어 실제로 저장됐는지 확인합니다.</p></div>
+        <div><span class="dot s" aria-hidden="true"></span><h3>돌아올 때 합치기</h3><p>Obsidian을 켤 때, 창이나 앱으로 돌아올 때, 기록 새로고침 때 받은 파일을 읽어 자기 기록과 합칩니다.</p></div>
+        <div><span class="dot t" aria-hidden="true"></span><h3>문제마다 마지막 평가</h3><p>평가마다 시각이 담긴 수정 번호를 붙이고, 두 기기의 기록이 다르면 더 최신 평가를 씁니다.</p></div>
+        <div><span class="dot c" aria-hidden="true"></span><h3>진 기록도 보관</h3><p>엇갈린 쪽 기록은 버리지 않고 충돌 기록으로 남겨 학습현황에 알립니다. 서로 다른 이력을 이어 붙여 일정을 망치지 않습니다.</p></div>
+        <div><span class="dot s" aria-hidden="true"></span><h3>설정·이어하기</h3><p>설정이 다르면 하나를 적용하고 나머지는 보관된 설정으로 남깁니다. 이어하기는 더 최근 위치를 씁니다.</p></div>
+        <div><span class="dot t" aria-hidden="true"></span><h3>덜 도착하면 경고</h3><p>동기화 폴더가 일부만 도착했으면 경고합니다. 그때 남긴 평가는 그 기기에만 저장되니 동기화를 마치고 다시 시작하세요.</p></div>
+      </div>
+    </div>
+
+    <div class="sync-part">
+      <h3 class="subh">주의 사항</h3>
+      <div class="more">
+        <div><span class="dot c" aria-hidden="true"></span><h3>한 번에 한 기기</h3><p>한 기기에서 학습 → 동기화 완료 확인 → 다른 기기에서 열기. 두 기기에서 동시에, 또는 오프라인으로 각자 학습하는 것이 충돌의 가장 흔한 원인입니다.</p></div>
+        <div><span class="dot s" aria-hidden="true"></span><h3>충돌 사본은 지우지 않기</h3><p><code>*.sync-conflict-*.md</code>나 <code>conflicted copy</code> 같은 사본은 MIA가 읽지 않습니다. 앱이 꺼져 있던 기기의 평가가 그 안에만 남을 수 있으니 백업하세요.</p></div>
+        <div><span class="dot t" aria-hidden="true"></span><h3>모든 기기 같은 버전</h3><p>이전 버전은 새 저장 위치와 수정 번호를 알지 못합니다. 업데이트를 위해 MIA 스위치를 껐다 켜지 마세요. 꺼진 상태가 퍼질 수 있습니다.</p></div>
+        <div><span class="dot c" aria-hidden="true"></span><h3>전송 도구는 하나만</h3><p>한 보관함에 Syncthing과 Remotely Save처럼 두 도구를 함께 쓰지 않습니다.</p></div>
+        <div><span class="dot s" aria-hidden="true"></span><h3>직접 편집 금지</h3><p><code>MIA Study Sync/</code> 파일은 MIA가 관리합니다. 열어서 고치지 마세요.</p></div>
+        <div><span class="dot t" aria-hidden="true"></span><h3>동기화는 백업이 아님</h3><p>한 기기의 손상·삭제가 그대로 퍼집니다. 보관함 밖에 따로 <a href="#backup">백업</a>하세요.</p></div>
+      </div>
+      <p class="honest">iCloud 외 조합(Windows·Android·Syncthing·Dropbox 등)과 충돌 사본 처리는 실기기로 검증하지 않았습니다. 처음엔 백업한 뒤 문제 몇 개를 한 기기에서 평가하고, 다른 기기에 기록이 넘어오는지 먼저 확인하세요.</p>
+    </div>
+  </div>
+</section>
+
 <section id="install">
   <div class="wrap">
-    <div class="sh"><span class="shape t" aria-hidden="true"></span><h2>설치</h2><span class="num">06</span></div>
+    <div class="sh"><span class="shape t" aria-hidden="true"></span><h2>설치</h2><span class="num">07</span></div>
     <div class="install">
       <div class="box">
         <h3>BRAT <small>추천</small></h3>
@@ -607,7 +675,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
 
 <section id="update">
   <div class="wrap">
-    <div class="sh"><span class="shape c" aria-hidden="true"></span><h2>최신 업데이트</h2><span class="num">07</span></div>
+    <div class="sh"><span class="shape c" aria-hidden="true"></span><h2>최신 업데이트</h2><span class="num">08</span></div>
     <div class="upd">
       <div class="l">
         <div class="big">1.4.21</div>
@@ -629,7 +697,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
 
 <section id="verification">
   <div class="wrap">
-    <div class="sh"><span class="shape s" aria-hidden="true"></span><h2>검증</h2><span class="num">08</span></div>
+    <div class="sh"><span class="shape s" aria-hidden="true"></span><h2>검증</h2><span class="num">09</span></div>
     <div class="verify">
       <div class="v"><span class="lab ok">통과</span><b>1,794개</b><p>1.4.21 자동 검사 통과 1,792·실패 0·생략 2, 타입 검사·배포 빌드 통과.</p></div>
       <div class="v"><span class="lab ok">확인</span><b>데스크톱 앱</b><p>macOS Obsidian에서 모든 탭과 시험·암기, 평가·취소, 재시작을 확인했습니다.</p></div>
@@ -641,12 +709,13 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
 
 <section id="faq">
   <div class="wrap">
-    <div class="sh"><span class="shape t" aria-hidden="true"></span><h2>자주 묻는 질문</h2><span class="num">09</span></div>
+    <div class="sh"><span class="shape t" aria-hidden="true"></span><h2>자주 묻는 질문</h2><span class="num">10</span></div>
     <div class="faq">
       <details><summary>업데이트하면 기존 복습 기록이 사라지나요?</summary><p>아니요. 기록과 설정은 <code>data.json</code>·<code>ui-state.json</code>에 있고, 업데이트는 <code>main.js</code>·<code>styles.css</code>·<code>manifest.json</code>만 바꿉니다. 1.4 계열은 기록 형식을 바꾸지 않았고, 1.4.19에서 늘어난 설정 항목(미리 학습)은 값이 없으면 기본값으로 읽습니다. 그래도 업데이트 전에 보관함을 백업해 두세요.</p></details>
       <details><summary>수식이 수식으로 안 보이고 글자 그대로 나와요.</summary><p>원문에 <code>$...$</code> 또는 <code>$$...$$</code> 구분자와 TeX 문법이 있어야 수식으로 표시됩니다. <code>vC(t) = Vs(1 - e^(-t/RC))</code>처럼 구분자가 없는 문장은 자동으로 수식이 되지 않습니다.</p></details>
       <details><summary>새 버전을 깔았는데 화면이 그대로예요.</summary><p>Obsidian을 완전히 껐다 다시 켜야 새 파일을 불러옵니다. 실행 중인 버전은 Major Study 제목 옆에 표시됩니다.</p></details>
-      <details><summary>휴대폰과 컴퓨터에서 같이 쓸 수 있나요?</summary><p>같은 보관함을 Obsidian Sync·iCloud 등으로 동기화하면 복습 기록·학습 설정·이어하기를 함께 씁니다. 모든 기기를 같은 MIA 버전으로 맞추세요. 실제 두 기기 동기화는 아직 직접 검증하지 않았습니다.</p></details>
+      <details><summary>휴대폰과 컴퓨터에서 같이 쓸 수 있나요?</summary><p>같은 보관함을 Obsidian Sync·iCloud 등으로 동기화하면 복습 기록·학습 설정·이어하기를 함께 씁니다. 모든 기기를 같은 MIA 버전으로 맞추세요. 실제 두 기기 동기화는 아직 직접 검증하지 않았습니다. <a href="#sync">여러 기기에서 쓰기</a>를 보세요.</p></details>
+      <details><summary>iCloud 말고 다른 동기화(Windows·Android)도 되나요?</summary><p>MIA는 보관함 안의 파일에 기록을 저장하므로, 보관함 폴더를 맞춰 주는 도구라면 원리상 됩니다. Windows + Android는 Syncthing(무료)이나 Obsidian Sync를 권합니다. <strong>범용 동기화 폴더</strong>를 켜고, 한 기기에서 학습을 마치고 동기화가 끝난 뒤 다른 기기를 여세요. 이 조합은 실기기로 검증하지 않았습니다. <a href="#sync">설정 방법과 주의 사항</a>을 보세요.</p></details>
       <details><summary>Anki와 무엇이 다른가요?</summary><p>복습 알고리즘(FSRS-6)과 학습 단계·하루 경계·미리 학습·매개변수 최적화는 같은 방식입니다. 카드가 Obsidian 보관함의 Markdown으로 남고 키워드 노트로 개념끼리 연결된다는 점이 다르고, 덱 계층·카드 정지 같은 일부 기능은 없습니다. <a href="#anki">Anki와 비교</a> 표를 보세요.</p></details>
       <details><summary>백업은 어떻게 하나요?</summary><p>과목 폴더의 <code>문제은행.md</code>, 키워드 노트, <code>.obsidian/<wbr>plugins/<wbr>mia-study/</code>의 <code>data.json</code>·<code>ui-state.json</code>(기기 간 동기화를 켰다면 <code>MIA Study Sync/</code> 폴더도)을 보관함 밖의 다른 장소(외장 드라이브, 다른 클라우드, Git 등)에 주기적으로 복사하세요. 동기화는 백업이 아닙니다. <a href="#backup">주의 사항</a>을 보세요.</p></details>
       <details><summary>이미 정리해 둔 문제를 한꺼번에 넣을 수 있나요?</summary><p>문제 자료와 <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/MIA-AGENT.md">MIA-AGENT.md</a>를 GPT나 파일을 편집하는 AI 에이전트에 함께 주면 MIA 형식의 문제은행으로 정리해 줍니다. 기존 Markdown 문제는 <strong>문제</strong> 화면의 <strong>등록하지 않은 문제 후보</strong>에서 등록할 수 있습니다. 외부에서 고친 뒤에는 명령 팔레트의 <code>MIA Study: 과목 노트 다시 동기화</code>를 실행하세요.</p></details>
@@ -657,7 +726,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
 </section>
 <section id="credits">
   <div class="wrap">
-    <div class="sh"><span class="shape c" aria-hidden="true"></span><h2>출처와 라이선스</h2><span class="num">10</span></div>
+    <div class="sh"><span class="shape c" aria-hidden="true"></span><h2>출처와 라이선스</h2><span class="num">11</span></div>
     <div class="credits">
       <div>
         <h3>복습 알고리즘</h3>
