@@ -239,6 +239,16 @@ section{padding:88px 0 0;scroll-margin-top:12px}
 .cmp-miss h3{font-size:1.1rem;margin:0 0 8px}
 .cmp-miss p{margin:0;font-size:.92rem;color:var(--muted)}
 
+/* credits */
+.credits{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:4px solid var(--ink);background:var(--panel)}
+.credits>div{padding:22px 24px;min-width:0}
+.credits>div:nth-child(even){border-left:4px solid var(--ink)}
+.credits>div:nth-child(n+3){border-top:4px solid var(--ink)}
+.credits h3{font-size:1.1rem;margin:0 0 8px}
+.credits ul{margin:0;padding-left:18px}
+.credits li{margin:6px 0;font-size:.92rem}
+.credits li span{color:var(--muted)}
+
 /* footer */
 footer{margin-top:96px;background:var(--ink);color:var(--bg);padding:36px 0 44px;font-size:.9rem}
 footer a{color:var(--bg)}
@@ -291,6 +301,10 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
   .cmp .row>div+div{border-left:0;border-top:2px dashed var(--ink)}
   .cmp .row>div[data-h]::before{display:block;content:attr(data-h);font-size:.75rem;font-weight:800;color:var(--muted);margin-bottom:2px}
   .cmp-miss{padding:18px 16px}
+  .credits{grid-template-columns:1fr}
+  .credits>div{padding:18px 16px}
+  .credits>div:nth-child(even){border-left:0}
+  .credits>div+div{border-top:4px solid var(--ink)}
   .grades span{font-size:.74rem}
   .sh .num{display:none}
   .phones{gap:12px}
@@ -307,7 +321,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
   <div class="wrap">
     <a class="brand" href="#"><span class="mark" aria-hidden="true"><i class="c"></i><i class="s"></i><i class="t"></i></span>MIA Study</a>
     <nav aria-label="페이지 안내">
-      <a href="#start">시작</a><a href="#features">기능</a><a href="#anki">Anki 비교</a><a href="#mobile">모바일</a><a href="#install">설치</a><a href="#faq">FAQ</a><a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a>
+      <a href="#start">시작</a><a href="#features">기능</a><a href="#anki">Anki 비교</a><a href="#mobile">모바일</a><a href="#install">설치</a><a href="#faq">FAQ</a><a href="#credits">출처</a><a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a>
     </nav>
     <button class="theme-btn" type="button" id="theme" aria-label="밝은·어두운 테마 전환">◐</button>
   </div>
@@ -625,12 +639,51 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
     </div>
   </div>
 </section>
+<section id="credits">
+  <div class="wrap">
+    <div class="sh"><span class="shape c" aria-hidden="true"></span><h2>출처와 라이선스</h2><span class="num">10</span></div>
+    <div class="credits">
+      <div>
+        <h3>복습 알고리즘</h3>
+        <ul>
+          <li><strong>FSRS</strong> <span>— Jarrett Ye와 <a href="https://github.com/open-spaced-repetition">Open Spaced Repetition</a>. FSRS-6과 기본 가중치 21개를 씁니다.</span></li>
+          <li><span>Ye, Su, Cao. <a href="https://doi.org/10.1145/3534678.3539081">A Stochastic Shortest Path Algorithm for Optimizing Spaced Repetition Scheduling</a>. KDD 2022.</span></li>
+          <li><span>Su, Ye, Nie, Cao, Chen. <a href="https://doi.org/10.1109/TKDE.2023.3251721">Optimizing Spaced Repetition Schedule by Capturing the Dynamics of Memory</a>. IEEE TKDE 2023.</span></li>
+          <li><a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a> <span>(MIT) — 복습일 계산</span></li>
+          <li><a href="https://github.com/open-spaced-repetition/fsrs-rs">fsrs-rs</a> <span>(BSD-3-Clause) — 매개변수 최적화를 이 학습 절차대로 TypeScript로 다시 구현</span></li>
+        </ul>
+      </div>
+      <div>
+        <h3>참고한 앱</h3>
+        <ul>
+          <li><a href="https://apps.ankiweb.net/">Anki</a> <span>(AGPL-3.0-or-later) — 설정 이름·기본값·동작을 참고했고 코드는 쓰지 않았습니다.</span></li>
+          <li><span>MIA Study는 Anki·Obsidian·Open Spaced Repetition과 관계없는 개인 프로젝트입니다.</span></li>
+        </ul>
+      </div>
+      <div>
+        <h3>포함된 라이브러리</h3>
+        <ul>
+          <li><a href="https://github.com/markdown-it/markdown-it">markdown-it</a> <span>(MIT)</span> · <a href="https://github.com/dolanmiu/docx">docx</a> <span>(MIT)</span> · <a href="https://github.com/Stuk/jszip">JSZip</a> <span>(MIT)</span> · <a href="https://github.com/nodeca/pako">pako</a> <span>(MIT·zlib)</span></li>
+          <li><span>전체 목록과 라이선스 전문:</span> <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/THIRD-PARTY-NOTICES.txt">THIRD-PARTY-NOTICES.txt</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>도구와 디자인</h3>
+        <ul>
+          <li><span>코드와 문서 대부분을</span> Claude Code<span>(Anthropic)와</span> Codex<span>(OpenAI)로 작성했습니다.</span></li>
+          <li><a href="https://fonts.google.com/specimen/Black+Han+Sans">Black Han Sans</a> <span>(Zess Type, SIL OFL 1.1) · 바우하우스 양식에서 영감</span></li>
+          <li><span>모든 출처:</span> <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/CREDITS.md">CREDITS.md</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
 </main>
 
 <footer>
   <div class="wrap">
     <span class="fm" aria-hidden="true"><i class="c"></i><i class="s"></i><i class="t"></i></span>
-    <span>MIA Study 1.4.20 · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT</a> · 복습 일정: <a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a>(FSRS-6)</span>
+    <span>MIA Study 1.4.20 · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT</a> · 복습 일정: <a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a>(FSRS-6) · <a href="#credits">출처</a></span>
     <span><a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/issues">문제 신고</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases">릴리스</a></span>
   </div>
 </footer>
