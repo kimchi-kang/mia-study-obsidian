@@ -33,6 +33,24 @@ describe("resume persistence and device reading preferences", () => {
     expect(ui.store.resume).toEqual(saved);
     await ui.store.saveResume(null); await ui.store.load(); expect(ui.store.resume).toBeNull();
   });
+  it("recognizes a committed position even when the adapter rejects after writing", async () => {
+    const ui = device(); await ui.store.saveResume(saved);
+    const newer = { ...saved, queueIndex: 2, updatedAt: "2026-10-18T00:00:00Z" };
+    ui.adapter.write.mockImplementationOnce(async (path, text) => {
+      ui.files.set(path, text); throw Error("rejected after commit");
+    });
+    await expect(ui.store.saveResume(newer)).resolves.toBeUndefined();
+    expect(ui.store.resume).toEqual(newer);
+    expect(ui.local.get("mia-study:resume-checkpoint:plugin/ui-state.json").resume).toEqual(newer);
+  });
+  it.each(["unchanged", "truncated"])("does not acknowledge an %s resume write as saved", async failure => {
+    const ui = device(); await ui.store.saveResume(saved);
+    ui.adapter.write.mockImplementationOnce(async (path, text) => {
+      if (failure === "truncated") ui.files.set(path, text.slice(0, 30));
+    });
+    await expect(ui.store.saveResume({ ...saved, queueIndex: 2 })).rejects.toThrow();
+    expect(ui.store.resume).toEqual(saved);
+  });
   it("does not let a slow synced-file read overwrite a newer local move", async () => {
     const ui = device(); await ui.store.saveResume(saved);
     let finishRead;
