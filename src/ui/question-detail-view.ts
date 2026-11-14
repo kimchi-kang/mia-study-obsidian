@@ -8,6 +8,7 @@ import { errorMessage } from "./error-message";
 import { ConfirmDeleteModal } from "./manage-modals";
 import { renderQuestionTitle } from "./question-title";
 import { GRADE_HINTS } from "./study-grades";
+import { dialogKey, ModalOpenGuard } from "./modal-open-guard";
 
 export type RegisteredQuestion = QuestionRecord & { id: string };
 
@@ -58,6 +59,7 @@ export class QuestionDetailView {
     private readonly app: App,
     private readonly source: QuestionDetailSource,
     private readonly hooks: QuestionDetailHooks,
+    private readonly modalOpenGuard = new ModalOpenGuard(),
   ) {}
 
   /**
@@ -146,14 +148,14 @@ export class QuestionDetailView {
   private confirmReset(): void {
     if (this.saving) return;
     const count = this.source.review?.history.length ?? 0;
-    new ConfirmDeleteModal(
+    this.modalOpenGuard.open(dialogKey("review-reset-confirmation", this.source.question.id), () => new ConfirmDeleteModal(
       this.app,
       "학습 기록 초기화",
       `이 질문의 복습 기록 ${count}회와 다음 복습 일정이 모두 지워지고 새 문제로 돌아갑니다. 질문·정답·키워드·연결 질문은 그대로입니다. 되돌릴 수 없습니다.`,
       "초기화",
       () => this.perform(this.source.actions.resetReview, "복습 기록을 초기화했습니다."),
       "초기화 실패",
-    ).open();
+    ));
   }
 
   private actionButton(parent: HTMLElement, label: string, action: () => void, id: string, cls?: string): void {

@@ -11,6 +11,7 @@ import { ReviewConflictModal } from "./review-conflict-modal";
 import { SettingsConflictModal } from "./settings-conflict-modal";
 import type { StudyPageContext } from "./study-page-context";
 import { progressGuidance } from "./study-policy";
+import { dialogKey } from "./modal-open-guard";
 
 // The dashboard and progress pages: counts, start buttons and per-subject cards.
 
@@ -35,38 +36,40 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
     const warning = root.createDiv({ cls: "mia-storage-warning" });
     warning.createEl("p", { text: "완료를 확인하지 못한 저장 사본이 있습니다. 새 평가 전에 확인하세요." });
     warning.createEl("button", { text: "미완료 저장 확인" }).addEventListener("click", () => {
-      const modal = new Modal(ctx.app);
-      modal.setTitle("미완료 저장 확인");
-      modal.modalEl.addClass("mia-preview-modal", "mia-recovery-modal");
-      modal.contentEl.createEl("p", { text: "이 사본은 저장 완료가 확인되지 않은 요청입니다. 아래 원본을 복사해 별도로 보관할 수 있습니다. 재시도는 최신 파일과 사본을 기존 충돌 규칙으로 비교하며, 평가를 다시 계산하거나 이력을 합산하지 않습니다. 설정·평가 차이가 있으면 별도 보관됩니다." });
-      const original = modal.contentEl.createEl("textarea", { attr: { readonly: "true", rows: "10", "aria-label": "미완료 저장 복구용 JSON" } });
-      original.value = JSON.stringify(pendingRecovery, null, 2);
-      original.style.width = "100%";
-      const retry = modal.contentEl.createEl("button", { text: "최신 파일과 확인 후 저장 재시도" });
-      retry.addEventListener("click", async () => {
-        retry.disabled = true;
-        try { await ctx.plugin.store.retryPending(); await ctx.plugin.index.rebuild(); modal.close(); ctx.showDashboard(); }
-        catch (error) { new Notice(`저장 재시도 실패: ${errorMessage(error)}`); retry.disabled = false; }
+      ctx.plugin.modalOpenGuard.open(dialogKey("pending-recovery"), () => {
+        const modal = new Modal(ctx.app);
+        modal.setTitle("미완료 저장 확인");
+        modal.modalEl.addClass("mia-preview-modal", "mia-recovery-modal");
+        modal.contentEl.createEl("p", { text: "이 사본은 저장 완료가 확인되지 않은 요청입니다. 아래 원본을 복사해 별도로 보관할 수 있습니다. 재시도는 최신 파일과 사본을 기존 충돌 규칙으로 비교하며, 평가를 다시 계산하거나 이력을 합산하지 않습니다. 설정·평가 차이가 있으면 별도 보관됩니다." });
+        const original = modal.contentEl.createEl("textarea", { attr: { readonly: "true", rows: "10", "aria-label": "미완료 저장 복구용 JSON" } });
+        original.value = JSON.stringify(pendingRecovery, null, 2);
+        original.style.width = "100%";
+        const retry = modal.contentEl.createEl("button", { text: "최신 파일과 확인 후 저장 재시도" });
+        retry.addEventListener("click", async () => {
+          retry.disabled = true;
+          try { await ctx.plugin.store.retryPending(); await ctx.plugin.index.rebuild(); modal.close(); ctx.showDashboard(); }
+          catch (error) { new Notice(`저장 재시도 실패: ${errorMessage(error)}`); retry.disabled = false; }
+        });
+        modal.contentEl.createEl("button", { text: "닫기" }).addEventListener("click", () => modal.close());
+        return modal;
       });
-      modal.contentEl.createEl("button", { text: "닫기" }).addEventListener("click", () => modal.close());
-      modal.open();
     });
   }
   const settingsConflicts = ctx.plugin.store.settingsConflicts;
   if (settingsConflicts?.length) {
     const warning = root.createDiv({ cls: "mia-storage-warning" });
     warning.createEl("p", { text: `기기 간 설정 차이 ${settingsConflicts.length}개를 보관했습니다. 현재 설정은 학습 설정에서 확인하세요.` });
-    warning.createEl("button", { text: "보관된 설정 확인" }).addEventListener("click", () => new SettingsConflictModal(ctx.app, ctx.plugin.store.settings, settingsConflicts, async id => {
+    warning.createEl("button", { text: "보관된 설정 확인" }).addEventListener("click", () => ctx.plugin.modalOpenGuard.open(dialogKey("settings-conflicts"), () => new SettingsConflictModal(ctx.app, ctx.plugin.store.settings, settingsConflicts, async id => {
       await ctx.plugin.store.restoreSettingsConflict(id);
       await ctx.plugin.index.rebuild();
       ctx.showDashboard();
-    }).open());
+    })));
   }
   const conflicts = ctx.plugin.store.conflicts;
   if (conflicts && Object.keys(conflicts).length) {
     const warning = root.createDiv({ cls: "mia-sync-warning" });
     warning.createEl("p", { text: `기기 간 평가가 달랐던 문제 ${Object.keys(conflicts).length}개 · 이전 이력도 보관했습니다.` });
-    warning.createEl("button", { text: "보관된 평가 확인" }).addEventListener("click", () => new ReviewConflictModal(ctx.app, conflicts, id => ctx.plugin.index.questionById(id)?.heading ?? id).open());
+    warning.createEl("button", { text: "보관된 평가 확인" }).addEventListener("click", () => ctx.plugin.modalOpenGuard.open(dialogKey("review-conflicts"), () => new ReviewConflictModal(ctx.app, conflicts, id => ctx.plugin.index.questionById(id)?.heading ?? id)));
   }
   renderDuplicateFileWarning(ctx, root);
   const questions = ctx.plugin.index.registered;

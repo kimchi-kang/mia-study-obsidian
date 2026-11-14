@@ -17,6 +17,7 @@ import { bindStudyGestures, StudyGestureBinding } from "./study-gestures";
 import { bindAdaptiveLayout } from "./adaptive-layout";
 import { bindRatingTapGuard } from "./rating-tap-guard";
 import { StudyControlsModal } from "./study-controls-modal";
+import { dialogKey } from "./modal-open-guard";
 import { StudyAppearanceModal } from "./study-appearance-modal";
 import type { StudySessionSummary } from "../services/study-ui-store";
 import { renderKeywords } from "./keywords-page";
@@ -635,7 +636,7 @@ export class MiaStudyView extends ItemView {
     const settingsButtons = title.createDiv({ cls: "mia-settings-buttons" });
     settingsButtons.createEl("button", { text: "학습 설정", cls: "mia-learning-button" }).addEventListener("click", () => this.openStudySettings());
     const appearance = settingsButtons.createEl("button", { text: "보기 설정", cls: "mia-appearance-button" });
-    appearance.addEventListener("click", () => new StudyAppearanceModal(this.app, this.plugin.studyUi, () => this.refreshAppearance(), () => this.restoreSettingsFocus(".mia-appearance-button")).open());
+    appearance.addEventListener("click", () => this.plugin.modalOpenGuard.open(dialogKey("study-appearance-settings"), () => new StudyAppearanceModal(this.app, this.plugin.studyUi, () => this.refreshAppearance(), () => this.restoreSettingsFocus(".mia-appearance-button"))));
     const nav = header.createDiv({ cls: "mia-nav" });
     // Weak questions live on the dashboard strip and as the 취약 filter on 문제, so there is no tab of their own.
     this.navButton(nav, "오늘", "dashboard");
@@ -651,7 +652,7 @@ export class MiaStudyView extends ItemView {
   }
 
   private openStudySettings(): void {
-    new StudyManagementModal(this.app, this.plugin, () => this.render(), () => this.restoreSettingsFocus(".mia-learning-button")).open();
+    this.plugin.modalOpenGuard.open(dialogKey("study-management-settings"), () => new StudyManagementModal(this.app, this.plugin, () => this.render(), () => this.restoreSettingsFocus(".mia-learning-button")));
   }
 
   private showQuestions(review: ReviewFilter, subject = "all"): void {
@@ -772,14 +773,16 @@ export class MiaStudyView extends ItemView {
         this.resultTimer = window.setTimeout(() => {
           this.resultTimer = null;
           this.resultShown = true;
-          this.resultModal = new StudyResultModal(
-            this.app,
-            result,
-            () => this.restartSession(),
-            () => this.returnToSessionOrigin(),
-            this.lastRated ? () => void this.undoLastRating() : undefined,
-          );
-          this.resultModal.open();
+          this.plugin.modalOpenGuard.open(dialogKey("study-result"), () => {
+            this.resultModal = new StudyResultModal(
+              this.app,
+              result,
+              () => this.restartSession(),
+              () => this.returnToSessionOrigin(),
+              this.lastRated ? () => void this.undoLastRating() : undefined,
+            );
+            return this.resultModal;
+          });
         }, 0);
       }
       return;
@@ -948,7 +951,7 @@ export class MiaStudyView extends ItemView {
       this.renderUndoButton(utility, "mia-dock-undo");
     } else if (!this.readOnlyBrowse) {
       const help = utility.createEl("button", { text: "조작 안내", cls: "mia-controls-help" });
-      help.addEventListener("click", () => new StudyControlsModal(this.app).open());
+      help.addEventListener("click", () => this.plugin.modalOpenGuard.open(dialogKey("study-controls"), () => new StudyControlsModal(this.app)));
     }
     const forward = utility.createEl("button", { text: "다음 →", cls: "mia-thumb-next" });
     forward.setAttr("aria-label", "평가 없이 다음 문제");

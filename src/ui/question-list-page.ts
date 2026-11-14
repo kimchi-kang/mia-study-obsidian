@@ -275,7 +275,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
         // A saved rating or reset changes the store, which re-renders this page and rebuilds the panel
         // from `selectedId`; refetching here would run against the DOM that render is about to replace.
         afterMutation: () => {},
-      });
+      }, ctx.plugin.modalOpenGuard);
       await detail.render(panel, title, component, () => revision === panelRevision);
       if (revision !== panelRevision) return;
       const body = panel.querySelector<HTMLElement>(".mia-detail-scroll");

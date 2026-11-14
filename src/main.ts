@@ -31,6 +31,7 @@ import { MIA_VIEW_TYPE, MiaStudyView } from "./ui/study-view";
 import { KeywordMeaningModal } from "./ui/keyword-modal";
 import { FollowUpModal } from "./ui/follow-up-modal";
 import { QuestionDetailModal } from "./ui/question-detail-modal";
+import { dialogKey, ModalOpenGuard } from "./ui/modal-open-guard";
 import type { QuestionDetailSource } from "./ui/question-detail-view";
 import { recommendQuestions } from "./core/recommendation-engine";
 import {
@@ -69,6 +70,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
   private readonly keywords = new KeywordOperations(this);
   private readonly subjects = new SubjectOperations(this, this.subjectNotes, this.followUps);
   private readonly questions = new QuestionOperations(this, this.subjectNotes, this.keywords, this.followUps);
+  readonly modalOpenGuard = new ModalOpenGuard();
 
   async onload(): Promise<void> {
     this.unloadRequested = false;
@@ -249,17 +251,17 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
       void this.openQuestion(question);
       return;
     }
-    new QuestionMetadataModal(
+    this.modalOpenGuard.open(dialogKey("question-metadata", question.id ?? `${question.filePath}:${question.location.headingLine}`), () => new QuestionMetadataModal(
       this.app,
       question,
       this.store.settings.keywordFolder,
       (metadata) => this.writeMetadata(question, metadata),
       (id) => this.index.questionById(id),
-    ).open();
+    ));
   }
 
   showKeywordMeaning(target: string, label: string, sourcePath: string): void {
-    new KeywordMeaningModal(this.app, target, label, sourcePath, this.store.settings.keywordFolder).open();
+    this.modalOpenGuard.open(dialogKey("keyword-meaning", target), () => new KeywordMeaningModal(this.app, target, label, sourcePath, this.store.settings.keywordFolder));
   }
 
   get managedRoot(): string {
@@ -280,122 +282,126 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     for (const question of this.index.registered) counts.set(question.subject, (counts.get(question.subject) ?? 0) + 1);
     const subjects = [...counts].sort(([a], [b]) => a.localeCompare(b, "ko"))
       .map(([name, count]) => ({ name, count }));
-    new SubjectExportModal(this.app, subjects, (subject) => this.exportSubject(subject),
-      Platform.isDesktopApp ? "다운로드 폴더" : "보관함의 MIA 출력 폴더").open();
+    this.modalOpenGuard.open(dialogKey("subject-export"), () => new SubjectExportModal(this.app, subjects, (subject) => this.exportSubject(subject),
+      Platform.isDesktopApp ? "다운로드 폴더" : "보관함의 MIA 출력 폴더"));
   }
 
   openSubjectEditor(current: string | null = null): void {
-    new SubjectEditorModal(this.app, current, async (name) => {
+    this.modalOpenGuard.open(dialogKey("subject-editor", current ?? "new"), () => new SubjectEditorModal(this.app, current, async (name) => {
       if (current) await this.renameSubject(current, name);
       else await this.createSubject(name);
-    }).open();
+    }));
   }
 
   confirmDeleteSubject(subject: string): void {
     const folderPath = normalizePath(`${this.managedRoot}/${subject}`);
     const count = this.index.registered.filter((question) => question.filePath.startsWith(`${folderPath}/`)).length;
-    new ConfirmDeleteModal(
+    this.modalOpenGuard.open(dialogKey("subject-delete", subject), () => new ConfirmDeleteModal(
       this.app,
       `${subject} 과목 삭제`,
       `${subject} 폴더와 질문 ${count}개를 Obsidian 휴지통으로 이동합니다. 해당 질문의 FSRS 복습 기록도 삭제됩니다.`,
       "과목 삭제",
       () => this.deleteSubject(subject),
-    ).open();
+    ));
   }
 
   async openManagedQuestionEditor(question: QuestionRecord | null = null, onClosed?: () => void, onSaved?: () => void, isActive?: () => boolean): Promise<void> {
-    if (question) {
-      const current = question.id ? this.index.questionById(question.id) : undefined;
-      if (!current) throw new Error("원본 문제를 찾을 수 없습니다. 삭제 또는 ID 충돌 여부를 확인하세요.");
-      question = current;
-    }
-    const subjects = [...new Set([...(question ? [question.subject] : []), ...this.listSubjects()])];
-    const meanings = question ? await this.loadKeywordMeanings(question) : new Map<string, string>();
-    if (isActive && !isActive()) return;
-    if (question) {
-      const current = question.id ? this.index.questionById(question.id) : undefined;
-      if (!current) throw new Error("원본 문제를 찾을 수 없습니다. 삭제 또는 ID 충돌 여부를 확인하세요.");
-      assertQuestionUnchanged(question, current);
-    }
-    let editorPath = question?.filePath;
-    const pendingSubjectNotes = new Map<string, string>();
-    const persistedQuestion = (persisted: QuestionRecord) => {
-      question = persisted;
-      editorPath ??= persisted.filePath;
-    };
-    new ManagedQuestionModal(
-      this.app,
-      subjects,
-      this.store.settings.keywordFolder,
-      question,
-      meanings,
-      async (draft) => {
-        // A move may commit before derived-note refresh fails. The still-open
-        // editor's relative links remain authored against its original bank.
-        const input = question && editorPath && editorPath !== question.filePath ? {
-          ...draft,
-          questionMarkdown: rebaseMarkdownLinks(draft.questionMarkdown, editorPath, question.filePath),
-          answerMarkdown: rebaseMarkdownLinks(draft.answerMarkdown, editorPath, question.filePath),
-        } : draft;
-        // Clear any stale source-index entry before resolving incoming links.
-        for (const path of pendingSubjectNotes.values()) {
-          const file = this.app.vault.getAbstractFileByPath(path);
-          if (!(file instanceof TFile)) throw new Error("이동 전 문제 파일을 찾지 못했습니다. 갱신을 다시 시도하세요.");
-          await this.index.refreshFile(file);
-        }
-        const previousQuestion = question;
-        try {
-          if (question) await this.updateManagedQuestion(question, input, persistedQuestion);
-          else await this.createManagedQuestion(input, persistedQuestion);
-        } catch (error) {
-          if (previousQuestion && question?.subject !== previousQuestion.subject && this.subjectNotes.containsQuestion(previousQuestion)) {
-            pendingSubjectNotes.set(previousQuestion.subject, previousQuestion.filePath);
+    const target = question ? question.id ?? `${question.filePath}:${question.location.headingLine}` : "new";
+    await this.modalOpenGuard.openAsync(dialogKey("managed-question-editor", target), async () => {
+      if (question) {
+        const current = question.id ? this.index.questionById(question.id) : undefined;
+        if (!current) throw new Error("원본 문제를 찾을 수 없습니다. 삭제 또는 ID 충돌 여부를 확인하세요.");
+        question = current;
+      }
+      const subjects = [...new Set([...(question ? [question.subject] : []), ...this.listSubjects()])];
+      const meanings = question ? await this.loadKeywordMeanings(question) : new Map<string, string>();
+      if (isActive && !isActive()) return null;
+      if (question) {
+        const current = question.id ? this.index.questionById(question.id) : undefined;
+        if (!current) throw new Error("원본 문제를 찾을 수 없습니다. 삭제 또는 ID 충돌 여부를 확인하세요.");
+        assertQuestionUnchanged(question, current);
+      }
+      let editorPath = question?.filePath;
+      const pendingSubjectNotes = new Map<string, string>();
+      const persistedQuestion = (persisted: QuestionRecord) => {
+        question = persisted;
+        editorPath ??= persisted.filePath;
+      };
+      return new ManagedQuestionModal(
+        this.app,
+        subjects,
+        this.store.settings.keywordFolder,
+        question,
+        meanings,
+        async (draft) => {
+          // A move may commit before derived-note refresh fails. The still-open
+          // editor's relative links remain authored against its original bank.
+          const input = question && editorPath && editorPath !== question.filePath ? {
+            ...draft,
+            questionMarkdown: rebaseMarkdownLinks(draft.questionMarkdown, editorPath, question.filePath),
+            answerMarkdown: rebaseMarkdownLinks(draft.answerMarkdown, editorPath, question.filePath),
+          } : draft;
+          // Clear any stale source-index entry before resolving incoming links.
+          for (const path of pendingSubjectNotes.values()) {
+            const file = this.app.vault.getAbstractFileByPath(path);
+            if (!(file instanceof TFile)) throw new Error("이동 전 문제 파일을 찾지 못했습니다. 갱신을 다시 시도하세요.");
+            await this.index.refreshFile(file);
           }
-          throw error;
-        }
-        for (const subject of pendingSubjectNotes.keys()) {
-          // Every question file in the folder belongs in the note, not just the bank.
-          await this.syncSubjectNote(subject, await this.subjectQuestions(subject));
-          pendingSubjectNotes.delete(subject);
-        }
-        onSaved?.();
-      },
-      this.index.registered,
-      onClosed,
-    ).open();
+          const previousQuestion = question;
+          try {
+            if (question) await this.updateManagedQuestion(question, input, persistedQuestion);
+            else await this.createManagedQuestion(input, persistedQuestion);
+          } catch (error) {
+            if (previousQuestion && question?.subject !== previousQuestion.subject && this.subjectNotes.containsQuestion(previousQuestion)) {
+              pendingSubjectNotes.set(previousQuestion.subject, previousQuestion.filePath);
+            }
+            throw error;
+          }
+          for (const subject of pendingSubjectNotes.keys()) {
+            // Every question file in the folder belongs in the note, not just the bank.
+            await this.syncSubjectNote(subject, await this.subjectQuestions(subject));
+            pendingSubjectNotes.delete(subject);
+          }
+          onSaved?.();
+        },
+        this.index.registered,
+        onClosed,
+      );
+    });
   }
 
   openKeywordEditor(entry: KeywordNoteEntry | null = null): void {
-    void (async () => {
+    const target = entry?.filePath ?? "new";
+    void this.modalOpenGuard.openAsync(dialogKey("keyword-editor", target), async () => {
       const meaning = entry ? await this.readKeywordNote(entry.filePath) : "";
-      new KeywordEditorModal(this.app, entry ? { name: entry.name, meaning } : null, (name, value) =>
+      return new KeywordEditorModal(this.app, entry ? { name: entry.name, meaning } : null, (name, value) =>
         this.saveKeyword(entry, name, value),
-      ).open();
-    })().catch((error) => new Notice(`키워드 열기 실패: ${error instanceof Error ? error.message : String(error)}`));
+      );
+    }).catch((error) => new Notice(`키워드 열기 실패: ${error instanceof Error ? error.message : String(error)}`));
   }
 
   confirmDeleteKeyword(entry: KeywordNoteEntry): void {
     const linked = this.keywords.questionsUsing([entry.target]);
-    new ConfirmDeleteModal(
+    this.modalOpenGuard.open(dialogKey("keyword-delete", entry.filePath), () => new ConfirmDeleteModal(
       this.app,
       `${entry.name} 키워드 삭제`,
       `키워드 노트를 휴지통으로 이동하고 연결된 질문 ${linked.length}개의 핵심·보조 키워드 목록에서도 제거합니다.`,
       "키워드 삭제",
       () => this.deleteKeyword(entry),
-    ).open();
+    ));
   }
 
   confirmDeleteQuestion(question: QuestionRecord & { id: string }): void {
     const hasSubjectNote = this.subjectNotes.containsQuestion(question)
       && this.app.vault.getAbstractFileByPath(this.subjectNotes.path(question.subject)) instanceof TFile;
     const location = hasSubjectNote ? `원문과 ${question.subject} 노트` : "원문";
-    new ConfirmDeleteModal(
+    this.modalOpenGuard.open(dialogKey("question-delete", question.id), () => new ConfirmDeleteModal(
       this.app,
       "질문 삭제",
       `“${question.heading}”을 ${location}에서 삭제하고 FSRS 복습 기록도 제거합니다.`,
       "질문 삭제",
       () => this.deleteManagedQuestion(question),
-    ).open();
+    ));
   }
 
   async openQuestion(question: QuestionRecord): Promise<void> {
@@ -423,17 +429,17 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     const current = opened.find(item => item.id === question.id);
     if (!current) throw new Error("연결을 편집할 질문을 찾지 못했습니다.");
     const expected = new Map(opened.map(item => [item.id, item]));
-    new FollowUpModal(this.app, current, opened, async (ids, bidirectional) => {
+    this.modalOpenGuard.open(dialogKey("question-connections", question.id), () => new FollowUpModal(this.app, current, opened, async (ids, bidirectional) => {
       const changes = planFollowUpChanges(current, ids, opened, bidirectional);
       await this.index.rebuild();
       await this.applyFollowUpChanges(changes, expected);
       new Notice(`${changes.size}개 질문의 연결을 갱신했습니다.`);
-    }).open();
+    }));
   }
 
   openQuestionPreview(question: QuestionRecord & { id: string }, restore: () => void): void {
     const current = this.index.questionById(question.id) ?? question;
-    new QuestionPreviewModal(this.app, current, () => void this.openQuestionDetail(current), restore, this.studyUi.appearance).open();
+    this.modalOpenGuard.open(dialogKey("question-preview", question.id), () => new QuestionPreviewModal(this.app, current, () => void this.openQuestionDetail(current), restore, this.studyUi.appearance));
   }
 
   /** Resolves a question's detail (status, keyword meanings, related questions) and its actions. */
@@ -459,19 +465,11 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     };
   }
 
-  /** Question ids whose detail dialog is open or opening, so a double click cannot stack two of them. */
-  private readonly detailDialogs = new Set<string>();
-
   async openQuestionDetail(question: QuestionRecord & { id: string }): Promise<void> {
-    if (this.detailDialogs.has(question.id)) return;
-    this.detailDialogs.add(question.id);
-    try {
+    await this.modalOpenGuard.openAsync(dialogKey("question-detail", question.id), async () => {
       const { question: current, review, recommendations, meanings, actions } = await this.questionDetailSource(question);
-      new QuestionDetailModal(this.app, current, review, recommendations, meanings, actions, () => this.detailDialogs.delete(question.id)).open();
-    } catch (error) {
-      this.detailDialogs.delete(question.id);
-      throw error;
-    }
+      return new QuestionDetailModal(this.app, current, review, recommendations, meanings, actions, this.modalOpenGuard);
+    });
   }
 
   private questionAtLine(path: string, line: number): QuestionRecord | undefined {

@@ -1,10 +1,11 @@
 import { it, expect, vi } from "vitest";
-const dialogs = vi.hoisted(() => ({ questions: [], subjects: [], deletes: [] }));
+const dialogs = vi.hoisted(() => ({ questions: [], subjects: [], deletes: [], followUps: [], questionModals: [], deleteModals: [], followUpModals: [] }));
 vi.mock("../src/ui/manage-modals", () => ({
-  ManagedQuestionModal: class { constructor(...args) { dialogs.questions.push(args); } open() {} },
+  ManagedQuestionModal: class { constructor(...args) { dialogs.questions.push(args); dialogs.questionModals.push(this); } onClose() {} open() {} },
   SubjectEditorModal: class { constructor(...args) { dialogs.subjects.push(args); } open() {} },
-  ConfirmDeleteModal: class { constructor(...args) { dialogs.deletes.push(args); } open() {} }, KeywordEditorModal: class {},
+  ConfirmDeleteModal: class { constructor(...args) { dialogs.deletes.push(args); dialogs.deleteModals.push(this); } onClose() {} open() {} }, KeywordEditorModal: class {},
 }));
+vi.mock("../src/ui/follow-up-modal", () => ({ FollowUpModal: class { constructor(...args) { dialogs.followUps.push(args); dialogs.followUpModals.push(this); } onClose() {} open() {} } }));
 vi.mock("obsidian", () => ({
   Plugin: class {}, Modal: class {}, ItemView: class {}, PluginSettingTab: class {}, MarkdownView: class {},
   TFile: class {}, TFolder: class {}, Component: class {}, Setting: class {}, Notice: class {}, Platform: { isMobile: false }, normalizePath: path => path,
@@ -124,4 +125,74 @@ it("omits the subject note from deletion confirmation when no managed note exist
   plugin.app = { vault: { getAbstractFileByPath: () => null } };
   plugin.confirmDeleteQuestion({ heading: "질문", subject: "물리", filePath: "MIA/물리/문제은행.md" });
   expect(dialogs.deletes.at(-1)[2]).not.toContain("물리 노트");
+});
+
+const managedQuestion = {
+  id: "mia-q-dialog-guard",
+  subject: "물리",
+  filePath: "MIA/물리/문제은행.md",
+  heading: "질문",
+  headingLevel: 3,
+  questionMarkdown: "질문 내용",
+  answerMarkdown: "정답",
+  questionType: "정의형",
+  coreKeywords: [],
+  subKeywords: [],
+  followUpIds: [],
+  location: { headingLine: 1, answerEndLine: 3 },
+};
+
+it("opens one question-add editor for a double invocation and releases its key on close", async () => {
+  const plugin = new MiaStudyPlugin();
+  plugin.app = {};
+  plugin.store = { settings: { keywordFolder: "MIA/키워드" } };
+  plugin.index = { registered: [] };
+  plugin.listSubjects = () => [];
+  const before = dialogs.questions.length;
+  await Promise.all([plugin.openManagedQuestionEditor(), plugin.openManagedQuestionEditor()]);
+  expect(dialogs.questions).toHaveLength(before + 1);
+  dialogs.questionModals.at(-1).onClose();
+  await plugin.openManagedQuestionEditor();
+  expect(dialogs.questions).toHaveLength(before + 2);
+});
+
+it("opens one question-edit editor for a double invocation and permits reopening after close", async () => {
+  const plugin = new MiaStudyPlugin();
+  plugin.app = {};
+  plugin.store = { settings: { keywordFolder: "MIA/키워드" } };
+  plugin.index = { registered: [managedQuestion], questionById: () => managedQuestion };
+  plugin.listSubjects = () => ["물리"];
+  plugin.loadKeywordMeanings = async () => new Map();
+  const before = dialogs.questions.length;
+  await Promise.all([plugin.openManagedQuestionEditor(managedQuestion), plugin.openManagedQuestionEditor(managedQuestion)]);
+  expect(dialogs.questions).toHaveLength(before + 1);
+  dialogs.questionModals.at(-1).onClose();
+  await plugin.openManagedQuestionEditor(managedQuestion);
+  expect(dialogs.questions).toHaveLength(before + 2);
+});
+
+it("opens one connections dialog for a double invocation and permits reopening after close", () => {
+  const plugin = new MiaStudyPlugin();
+  plugin.app = {};
+  plugin.index = { registered: [managedQuestion], questionById: () => managedQuestion };
+  const before = dialogs.followUps.length;
+  plugin.openFollowUpEditor(managedQuestion);
+  plugin.openFollowUpEditor(managedQuestion);
+  expect(dialogs.followUps).toHaveLength(before + 1);
+  dialogs.followUpModals.at(-1).onClose();
+  plugin.openFollowUpEditor(managedQuestion);
+  expect(dialogs.followUps).toHaveLength(before + 2);
+});
+
+it("opens one delete confirmation for a double invocation and permits reopening after close", () => {
+  const plugin = new MiaStudyPlugin();
+  plugin.app = { vault: { getAbstractFileByPath: () => null } };
+  plugin.store = { settings: { sourceRoots: ["MIA"] } };
+  const before = dialogs.deletes.length;
+  plugin.confirmDeleteQuestion(managedQuestion);
+  plugin.confirmDeleteQuestion(managedQuestion);
+  expect(dialogs.deletes).toHaveLength(before + 1);
+  dialogs.deleteModals.at(-1).onClose();
+  plugin.confirmDeleteQuestion(managedQuestion);
+  expect(dialogs.deletes).toHaveLength(before + 2);
 });
