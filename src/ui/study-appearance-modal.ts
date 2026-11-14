@@ -21,7 +21,7 @@ export class StudyAppearanceModal extends Modal {
     this.draft = this.store.appearance;
     this.initial = JSON.stringify(this.draft);
     this.setTitle("보기 설정");
-    this.modalEl.addClass("mia-appearance-modal");
+    this.modalEl.addClass("mia-appearance-modal", "mia-setting-controls");
     this.contentEl.createEl("p", { text: "현재 저장된 값을 보여줍니다. 변경 후 저장하면 이 기기에만 적용됩니다.", cls: "mia-muted" });
     const screen = this.group("학습 화면");
     new Setting(screen).setName("글자 크기").addDropdown((dropdown) => {

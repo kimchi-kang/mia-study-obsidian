@@ -354,14 +354,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 }
 
 .is-phone .mia-keyboard-modal .modal-content { padding-inline: 12px; }
-.is-phone .mia-keyboard-modal .setting-item { display: block; padding-block: 10px; }
-.is-phone .mia-keyboard-modal .setting-item-info { margin: 0 0 7px; }
-.is-phone .mia-keyboard-modal .setting-item-control { width: 100%; margin: 0; justify-content: stretch; }
-.is-phone .mia-keyboard-modal .setting-item-control > input,
-.is-phone .mia-keyboard-modal .setting-item-control > textarea,
-.is-phone .mia-keyboard-modal .setting-item-control > select,
-.is-phone .mia-keyboard-modal .setting-item-control > .dropdown { width: 100%; }
-.is-phone .mia-keyboard-modal .setting-item:last-child .setting-item-control > button { width: 100%; }
+.is-phone .mia-keyboard-modal .setting-item { padding-block: 10px; }
 .is-phone .mia-keyboard-modal textarea { min-height: 92px; max-height: 168px; resize: vertical; }
 .is-phone .mia-keyboard-modal .modal-close-button,
 .is-phone .mia-detail-modal .modal-close-button,
@@ -652,9 +645,6 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   .mia-header > div:first-child { flex-wrap: wrap; }
 }
 .is-phone .mia-preview-modal { width: calc(100vw - 16px); max-height: calc(100dvh - 32px); }
-.is-phone .mia-appearance-modal .setting-item { display: block; }
-.is-phone .mia-appearance-modal .setting-item-control { margin-top: 8px; justify-content: stretch; }
-.is-phone .mia-appearance-modal select { width: 100%; }
 .mia-preview-modal[data-reading-size="small"] { --mia-preview-body: 14px; --mia-preview-title: 21px; }
 .mia-preview-modal[data-reading-size="medium"] { --mia-preview-body: 16px; --mia-preview-title: 25px; }
 .mia-preview-modal[data-reading-size="large"] { --mia-preview-body: 20px; --mia-preview-title: 30px; }
@@ -709,7 +699,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 @media (max-width: 640px), (pointer: coarse) {
   :is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) { --mia-control-height: 44px; }
 }
-:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) button:not(.modal-close-button) {
+:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) button:not(.modal-close-button, .checkbox-container) {
   box-sizing: border-box;
   min-height: var(--mia-control-height);
   height: auto;
@@ -795,41 +785,6 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-sync-warning { padding: 14px; margin-bottom: 16px; border: 1px solid var(--text-warning); border-radius: 12px; }
 .mia-sync-warning p { margin-top: 0; }
 .mia-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-/* Keep mobile switches compact and stable; expand their invisible hit area. */
-.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal, .mia-keyboard-settings) .checkbox-container {
-  --toggle-width: 44px;
-  --toggle-thumb-width: 22px;
-  --toggle-thumb-height: 22px;
-  --toggle-border-width: 2px;
-  --toggle-radius: 26px;
-  --toggle-thumb-radius: 50%;
-  --toggle-s-width: 44px;
-  --toggle-s-thumb-width: 22px;
-  --toggle-s-thumb-height: 22px;
-  --toggle-s-border-width: 2px;
-}
-.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal, .mia-keyboard-settings) .setting-item.mod-toggle {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal, .mia-keyboard-settings) .setting-item.mod-toggle .setting-item-info { flex: 1; min-width: 0; }
-.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal, .mia-keyboard-settings) .setting-item-control { min-height: 44px; }
-.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal, .mia-keyboard-settings) .setting-item.mod-toggle .setting-item-control {
-  flex: 0 0 44px;
-  min-width: 44px;
-  margin-top: 0;
-  justify-content: center;
-}
-.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal, .mia-keyboard-settings) .checkbox-container::before {
-  inset: min(0px, calc((var(--toggle-thumb-height) + var(--toggle-border-width) * 2 - 44px) / 2)) min(0px, calc((var(--toggle-width) - 44px) / 2));
-}
-.is-mobile :is(.mia-appearance-modal, .mia-keyboard-modal, .mia-keyboard-settings) .checkbox-container:active::after {
-  width: var(--toggle-thumb-width);
-  height: var(--toggle-thumb-height);
-  margin-top: var(--toggle-border-width);
-  left: 0;
-}
 .is-mobile .mia-view .mia-keyword-chips button { min-height: 44px; }
 @media (prefers-reduced-motion: reduce) {
   .mia-view *, .mia-view *::before, .mia-view *::after { scroll-behavior: auto !important; transition: none !important; }
@@ -975,13 +930,6 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   .mia-learning-settings-actions:has(> .mia-keyboard-dismiss) > button:first-of-type { grid-column: auto; }
   .mia-learning-settings-actions > .mia-keyboard-dismiss { grid-column: 2; grid-row: 1; }
   .mia-appearance-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-/* State labels need room beside the touch-sized toggle. */
-.is-mobile :is(.mia-appearance-modal, .mia-keyboard-settings) .setting-item.mod-toggle .setting-item-control:has(.mia-toggle-state) {
-  flex-basis: 86px;
-  min-width: 86px;
-  flex-wrap: nowrap;
-  justify-content: flex-end;
 }
 .mia-step-editor [hidden] { display: none !important; }
 /* Obsidian's settings pane can be narrow independently of the study view. */
@@ -1481,7 +1429,7 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
   --button-radius: var(--mia-radius-s);
   --input-radius: var(--mia-radius-s);
 }
-:is(.mia-study-management-settings, .mia-appearance-modal, .mia-keyboard-settings .mia-device-sync-settings) :is(button:not(.modal-close-button), input:not([type="checkbox"], [type="radio"]), select, textarea) { border-radius: var(--mia-radius-s); }
+:is(.mia-study-management-settings, .mia-appearance-modal, .mia-keyboard-settings .mia-device-sync-settings) :is(button:not(.modal-close-button, .checkbox-container), input:not([type="checkbox"], [type="radio"]), select, textarea) { border-radius: var(--mia-radius-s); }
 /* Boxes: the summary keeps a uniform edge so all four corners match. */
 .mia-study-management-settings .mia-settings-summary { border-left-width: 1px; border-color: var(--mia-accent-line); border-radius: var(--mia-radius); }
 :is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help[open],
@@ -1581,8 +1529,8 @@ body.theme-dark .mia-view :is(a, .internal-link, .external-link) { color: #8fa9f
 
 /* Buttons: ink outline, flat, yellow on hover, red for the lead action */
 .mia-view button:where(:not(.mia-home-button, .mia-stat, .mia-nav button, .mia-progress-stat, .mia-keyword, .mia-grade-key)),
-.modal.mia-controls-modal button, :where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button:where(:not(.modal-close-button, .checkbox-container)),
-.mia-keyboard-settings button {
+.modal.mia-controls-modal button:where(:not(.checkbox-container)), :where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button:where(:not(.modal-close-button, .checkbox-container)),
+.mia-keyboard-settings button:where(:not(.checkbox-container)) {
   border: 3px solid var(--mia-ink);
   background: var(--mia-panel);
   color: var(--mia-ink);
@@ -1590,8 +1538,8 @@ body.theme-dark .mia-view :is(a, .internal-link, .external-link) { color: #8fa9f
   font-weight: 800;
 }
 .mia-view button:where(:not(.mia-home-button, .mia-stat, .mia-nav button, .mia-progress-stat, .mia-keyword, .mia-grade-key)):not(:disabled):hover,
-.mia-keyboard-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-detail-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-result-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-preview-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-appearance-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-study-management-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-confirm-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-recovery-modal button:where(:not(.modal-close-button)):not(:disabled):hover, .mia-controls-modal button:where(:not(.modal-close-button)):not(:disabled):hover,
-.mia-keyboard-settings button:not(:disabled):hover { background: var(--mia-yellow); color: var(--mia-on-yellow); border-color: var(--mia-ink); }
+.mia-keyboard-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-detail-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-result-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-preview-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-appearance-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-study-management-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-confirm-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-recovery-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-controls-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover,
+.mia-keyboard-settings button:not(.checkbox-container):not(:disabled):hover { background: var(--mia-yellow); color: var(--mia-on-yellow); border-color: var(--mia-ink); }
 .mia-view button.mod-cta, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-controls-modal) button.mod-cta, .mia-keyboard-settings button.mod-cta,
 .mia-view.mia-route-dashboard .mia-manage-actions button.mod-cta { background: var(--mia-red); color: var(--mia-on-color); border: 3px solid var(--mia-ink); box-shadow: none; }
 .mia-view button.mod-cta:not(:disabled):hover, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-controls-modal) button.mod-cta:not(:disabled):hover, .mia-keyboard-settings button.mod-cta:not(:disabled):hover,
@@ -1726,10 +1674,6 @@ body.theme-dark .mia-view button.mod-warning, body.theme-dark :is(.mia-keyboard-
 :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) :is(.mia-settings-group-title) { font-family: var(--mia-head); font-weight: 800; color: var(--mia-ink); }
 :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) .mia-settings-status { border: 3px solid var(--mia-ink); background: var(--mia-yellow); color: var(--mia-on-yellow); font-weight: 800; }
 :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) .mia-settings-modes button[aria-pressed="true"], :is(.mia-keyboard-modal, .mia-study-management-modal) .mia-settings-modes button.is-active { background: var(--mia-ink); color: var(--mia-bg); }
-.modal:is(.mia-keyboard-modal, .mia-study-management-modal, .mia-appearance-modal, .mia-controls-modal) .checkbox-container { border: 3px solid var(--mia-ink); background: var(--mia-panel); }
-.modal:is(.mia-keyboard-modal, .mia-study-management-modal, .mia-appearance-modal, .mia-controls-modal) .checkbox-container.is-enabled { background: var(--mia-blue); }
-.mia-view .checkbox-container { border: 3px solid var(--mia-ink); background: var(--mia-panel); }
-.mia-view .checkbox-container.is-enabled { background: var(--mia-blue); }
 
 /* The plugin's own settings tab */
 .mia-keyboard-settings { color: var(--mia-ink); }
@@ -2200,3 +2144,60 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
   .modal.mia-detail-modal .mia-detail-actions > button { min-height: 52px; padding-inline: 4px; }
   .modal.mia-detail-modal .mia-detail-actions > button.mod-warning { min-width: 56px; padding-inline: 10px; }
 }
+
+/* Settings layout owns spacing and touch targets; Obsidian owns switch geometry. */
+.mia-setting-controls {
+  container: mia-setting-controls / inline-size;
+  --mia-settings-select-width: 10rem;
+}
+.mia-study-management-settings.mia-setting-controls { container-name: mia-setting-controls mia-settings; }
+.mia-setting-controls .setting-item { gap: 16px; align-items: center; }
+.mia-setting-controls .setting-item-info { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.mia-setting-controls .setting-item-control {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.mia-setting-controls .setting-item-control > select {
+  box-sizing: border-box;
+  width: var(--mia-settings-select-width);
+  min-width: var(--mia-settings-select-width);
+  max-width: 100%;
+}
+/* Preserve a single line for the label and native switch even inside stacked sections. */
+.mia-setting-controls .setting-item.mod-toggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.mia-setting-controls .setting-item.mod-toggle .setting-item-info { margin: 0; }
+.mia-setting-controls .setting-item.mod-toggle .setting-item-control {
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0;
+  padding-top: 0;
+  flex-wrap: nowrap;
+}
+@container mia-setting-controls (max-width: 419px) {
+  .mia-setting-controls .setting-item:not(.mod-toggle) {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .mia-setting-controls .setting-item:not(.mod-toggle) .setting-item-control {
+    width: 100%;
+    margin: 0;
+  }
+  .mia-setting-controls .setting-item-control > :is(input:not([type="checkbox"], [type="radio"]), textarea, select, .dropdown) {
+    width: 100%;
+    min-width: 0;
+  }
+}
+/* Keep the tablet overlay compact even when Obsidian's mobile modal is full width. */
+.modal-container > .modal.mia-appearance-modal { width: min(480px, calc(100vw - 28px)); }

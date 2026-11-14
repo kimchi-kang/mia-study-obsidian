@@ -3,7 +3,7 @@ import { Modal } from "obsidian";
 export class StudyControlsModal extends Modal {
   onOpen(): void {
     this.setTitle("학습 조작 안내");
-    this.modalEl.addClass("mia-controls-modal");
+    this.modalEl.addClass("mia-controls-modal", "mia-setting-controls");
     this.contentEl.createEl("h3", { text: "맥 · 키보드와 트랙패드" });
     this.contentEl.createEl("p", { text: "Space 정답 보기 · 1–4 평가 · ← → 문제 이동 · U 직전 평가 취소. 긴 답안은 트랙패드로 스크롤하세요." });
     this.contentEl.createEl("h3", { text: "폰 · 패드" });

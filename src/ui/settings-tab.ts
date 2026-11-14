@@ -50,7 +50,7 @@ export class MiaSettingTab extends PluginSettingTab {
     this.keyboardViewport?.destroy();
     this.keyboardViewport = null;
     containerEl.empty();
-    containerEl.addClass("mia-keyboard-settings");
+    containerEl.addClass("mia-keyboard-settings", "mia-setting-controls");
     containerEl.createEl("h2", { text: "Major Study" });
     containerEl.createEl("p", { text: "노트 내용과 FSRS 복습 기록은 분리됩니다. 등록 명령을 실행하기 전에는 원문을 수정하지 않습니다.", cls: "setting-item-description" });
 

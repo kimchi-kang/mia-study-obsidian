@@ -147,7 +147,7 @@ export abstract class KeyboardAwareModal extends Modal {
   open(): void {
     super.open();
     this.containerEl.addClass("mia-keyboard-modal-container");
-    this.modalEl.addClass("mia-keyboard-modal");
+    this.modalEl.addClass("mia-keyboard-modal", "mia-setting-controls");
     this.keyboardBinding?.destroy();
     this.keyboardBinding = bindKeyboardViewport(this.containerEl, this.contentEl);
   }
