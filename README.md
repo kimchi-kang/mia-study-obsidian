@@ -10,7 +10,7 @@
 ![Platforms](https://img.shields.io/badge/desktop%20%C2%B7%20mobile-supported-2f9e5b)
 [![License](https://img.shields.io/github/license/kimchi-kang/mia-study-obsidian?color=555)](LICENSE)
 
-[**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.4.18 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.18/mia-study-1.4.18.zip) · [변경 내역](docs/releases/1.4.18.md) · [현재 상태](STATUS.md)
+[**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.4.20 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.4.20/mia-study-1.4.20.zip) · [변경 내역](docs/releases/1.4.20.md) · [현재 상태](STATUS.md)
 
 <img src="docs/assets/screens/desktop-dashboard.jpg" alt="MIA Study 오늘 화면. 바우하우스 디자인의 복습·새 문제 블록, 시작 패널, 취약 문제 띠와 과목별 학습 카드" width="860">
 
