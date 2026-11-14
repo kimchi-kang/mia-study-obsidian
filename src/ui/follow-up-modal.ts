@@ -26,6 +26,7 @@ export class FollowUpModal extends KeyboardAwareModal {
   }
 
   onOpen(): void {
+    this.modalEl.addClass("mia-setting-controls");
     this.titleRenderer.load();
     void renderQuestionTitle(this.app, this.base.heading, this.contentEl.createDiv({ cls: "mia-muted" }), this.base.filePath, this.titleRenderer);
     const toolbar = this.contentEl.createDiv({ cls: "mia-toolbar mia-filter-toolbar" });

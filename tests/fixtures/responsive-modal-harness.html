@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>MIA responsive modal harness</title>
-  <link rel="stylesheet" href="../../styles.css">
+
   <style>
     :root {
       color-scheme: dark;
@@ -51,6 +51,7 @@
       background: var(--background-modifier-cover);
     }
     .modal {
+      max-width: 100%;
       position: relative;
       border: 1px solid var(--background-modifier-border);
       border-radius: var(--radius-l);
@@ -68,7 +69,16 @@
     .setting-item-control { display: flex; flex: 1 1 58%; justify-content: flex-end; gap: 8px; }
     .dashboard-copy { max-width: 1100px; margin: 0 auto; }
     .keyboard-open { --mia-visible-viewport-height: 100dvh; --mia-viewport-offset-top: 0px; }
+    /* Host fixture only: a native-style switch. Production CSS must leave it alone. */
+    .checkbox-container { position: relative; flex-shrink: 0; width: 40px; height: 24px; border: 2px solid #888; border-radius: 24px; background: #555; }
+    .checkbox-container::after { content: ""; position: absolute; top: 1px; left: 1px; width: 18px; height: 18px; border-radius: 50%; background: white; }
+    .checkbox-container.is-enabled { background: #7855cc; }
+    .checkbox-container.is-enabled::after { left: 17px; }
+    .harness-toolbar { position: fixed; top: 0; left: 0; z-index: 100; display: flex; flex-wrap: wrap; gap: 4px; background: #171717; font-size: 12px; max-width: 100%; }
+    .harness-toolbar select { width: auto; }
+    .harness-toolbar output { flex-basis: 100%; }
   </style>
+  <link rel="stylesheet" href="../../styles.css">
 </head>
 <body>
   <main class="workspace is-floating-nav">
@@ -126,18 +136,73 @@
     const device = params.get("device") || "desktop";
     const size = params.get("size") || "compact";
     if (params.get("modal") === "0") document.getElementById("modal-container").style.display = "none";
+    document.body.classList.toggle("is-mobile", device !== "desktop");
     document.body.classList.toggle("is-phone", device === "phone");
     document.body.classList.toggle("is-tablet", device === "tablet");
     const modal = document.getElementById("modal");
     modal.className = `modal mia-keyboard-modal mia-editor-modal-${size}`;
     if (params.get("keyboard") === "1") document.getElementById("modal-container").classList.add("mia-keyboard-open", "keyboard-open");
-    if (size === "long") {
+    if (size === "long" && params.get("modal") !== "appearance") {
       document.getElementById("modal-title").textContent = "질문 추가";
       document.getElementById("modal-content").innerHTML = Array.from({ length: 8 }, (_, index) => `
         <div class="setting-item">
           <div class="setting-item-info"><div class="setting-item-name">${["과목", "새 과목 이름", "질문", "정답", "질문 유형", "핵심 키워드", "핵심 키워드 의미", "보조 키워드"][index]}</div><div class="setting-item-description">질문과 키워드를 관리합니다.</div></div>
           <div class="setting-item-control">${index === 2 || index === 3 ? "<textarea rows='4'>샘플 입력 내용</textarea>" : "<input value='샘플 입력'>"}</div>
         </div>`).join("") + `<div class="setting-item"><div class="setting-item-info"></div><div class="setting-item-control"><button class="mod-cta">저장</button></div></div>`;
+    }
+    if (params.get("modal") === "appearance") {
+      modal.className = "modal mia-appearance-modal mia-setting-controls";
+      document.getElementById("modal-title").textContent = "보기 설정";
+      const rows = [["글자 크기", "보통", "작게", "크게"], ["정보량", "자세하게", "간결하게"], ["답안 배치", "위아래로", "나란히"], ["암기 모드 순서", "랜덤", "순서대로"], ["쓸어넘기기 민감도", "기본", "부드럽게", "확실하게"]];
+      const toggle = (name, enabled) => `<div class="setting-item mod-toggle"><div class="setting-item-info"><div class="setting-item-name">${name}</div></div><div class="setting-item-control"><span class="mia-toggle-state">${enabled ? "켜짐" : "꺼짐"}</span><div class="checkbox-container ${enabled ? "is-enabled" : ""}" role="switch" tabindex="0" aria-label="${name}" aria-checked="${enabled}"></div></div></div>`;
+      document.getElementById("modal-content").innerHTML = `<div class="mia-settings-group"><div class="mia-settings-list">${rows.map(([name, ...options]) => `<div class="setting-item"><div class="setting-item-info"><div class="setting-item-name">${name}</div><div class="setting-item-description">이 기기에 저장되는 보기 설정입니다.</div></div><div class="setting-item-control"><select aria-label="${name}">${options.map(text => `<option>${text}</option>`).join("")}</select></div></div>`).join("")}${toggle("집중 모드", false)}${toggle("쓸어서 뒤로가기", true)}</div></div>`;
+      document.querySelectorAll('[role="switch"]').forEach(el => {
+        const change = () => { const enabled = el.classList.toggle("is-enabled"); el.setAttribute("aria-checked", String(enabled)); el.previousElementSibling.textContent = enabled ? "켜짐" : "꺼짐"; requestAnimationFrame(checkAppearance); };
+        el.addEventListener("click", change);
+        el.addEventListener("keydown", event => { if (event.key === " " || event.key === "Enter") { event.preventDefault(); change(); } });
+      });
+      const toolbar = document.createElement("div");
+      toolbar.className = "harness-toolbar";
+      toolbar.innerHTML = `<label>화면 폭 <select id="harness-width">${[390, 820, 1024, 1280].map(width => `<option>${width}</option>`).join("")}</select></label><label><input id="harness-mobile" type="checkbox" style="width:auto;min-height:0"> .is-mobile</label><output id="harness-result" aria-live="polite"></output>`;
+      document.body.append(toolbar);
+      const widthInput = document.getElementById("harness-width");
+      const mobileInput = document.getElementById("harness-mobile");
+      widthInput.value = params.get("width") || (device === "phone" ? "390" : device === "tablet" ? "820" : "1280");
+      mobileInput.checked = device !== "desktop";
+      function checkAppearance() {
+        const errors = [];
+        const selects = [...modal.querySelectorAll(".setting-item-control > select")];
+        const narrow = modal.clientWidth - parseFloat(getComputedStyle(modal).paddingLeft) - parseFloat(getComputedStyle(modal).paddingRight) < 420;
+        if (narrow) {
+          if (selects.some(el => Math.abs(el.getBoundingClientRect().width - el.parentElement.clientWidth) > 1)) errors.push("select full width");
+        } else if (selects.some(el => Math.abs(el.getBoundingClientRect().right - selects[0].getBoundingClientRect().right) > 1)) errors.push("select alignment");
+        modal.querySelectorAll(".checkbox-container").forEach(el => {
+          const style = getComputedStyle(el, "::after");
+          const x = parseFloat(style.left) + parseFloat(getComputedStyle(el).borderLeftWidth);
+          const y = parseFloat(style.top) + parseFloat(getComputedStyle(el).borderTopWidth);
+          const rect = el.getBoundingClientRect();
+          if (x < 0 || y < 0 || x + parseFloat(style.width) > rect.width || y + parseFloat(style.height) > rect.height) errors.push("thumb containment");
+        });
+        if (mobileInput.checked && [...modal.querySelectorAll(".setting-item-control")].some(el => el.getBoundingClientRect().height < 44)) errors.push("44px target");
+        if ([modal, modal.querySelector(".modal-content"), document.documentElement].some(el => el.scrollWidth > el.clientWidth + 1)) errors.push("horizontal overflow");
+        window.appearanceChecks = { width: Number(widthInput.value), mobile: mobileInput.checked, narrow, errors };
+        document.getElementById("harness-result").textContent = errors.length ? `FAIL: ${errors.join(", ")}` : "PASS: thumb / select / touch area / overflow";
+      }
+      function updateViewport() {
+        const container = document.getElementById("modal-container");
+        container.style.width = `${widthInput.value}px`;
+        container.style.maxWidth = "100%";
+        container.style.left = "50%";
+        container.style.transform = "translateX(-50%)";
+        container.style.paddingTop = "80px";
+        document.body.classList.toggle("is-mobile", mobileInput.checked);
+        document.body.classList.toggle("is-phone", mobileInput.checked && Number(widthInput.value) === 390);
+        requestAnimationFrame(checkAppearance);
+      }
+      widthInput.addEventListener("change", updateViewport);
+      mobileInput.addEventListener("change", updateViewport);
+      window.addEventListener("resize", checkAppearance);
+      updateViewport();
     }
   </script>
 </body>
