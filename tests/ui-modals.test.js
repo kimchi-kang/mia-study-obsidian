@@ -340,6 +340,34 @@ describe("keyword meaning dialog lifetime", () => {
     expect(modal.contentEl.find("키워드 노트 열기")).toBeDefined();
   });
 
+  it("shows only the keyword and its meaning, not the note's link list", async () => {
+    const { KeywordMeaningModal } = await import("../src/ui/keyword-modal");
+    const file = { path: "keywords/기류.md", extension: "md" };
+    const note = "# 기류\n\n## 의미\n\n단위 시간에 단면을 통과하는 재료량이다.\n\n## 연결\n\n- [[지리학#^q61|Q61. 자기 쌍극자]]\n";
+    const app = { metadataCache: { getFirstLinkpathDest: () => file }, vault: { cachedRead: async () => note } };
+    const render = vi.spyOn(MarkdownRenderer, "render");
+    try {
+      const modal = new KeywordMeaningModal(app, "기류", "기류", "source.md", "keywords");
+      await modal.onOpen();
+      expect(render).toHaveBeenCalledOnce();
+      expect(render.mock.calls[0][1]).toBe("단위 시간에 단면을 통과하는 재료량이다.");
+      expect(modal.contentEl.find("의미")).toBeDefined();
+      expect(modal.contentEl.find("닫기")).toBeDefined();
+      expect(modal.contentEl.find("키워드 노트 열기")).toBeDefined();
+    } finally { render.mockRestore(); }
+  });
+  it("explains an empty meaning instead of rendering the link list", async () => {
+    const { KeywordMeaningModal } = await import("../src/ui/keyword-modal");
+    const note = "# 기류\n\n## 의미\n\n\n## 연결\n\n- [[문제]]\n";
+    const app = { metadataCache: { getFirstLinkpathDest: () => ({ path: "k/기류.md", extension: "md" }) }, vault: { cachedRead: async () => note } };
+    const render = vi.spyOn(MarkdownRenderer, "render");
+    try {
+      const modal = new KeywordMeaningModal(app, "기류", "기류", "source.md", "keywords");
+      await modal.onOpen();
+      expect(render).not.toHaveBeenCalled();
+      expect(modal.contentEl.find("아직 의미가 적혀 있지 않습니다. 편집에서 의미를 적으면 여기에 보입니다.")).toBeDefined();
+    } finally { render.mockRestore(); }
+  });
   it.each([false, true])("ignores a read completing after close (failure=%s)", async fail => {
     const { KeywordMeaningModal } = await import("../src/ui/keyword-modal");
     let finish;

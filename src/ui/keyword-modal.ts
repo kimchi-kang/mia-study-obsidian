@@ -1,7 +1,9 @@
 import { Component, MarkdownRenderer, Modal, Notice, TFile } from "obsidian";
 import { keywordLinkPath, keywordNotePath } from "../core/keyword-path";
+import { readKeywordMeaning } from "../core/keyword-note";
 import { errorMessage } from "./error-message";
 
+/** Shows only the keyword and its meaning; the note's link list and other sections stay in the note. */
 export class KeywordMeaningModal extends Modal {
   private renderer: Component | null = null;
   private renderRevision = 0;
@@ -19,6 +21,7 @@ export class KeywordMeaningModal extends Modal {
   async onOpen(): Promise<void> {
     const revision = ++this.renderRevision;
     this.contentEl.empty();
+    this.modalEl.addClass("mia-preview-modal", "mia-keyword-meaning-modal");
     this.titleEl.setText(this.label);
     const file = this.app.metadataCache.getFirstLinkpathDest(keywordLinkPath(this.target), this.sourcePath);
     if (file) {
@@ -32,10 +35,20 @@ export class KeywordMeaningModal extends Modal {
       try {
         const markdown = await this.app.vault.cachedRead(file);
         if (revision !== this.renderRevision) return;
-        const content = this.contentEl.createDiv();
-        await MarkdownRenderer.render(this.app, markdown, content, file.path, renderer);
-        if (revision !== this.renderRevision) return;
-        const open = this.contentEl.createEl("button", { text: "키워드 노트 열기" });
+        // MIA notes keep the meaning under "## 의미"; a hand-written note without it shows its body without the title.
+        const meaning = /^ {0,3}##\s+의미\s*$/m.test(markdown) ? readKeywordMeaning(markdown) : markdown.replace(/^\uFEFF?\s*# [^\n]*\n?/, "").trim();
+        const section = this.contentEl.createDiv({ cls: "mia-keyword-meaning" });
+        section.createDiv({ text: "의미", cls: "mia-card-label" });
+        if (meaning) {
+          const content = section.createDiv({ cls: "mia-markdown mia-answer" });
+          await MarkdownRenderer.render(this.app, meaning, content, file.path, renderer);
+          if (revision !== this.renderRevision) return;
+        } else {
+          section.createEl("p", { text: "아직 의미가 적혀 있지 않습니다. 편집에서 의미를 적으면 여기에 보입니다.", cls: "mia-muted" });
+        }
+        const actions = this.contentEl.createDiv({ cls: "mia-preview-actions" });
+        actions.createEl("button", { text: "닫기", cls: "mod-cta" }).addEventListener("click", () => this.close());
+        const open = actions.createEl("button", { text: "키워드 노트 열기" });
         open.addEventListener("click", async () => {
           try {
             await this.app.workspace.getLeaf("tab").openFile(file);

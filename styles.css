@@ -2350,3 +2350,12 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 @container mia-view (max-width: 600px) {
   .mia-view.mia-route-dashboard .mia-subject-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Keyword meaning popup: the keyword as the title and its meaning in the study answer box style. */
+.mia-keyword-meaning-modal .modal-title { font-size: var(--mia-preview-title, 25px); font-weight: 800; }
+.mia-keyword-meaning-modal .mia-keyword-meaning { padding: 12px 16px; background: var(--mia-panel); border: 3px solid var(--mia-ink); border-left: 12px solid var(--mia-yellow); }
+.mia-keyword-meaning-modal .mia-keyword-meaning .mia-card-label { display: inline-block; margin: 0 0 8px; padding: 3px 9px; background: var(--mia-yellow); color: var(--mia-on-yellow); border: 3px solid var(--mia-ink); font-size: 11px; font-weight: 800; letter-spacing: .06em; }
+.mia-keyword-meaning-modal .mia-keyword-meaning .mia-markdown { font-size: var(--mia-preview-body, 16px); line-height: 1.7; }
+.mia-keyword-meaning-modal .mia-keyword-meaning .mia-markdown > :first-child { margin-top: 0; }
+.mia-keyword-meaning-modal .mia-keyword-meaning .mia-markdown > :last-child { margin-bottom: 0; }
+.mia-keyword-meaning-modal .mia-keyword-meaning > p.mia-muted { margin: 0; }
