@@ -724,16 +724,45 @@ describe("study view scheduling integration", () => {
     await ui.button("암기").click();
     expect(ui.reviews.related.history).toHaveLength(1);
   });
-  it("reveals keyword hints without grading or exposing the answer, then resets hints on the next card", async () => {
+  it.each(["resume", "workspace"])("keeps keywords hidden until revealing the answer, including navigation and %s restore", async source => {
     const ui = setup({ linked: true });
-    ui.plugin.index.registered[0].coreKeywords = [{ target: "키워드", label: "키워드", raw: "키워드" }];
+    ui.plugin.index.registered[0].coreKeywords = [{ target: "핵심개념", label: "핵심개념", raw: "핵심개념" }];
+    ui.plugin.index.registered[0].subKeywords = [{ target: "보조개념", label: "보조개념", raw: "보조개념" }];
+    const expectHiddenKeywords = () => {
+      expect(ui.button("키워드 힌트")).toBeUndefined();
+      for (const text of ["핵심 키워드", "보조 키워드", "핵심개념", "보조개념", "핵심 개념 확인", "모범 답안"]) expect(ui.content()).not.toContain(text);
+      expect(ui.button("정답 보기")).toBeDefined();
+      expect(ui.view.getState().answerVisible).toBe(false);
+      expect(ui.reviews).toEqual({});
+    };
     ui.view.startReview(["q", "related"]);
-    await ui.button("키워드 힌트").click();
-    expect(ui.content()).toContain("키워드"); expect(ui.button("정답 보기")).toBeDefined();
-    expect(ui.view.getState().answerVisible).toBe(false); expect(ui.reviews).toEqual({});
+    expectHiddenKeywords();
     await ui.button("다음 →").click(); await ui.exactButton("← 이전").click();
-    expect(ui.button("키워드 힌트 접기")).toBeUndefined();
-    expect(ui.button("키워드 힌트")).toBeDefined();
+    expectHiddenKeywords();
+    const state = ui.view.getState();
+    ui.view.showDashboard(); await ui.plugin.studyUi.load();
+    if (source === "resume") await ui.button("이어하기").click();
+    else await ui.view.setState(state, {});
+    expectHiddenKeywords();
+    await ui.button("정답 보기").click();
+    expect(ui.button("키워드 힌트")).toBeUndefined();
+    const concepts = ui.view.contentEl.querySelector(".mia-study-concepts");
+    expect(concepts.content).toContain("핵심 개념 확인 · 2개");
+    expect(concepts.content).toContain("핵심 키워드");
+    expect(concepts.content).toContain("보조 키워드");
+    expect(concepts.find("핵심개념", true).getAttribute("aria-label")).toBe("핵심개념 의미 보기");
+    expect(concepts.find("보조개념", true).getAttribute("aria-label")).toBe("보조개념 의미 보기");
+    expect(ui.content()).toContain("모범 답안");
+    expect(ui.view.getState().answerVisible).toBe(true);
+    expect(ui.reviews).toEqual({});
+  });
+  it("does not offer keyword hints in browse mode for a question with core keywords", () => {
+    const ui = setup({ start: false });
+    ui.plugin.index.registered[0].coreKeywords = [{ target: "핵심개념", label: "핵심개념", raw: "핵심개념" }];
+    ui.view.startReview(["q"], "browse");
+    expect(ui.button("키워드 힌트")).toBeUndefined();
+    expect(ui.content()).toContain("모범 답안");
+    expect(ui.view.getState()).toMatchObject({ sessionMode: "browse", answerVisible: true });
   });
   it("offers resume on the dashboard and restores position and answer on a fresh device/view", async () => {
     const first = setup({ linked: true }); first.view.startReview(["q", "related"]);

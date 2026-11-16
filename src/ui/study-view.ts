@@ -89,7 +89,6 @@ export class MiaStudyView extends ItemView {
   private studyShortcuts = new Map<string, HTMLButtonElement>();
   private renderedPosition = "";
   private gestures: StudyGestureBinding | null = null;
-  private hintVisible = false;
   private readingPosition = { key: "", scrollTop: 0, pageScrollTop: 0, conceptsOpen: false };
   private readingRenders: Promise<void>[] = [];
   private readingRestorePending = false;
@@ -300,7 +299,6 @@ export class MiaStudyView extends ItemView {
         }
       }
       this.resultShown = false;
-      this.hintVisible = false;
     }
     if (recoveredRatingId) this.restoreCommittedSessionGrade(recoveredRatingId);
     if (next.route !== "study") this.clearResultPopup();
@@ -569,7 +567,7 @@ export class MiaStudyView extends ItemView {
     root.setAttr("aria-busy", String(this.isMutatingReview));
     if (this.isMutatingReview) this.renderReviewSaveStatus();
     const position = `${this.route}:${this.queueIndex}:${this.queue[this.queueIndex] ?? ""}`;
-    if (position !== this.renderedPosition) { root.scrollTop = 0; this.hintVisible = false; }
+    if (position !== this.renderedPosition) root.scrollTop = 0;
     this.renderedPosition = position;
     root.removeClass("mia-route-dashboard", "mia-route-progress", "mia-route-questions", "mia-route-keywords", "mia-route-study");
     root.addClass("mia-view");
@@ -842,12 +840,6 @@ export class MiaStudyView extends ItemView {
     }
     if (!this.answerVisible) {
       questionSection.createEl("p", { text: "답을 먼저 떠올린 뒤 정답을 확인해 보세요.", cls: "mia-recall-prompt" });
-      if (question.coreKeywords.length) {
-        const hint = questionSection.createEl("button", { text: this.hintVisible ? "키워드 힌트 접기" : "키워드 힌트", cls: "mia-hint-button" });
-        hint.setAttr("aria-expanded", String(this.hintVisible));
-        hint.addEventListener("click", () => { this.hintVisible = !this.hintVisible; this.render(); this.contentEl.focus({ preventScroll: true }); });
-        if (this.hintVisible) this.renderKeywordSection(questionSection, "핵심 키워드", question.coreKeywords, question.filePath);
-      }
       const dock = root.createDiv({ cls: "mia-study-dock" });
       const actions = dock.createDiv({ cls: "mia-study-actions" });
       const reveal = actions.createEl("button", { text: "정답 보기", cls: "mod-cta mia-reveal" });

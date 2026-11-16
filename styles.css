@@ -655,7 +655,6 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-route-study[data-focus="true"] .mia-header .mia-nav { display: none; }
 .mia-route-study[data-focus="true"] .mia-header { margin-bottom: 8px; padding-bottom: 8px; }
 .mia-route-study[data-focus="true"] .mia-focus-exit { display: inline-flex; align-items: center; }
-.mia-hint-button { height: auto; min-height: 40px; color: var(--interactive-accent); background: transparent; box-shadow: none; padding: 6px 0; }
 .mia-view[data-swipe-enabled="false"] .mia-touch-hint { display: none; }
 @container mia-view (min-width: 900px) {
   .mia-view[data-answer-layout="split"] .mia-study-layout { grid-template-columns: minmax(0, 1fr); }
