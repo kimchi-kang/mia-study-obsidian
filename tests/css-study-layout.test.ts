@@ -15,9 +15,11 @@ describe("study pane width and chrome CSS", () => {
     expect(declarations(rules.find(rule => rule.selector === ".mia-view.mia-route-study" && declarations(rule)["--mia-study-width"])!)["--mia-study-width"]).toBe("1360px");
     expect(declarations(rules.find(rule => rule.selector === ".mia-view" && declarations(rule)["--mia-study-width"])!)["--mia-study-width"]).toBe("1080px");
   });
-  it("removes the touch study cap and uses small pane gutters plus the existing safe edges", () => {
-    const rule = rules.find(rule => touchStudy(rule) && declarations(rule)["--mia-study-width"]);
+  it("removes all five touch route caps and uses small pane gutters plus the existing safe edges", () => {
+    const rule = rules.find(rule => rule.selector.includes(".mia-route-dashboard") && declarations(rule)["--mia-study-width"] === "none");
     expect(rule).toBeDefined();
+    for (const route of ["study", "dashboard", "progress", "questions", "keywords"]) expect(rule!.selector).toContain(`.mia-route-${route}`);
+    expect(rule!.selector).toContain(':is([data-device="phone"], [data-device="tablet"])');
     expect(declarations(rule!)).toMatchObject({
       "--mia-study-width": "none",
       "--mia-pane-gutter": "clamp(8px, calc(var(--mia-pane-width, 400px) * .02), 16px)",
@@ -59,5 +61,31 @@ describe("study pane width and chrome CSS", () => {
   it("retains the phone 44px bar and four-column rating buttons", () => {
     expect(rules.some(rule => rule.selector.includes('[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-settings-buttons > button') && declarations(rule)["min-height"] === "44px")).toBe(true);
     expect(rules.some(rule => rule.selector.includes('[data-device="phone"].mia-route-study .mia-study-dock .mia-ratings') && declarations(rule)["grid-template-columns"] === "repeat(4, minmax(0, 1fr))")).toBe(true);
+  });
+});
+
+
+describe("wide library routes", () => {
+  it("limits only the four touch library routes to 1600px, without reaching dialogs or study", () => {
+    const rule = rules.find(rule => declarations(rule)["max-width"] === "1600px")!;
+    expect(rule.selector).toContain('[data-device="tablet"]');
+    expect(rule.selector).toContain('[data-device="phone"]');
+    expect(rule.selector).toContain(' > *');
+    expect(rule.selector).not.toContain('.mia-route-study');
+    expect(rule.selector).not.toContain('modal');
+    for (const route of ["dashboard", "progress", "questions", "keywords"]) expect(rule.selector).toContain(`.mia-route-${route}`);
+  });
+  it("adds adaptive subject and question grids and sizes question rows by their own column", () => {
+    for (const selector of [".mia-view.mia-route-dashboard .mia-subject-grid", ".mia-view.mia-route-progress .mia-progress-subjects", ".mia-view.mia-route-questions .mia-list"]) {
+      expect(rules.some(rule => rule.selector === selector && declarations(rule)["grid-template-columns"]?.includes("repeat(auto-fill, minmax(min("))).toBe(true);
+    }
+    const row = rules.find(rule => rule.selector === ".mia-view.mia-route-questions .mia-row")!;
+    expect(row.parent).toMatchObject({ name: "container", params: "mia-question-list (max-width: 760px) or (min-width: 966px)" });
+    expect(declarations(row)["grid-template-areas"]).toBe('"dot body body" "actions actions delete"');
+  });
+  it("preserves the detail breakpoint while allowing both columns to grow", () => {
+    const rule = rules.find(rule => rule.selector === ".mia-view.mia-route-questions .mia-questions-layout")!;
+    expect(rule.parent).toMatchObject({ name: "container", params: "mia-view (min-width: 1000px)" });
+    expect(declarations(rule)["grid-template-columns"]).toBe("minmax(0, 1.8fr) minmax(400px, 1fr)");
   });
 });

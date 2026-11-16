@@ -4,7 +4,7 @@ const markdown = new MarkdownIt();
 // Obsidian boundary only; StudyView, recommendation engine and FSRS remain real.
 // Same plugin/store contract as study-session.test.js, with real jsdom elements.
 export function obsidianLayoutBoundary() {
-  class Component { load() {} unload() {} }
+  class Component { load() {} unload() {} addChild(child) { return child; } removeChild() {} }
   return {
     Component,
     ItemView: class { constructor(leaf) { this.app = leaf.app; this.leaf = leaf; this.contentEl = document.createElement("div"); } },

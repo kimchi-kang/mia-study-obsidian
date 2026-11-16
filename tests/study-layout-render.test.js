@@ -39,11 +39,25 @@ describe("study layout rendered DOM", () => {
     const { root } = await renderLayoutCase({ long: true });
     expect(root.querySelectorAll(".mia-answer li")).toHaveLength(40);
   });
+  it.each(["dashboard", "progress", "questions", "keywords"])("renders populated %s through the real route", async route => {
+    const { root } = await renderLayoutCase({ route });
+    expect(root.classList.contains(`mia-route-${route}`)).toBe(true);
+    if (route === "dashboard") { expect(root.querySelector(".mia-resume-card")).not.toBeNull(); expect(root.querySelectorAll(".mia-subject-card")).toHaveLength(6); }
+    if (route === "progress") expect(root.querySelectorAll(".mia-progress-subject")).toHaveLength(6);
+    if (route === "questions") { expect(root.querySelectorAll(".mia-row")).toHaveLength(48); expect(root.querySelector(".mia-detail-panel .mia-answer")).not.toBeNull(); expect(root.querySelector(".mia-warning")).toBeNull(); }
+    if (route === "keywords") expect(root.querySelectorAll(".mia-keyword")).toHaveLength(12);
+    if (route === "questions") expect(root.querySelector(".mia-status-chips").textContent).toContain("오늘 복습 24학습 전 16▲ 취약 16");
+  });
   it("ships a reproducible standalone harness with real rendered study HTML", async () => {
     const cases = {};
     for (const [name, options] of Object.entries({ short: {}, long: { long: true }, "no-related": { related: false } })) {
       const { root } = await renderLayoutCase(options);
       cases[name] = root.outerHTML;
+      root.remove();
+    }
+    for (const route of ["dashboard", "progress", "questions", "keywords"]) {
+      const { root } = await renderLayoutCase({ route });
+      cases[route] = root.outerHTML;
       root.remove();
     }
     const html = layoutHarness(cases);

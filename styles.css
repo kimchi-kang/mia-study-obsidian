@@ -1770,7 +1770,7 @@ body.theme-dark .mia-view { --mia-danger-text: #ff7a70; }
 .mia-view.mia-view .mia-progress-subject > .mia-inline-actions > button { width: 100%; margin: 0; min-height: 40px; white-space: nowrap; }
 
 /* Keyword cards: name, one-line meta, [시험][암기], disclosure, [수정 | 삭제] */
-.mia-view .mia-keyword-grid { grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); }
+.mia-view .mia-keyword-grid { grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
 .mia-view.mia-view .mia-keyword { display: grid; grid-template-columns: 1fr 1fr; column-gap: 8px; row-gap: 8px; align-content: start; }
 .mia-view .mia-keyword > strong { grid-column: 1 / -1; order: 0; }
 .mia-view .mia-keyword > span { grid-column: 1 / -1; order: 1; font-size: .86em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: -4px; }
@@ -2250,7 +2250,7 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 /* Study uses the pane, rather than a desktop reading column, on touch devices.
    Keep the existing edge subtraction: a pane already inside a cutout needs no extra inset. */
 .mia-view.mia-route-study { --mia-study-width: 1360px; }
-.mia-view.mia-route-study:is([data-device="phone"], [data-device="tablet"]) {
+.mia-view:is(.mia-route-study, .mia-route-dashboard, .mia-route-progress, .mia-route-questions, .mia-route-keywords):is([data-device="phone"], [data-device="tablet"]) {
   --mia-study-width: none;
   --mia-pane-gutter: clamp(8px, calc(var(--mia-pane-width, 400px) * .02), 16px);
   padding-left: calc(var(--mia-pane-gutter) + var(--mia-edge-left));
@@ -2316,4 +2316,37 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
   .mia-view.mia-route-study[data-device="phone"] .mia-study-concepts { margin-top: 8px; padding-top: 4px; }
   .mia-view.mia-route-study[data-device="phone"] .mia-study-dock { margin-top: 4px; padding-top: 6px; }
   .mia-view.mia-route-study[data-device="phone"] .mia-thumb-navigation { margin-top: 4px; }
+}
+
+/* Library pages keep a readable ceiling on unusually wide touch panes.
+   Study retains its uncapped 1.4.23 behavior. Desktop reading caps stay unchanged. */
+.mia-view:is(.mia-route-dashboard, .mia-route-progress, .mia-route-questions, .mia-route-keywords):is([data-device="phone"], [data-device="tablet"]) > * {
+  max-width: 1600px;
+}
+.mia-view.mia-route-dashboard .mia-subject-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+}
+.mia-view.mia-route-progress .mia-progress-subjects {
+  grid-template-columns: repeat(auto-fill, minmax(min(380px, 100%), 1fr));
+}
+/* The list can grow into multiple compact cards; row actions follow the list
+   column, since the detail panel consumes part of the route's container. */
+.mia-view.mia-route-questions .mia-questions-main { container: mia-question-list / inline-size; }
+.mia-view.mia-route-questions .mia-list {
+  grid-template-columns: repeat(auto-fill, minmax(min(480px, 100%), 1fr));
+}
+@container mia-question-list (max-width: 760px) or (min-width: 966px) {
+  .mia-view.mia-route-questions .mia-row {
+    grid-template-columns: 14px minmax(0, 1fr) 56px;
+    grid-template-areas: "dot body body" "actions actions delete";
+    padding: 12px;
+  }
+  .mia-view.mia-route-questions :is(.mia-row-actions > button, .mia-row-delete) { min-height: 44px; }
+}
+@container mia-view (min-width: 1000px) {
+  .mia-view.mia-route-questions .mia-questions-layout { grid-template-columns: minmax(0, 1.8fr) minmax(400px, 1fr); }
+}
+/* Retain the existing narrow-pane and phone arrangements. */
+@container mia-view (max-width: 600px) {
+  .mia-view.mia-route-dashboard .mia-subject-grid { grid-template-columns: minmax(0, 1fr); }
 }

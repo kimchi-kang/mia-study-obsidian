@@ -39,11 +39,12 @@ p, ol, ul { margin-block: 1em; }
 <div class="workspace"><div class="workspace-leaf"><div class="workspace-leaf-content"><div class="view-content"></div></div></div></div>
 <script id="mia-cases" type="application/json">${JSON.stringify(cases).replaceAll("<", "\\u003c")}</script>
 <script>
-// Queries: device, case=short|long|no-related, safeLeft/Right/Top/Bottom (px),
+// Queries: route=dashboard|progress|questions|keywords|study, device, case=short|long|no-related, safeLeft/Right/Top/Bottom (px),
 // paneLeft/Top/Width/Height/RightGap/BottomGap (px), focus, density, answerLayout.
 const params = new URLSearchParams(location.search);
 const cases = JSON.parse(document.getElementById('mia-cases').textContent);
-const selected = params.get('case') || 'short';
+const route = ['dashboard', 'progress', 'questions', 'keywords', 'study'].includes(params.get('route')) ? params.get('route') : 'study';
+const selected = route === 'study' ? params.get('case') || 'short' : route;
 document.querySelector('.view-content').innerHTML = cases[selected] || cases.short;
 const view = document.querySelector('.mia-view');
 view.dataset.device = ['phone', 'tablet', 'desktop'].includes(params.get('device')) ? params.get('device') : 'tablet';
@@ -71,8 +72,16 @@ geometry();
 addEventListener('resize', geometry);
 window.miaLayoutReport = function() {
   const pane = view.getBoundingClientRect();
-  const card = view.querySelector('.mia-study-card').getBoundingClientRect();
-  const layout = view.querySelector('.mia-study-layout');
+  const content = view.querySelector(({ study: '.mia-study-layout', dashboard: '.mia-hero', progress: '.mia-stats', questions: '.mia-questions-layout', keywords: '.mia-keyword-grid' })[route]);
+  const card = content.getBoundingClientRect();
+  const layout = content;
+  const grids = {};
+  for (const selector of ['.mia-stats', '.mia-subject-grid', '.mia-progress-subjects', '.mia-keyword-grid', '.mia-list', '.mia-questions-layout', '.mia-study-layout', '.mia-hero-counts']) {
+    const grid = view.querySelector(selector);
+    if (grid) grids[selector] = getComputedStyle(grid).gridTemplateColumns.split(' ').filter(track => parseFloat(track) > 0).length;
+  }
+  const panel = view.querySelector('.mia-detail-panel');
+  const panelVisible = !!panel && getComputedStyle(panel).display !== 'none';
   const css = getComputedStyle(view);
   // Resolving calc/max/var via a probe preserves the production safe-area calculation.
   const probe = document.createElement('div');
@@ -81,6 +90,8 @@ window.miaLayoutReport = function() {
   const safeWidth = probe.getBoundingClientRect().width;
   probe.remove();
   return {
+    route, grids, panelVisible, panelWidth: panelVisible ? panel.getBoundingClientRect().width : 0,
+    contentWidth: card.width, contentPaneRatio: card.width / pane.width, contentSafePaneRatio: card.width / (pane.width - safeWidth),
     device: view.dataset.device, case: selected, paneWidth: pane.width, cardWidth: card.width,
     cardPaneRatio: card.width / pane.width,
     cardSafePaneRatio: card.width / (pane.width - safeWidth),
@@ -91,6 +102,7 @@ window.miaLayoutReport = function() {
     horizontalOverflow: document.documentElement.scrollWidth > innerWidth,
     documentScrollWidth: document.documentElement.scrollWidth, innerWidth,
     paneHorizontalOverflow: view.scrollWidth > view.clientWidth,
+    overflowingElements: [...view.querySelectorAll('*')].filter(el => el.getClientRects().length && getComputedStyle(el).overflowX === 'visible' && el.scrollWidth > el.clientWidth + 1).map(el => el.className).filter(Boolean),
     layoutColumns: getComputedStyle(layout).gridTemplateColumns,
     studyWidth: css.getPropertyValue('--mia-study-width').trim()
   };
