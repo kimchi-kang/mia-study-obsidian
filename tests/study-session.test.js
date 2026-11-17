@@ -2448,3 +2448,116 @@ it("averages only cards with times from this session and resets on resume", asyn
   await ui.plugin.studyUi.saveResume({queue:["q"],seed:["q"],skipped:[],queueIndex:0,answerVisible:false,sessionMode:"recall",updatedAt:new Date().toISOString()});
   vi.advanceTimersByTime(5000);await ui.view.resumeStudy();expect(ui.view.answerClock.milliseconds).toBe(0);
 });
+
+describe("auto advance and leech", () => {
+  const findClass = (ui, cls) => { const visit = el => el.cls.split(" ").includes(cls) ? el : el.children.map(visit).find(Boolean); return visit(ui.view.contentEl); };
+  const flush = async () => { for (let i=0;i<60;i++) await Promise.resolve(); };
+  const auto = (patch = {}, options = {}) => {
+    const ui=setup({start:false,linked:true,...options});
+    ui.plugin.studyUi.updateAppearance(patch);ui.view.startReview(["q","related"]);return ui;
+  };
+  it("leaves default DOM and interval behavior unchanged, including missing keys", () => {
+    const ui=auto();expect(findClass(ui,"mia-auto-advance")).toBeUndefined();
+    expect(vi.getTimerCount()).toBe(1);vi.advanceTimersByTime(10000);expect(ui.view.answerVisible).toBe(false);
+    ui.plugin.studyUi.updateAppearance({answerTimer:false});ui.view.render();expect(vi.getTimerCount()).toBe(0);
+  });
+  it.each([true,false])("reveals at ten seconds and records recall time with answerTimer=%s", async answerTimer => {
+    const ui=auto({autoQuestionSeconds:10,answerTimer});const el=findClass(ui,"mia-auto-advance");
+    expect(el.text).toBe("자동 10");expect(el.attrs["aria-live"]).toBeUndefined();
+    const render=vi.spyOn(ui.view,"render");vi.advanceTimersByTime(9000);expect(el.text).toBe("자동 1");expect(render).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1000);expect(ui.view.answerVisible).toBe(true);expect(ui.view.contentEl.focused).toBe(true);
+    await ui.button("너무 쉬움").click();expect(ui.reviews.q.history[0].answer_ms).toBe(10000);
+  });
+  it.each([false,true])("skips without rating after a manual/auto reveal (%s)", async automated => {
+    const ui=auto({autoQuestionSeconds:automated?5:0,autoAnswerSeconds:3});
+    if(automated)vi.advanceTimersByTime(5000);else await ui.button("정답 보기").click();
+    vi.advanceTimersByTime(3000);expect(ui.view.queueIndex).toBe(1);expect(ui.reviews).toEqual({});expect(ui.view.studyResult().skipped).toBe(1);
+  });
+  it("uses Again saving, undo and recorded answer_ms", async () => {
+    const ui=auto({autoQuestionSeconds:5,autoAnswerSeconds:3,autoAnswerAction:"again"});
+    vi.advanceTimersByTime(8000);await flush();expect(ui.reviews.q.history).toHaveLength(1);expect(ui.reviews.q.history[0]).toMatchObject({rating:Rating.Again,answer_ms:5000});
+    await ui.view.undoLastRating();expect(ui.reviews.q).toBeUndefined();
+  });
+  it("pauses for hidden documents, modals and manual toggles, then continues", async () => {
+    const ui=auto({autoQuestionSeconds:10});let modal=false;const doc={hidden:false,body:{querySelector:()=>modal?{}:null}};
+    ui.view.autoAdvance.document=doc;vi.advanceTimersByTime(3000);
+    doc.hidden=true;ui.view.autoAdvance.sync();vi.advanceTimersByTime(20000);expect(ui.view.answerVisible).toBe(false);
+    doc.hidden=false;ui.view.autoAdvance.sync();vi.advanceTimersByTime(2000);
+    modal=true;ui.view.autoAdvance.sync();vi.advanceTimersByTime(20000);modal=false;ui.view.autoAdvance.sync();
+    const el=findClass(ui,"mia-auto-advance");await el.click();expect(el.text).toBe("자동 ∥");vi.advanceTimersByTime(20000);expect(ui.view.answerVisible).toBe(false);
+    await el.click();vi.advanceTimersByTime(4999);expect(ui.view.answerVisible).toBe(false);vi.advanceTimersByTime(1);expect(ui.view.answerVisible).toBe(true);
+  });
+  it("does not let auto pause or an open modal shorten the recorded recall time", async () => {
+    const ui=auto({autoQuestionSeconds:20});let modal=false;ui.view.autoAdvance.document={hidden:false,body:{querySelector:()=>modal?{}:null}};
+    vi.advanceTimersByTime(3000);const el=findClass(ui,"mia-auto-advance");await el.click();vi.advanceTimersByTime(2000);
+    modal=true;vi.advanceTimersByTime(1000);modal=false;vi.advanceTimersByTime(2000);
+    await ui.button("정답 보기").click();await ui.button("너무 쉬움").click();expect(ui.reviews.q.history[0].answer_ms).toBe(8000);
+  });
+  it("starts restored visible answers at zero, without guessing question time", async () => {
+    const ui=auto({autoQuestionSeconds:10,autoAnswerSeconds:3});
+    await ui.view.setState({...ui.view.getState(),answerVisible:true},{});
+    expect(ui.view.answerClock).toBeNull();expect(findClass(ui,"mia-auto-advance").text).toBe("자동 3");
+    vi.advanceTimersByTime(3000);expect(ui.view.queueIndex).toBe(1);expect(ui.reviews).toEqual({});
+  });
+  it("has no auto advance in browse, rated revisits, results, or after closing", async () => {
+    const ui=auto({autoQuestionSeconds:5,autoAnswerSeconds:3});await ui.button("정답 보기").click();await ui.button("너무 쉬움").click();
+    await ui.button("← 이전 문제").click();expect(findClass(ui,"mia-auto-advance")).toBeUndefined();
+    ui.view.startReview(["q"],"browse");expect(findClass(ui,"mia-auto-advance")).toBeUndefined();
+    ui.view.startReview(["related"]);ui.view.skipQuestion();expect(findClass(ui,"mia-auto-advance")).toBeUndefined();
+    ui.view.startReview(["related"]);const el=findClass(ui,"mia-auto-advance"),write=vi.spyOn(el,"setText");await ui.view.onClose();vi.advanceTimersByTime(60000);
+    expect(write).not.toHaveBeenCalled();expect(ui.reviews.related).toBeUndefined();expect(vi.getTimerCount()).toBe(0);
+  });
+  it("rejects late ticks after moving or closing and never double-rates while saving", async () => {
+    const callbacks=[];const original=setInterval;vi.stubGlobal("setInterval",(fn,ms)=>{callbacks.push(fn);return original(fn,ms);});
+    const ui=auto({autoQuestionSeconds:5,autoAnswerSeconds:3,autoAnswerAction:"again"});const old=callbacks.at(-1);
+    ui.view.moveToQuestion(1);vi.advanceTimersByTime(4000);old();expect(ui.view.answerVisible).toBe(false);expect(ui.reviews).toEqual({});
+    vi.advanceTimersByTime(1000);const tick=callbacks.at(-1);let finish;const save=vi.spyOn(ui.plugin.store,"setReview").mockImplementation((id,state)=>new Promise(resolve=>{finish=()=>{ui.reviews[id]=state;resolve();};}));
+    vi.advanceTimersByTime(3000);expect(save).toHaveBeenCalledTimes(1);tick();old();vi.advanceTimersByTime(20000);expect(save).toHaveBeenCalledTimes(1);
+    finish();await flush();await ui.view.onClose();tick();old();expect(save).toHaveBeenCalledTimes(1);
+  });
+  it("announces only a committed threshold crossing and allows a new notice after undo", async () => {
+    const ui=auto();let state=ui.plugin.fsrs.rate(undefined,Rating.Good,new Date(Date.now()-86400000),"q");
+    state.card.state=State.Review;state.card.lapses=7;ui.reviews.q=state;
+    modalBoundary.notices=[];await ui.button("정답 보기").click();await ui.button("못 암기").click();
+    expect(ui.reviews.q.card.lapses).toBe(8);expect(modalBoundary.notices.filter(s=>s.startsWith("자주 틀리는"))).toHaveLength(1);
+    await ui.view.undoLastRating();await ui.button("못 암기").click();expect(modalBoundary.notices.filter(s=>s.startsWith("자주 틀리는"))).toHaveLength(2);
+    await ui.button("← 이전 문제").click();await ui.button("너무 쉬움").click();expect(modalBoundary.notices.filter(s=>s.startsWith("자주 틀리는"))).toHaveLength(2);
+  });
+  it("renders a leech title badge, dropdown only filter and detail summary", async () => {
+    const {renderQuestionRow}=await import("../src/ui/question-row");const {QuestionDetailView}=await import("../src/ui/question-detail-view");
+    const ui=auto();const review=ui.plugin.fsrs.rate(undefined,3,new Date(),"q");review.card.lapses=8;ui.reviews.q=review;
+    const ctx=ui.view.pages,question=ui.plugin.index.questionById("q"),parent=ui.view.contentEl.createDiv();renderQuestionRow(ctx,parent,question);
+    const badge=findClass({view:{contentEl:parent}},"mia-leech");expect(badge.text).toBe("자주 틀림");expect(badge.attrs["aria-label"]).toBe("8번 이상 잊은 문제 (잊은 횟수 8회)");
+    const detail=parent.createDiv();await new QuestionDetailView(ui.view.app,{question,review,recommendations:[],meanings:new Map(),actions:{}},{}).render(detail,parent.createDiv(),{},()=>true);
+    expect(detail.content).toContain("잊은 횟수 8회");expect(detail.content).toContain("문제를 나누거나 정답을 고쳐 보세요.");
+    ui.view.questionList.show("leech");await ui.view.setState({route:"questions"},{});
+    expect(ui.view.contentEl.querySelectorAll("option").some(el=>el.text.startsWith("자주 틀림"))).toBe(true);
+    expect(ui.view.contentEl.querySelectorAll("button").some(el=>el.text.startsWith("자주 틀림"))).toBe(false);
+    expect(ui.content()).toContain("질문");expect(ui.content()).not.toContain("꼬리질문 학습");
+  });
+});
+
+it.each([7,8])("does not announce leech below threshold or for an already leech card (%s lapses)",async lapses=>{
+  const ui=setup({start:false});const state=ui.plugin.fsrs.rate(undefined,Rating.Good,new Date(Date.now()-86400000),"q");
+  state.card.state=State.Review;state.card.lapses=lapses;ui.reviews.q=state;ui.view.startReview(["q"]);modalBoundary.notices=[];
+  await ui.button("정답 보기").click();await ui.button(lapses===7?"너무 쉬움":"못 암기").click();
+  expect(modalBoundary.notices.some(text=>text.startsWith("자주 틀리는"))).toBe(false);
+});
+it("does not announce an unsaved threshold crossing",async()=>{
+  const ui=setup({start:false,failSave:true});const state=ui.plugin.fsrs.rate(undefined,Rating.Good,new Date(Date.now()-86400000),"q");
+  state.card.state=State.Review;state.card.lapses=7;ui.reviews.q=state;ui.view.startReview(["q"]);modalBoundary.notices=[];
+  await ui.button("정답 보기").click();await ui.button("못 암기").click();expect(ui.reviews.q.card.lapses).toBe(7);
+  expect(modalBoundary.notices.some(text=>text.startsWith("자주 틀리는"))).toBe(false);
+});
+it("stops question auto advance when disabled mid-pause and continues the ordinary answer clock",async()=>{
+  const ui=setup();ui.plugin.studyUi.updateAppearance({autoQuestionSeconds:5});ui.view.render();vi.advanceTimersByTime(2000);
+  const visit=el=>el.cls.split(" ").includes("mia-auto-advance")?el:el.children.map(visit).find(Boolean);await visit(ui.view.contentEl).click();
+  ui.plugin.studyUi.updateAppearance({autoQuestionSeconds:0});ui.view.render();vi.advanceTimersByTime(4000);
+  expect(visit(ui.view.contentEl)).toBeUndefined();expect(ui.view.answerVisible).toBe(false);await ui.button("정답 보기").click();await ui.button("너무 쉬움").click();expect(ui.reviews.q.history[0].answer_ms).toBe(6000);
+});
+it("preserves the old unknown-list-filter fallback",async()=>{
+  const {queryQuestions}=await import("../src/core/question-query");const ui=setup();ui.reviews.q=ui.plugin.fsrs.rate(undefined,Rating.Easy);
+  const query={text:"",subject:"all",questionType:"all",review:"legacy-unknown",keyword:"",sort:"title"};
+  expect(queryQuestions(ui.plugin.index.registered,ui.reviews,ui.plugin.fsrs,query).map(q=>q.id)).toEqual(["q"]);
+  ui.reviews.q=ui.plugin.fsrs.rate(undefined,Rating.Again);expect(queryQuestions(ui.plugin.index.registered,ui.reviews,ui.plugin.fsrs,query)).toEqual([]);
+});

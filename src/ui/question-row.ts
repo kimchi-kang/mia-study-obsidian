@@ -1,3 +1,4 @@
+import { isLeech, LEECH_LAPSES } from "../core/study-automation";
 import { reportUiFailure } from "./error-message";
 import { MarkdownRenderer } from "obsidian";
 import { Rating } from "ts-fsrs";
@@ -54,7 +55,14 @@ export function renderQuestionRow(ctx: StudyPageContext, parent: HTMLElement, qu
   dot.setAttr("aria-label", state.label);
   dot.setAttr("title", state.label);
   const body = row.createDiv({ cls: "mia-row-body" });
-  renderQuestionHeading(ctx, body.createEl("strong"), question, component);
+  const heading = body.createEl("strong");
+  const review = ctx.plugin.store.getReview(question.id);
+  const leech = review && isLeech(review);
+  renderQuestionHeading(ctx, leech ? heading.createSpan() : heading, question, component);
+  if (leech) {
+    const label = `${LEECH_LAPSES}번 이상 잊은 문제 (잊은 횟수 ${review.card.lapses}회)`;
+    heading.createSpan({ text: "자주 틀림", cls: "mia-leech", attr: { title: label, "aria-label": label } });
+  }
   const prompt = body.createDiv({ cls: "mia-row-prompt mia-markdown" });
   ctx.renders.push(MarkdownRenderer.render(ctx.app, withoutSourceAttribution(question.questionMarkdown), prompt, question.filePath, component));
   body.createEl("small", { text: `${question.subject} · ${question.questionType} · 핵심 ${question.coreKeywords.map((item) => item.label).join(", ") || "없음"} · 보조 ${question.subKeywords.map((item) => item.label).join(", ") || "없음"}` });

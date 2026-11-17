@@ -81,3 +81,11 @@ it("defaults the answer timer on for old settings and saves its device preferenc
   boundary.rows.get("답변 타이머").change(false);ui.modal.contentEl.find("보기 설정 저장").click();
   expect(ui.store.appearance.answerTimer).toBe(false);ui.modal.open();expect(boundary.rows.get("답변 타이머").value).toBe(false);
 });
+
+it("defaults auto advance off and persists its three choices only on Save",()=>{
+  const ui=setup();expect(boundary.rows.get("질문 시간").value).toBe("0");expect(boundary.rows.get("정답 시간").value).toBe("0");expect(boundary.rows.get("정답 후 동작").value).toBe("skip");
+  boundary.rows.get("질문 시간").change("10");boundary.rows.get("정답 시간").change("3");boundary.rows.get("정답 후 동작").change("again");
+  expect(ui.store.appearance.autoQuestionSeconds??0).toBe(0);expect(ui.app.saveLocalStorage).not.toHaveBeenCalled();
+  ui.modal.contentEl.find("보기 설정 저장").click();expect(ui.store.appearance).toMatchObject({autoQuestionSeconds:10,autoAnswerSeconds:3,autoAnswerAction:"again"});
+  ui.modal.open();expect(boundary.rows.get("질문 시간").value).toBe("10");expect(boundary.rows.get("정답 시간").value).toBe("3");expect(boundary.rows.get("정답 후 동작").value).toBe("again");
+});

@@ -532,6 +532,8 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-detail-placeholder { margin: 0; padding: 24px 20px; }
 .mia-view .mia-row-urgency { font-weight: 700; }
 
+.mia-leech { display: inline; margin-left: 6px; padding: 0 4px; border: 2px solid var(--mia-red); color: var(--mia-danger-text); font-size: 10px; font-weight: 800; white-space: nowrap; }
+
 /* 5. Keywords */
 .mia-keyword-grid { display: grid; gap: 10px; }
 .mia-keyword { cursor: pointer; padding: 14px; flex-direction: column; }
@@ -702,6 +704,12 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-dock-undo { border: 3px solid var(--mia-ink); }
 .mia-view .mia-card-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 3px solid var(--mia-ink); }
 .mia-view .mia-related-item { flex-direction: column; flex-wrap: nowrap; gap: 8px; padding: 10px 12px; background: var(--mia-panel); }
+
+.mia-view .mia-auto-advance { display: inline-block; margin-left: 6px; padding: 0 3px; border: 2px solid var(--mia-ink); background: var(--mia-yellow); color: var(--mia-on-yellow); font-size: 10px; line-height: 1; white-space: nowrap; cursor: pointer; font-variant-numeric: tabular-nums; }
+
+.mia-view .mia-card-context:has(.mia-auto-advance) { flex-wrap: nowrap; align-items: center; gap: 4px; min-width: 0; white-space: nowrap; }
+.mia-view .mia-auto-context { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mia-view .mia-card-context:has(.mia-auto-advance) :is(.mia-answer-timer, .mia-auto-advance) { flex-shrink: 0; margin-left: 0; }
 
 /* 7. Settings and dialogs */
 .mia-warning { color: var(--text-warning); }

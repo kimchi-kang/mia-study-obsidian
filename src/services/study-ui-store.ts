@@ -1,3 +1,4 @@
+import { parseAutoAdvance, type AutoAdvanceSettings } from "../core/study-automation";
 import type { App, DataAdapter } from "obsidian";
 import { SwipeSensitivity } from "../core/study-swipe";
 import { MiaSessionMode, ReviewCheckpoint, parseReviewCheckpoint } from "../core/navigation";
@@ -8,7 +9,7 @@ export interface StudySessionSummary {
   grades: { id: string; grade: StudyGrade }[];
 }
 
-export interface StudyAppearance {
+export interface StudyAppearance extends Partial<AutoAdvanceSettings> {
   size: "small" | "medium" | "large";
   density: "compact" | "detailed";
   focus: boolean;
@@ -75,6 +76,8 @@ export function parseStudyResume(value: unknown): StudyResume | null {
 export function parseStudyAppearance(value: unknown): StudyAppearance {
   const raw = value && typeof value === "object" ? value as Record<string, unknown> : {};
   return {
+    // Preserve the legacy preference shape until an auto setting is saved; absent keys mean off.
+    ...(("autoQuestionSeconds" in raw || "autoAnswerSeconds" in raw || "autoAnswerAction" in raw) ? parseAutoAdvance(raw) : {}),
     size: raw.size === "small" || raw.size === "large" ? raw.size : "medium",
     density: raw.density === "compact" ? "compact" : "detailed",
     focus: raw.focus === true,

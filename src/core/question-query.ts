@@ -1,8 +1,9 @@
+import { isLeech } from "./study-automation";
 import { Rating } from "ts-fsrs";
 import { FsrsService } from "./fsrs-service";
 import { QuestionRecord, QuestionReviewState, QuestionType } from "./models";
 
-export type ReviewFilter = "all" | "due" | "new" | "again" | "hard" | "good" | "easy" | "weak" | "stable" | "today";
+export type ReviewFilter = "all" | "due" | "new" | "again" | "hard" | "good" | "easy" | "weak" | "leech" | "stable" | "today";
 export type QuestionSort = "review" | "title" | "subject" | "type" | "created" | "updated" | "weak" | "ambiguous";
 
 export interface QuestionQuery {
@@ -46,6 +47,7 @@ function matchesReview(
   fsrsService: FsrsService,
   now: Date,
 ): boolean {
+  if (filter === "leech") return isLeech(review);
   if (filter === "all") return true;
   if (filter === "due") return fsrsService.isDue(review, now);
   if (filter === "new") return fsrsService.isNew(review);

@@ -1,3 +1,4 @@
+import { isLeech } from "../core/study-automation";
 import { formatAnswerDuration } from "../core/answer-time";
 import { App, Component, MarkdownRenderer, Notice } from "obsidian";
 import { Rating } from "ts-fsrs";
@@ -107,7 +108,12 @@ export class QuestionDetailView {
     reset.dataset.action = "reset";
     reset.addEventListener("click", () => this.confirmReset());
 
-    body.createEl("h3", { text: `복습 기록 ${review?.history.length ?? 0}회` });
+    const historyHeading = body.createEl("h3", { text: `복습 기록 ${review?.history.length ?? 0}회` });
+    historyHeading.createEl("small", { text: ` · 잊은 횟수 ${review?.card.lapses ?? 0}회`, cls: "mia-muted" });
+    if (isLeech(review)) {
+      historyHeading.createSpan({ text: "자주 틀림", cls: "mia-leech" });
+      body.createEl("p", { text: "문제를 나누거나 정답을 고쳐 보세요.", cls: "mia-muted" });
+    }
     const history = body.createDiv({ cls: "mia-history" });
     for (const entry of [...(review?.history ?? [])].reverse()) {
       // ts-fsrs log.due is last_review || due, not the preceding scheduled due.

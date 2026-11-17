@@ -1,3 +1,4 @@
+import { AUTO_QUESTION_SECONDS, AUTO_ANSWER_SECONDS, parseAutoAdvance } from "../core/study-automation";
 import { Modal, Notice, Setting } from "obsidian";
 import { StudyAppearance, StudyUiStore } from "../services/study-ui-store";
 import { errorMessage } from "./error-message";
@@ -47,6 +48,20 @@ export class StudyAppearanceModal extends Modal {
     new Setting(touch).setName("쓸어넘기기 민감도").addDropdown((dropdown) => {
       dropdown.addOption("light", "가볍게").addOption("normal", "기본").addOption("firm", "확실하게").setValue(this.draft.swipeSensitivity);
       dropdown.onChange((value) => { if (value === "light" || value === "normal" || value === "firm") this.change({ swipeSensitivity: value }); });
+    });
+    const auto = this.group("자동 진행");
+    for (const [key, name, description, values] of [
+      ["autoQuestionSeconds", "질문 시간", "시험 모드에서 이 시간이 지나면 정답을 자동으로 보여줍니다. 기본값은 끔입니다.", AUTO_QUESTION_SECONDS],
+      ["autoAnswerSeconds", "정답 시간", "정답을 본 뒤 이 시간이 지나면 아래 동작을 하고 다음 문제로 넘어갑니다. 기본값은 끔입니다.", AUTO_ANSWER_SECONDS],
+    ] as const) {
+      new Setting(auto).setName(name).setDesc(description).addDropdown(dropdown => {
+        for (const seconds of values) dropdown.addOption(String(seconds), seconds ? `${seconds}초` : "끔");
+        dropdown.setValue(String(this.draft[key] ?? 0)).onChange(value => this.change(parseAutoAdvance({ ...this.draft, [key]: Number(value) })));
+      });
+    }
+    new Setting(auto).setName("정답 후 동작").setDesc("평가 없이 넘어가면 다음 복습 일정이 바뀌지 않습니다.").addDropdown(dropdown => {
+      dropdown.addOption("skip", "건너뛰기").addOption("again", "못 암기로 평가").setValue(this.draft.autoAnswerAction ?? "skip");
+      dropdown.onChange(value => this.change({ autoAnswerAction: value === "again" ? "again" : "skip" }));
     });
     this.status = this.contentEl.createEl("p", { text: "변경한 내용이 없습니다.", cls: "mia-muted mia-appearance-status" });
     this.status.setAttribute("role", "status");

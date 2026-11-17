@@ -59,3 +59,12 @@ describe("question query", () => {
       .toEqual(["due"]);
   });
 });
+
+it("selects leeches independently of last grade, without changing other review filters", () => {
+  const leech = fsrs.rate(undefined, Rating.Easy);leech.card.lapses=8;
+  const weak = fsrs.rate(undefined, Rating.Again);weak.card.lapses=7;
+  const questions=[question("leech"),question("weak"),question("new")];
+  const base={text:"",subject:"all",questionType:"all" as const,keyword:"",sort:"title" as const};
+  expect(queryQuestions(questions,{leech,weak},fsrs,{...base,review:"leech"}).map(q=>q.id)).toEqual(["leech"]);
+  expect(queryQuestions(questions,{leech,weak},fsrs,{...base,review:"weak"}).map(q=>q.id)).toEqual(["weak"]);
+});

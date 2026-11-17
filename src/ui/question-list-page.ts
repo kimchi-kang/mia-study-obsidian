@@ -108,7 +108,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
   const reviewOptions: Array<[ReviewFilter, string]> = [
     ["all", "전체 상태"], ["due", "복습 예정"], ["new", "새 문제"],
     ["again", "못 암기"], ["hard", "애매"], ["good", "암기"], ["easy", "너무 쉬움"],
-    ["weak", "취약 문제"], ["stable", "기억 안정"], ["today", "오늘 평가"],
+    ["weak", "취약 문제"], ["leech", "자주 틀림"], ["stable", "기억 안정"], ["today", "오늘 평가"],
   ];
   reviewOptions.forEach(([value, label]) => review.createEl("option", { text: label, value }));
   review.value = state.review;

@@ -1,3 +1,5 @@
+import { isLeech, LEECH_LAPSES } from "../core/study-automation";
+import { StudyAutoAdvance } from "./study-auto-advance";
 import { formatInterval, summarizeStudySession } from "./study-session-calculations";
 import { AnswerClock, MAX_ANSWER_SECONDS } from "../core/answer-time";
 import { withoutSourceAttribution } from "../core/source-attribution";
@@ -66,6 +68,8 @@ export class MiaStudyView extends ItemView {
   private sessionAttempts = new Map<number, { id: string; grade: StudyGrade }>();
   private sessionGrades = new Map<string, StudyGrade>();
   private sessionSkipped = new Set<string>();
+  private autoAdvance: StudyAutoAdvance | null = null;
+  private answerTickGeneration = 0;
   private answerClock: AnswerClock | null = null;
   private answerClockKey = "";
   private answerTimer: ReturnType<typeof setInterval> | null = null;
@@ -133,11 +137,11 @@ export class MiaStudyView extends ItemView {
     this.render();
     this.adaptiveLayout = bindAdaptiveLayout(this.contentEl);
     this.registerDomEvent(this.contentEl.ownerDocument, "visibilitychange", () => {
-      if (this.contentEl.ownerDocument.hidden) { this.answerClock?.pause(); this.flushReadingPosition(); }
+      if (this.contentEl.ownerDocument.hidden) { this.answerClock?.pause(); this.autoAdvance?.pause(); this.flushReadingPosition(); }
       else void this.refreshAfterReturn();
     });
     this.registerDomEvent(window, "focus", () => void this.refreshAfterReturn(false));
-    this.registerDomEvent(window, "pagehide", () => { this.answerClock?.pause(); this.flushReadingPosition(); });
+    this.registerDomEvent(window, "pagehide", () => { this.answerClock?.pause(); this.autoAdvance?.pause(); this.flushReadingPosition(); });
     this.registerInterval(window.setInterval(() => {
       if (!this.contentEl.ownerDocument.hidden && (this.route === "dashboard" || this.route === "progress")) void this.refreshAfterReturn();
     }, 30_000));
@@ -365,6 +369,7 @@ export class MiaStudyView extends ItemView {
   private async refreshAfterReturn(refreshTime = true, notify = false): Promise<void> {
     if (this.closed || this.refreshingAfterReturn || this.isMutatingReview) return;
     this.answerClock?.resume(this.contentEl.ownerDocument.hidden);
+    this.autoAdvance?.resume();
     this.refreshingAfterReturn = true;
     const previousResume = JSON.stringify(this.plugin.studyUi.resume);
     try {
@@ -736,6 +741,7 @@ export class MiaStudyView extends ItemView {
       this.queueIndex += 1;
     }
     if (!this.readOnlyBrowse && this.queueIndex >= this.queue.length) {
+      this.resetAnswerClock();
       const nextDue = this.refreshLearningQueue();
       if (this.queueIndex >= this.queue.length && nextDue) {
         const waiting = root.createDiv({ cls: "mia-primary-card" });
@@ -749,6 +755,7 @@ export class MiaStudyView extends ItemView {
       }
     }
     const id = this.queue[this.queueIndex];
+    if (!id) this.resetAnswerClock();
     const question = id ? this.plugin.index.questionById(id) : undefined;
     if ((!question || !question.id) && this.readOnlyBrowse) {
       const done = root.createDiv({ cls: "mia-primary-card" });
@@ -846,15 +853,7 @@ export class MiaStudyView extends ItemView {
       const actions = dock.createDiv({ cls: "mia-study-actions" });
       const reveal = actions.createEl("button", { text: "정답 보기", cls: "mod-cta mia-reveal" });
       reveal.setAttr("aria-keyshortcuts", "Space");
-      reveal.addEventListener("click", () => {
-        if (this.isMutatingReview) return;
-        this.answerClock?.stop();
-        this.answerVisible = true;
-        this.app.workspace.requestSaveLayout();
-        this.saveStudyPosition();
-        this.render();
-        this.contentEl.focus({ preventScroll: true });
-      });
+      reveal.addEventListener("click", () => this.revealAnswer());
       this.studyShortcuts.set(" ", reveal);
       this.renderStudyUtilities(dock, previous, next);
       return;
@@ -1007,6 +1006,16 @@ export class MiaStudyView extends ItemView {
     }
   }
 
+  private revealAnswer(): void {
+    if (this.isMutatingReview || this.closed || this.route !== "study" || this.answerVisible) return;
+    this.answerClock?.stop();
+    this.answerVisible = true;
+    this.app.workspace.requestSaveLayout();
+    this.saveStudyPosition();
+    this.render();
+    this.contentEl.focus({ preventScroll: true });
+  }
+
   private skipQuestion(): void {
     if (this.isMutatingReview) return;
     const id = this.queue[this.queueIndex];
@@ -1030,6 +1039,7 @@ export class MiaStudyView extends ItemView {
   private beginReviewSave(message: string): void {
     this.savingReviewCheckpoint = this.reviewCheckpoint().reviewCheckpoint;
     this.isMutatingReview = true;
+    this.autoAdvance?.pause();
     this.reviewSaveMessage = message;
     this.contentEl.setAttr("aria-busy", "true");
     this.renderReviewSaveStatus();
@@ -1038,6 +1048,7 @@ export class MiaStudyView extends ItemView {
   private endReviewSave(): void {
     this.savingReviewCheckpoint = undefined;
     this.isMutatingReview = false;
+    this.autoAdvance?.resume();
     this.reviewSaveMessage = "";
     if (!this.closed) {
       this.contentEl.setAttr("aria-busy", "false");
@@ -1097,6 +1108,9 @@ export class MiaStudyView extends ItemView {
             return;
           }
           await this.plugin.store.setReview(question.id, state, { state: expected });
+          if (!isLeech(expected) && isLeech(state)) {
+            new Notice(`자주 틀리는 문제입니다(${LEECH_LAPSES}번 잊음). 문제를 나누거나 정답을 고쳐 보세요.`);
+          }
           if (!this.sessionBaselines.has(ratedIndex)) this.sessionBaselines.set(ratedIndex, baseline);
           this.sessionSavedStates.set(question.id, state);
           this.changedGradedAnswers.delete(question.id);
@@ -1187,6 +1201,8 @@ export class MiaStudyView extends ItemView {
   }
 
   private clearAnswerInterval(): void {
+    this.answerTickGeneration += 1;
+    this.autoAdvance?.detach();
     if (this.answerTimer !== null) clearInterval(this.answerTimer);
     this.answerTimer = null;
     this.answerTimerEl = null;
@@ -1196,6 +1212,8 @@ export class MiaStudyView extends ItemView {
     this.clearAnswerInterval();
     this.answerClock = null;
     this.answerClockKey = "";
+    this.autoAdvance?.reset();
+    this.autoAdvance = null;
   }
 
   private renderAnswerTimer(parent: HTMLElement, id: string): void {
@@ -1207,14 +1225,38 @@ export class MiaStudyView extends ItemView {
     if (key !== this.answerClockKey) {
       this.resetAnswerClock();
       // Answer already shown (restore/undo): the recall time is unknown, so show and record nothing.
-      if (this.answerVisible) return;
       this.answerClockKey = key;
-      this.answerClock = new AnswerClock(this.contentEl.ownerDocument?.hidden ?? false);
+      if (!this.answerVisible) this.answerClock = new AnswerClock(this.contentEl.ownerDocument?.hidden ?? false);
     }
-    if (!this.plugin.studyUi.appearance.answerTimer) return;
-    this.answerTimerEl = parent.createSpan({ cls: "mia-answer-timer" });
-    this.updateAnswerTimer();
-    if (this.answerClock?.running) this.answerTimer = setInterval(() => this.updateAnswerTimer(), 1000);
+    const appearance = this.plugin.studyUi.appearance;
+    if (appearance.answerTimer && this.answerClock) {
+      this.answerTimerEl = parent.createSpan({ cls: "mia-answer-timer" });
+      this.updateAnswerTimer();
+    }
+    const seconds = (this.answerVisible ? appearance.autoAnswerSeconds : appearance.autoQuestionSeconds) ?? 0;
+    if (seconds > 0 && (this.answerVisible || this.answerClock)) {
+      this.autoAdvance ??= new StudyAutoAdvance();
+      this.autoAdvance.render(parent, `${key}:${this.answerVisible}`, seconds);
+    } else {
+      this.autoAdvance?.reset();
+      this.autoAdvance = null;
+    }
+    const generation = this.answerTickGeneration;
+    const answerVisible = this.answerVisible;
+    if (this.autoAdvance || (appearance.answerTimer && this.answerClock?.running)) {
+      this.answerTimer = setInterval(() => {
+        if (generation !== this.answerTickGeneration || this.closed || this.isMutatingReview
+          || this.route !== "study" || `${this.queueIndex}:${this.queue[this.queueIndex]}` !== key
+          || this.answerVisible !== answerVisible) return;
+        const advance = this.autoAdvance?.tick();
+        this.updateAnswerTimer();
+        if (!advance) return;
+        this.clearAnswerInterval();
+        if (!answerVisible) this.revealAnswer();
+        else if (this.plugin.studyUi.appearance.autoAnswerAction === "again") this.studyShortcuts.get("1")?.click();
+        else this.skipQuestion();
+      }, 1000);
+    }
   }
 
   private updateAnswerTimer(): void {

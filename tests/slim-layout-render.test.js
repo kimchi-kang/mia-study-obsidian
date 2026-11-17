@@ -127,6 +127,15 @@ it("renders additional real screens and states for computed-style equivalence", 
   expect(cases.settings).toContain('value="20"');
   expect(cases["settings-conflict"]).toContain("targetRetention");
   expect(cases.meaning).toContain("mia-keyword-meaning"); expect(cases["management-advanced"]).toContain('aria-pressed="true"');
+  await render("auto-question", { revealed: false }, ({ view }) => { view.plugin.studyUi.updateAppearance({ autoQuestionSeconds: 10 }); view.render(); });
+  await render("auto-answer", {}, ({ view }) => { view.plugin.studyUi.updateAppearance({ autoAnswerSeconds: 5, answerTimer: false }); view.render(); });
+  await render("leech-rows", { route: "questions" }, ({ view }) => {
+    for (const review of Object.values(view.plugin.store.reviews)) review.card.lapses = 8;
+    view.render();
+  });
+  expect(cases["auto-question"]).toContain("자동 10");
+  expect(cases["auto-answer"]).toContain("자동 5");
+  expect(cases["leech-rows"]).toContain("mia-leech");
   if (process.env.MIA_GENERATE_LAYOUT_HARNESS === "1") {
     await mkdir(".claude/slim", { recursive: true });
     // Reuse the exact host defaults; only replace the standalone boot script.
