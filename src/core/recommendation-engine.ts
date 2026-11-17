@@ -10,7 +10,7 @@ export interface QuestionRecommendation {
   reasons: string[];
 }
 
-const COMMON_KEYWORDS = new Set(["기압", "기류", "마찰", "과제", "신호", "함수", "시스템", "시간", "빈도"]);
+const COMMON_KEYWORDS = new Set(["개념", "정의", "원리", "방법", "특징", "함수", "시스템", "시간", "빈도"]);
 
 function normalizeKeyword(target: string): string {
   const path = target

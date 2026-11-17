@@ -60,7 +60,7 @@ describe("recommendQuestions", () => {
   });
 
   it("does not recommend from a common keyword alone", () => {
-    const common = { target: "MIA/키워드/기압", label: "기압", raw: "[[MIA/키워드/기압|기압]]" };
+    const common = { target: "MIA/키워드/개념", label: "개념", raw: "[[MIA/키워드/개념|개념]]" };
     const base = question("base", { coreKeywords: [common] });
     const unrelated = question("unrelated", { coreKeywords: [common] });
     expect(recommendQuestions(base, [base, unrelated], {}, fsrs)).toEqual([]);

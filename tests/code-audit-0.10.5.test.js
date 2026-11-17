@@ -121,6 +121,6 @@ describe("0.10.5 independent code audit", () => {
     await env.plugin.moveManagedQuestion(question, {...env.draft, answerMarkdown:withLink.answerMarkdown});
     const moved = parseQuestionFile(nextPath, env.contents.get(nextPath)).questions.find(q=>q.id==="mia-q-one");
     const destination = new URL(moved.answerMarkdown.match(/\]\(([^)]+)\)/)[1], "https://vault.invalid/" + nextPath).pathname;
-    expect(destination).toBe("/MIA/%EC%88%98%ED%95%99/%ED%9A%8C%EB%A1%9C.png");
+    expect(destination).toBe("/MIA/%EC%88%98%ED%95%99/%EA%B3%BC%EC%A0%9C.png");
   });
 });

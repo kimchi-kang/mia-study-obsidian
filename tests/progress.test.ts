@@ -42,7 +42,7 @@ describe("study progress", () => {
     const ratedGood = fsrs.rate(undefined, Rating.Good, new Date("2026-08-15T00:00:00.000Z"));
     const good = { ...ratedGood, card: { ...ratedGood.card, due: "2026-08-20T00:00:00.000Z" } };
     const result = calculateProgress(
-      [question("new", "과제"), question("hard", "과제"), question("good", "지리학")],
+      [question("new", "통계"), question("hard", "통계"), question("good", "지리학")],
       { hard, good },
       fsrs,
       now,
@@ -50,7 +50,7 @@ describe("study progress", () => {
     expect(result).toMatchObject({ total: 3, new: 1, studied: 2, due: 1, hard: 1, good: 1 });
     expect(result.bySubject).toEqual([
       { subject: "지리학", counts: expect.objectContaining({ total: 1, studied: 1, good: 1 }) },
-      { subject: "과제", counts: expect.objectContaining({ total: 2, new: 1, due: 1, hard: 1 }) },
+      { subject: "통계", counts: expect.objectContaining({ total: 2, new: 1, due: 1, hard: 1 }) },
     ]);
   });
 });
