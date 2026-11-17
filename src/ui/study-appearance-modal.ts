@@ -33,6 +33,7 @@ export class StudyAppearanceModal extends Modal {
       dropdown.onChange((value) => { if (value === "compact" || value === "detailed") this.change({ density: value }); });
     });
     this.toggle(screen, "focus", "집중 모드", "학습 중 상단 메뉴를 접습니다. 기본값은 꺼짐입니다.");
+    this.toggle(screen, "answerTimer", "답변 타이머", "시험 모드에서 정답을 볼 때까지 걸린 시간을 보여줍니다. 꺼도 시간은 기록됩니다. 기본값은 켜짐입니다.");
     new Setting(screen).setName("답안 배치").setDesc("나란히 보기는 넓은 창에서 적용됩니다. 좁아지면 자동으로 한 열로 돌아옵니다.").addDropdown((dropdown) => {
       dropdown.addOption("stacked", "위아래로").addOption("split", "나란히").setValue(this.draft.answerLayout);
       dropdown.onChange((value) => { if (value === "stacked" || value === "split") this.change({ answerLayout: value }); });
@@ -68,7 +69,7 @@ export class StudyAppearanceModal extends Modal {
     return section.createDiv({ cls: "mia-settings-list" });
   }
 
-  private toggle(parent: HTMLElement, key: "focus" | "swipeEnabled", name: string, description: string): void {
+  private toggle(parent: HTMLElement, key: "focus" | "swipeEnabled" | "answerTimer", name: string, description: string): void {
     const row = new Setting(parent).setName(name).setDesc(description);
     const state = row.controlEl.createSpan({ cls: "mia-toggle-state", text: this.draft[key] ? "켜짐" : "꺼짐" });
     state.setAttribute("aria-hidden", "true");

@@ -12,6 +12,7 @@ export interface StudyAppearance {
   size: "small" | "medium" | "large";
   density: "compact" | "detailed";
   focus: boolean;
+  answerTimer: boolean;
   answerLayout: "stacked" | "split";
   memorizationOrder: "sequential" | "random";
   swipeEnabled: boolean;
@@ -77,6 +78,7 @@ export function parseStudyAppearance(value: unknown): StudyAppearance {
     size: raw.size === "small" || raw.size === "large" ? raw.size : "medium",
     density: raw.density === "compact" ? "compact" : "detailed",
     focus: raw.focus === true,
+    answerTimer: raw.answerTimer !== false,
     answerLayout: raw.answerLayout === "split" ? "split" : "stacked",
     memorizationOrder: raw.memorizationOrder === "sequential" ? "sequential" : "random",
     swipeEnabled: raw.swipeEnabled !== false,

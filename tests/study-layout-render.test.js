@@ -66,3 +66,33 @@ describe("study layout rendered DOM", () => {
     expect(await readFile(path, "utf8")).toBe(html);
   });
 });
+
+it("excludes visibilitychange pauses, resumes through refresh, and cleans up on close", async () => {
+  vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} });
+  dom.window.HTMLElement.prototype.hasClass = function(name) { return this.classList.contains(name); };
+  vi.stubGlobal("HTMLInputElement", dom.window.HTMLInputElement);
+  vi.stubGlobal("HTMLTextAreaElement", dom.window.HTMLTextAreaElement);
+  const {view,root}=await renderLayoutCase({revealed:false});
+  const registrations=[],intervals=[];
+  view.registerDomEvent=(target,event,fn)=>{target.addEventListener(event,fn);registrations.push(()=>target.removeEventListener(event,fn));};
+  view.registerInterval=id=>intervals.push(id);
+  view.plugin.index.subscribe=()=>()=>{};view.plugin.store.subscribe=()=>()=>{};
+  view.plugin.synchronizeStudyData=async()=>{};
+  await view.onOpen();
+  vi.advanceTimersByTime(4200);
+  Object.defineProperty(document,"hidden",{configurable:true,value:true});
+  document.dispatchEvent(new dom.window.Event("visibilitychange"));
+  vi.advanceTimersByTime(20000);
+  expect(root.querySelector(".mia-answer-timer").textContent).toBe("0:04");
+  Object.defineProperty(document,"hidden",{configurable:true,value:false});
+  document.dispatchEvent(new dom.window.Event("visibilitychange"));
+  await vi.advanceTimersByTimeAsync(2300);
+  expect(view.answerClock.milliseconds).toBe(6500);
+  await view.refreshAfterReturn(false);vi.advanceTimersByTime(1000);
+  expect(view.answerClock.milliseconds).toBe(7500);
+  root.querySelector(".mia-reveal").click();vi.advanceTimersByTime(10000);
+  expect(root.querySelector(".mia-answer-timer").textContent).toBe("0:07");
+  const old=root.querySelector(".mia-answer-timer"),before=old.textContent;
+  await view.onClose();vi.advanceTimersByTime(5000);expect(old.textContent).toBe(before);expect(view.answerTimer).toBeNull();
+  registrations.forEach(dispose=>dispose());intervals.forEach(id=>window.clearInterval(id));
+});

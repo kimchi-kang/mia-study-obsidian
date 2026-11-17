@@ -118,10 +118,10 @@ describe("modal interaction regressions", () => {
     const toggles = descendants(modal.contentEl).filter(item => item.tag === "input");
     selects[0].handlers.get("change")("large"); selects[1].handlers.get("change")("compact");
     toggles[0].handlers.get("change")(true); selects[2].handlers.get("change")("split");
-    toggles[1].handlers.get("change")(false); selects[4].handlers.get("change")("firm"); selects[3].handlers.get("change")("sequential");
+    toggles[2].handlers.get("change")(false); selects[4].handlers.get("change")("firm"); selects[3].handlers.get("change")("sequential");
     expect(change).not.toHaveBeenCalled();
     modal.contentEl.find("보기 설정 저장").click();
-    expect(store.appearance).toEqual({ size: "large", density: "compact", focus: true, answerLayout: "split", swipeEnabled: false, swipeSensitivity: "firm", memorizationOrder: "sequential" });
+    expect(store.appearance).toEqual({ size: "large", density: "compact", focus: true, answerTimer: true, answerLayout: "split", swipeEnabled: false, swipeSensitivity: "firm", memorizationOrder: "sequential" });
     expect(change).toHaveBeenCalledOnce(); expect(modal.close).toHaveBeenCalledOnce();
   });
   it("preserves another subject's follow-up path when metadata is saved without edits", async () => {

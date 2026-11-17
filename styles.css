@@ -2359,3 +2359,10 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 .mia-keyword-meaning-modal .mia-keyword-meaning .mia-markdown > :first-child { margin-top: 0; }
 .mia-keyword-meaning-modal .mia-keyword-meaning .mia-markdown > :last-child { margin-bottom: 0; }
 .mia-keyword-meaning-modal .mia-keyword-meaning > p.mia-muted { margin: 0; }
+
+/* Inline recall metadata keeps the compact card header at its existing height. */
+.mia-view .mia-answer-timer {
+  display: inline-block; margin-left: 8px; white-space: nowrap;
+  font-size: 12px; line-height: 1; font-variant-numeric: tabular-nums;
+  color: var(--mia-on-yellow); background: var(--mia-yellow);
+}

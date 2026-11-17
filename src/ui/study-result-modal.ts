@@ -1,3 +1,4 @@
+import { formatAnswerDuration } from "../core/answer-time";
 import { App, Modal } from "obsidian";
 
 export interface StudyResult {
@@ -8,6 +9,7 @@ export interface StudyResult {
   easy: number;
   skipped: number;
   durationSeconds: number;
+  averageAnswerMs?: number;
 }
 
 export class StudyResultModal extends Modal {
@@ -27,6 +29,7 @@ export class StudyResultModal extends Modal {
     if (this.onUndo) this.contentEl.createEl("button", { text: "직전 평가 취소", cls: "mia-result-undo" }).addEventListener("click", () => { this.close(); this.onUndo?.(); });
     const grid = this.contentEl.createDiv({ cls: "mia-stats" });
     const values: Array<[string, number | string]> = [
+      ["평균 떠올린 시간", this.result.averageAnswerMs === undefined ? "-" : formatAnswerDuration(this.result.averageAnswerMs)],
       ["전체", this.result.total], ["못 암기", this.result.again], ["애매", this.result.hard],
       ["암기", this.result.good], ["너무 쉬움", this.result.easy], ["건너뜀", this.result.skipped],
       ["소요 시간", `${Math.floor(this.result.durationSeconds / 60)}분 ${this.result.durationSeconds % 60}초`],

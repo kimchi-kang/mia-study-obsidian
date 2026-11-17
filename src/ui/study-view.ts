@@ -1,3 +1,4 @@
+import { AnswerClock, MAX_ANSWER_SECONDS } from "../core/answer-time";
 import { withoutSourceAttribution } from "../core/source-attribution";
 import { StudyManagementModal } from "./study-management-modal";
 import { Component, ItemView, MarkdownRenderer, Notice, Platform, ViewStateResult, WorkspaceLeaf } from "obsidian";
@@ -78,6 +79,10 @@ export class MiaStudyView extends ItemView {
   private sessionAttempts = new Map<number, { id: string; grade: StudyGrade }>();
   private sessionGrades = new Map<string, StudyGrade>();
   private sessionSkipped = new Set<string>();
+  private answerClock: AnswerClock | null = null;
+  private answerClockKey = "";
+  private answerTimer: ReturnType<typeof setInterval> | null = null;
+  private answerTimerEl: HTMLElement | null = null;
   private resultShown = false;
   private renderComponent: Component | null = null;
   private keyboardViewport: KeyboardViewportBinding | null = null;
@@ -141,11 +146,11 @@ export class MiaStudyView extends ItemView {
     this.render();
     this.adaptiveLayout = bindAdaptiveLayout(this.contentEl);
     this.registerDomEvent(this.contentEl.ownerDocument, "visibilitychange", () => {
-      if (this.contentEl.ownerDocument.hidden) this.flushReadingPosition();
+      if (this.contentEl.ownerDocument.hidden) { this.answerClock?.pause(); this.flushReadingPosition(); }
       else void this.refreshAfterReturn();
     });
     this.registerDomEvent(window, "focus", () => void this.refreshAfterReturn(false));
-    this.registerDomEvent(window, "pagehide", () => this.flushReadingPosition());
+    this.registerDomEvent(window, "pagehide", () => { this.answerClock?.pause(); this.flushReadingPosition(); });
     this.registerInterval(window.setInterval(() => {
       if (!this.contentEl.ownerDocument.hidden && (this.route === "dashboard" || this.route === "progress")) void this.refreshAfterReturn();
     }, 30_000));
@@ -156,6 +161,7 @@ export class MiaStudyView extends ItemView {
     this.flushReadingPosition();
     if (this.undoFeedbackTimer !== null) window.clearTimeout(this.undoFeedbackTimer);
     this.closed = true;
+    this.resetAnswerClock();
     this.sessionEditGeneration += 1;
     this.editingSessionQuestion = null;
     this.contentEl.setAttr("aria-busy", "false");
@@ -222,6 +228,7 @@ export class MiaStudyView extends ItemView {
     this.answerVisible = mode === "browse";
     this.lastRated = null;
     this.sessionStartedAt = Date.now();
+    this.resetAnswerClock();
     this.sessionBaselines.clear();
     this.sessionAttempts.clear();
     this.sessionGrades.clear();
@@ -249,6 +256,7 @@ export class MiaStudyView extends ItemView {
   async setState(state: unknown, result: ViewStateResult): Promise<void> {
     if (this.reviewSavePending()) return;
     const initialRestore = !this.stateRestored;
+    this.resetAnswerClock();
     this.flushReadingPosition();
     const next = parseMiaNavigationState(state);
     // The weak-question page became a filter on the question list; saved workspaces may still name it.
@@ -369,6 +377,7 @@ export class MiaStudyView extends ItemView {
 
   private async refreshAfterReturn(refreshTime = true, notify = false): Promise<void> {
     if (this.closed || this.refreshingAfterReturn || this.isMutatingReview) return;
+    this.answerClock?.resume(this.contentEl.ownerDocument.hidden);
     this.refreshingAfterReturn = true;
     const previousResume = JSON.stringify(this.plugin.studyUi.resume);
     try {
@@ -472,6 +481,7 @@ export class MiaStudyView extends ItemView {
       const pruned = this.pruneExternallyRated(true);
       const moved = advanced || (pruned && this.queue[index] !== currentBefore);
       this.readingPosition = { key: `study:${index}:${this.queue[index] ?? ""}`, scrollTop: moved ? 0 : saved.scrollTop ?? 0, pageScrollTop: moved ? 0 : saved.pageScrollTop ?? 0, conceptsOpen: moved ? false : saved.conceptsOpen ?? false };
+      this.resetAnswerClock();
       this.answerVisible = saved.sessionMode === "browse" || (!moved && saved.answerVisible); this.resultShown = false;
       this.stateRestored = true;
       if (advanced || pruned) this.saveStudyPosition();
@@ -536,6 +546,8 @@ export class MiaStudyView extends ItemView {
 
   private render(): void {
     if (this.closed) return;
+    this.clearAnswerInterval();
+    if (this.route !== "study") this.resetAnswerClock();
     this.captureReadingPosition();
     this.readingRenders = [];
     this.gestures?.reset();
@@ -732,6 +744,7 @@ export class MiaStudyView extends ItemView {
 
     // A deleted current question must reach the learning check before completion.
     while (this.queueIndex < this.queue.length && !this.plugin.index.questionById(this.queue[this.queueIndex]!)) {
+      this.resetAnswerClock();
       this.queueIndex += 1;
     }
     if (!this.readOnlyBrowse && this.queueIndex >= this.queue.length) {
@@ -821,7 +834,8 @@ export class MiaStudyView extends ItemView {
     layout.setAttr("aria-label", "질문과 정답 영역");
     const card = layout.createDiv({ cls: "mia-study-card" });
     const cardHeader = card.createDiv({ cls: "mia-card-header" });
-    cardHeader.createDiv({ text: `${question.subject} / ${question.questionType}`, cls: "mia-card-context" });
+    const context = cardHeader.createDiv({ text: `${question.subject} / ${question.questionType}`, cls: "mia-card-context" });
+    this.renderAnswerTimer(context, question.id);
     const editActions = cardHeader.createDiv({ cls: "mia-session-edit-actions" });
     const edit = editActions.createEl("button", { text: "편집" });
     edit.disabled = this.isMutatingReview;
@@ -846,6 +860,7 @@ export class MiaStudyView extends ItemView {
       reveal.setAttr("aria-keyshortcuts", "Space");
       reveal.addEventListener("click", () => {
         if (this.isMutatingReview) return;
+        this.answerClock?.stop();
         this.answerVisible = true;
         this.app.workspace.requestSaveLayout();
         this.saveStudyPosition();
@@ -1008,6 +1023,7 @@ export class MiaStudyView extends ItemView {
     if (this.isMutatingReview) return;
     const id = this.queue[this.queueIndex];
     if (id && !this.sessionAttempts.has(this.queueIndex)) this.sessionSkipped.add(id);
+    this.resetAnswerClock();
     this.queueIndex += 1;
     this.answerVisible = this.sessionMode === "browse";
     this.refreshLearningQueue();
@@ -1081,7 +1097,8 @@ export class MiaStudyView extends ItemView {
           if (expected?.card.last_review && Date.parse(expected.card.last_review) > now.getTime()) {
             throw new Error("기기 시간이 직전 평가보다 이전입니다. 날짜와 시간을 확인한 뒤 다시 평가하세요.");
           }
-          const state = this.plugin.fsrs.rate(baseline, preview.grade, now, question.id);
+          const state = this.plugin.fsrs.rate(baseline, preview.grade, now, question.id,
+            this.sessionAttempts.has(ratedIndex) ? expected?.history.at(-1)?.answer_ms : this.answerClock?.stop());
           const due = new Date(state.card.due);
           const currentInterval = formatInterval(due, state.card.scheduled_days,
             preview.fixedIntervalMinutes === undefined ? undefined : (due.getTime() - now.getTime()) / 60000, now);
@@ -1161,6 +1178,7 @@ export class MiaStudyView extends ItemView {
 
   private moveToQuestion(index: number): void {
     if (this.isMutatingReview) return;
+    this.resetAnswerClock();
     const forward = index > this.queueIndex;
     this.queueIndex = Math.max(0, Math.min(index, this.queue.length));
     this.answerVisible = this.sessionMode === "browse" || this.sessionAttempts.has(this.queueIndex);
@@ -1180,8 +1198,50 @@ export class MiaStudyView extends ItemView {
     return plan.nextDue;
   }
 
+  private clearAnswerInterval(): void {
+    if (this.answerTimer !== null) clearInterval(this.answerTimer);
+    this.answerTimer = null;
+    this.answerTimerEl = null;
+  }
+
+  private resetAnswerClock(): void {
+    this.clearAnswerInterval();
+    this.answerClock = null;
+    this.answerClockKey = "";
+  }
+
+  private renderAnswerTimer(parent: HTMLElement, id: string): void {
+    if (this.readOnlyBrowse || this.sessionAttempts.has(this.queueIndex)) {
+      this.resetAnswerClock();
+      return;
+    }
+    const key = `${this.queueIndex}:${id}`;
+    if (key !== this.answerClockKey) {
+      this.resetAnswerClock();
+      // Answer already shown (restore/undo): the recall time is unknown, so show and record nothing.
+      if (this.answerVisible) return;
+      this.answerClockKey = key;
+      this.answerClock = new AnswerClock(this.contentEl.ownerDocument?.hidden ?? false);
+    }
+    if (!this.plugin.studyUi.appearance.answerTimer) return;
+    this.answerTimerEl = parent.createSpan({ cls: "mia-answer-timer" });
+    this.updateAnswerTimer();
+    if (this.answerClock?.running) this.answerTimer = setInterval(() => this.updateAnswerTimer(), 1000);
+  }
+
+  private updateAnswerTimer(): void {
+    if (this.closed || !this.answerTimerEl || !this.answerClock) return;
+    const seconds = Math.floor(this.answerClock.milliseconds / 1000);
+    this.answerTimerEl.setText(`${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}${seconds >= MAX_ANSWER_SECONDS ? "+" : ""}`);
+    this.answerTimerEl.setAttr("aria-label", `떠올린 시간 ${seconds}초`);
+  }
+
   private studyResult(): StudyResult {
     const grades = [...this.sessionGrades.values()];
+    const times = [...this.sessionGrades.keys()].flatMap(id => {
+      const ms = this.plugin.store.getReview(id)?.history.at(-1)?.answer_ms;
+      return ms === undefined ? [] : [ms];
+    });
     return {
       total: new Set(this.queue).size,
       again: grades.filter((grade) => grade === Rating.Again).length,
@@ -1189,6 +1249,7 @@ export class MiaStudyView extends ItemView {
       good: grades.filter((grade) => grade === Rating.Good).length,
       easy: grades.filter((grade) => grade === Rating.Easy).length,
       skipped: [...this.sessionSkipped].filter((id) => !this.sessionGrades.has(id)).length,
+      ...(times.length ? { averageAnswerMs: times.reduce((sum, ms) => sum + ms, 0) / times.length } : {}),
       durationSeconds: Math.max(0, Math.round((Date.now() - this.sessionStartedAt) / 1000)),
     };
   }

@@ -153,7 +153,7 @@ async function studySession(env, start, pickGrade, { secondsPerCard = 20, maxCar
     presented.push({ id, at: now.getTime(), before });
     await ratingButton(view, grade).click();
     // The saved state must be exactly what the scheduler computes for this click.
-    expect(reviews[id], `rating ${id}`).toEqual(oracle.rate(before, grade, now, id));
+    expect(reviews[id], `rating ${id}`).toEqual(oracle.rate(before, grade, now, id, 0));
   }
   throw new Error("session did not finish");
 }

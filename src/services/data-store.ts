@@ -1,3 +1,4 @@
+import { normalizeAnswerMs } from "../core/answer-time";
 import { rebaseSettings, reviseSettings, settingsKey, settingsSnapshot } from "../core/settings-sync";
 import { parseStudyManagement } from "../core/study-management";
 import { parseStudyProfiles } from "../core/simple-study-settings";
@@ -116,6 +117,7 @@ function parseLog(value: unknown): SerializedReviewLog | null {
   if (!isNonnegativeNumber(value.stability) || !isNonnegativeNumber(value.difficulty)) return null;
   if (!isNonnegativeNumber(value.elapsed_days) || !isNonnegativeNumber(value.last_elapsed_days)) return null;
   if (!isNonnegativeNumber(value.scheduled_days) || !isNonnegativeInteger(value.learning_steps)) return null;
+  const answer_ms = normalizeAnswerMs(value.answer_ms);
   return {
     rating: value.rating,
     state: value.state,
@@ -127,6 +129,7 @@ function parseLog(value: unknown): SerializedReviewLog | null {
     scheduled_days: value.scheduled_days,
     learning_steps: value.learning_steps,
     review: value.review,
+    ...(answer_ms === undefined ? {} : { answer_ms }),
   };
 }
 

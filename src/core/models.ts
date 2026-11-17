@@ -64,6 +64,7 @@ export interface SerializedFsrsCard {
 }
 
 export interface SerializedReviewLog {
+  answer_ms?: number;
   rating: number;
   state: number;
   due: string;

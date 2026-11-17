@@ -66,7 +66,7 @@ vi.mock("obsidian", () => {
   return {
     Setting,
     PluginSettingTab: class { constructor(app) { this.app=app; this.containerEl=new Element(); this.containerEl.ownerDocument={defaultView:null}; } hide() {} },
-    ItemView: class { constructor(leaf) { this.leaf = leaf; this.app = leaf.app; this.contentEl = new Element(); } },
+    ItemView: class { constructor(leaf) { this.leaf = leaf; this.app = leaf.app; this.contentEl = new Element(); this.contentEl.ownerDocument = { hidden: false }; } },
     Component: class {
       children = [];
       load() {}
@@ -982,7 +982,7 @@ describe("study view scheduling integration", () => {
     if (action === "navigate") ui.view.showDashboard();
     if (action === "restart") ui.view.startReview(["q"]);
     if (action === "close") await ui.view.onClose();
-    expect(vi.getTimerCount()).toBe(0);
+    expect(vi.getTimerCount()).toBe(action === "restart" ? 1 : 0);
     await vi.runOnlyPendingTimersAsync();
     expect(ui.reviews).toEqual({});
   });
@@ -1166,7 +1166,7 @@ describe("session synchronization boundaries",()=>{
     const ui=await persistentSession();const button=ui.button("너무 쉬움");
     vi.setSystemTime(new Date(Date.now()+2*86400000));
     ui.plugin.fsrs=new FsrsService({targetRetention:.99,maximumIntervalDays:1});
-    const expected=ui.plugin.fsrs.rate(undefined,Rating.Easy,new Date(),"q");await button.click();
+    const expected=ui.plugin.fsrs.rate(undefined,Rating.Easy,new Date(),"q",0);await button.click();
     expect(ui.store.getReview("q")).toEqual(expected);
     expect(ui.store.getReview("q").card.last_review).toBe(new Date().toISOString());
   });
@@ -2366,4 +2366,85 @@ it("waits to learn ahead until the remaining new card has been graded", async ()
   await restored.view.setState(state, {});
   expect(restored.view.getState().queueIndex).toBe(state.queueIndex);
   expect(restored.view.getState().queue[state.queueIndex]).toBe("q");
+});
+
+describe("recall answer timer", () => {
+  const timer = ui => {
+    const visit = el => el.cls.split(" ").includes("mia-answer-timer") ? el : el.children.map(visit).find(Boolean);
+    return visit(ui.view.contentEl);
+  };
+  it("starts at zero, changes only text, and freezes on Space reveal before rating", async () => {
+    const ui=setup(); const el=timer(ui), render=vi.spyOn(ui.view,"render");
+    expect(el.text).toBe("0:00");expect(el.attrs["aria-live"]).toBeUndefined();
+    vi.advanceTimersByTime(12345);expect(el.text).toBe("0:12");expect(render).not.toHaveBeenCalled();
+    ui.view.handleStudyShortcut({key:" ",target:null,preventDefault(){}});
+    expect(timer(ui).attrs["aria-label"]).toBe("떠올린 시간 12초");
+    vi.advanceTimersByTime(20000);expect(timer(ui).text).toBe("0:12");
+    await ui.button("너무 쉬움").click();expect(ui.reviews.q.history.at(-1).answer_ms).toBe(12345);
+    expect(ui.view.studyResult().averageAnswerMs).toBe(12345);
+  });
+  it("caps display and storage at sixty seconds", async () => {
+    const ui=setup();vi.advanceTimersByTime(95000);expect(timer(ui).text).toBe("1:00+");
+    await ui.button("정답 보기").click();await ui.button("너무 쉬움").click();expect(ui.reviews.q.history.at(-1).answer_ms).toBe(60000);
+  });
+  it("resets for next, previous, skipped, restarted and restored cards", async () => {
+    const ui=setup({linked:true,start:false});ui.view.startReview(["q","related"]);
+    vi.advanceTimersByTime(5000);await ui.button("다음 문제 →").click();expect(timer(ui).text).toBe("0:00");
+    vi.advanceTimersByTime(3000);await ui.button("← 이전 문제").click();expect(timer(ui).text).toBe("0:00");
+    vi.advanceTimersByTime(2000);ui.view.skipQuestion();expect(timer(ui).text).toBe("0:00");
+    vi.advanceTimersByTime(2000);ui.view.restartSession();expect(timer(ui).text).toBe("0:00");
+    vi.advanceTimersByTime(2000);await ui.view.setState(ui.view.getState(),{});expect(timer(ui).text).toBe("0:00");
+  });
+  it("hides evaluated revisits and browse cards", async () => {
+    const ui=setup({linked:true,start:false});ui.view.startReview(["q","related"]);
+    await ui.button("정답 보기").click();await ui.button("너무 쉬움").click();
+    await ui.button("← 이전 문제").click();expect(timer(ui)).toBeUndefined();
+    ui.view.startReview(["q"],"browse");expect(timer(ui)).toBeUndefined();
+  });
+  it("records while the display is disabled and can rate without reveal", async () => {
+    const ui=setup();ui.plugin.studyUi.updateAppearance({answerTimer:false});ui.view.render();expect(timer(ui)).toBeUndefined();
+    vi.advanceTimersByTime(4300);
+    // Exercise the rating handler directly with a still-hidden answer.
+    ui.view.renderRatings(ui.view.contentEl,ui.plugin.index.questionById("q"));
+    await ui.button("너무 쉬움").click();expect(ui.reviews.q.history.at(-1).answer_ms).toBe(4300);
+  });
+  it("preserves elapsed time on unrelated renders and clears callbacks on close", async () => {
+    const ui=setup();vi.advanceTimersByTime(2000);ui.view.render();expect(timer(ui).text).toBe("0:02");
+    const el=timer(ui),setText=vi.spyOn(el,"setText");await ui.view.onClose();
+    vi.advanceTimersByTime(5000);expect(setText).not.toHaveBeenCalled();expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
+it("shows the session mean, empty result fallback and optional detail history duration", async () => {
+  const {StudyResultModal}=await import("../src/ui/study-result-modal");
+  const {QuestionDetailView}=await import("../src/ui/question-detail-view");
+  const ui=setup();let result=new StudyResultModal(ui.view.app,ui.view.studyResult(),()=>{},()=>{});result.onOpen();
+  expect(result.contentEl.content).toContain("- 평균 떠올린 시간");
+  vi.advanceTimersByTime(12000);await ui.button("정답 보기").click();await ui.button("너무 쉬움").click();
+  result=new StudyResultModal(ui.view.app,ui.view.studyResult(),()=>{},()=>{});result.onOpen();expect(result.contentEl.content).toContain("12초 평균 떠올린 시간");
+  const question=ui.plugin.index.questionById("q"),source={question,review:ui.reviews.q,recommendations:[],meanings:new Map(),actions:{}};
+  const render=async()=>{const parent=ui.view.contentEl.createDiv(),title=parent.createDiv();await new QuestionDetailView(ui.view.app,source,{}).render(parent,title,{},()=>true);return parent;};
+  expect((await render()).content).toContain(" · 떠올린 시간 12초");delete source.review.history[0].answer_ms;
+  expect((await render()).content).not.toContain("떠올린 시간");
+});
+
+it("preserves answer time on regrading and removes it with undo", async () => {
+  const ui=setup({linked:true,start:false});ui.view.startReview(["q","related"]);
+  vi.advanceTimersByTime(7300);await ui.button("정답 보기").click();await ui.button("너무 쉬움").click();
+  await ui.button("← 이전 문제").click();vi.advanceTimersByTime(5000);
+  await ui.button("암기").click();expect(ui.reviews.q.history).toHaveLength(1);expect(ui.reviews.q.history[0].answer_ms).toBe(7300);
+  await ui.view.undoLastRating();expect(ui.reviews.q).toBeUndefined();expect(ui.view.studyResult().averageAnswerMs).toBeUndefined();
+});
+
+it("averages only cards with times from this session and resets on resume", async () => {
+  const ui=setup({linked:true,start:false});ui.view.startReview(["q","related"]);
+  vi.advanceTimersByTime(10000);await ui.button("정답 보기").click();await ui.button("너무 쉬움").click();
+  vi.advanceTimersByTime(14000);await ui.button("정답 보기").click();await ui.button("너무 쉬움").click();
+  expect(ui.view.studyResult().averageAnswerMs).toBe(12000);
+  delete ui.reviews.q.history[0].answer_ms;expect(ui.view.studyResult().averageAnswerMs).toBe(14000);
+  delete ui.reviews.related.history[0].answer_ms;expect(ui.view.studyResult().averageAnswerMs).toBeUndefined();
+  ui.view.startReview(["q"],"recall");
+  // Save a fresh hidden question position, then exercise the actual resume loader.
+  await ui.plugin.studyUi.saveResume({queue:["q"],seed:["q"],skipped:[],queueIndex:0,answerVisible:false,sessionMode:"recall",updatedAt:new Date().toISOString()});
+  vi.advanceTimersByTime(5000);await ui.view.resumeStudy();expect(ui.view.answerClock.milliseconds).toBe(0);
 });

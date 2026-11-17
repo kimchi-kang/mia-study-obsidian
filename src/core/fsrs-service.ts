@@ -1,3 +1,4 @@
+import { normalizeAnswerMs } from "./answer-time";
 import {
   Card,
   Grade,
@@ -130,7 +131,7 @@ export class FsrsService {
     });
   }
 
-  rate(state: QuestionReviewState | undefined, grade: StudyGrade, now = new Date(), questionId = ""): QuestionReviewState {
+  rate(state: QuestionReviewState | undefined, grade: StudyGrade, now = new Date(), questionId = "", answerMs?: number): QuestionReviewState {
     const current = state ?? this.createState(now);
     if (current.card.last_review && Date.parse(current.card.last_review) > now.getTime()) {
       throw new Error("기기 시간이 직전 평가보다 이전입니다. 날짜와 시간을 확인한 뒤 다시 평가하세요.");
@@ -138,9 +139,12 @@ export class FsrsService {
     const card = { ...this.shiftCard(deserializeCard(current.card), toStudyTimeline), questionSeed: `${questionId}:` };
     const result = this.scheduler.next(card, toStudyTimeline(now, this.dayStartsAt), grade as Grade);
     const log = { ...result.log, due: fromStudyTimeline(result.log.due, this.dayStartsAt), review: fromStudyTimeline(result.log.review, this.dayStartsAt) };
+    const answer_ms = normalizeAnswerMs(answerMs);
     return {
       card: serializeCard(this.scheduleInterval(this.unshiftResult(result.card, now), grade, now)),
-      history: [...current.history, serializeLog(log)],
+      history: [...current.history, { ...serializeLog(log),
+        ...(answer_ms === undefined ? {} : { answer_ms }),
+      }],
       lastRating: grade,
     };
   }

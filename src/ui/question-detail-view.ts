@@ -1,3 +1,4 @@
+import { formatAnswerDuration } from "../core/answer-time";
 import { App, Component, MarkdownRenderer, Notice } from "obsidian";
 import { Rating } from "ts-fsrs";
 import { StudyGrade } from "../core/fsrs-service";
@@ -110,7 +111,7 @@ export class QuestionDetailView {
     const history = body.createDiv({ cls: "mia-history" });
     for (const entry of [...(review?.history ?? [])].reverse()) {
       // ts-fsrs log.due is last_review || due, not the preceding scheduled due.
-      history.createDiv({ text: `${new Date(entry.review).toLocaleString("ko-KR")} · ${RATING_LABELS[entry.rating] ?? entry.rating} · 계산 기준 ${new Date(entry.due).toLocaleString("ko-KR")}` });
+      history.createDiv({ text: `${new Date(entry.review).toLocaleString("ko-KR")} · ${RATING_LABELS[entry.rating] ?? entry.rating} · 계산 기준 ${new Date(entry.due).toLocaleString("ko-KR")}${entry.answer_ms === undefined ? "" : ` · 떠올린 시간 ${formatAnswerDuration(entry.answer_ms)}`}` });
     }
     if (!review?.history.length) history.createEl("p", { text: "아직 복습 기록이 없습니다.", cls: "mia-muted" });
 

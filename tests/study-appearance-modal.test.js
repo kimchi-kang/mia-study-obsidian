@@ -60,7 +60,7 @@ describe("appearance dialog user interactions",()=>{
     const ui=setup({focus:false,swipeEnabled:true});
     for(const [name,value] of [["글자 크기","large"],["정보량","compact"],["답안 배치","split"],["암기 모드 순서","sequential"],["쓸어넘기기 민감도","firm"],["집중 모드",true],["쓸어서 뒤로가기",false]])boundary.rows.get(name).change(value);
     ui.modal.contentEl.find("보기 설정 저장").click();
-    expect(ui.store.appearance).toEqual({size:"large",density:"compact",answerLayout:"split",memorizationOrder:"sequential",swipeSensitivity:"firm",focus:true,swipeEnabled:false});
+    expect(ui.store.appearance).toEqual({answerTimer:true,size:"large",density:"compact",answerLayout:"split",memorizationOrder:"sequential",swipeSensitivity:"firm",focus:true,swipeEnabled:false});
     expect(ui.app.saveLocalStorage).toHaveBeenCalledTimes(1);expect(ui.changed).toHaveBeenCalledTimes(1);expect(ui.modal.closed).toBe(true);
     ui.modal.open();expect(boundary.rows.get("쓸어서 뒤로가기").value).toBe(false);expect(ui.modal.contentEl.find("보기 설정 저장").disabled).toBe(true);
   });
@@ -74,4 +74,10 @@ describe("appearance dialog user interactions",()=>{
     ui.modal.contentEl.find("보기 설정 저장").click();expect(ui.modal.closed).toBe(false);expect(ui.store.appearance.focus).toBe(false);expect(boundary.rows.get("집중 모드").value).toBe(true);
     expect(boundary.notices.at(-1)).toContain("저장 실패");ui.modal.contentEl.find("보기 설정 저장").click();expect(ui.store.appearance.focus).toBe(true);
   });
+});
+
+it("defaults the answer timer on for old settings and saves its device preference",()=>{
+  const ui=setup();expect(boundary.rows.get("답변 타이머").value).toBe(true);
+  boundary.rows.get("답변 타이머").change(false);ui.modal.contentEl.find("보기 설정 저장").click();
+  expect(ui.store.appearance.answerTimer).toBe(false);ui.modal.open();expect(boundary.rows.get("답변 타이머").value).toBe(false);
 });
