@@ -47,6 +47,6 @@ QA최종에서 이전 리뷰 전체가 원본과 동일하고, 새 합성문제 
 
 ## 증거
 
-[Anki실제버전](anki-version.png) · [최종상세](advanced.png) · [차이안내](differences.png) · [작은창](small-settings.png) · [설정탭초안](settings-tab.png) · [실제기한도래](real-due.png) · [최종대시보드](dashboard.png)
+Anki 실제 버전: 25.09.4 (d52ca669) · [최종상세](advanced.png) · [차이안내](differences.png) · [작은창](small-settings.png) · [설정탭초안](settings-tab.png) · [실제기한도래](real-due.png) · [최종대시보드](dashboard.png)
 
 원본은 로컬 `artifacts/anki-settings-2026-11-06/`의 실제PNG/AX/DOM·번호별요청/결과·시간표본·개인프리셋 읽기사본·공식25.09.4소스·설치Anki합성엔진결과·백업·보존지문입니다. 개인 Anki데이터/설정 원문/덱이름이 있는 전체캡처는 ignored원본에만 두고 저장소에 포함하지 않습니다. 요약 JSON의 해시가 최종 검증 빌드와 QA설치에 일치합니다.

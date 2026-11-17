@@ -378,6 +378,22 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
       <p class="why">iCloud·Obsidian Sync 같은 동기화는 백업이 아닙니다. 한 기기에서 파일이 손상되거나 지워지면 그 상태가 다른 기기로 그대로 퍼집니다.</p>
     </div>
   </aside>
+  <aside class="caution" id="disclaimer" aria-labelledby="disclaimer-title">
+    <div class="bar" aria-hidden="true">면책</div>
+    <div class="body">
+      <h2 id="disclaimer-title">학습을 돕는 참고용 도구입니다. 가끔 참고하는 용도로만 쓰세요.</h2>
+      <p>MIA Study를 설치하거나 사용하면 아래 내용에 동의한 것으로 봅니다. 동의하지 않으면 사용하지 마세요.</p>
+      <ul>
+        <li><strong>학습 보조용입니다.</strong> 시험 합격·성적·학습 효과를 보장하지 않으며 교재·강의·기출 풀이 같은 주된 공부 방법을 대신하지 않습니다. 복습 일정과 출제 목록만으로 공부 범위나 시험 대비를 판단하지 마세요. 시험 전에는 문제은행 원본 노트를 처음부터 직접 훑어보는 시간을 따로 가지세요.</li>
+        <li><strong>AI로 개발했습니다.</strong> 코드와 문서 대부분을 AI 코딩 도구(Anthropic Claude Code, OpenAI Codex)로 작성한 개인 프로젝트이며, 전문 품질 검수나 보안 감사를 받지 않았습니다.</li>
+        <li><strong>테스트는 거쳤지만 오류가 없다는 뜻이 아닙니다.</strong> 버전마다 자동 검사 약 1,900개와 화면 측정을 하지만, 실제 iPad·휴대폰, 모든 Obsidian 버전·테마·플러그인·동기화 조합은 확인하지 않았습니다.</li>
+        <li><strong>이런 일이 생길 수 있습니다.</strong> 복습 일정(FSRS)·하루 한도·출제 순서·필터 오류로 <strong>특정 질문이 오랫동안 출제되지 않거나</strong> 너무 자주·드물게 나올 수 있습니다. 문제은행을 읽다가 질문이 빠지거나 정답·키워드가 잘못 표시될 수 있고, 통계·취약·자주 틀림 표시나 타이머·자동 진행 시간이 실제와 다를 수 있으며, 학습 기록이 지워지거나 동기화 충돌로 덮어써질 수 있습니다. Obsidian 업데이트로 기능이 멈출 수도 있습니다.</li>
+        <li><strong>책임의 제한.</strong> <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT 라이선스</a>에 따라 "있는 그대로(AS IS)" 무상 제공하며 정확성·오류 없음·데이터 보존을 보증하지 않습니다. 관련 법령이 허용하는 최대 범위에서, 개발자와 기여자는 사용하거나 사용할 수 없어서 생긴 학습 손실, 시험·평가 결과, 데이터·시간 손실, 그 밖의 직접·간접 손해에 책임지지 않습니다. 학습 판단과 그 결과의 책임은 사용자에게 있습니다.</li>
+        <li><strong>넣는 자료의 권리.</strong> 교재·기출·강의 자료의 저작권은 각 권리자에게 있습니다. 개인 학습 범위를 넘어 공개·배포하지 마세요. 외부 AI 서비스로 자료를 정리하면 그 내용은 해당 서비스로 전송되고 그 약관을 따릅니다.</li>
+      </ul>
+      <p class="why">개인정보: 플러그인은 외부 서버로 아무 데이터도 보내지 않으며 분석·추적 코드가 없습니다. 이 소개 페이지는 GitHub Pages로 제공되고 글꼴을 Google Fonts에서 불러오므로 접속 IP 등이 GitHub·Google에 전달될 수 있습니다. 밝게·어둡게 선택만 브라우저에 저장하며 쿠키·분석 도구는 쓰지 않습니다. 상표: Obsidian, Anki, FSRS, Claude, Codex 등은 각 소유자의 이름·상표이며, MIA Study는 Obsidian(Dynalist Inc.), Anki(Ankitects), Open Spaced Repetition, Anthropic, OpenAI와 관계없는 비공식 개인 프로젝트입니다. 자세한 내용은 <a href="https://github.com/kimchi-kang/mia-study-obsidian#면책-고지와-사용-주의">README의 면책 고지</a>를 보세요.</p>
+    </div>
+  </aside>
 </div>
 
 <section id="start">
@@ -779,7 +795,7 @@ footer .fm .t{background:var(--yellow);clip-path:polygon(50% 0,100% 100%,0 100%)
 <footer>
   <div class="wrap">
     <span class="fm" aria-hidden="true"><i class="c"></i><i class="s"></i><i class="t"></i></span>
-    <span>MIA Study 1.4.29 · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT</a> · 복습 일정: <a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a>(FSRS-6) · <a href="#credits">출처</a></span>
+    <span>MIA Study 1.4.29 · <a href="https://github.com/kimchi-kang/mia-study-obsidian/blob/main/LICENSE">MIT</a> · 복습 일정: <a href="https://github.com/open-spaced-repetition/ts-fsrs">ts-fsrs</a>(FSRS-6) · <a href="#credits">출처</a> · <a href="#disclaimer">면책 고지</a></span>
     <span><a href="https://github.com/kimchi-kang/mia-study-obsidian">GitHub</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/issues">문제 신고</a> · <a href="https://github.com/kimchi-kang/mia-study-obsidian/releases">릴리스</a></span>
   </div>
 </footer>
