@@ -1,0 +1,4375 @@
+[
+  {
+    "context": [],
+    "selector": "button.mia-progress-stat:hover",
+    "declarations": [
+      [
+        "border-color",
+        "var(--interactive-accent)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-candidates",
+    "declarations": [
+      [
+        "margin-top",
+        "22px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-candidate",
+    "declarations": [
+      [
+        "display",
+        "flex",
+        false
+      ],
+      [
+        "justify-content",
+        "space-between",
+        false
+      ],
+      [
+        "gap",
+        "12px",
+        false
+      ],
+      [
+        "padding",
+        "8px 0",
+        false
+      ],
+      [
+        "border-bottom",
+        "1px solid var(--background-modifier-border)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-candidate-label",
+    "declarations": [
+      [
+        "display",
+        "flex",
+        false
+      ],
+      [
+        "flex-direction",
+        "column",
+        false
+      ],
+      [
+        "gap",
+        "3px",
+        false
+      ],
+      [
+        "min-width",
+        "0",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-candidate-label small",
+    "declarations": [
+      [
+        "color",
+        "var(--text-muted)",
+        false
+      ],
+      [
+        "overflow-wrap",
+        "anywhere",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-candidate-search",
+    "declarations": [
+      [
+        "width",
+        "min(520px, 100%)",
+        false
+      ],
+      [
+        "margin",
+        "12px 0",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-load-more",
+    "declarations": [
+      [
+        "display",
+        "block",
+        false
+      ],
+      [
+        "margin",
+        "14px auto 0",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyword:hover",
+    "declarations": [
+      [
+        "border-color",
+        "var(--interactive-accent)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-session-rating",
+    "declarations": [
+      [
+        "color",
+        "var(--interactive-accent)",
+        false
+      ],
+      [
+        "font-weight",
+        "600",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-followup-list",
+    "declarations": [
+      [
+        "min-height",
+        "min(128px, 42dvh)",
+        false
+      ],
+      [
+        "grid-auto-rows",
+        "max-content",
+        false
+      ],
+      [
+        "align-content",
+        "start",
+        false
+      ],
+      [
+        "max-height",
+        "min(52vh, 520px)",
+        false
+      ],
+      [
+        "overflow-y",
+        "auto",
+        false
+      ],
+      [
+        "display",
+        "grid",
+        false
+      ],
+      [
+        "gap",
+        "4px",
+        false
+      ],
+      [
+        "padding",
+        "6px 0",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-followup-option",
+    "declarations": [
+      [
+        "display",
+        "flex",
+        false
+      ],
+      [
+        "align-items",
+        "flex-start",
+        false
+      ],
+      [
+        "gap",
+        "10px",
+        false
+      ],
+      [
+        "padding",
+        "9px",
+        false
+      ],
+      [
+        "border",
+        "1px solid var(--background-modifier-border)",
+        false
+      ],
+      [
+        "border-radius",
+        "var(--radius-m)",
+        false
+      ],
+      [
+        "cursor",
+        "pointer",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-followup-option > span",
+    "declarations": [
+      [
+        "display",
+        "flex",
+        false
+      ],
+      [
+        "min-width",
+        "0",
+        false
+      ],
+      [
+        "flex-direction",
+        "column",
+        false
+      ],
+      [
+        "gap",
+        "3px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-followup-option small",
+    "declarations": [
+      [
+        "color",
+        "var(--text-muted)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-modal",
+    "declarations": [
+      [
+        "box-sizing",
+        "border-box",
+        false
+      ],
+      [
+        "display",
+        "flex",
+        false
+      ],
+      [
+        "flex-direction",
+        "column",
+        false
+      ],
+      [
+        "width",
+        "min(600px, calc(100vw - 48px))",
+        false
+      ],
+      [
+        "height",
+        "auto",
+        true
+      ],
+      [
+        "min-height",
+        "0",
+        true
+      ],
+      [
+        "max-height",
+        "min(760px, calc(100dvh - 48px))",
+        false
+      ],
+      [
+        "overflow",
+        "hidden",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-modal.mia-editor-modal-compact",
+    "declarations": [
+      [
+        "width",
+        "min(440px, calc(100vw - 48px))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-modal.mia-editor-modal-long",
+    "declarations": [
+      [
+        "width",
+        "min(760px, calc(100vw - 48px))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-editor-modal-long .setting-item",
+    "declarations": [
+      [
+        "display",
+        "block",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-editor-modal-long .setting-item-info",
+    "declarations": [
+      [
+        "margin",
+        "0 0 8px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-editor-modal-long .setting-item-control",
+    "declarations": [
+      [
+        "width",
+        "100%",
+        false
+      ],
+      [
+        "min-width",
+        "0",
+        false
+      ],
+      [
+        "margin",
+        "0",
+        false
+      ],
+      [
+        "justify-content",
+        "stretch",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-editor-modal-long .setting-item-control > :is(input, textarea, select, .dropdown)",
+    "declarations": [
+      [
+        "box-sizing",
+        "border-box",
+        false
+      ],
+      [
+        "width",
+        "100%",
+        false
+      ],
+      [
+        "min-width",
+        "0",
+        false
+      ],
+      [
+        "max-width",
+        "100%",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-editor-modal-long textarea",
+    "declarations": [
+      [
+        "resize",
+        "vertical",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-modal .modal-header",
+    "declarations": [
+      [
+        "flex",
+        "0 0 auto",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-modal .modal-content",
+    "declarations": [
+      [
+        "scroll-padding-bottom",
+        "calc(var(--mia-keyboard-actions-height, 0px) + 24px)",
+        false
+      ],
+      [
+        "flex",
+        "0 1 auto",
+        false
+      ],
+      [
+        "min-height",
+        "0",
+        false
+      ],
+      [
+        "overflow-y",
+        "auto",
+        false
+      ],
+      [
+        "overscroll-behavior",
+        "contain",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(min-width: 641px) and (max-width: 1100px)"
+      ]
+    ],
+    "selector": ".mia-keyboard-modal",
+    "declarations": [
+      [
+        "width",
+        "min(620px, calc(100vw - 48px))",
+        false
+      ],
+      [
+        "max-height",
+        "calc(100dvh - 48px)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(min-width: 641px) and (max-width: 1100px)"
+      ]
+    ],
+    "selector": ".mia-keyboard-modal.mia-editor-modal-compact",
+    "declarations": [
+      [
+        "width",
+        "min(460px, calc(100vw - 48px))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(min-width: 641px) and (max-width: 1100px)"
+      ]
+    ],
+    "selector": ".mia-keyboard-modal.mia-editor-modal-long",
+    "declarations": [
+      [
+        "width",
+        "min(760px, calc(100vw - 48px))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px)"
+      ]
+    ],
+    "selector": ".mia-view button,\n  .mia-view input,\n  .mia-view select,\n  .mia-keyboard-modal button,\n  .mia-keyboard-modal input,\n  .mia-keyboard-modal select,\n  .mia-keyboard-modal textarea",
+    "declarations": [
+      [
+        "min-height",
+        "44px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px)"
+      ]
+    ],
+    "selector": ".mia-view input,\n  .mia-view select,\n  .mia-keyboard-modal input,\n  .mia-keyboard-modal select,\n  .mia-keyboard-modal textarea",
+    "declarations": [
+      [
+        "box-sizing",
+        "border-box",
+        false
+      ],
+      [
+        "max-width",
+        "100%",
+        false
+      ],
+      [
+        "font-size",
+        "16px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px)"
+      ]
+    ],
+    "selector": ".mia-keyboard-modal .mia-filter-toolbar",
+    "declarations": [
+      [
+        "grid-template-columns",
+        "minmax(0, 1fr)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px)"
+      ]
+    ],
+    "selector": ".mia-candidate",
+    "declarations": [
+      [
+        "align-items",
+        "stretch",
+        false
+      ],
+      [
+        "flex-direction",
+        "column",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px)"
+      ]
+    ],
+    "selector": ".mia-candidate",
+    "declarations": [
+      [
+        "gap",
+        "8px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px)"
+      ]
+    ],
+    "selector": ".mia-candidate > .mia-inline-actions",
+    "declarations": [
+      [
+        "display",
+        "grid",
+        false
+      ],
+      [
+        "grid-template-columns",
+        "repeat(2, minmax(0, 1fr))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px)"
+      ]
+    ],
+    "selector": ".mia-candidate-search",
+    "declarations": [
+      [
+        "width",
+        "100%",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px)"
+      ]
+    ],
+    "selector": ".mia-session-rating",
+    "declarations": [
+      [
+        "font-size",
+        "var(--font-ui-small)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-phone .mia-detail-modal,\n.is-phone .mia-result-modal,\n.is-phone .mia-keyboard-modal",
+    "declarations": [
+      [
+        "box-sizing",
+        "border-box",
+        false
+      ],
+      [
+        "width",
+        "calc(100vw - 16px)",
+        false
+      ],
+      [
+        "max-width",
+        "none",
+        false
+      ],
+      [
+        "max-height",
+        "calc(100dvh - 24px)",
+        false
+      ],
+      [
+        "min-height",
+        "0",
+        true
+      ],
+      [
+        "height",
+        "auto",
+        true
+      ],
+      [
+        "margin",
+        "0",
+        false
+      ],
+      [
+        "border-radius",
+        "var(--radius-l) var(--radius-l) 0 0",
+        false
+      ],
+      [
+        "overflow",
+        "hidden",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-phone .mia-keyboard-modal-container:not(.mia-keyboard-open)",
+    "declarations": [
+      [
+        "align-items",
+        "flex-end",
+        false
+      ],
+      [
+        "padding",
+        "8px 8px max(8px, var(--safe-area-inset-bottom, 0px))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-phone .mia-keyboard-modal .modal-content",
+    "declarations": [
+      [
+        "padding-inline",
+        "12px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-phone .mia-keyboard-modal .setting-item",
+    "declarations": [
+      [
+        "padding-block",
+        "10px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-phone .mia-keyboard-modal textarea",
+    "declarations": [
+      [
+        "min-height",
+        "92px",
+        false
+      ],
+      [
+        "max-height",
+        "168px",
+        false
+      ],
+      [
+        "resize",
+        "vertical",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-phone .mia-keyboard-modal .modal-close-button,\n.is-phone .mia-detail-modal .modal-close-button,\n.is-phone .mia-result-modal .modal-close-button",
+    "declarations": [
+      [
+        "width",
+        "44px",
+        false
+      ],
+      [
+        "height",
+        "44px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-phone .mia-followup-list",
+    "declarations": [
+      [
+        "max-height",
+        "42dvh",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-phone .mia-followup-option",
+    "declarations": [
+      [
+        "min-height",
+        "48px",
+        false
+      ],
+      [
+        "padding",
+        "10px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px)"
+      ]
+    ],
+    "selector": ".mia-keyboard-modal-container.mia-keyboard-open",
+    "declarations": [
+      [
+        "box-sizing",
+        "border-box",
+        false
+      ],
+      [
+        "top",
+        "var(--mia-viewport-offset-top, 0px)",
+        true
+      ],
+      [
+        "bottom",
+        "auto",
+        true
+      ],
+      [
+        "height",
+        "var(--mia-visible-viewport-height, 100dvh)",
+        true
+      ],
+      [
+        "max-height",
+        "var(--mia-visible-viewport-height, 100dvh)",
+        true
+      ],
+      [
+        "align-items",
+        "flex-end",
+        false
+      ],
+      [
+        "padding",
+        "8px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px)"
+      ]
+    ],
+    "selector": ".mia-keyboard-modal-container.mia-keyboard-open .mia-keyboard-modal",
+    "declarations": [
+      [
+        "box-sizing",
+        "border-box",
+        false
+      ],
+      [
+        "display",
+        "flex",
+        false
+      ],
+      [
+        "flex-direction",
+        "column",
+        false
+      ],
+      [
+        "width",
+        "min(100%, 720px)",
+        false
+      ],
+      [
+        "height",
+        "auto",
+        true
+      ],
+      [
+        "min-height",
+        "0",
+        true
+      ],
+      [
+        "max-height",
+        "calc(var(--mia-visible-viewport-height, 100dvh) - 16px)",
+        true
+      ],
+      [
+        "margin",
+        "0",
+        false
+      ],
+      [
+        "overflow",
+        "hidden",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px)"
+      ]
+    ],
+    "selector": ".mia-keyboard-modal .modal-content",
+    "declarations": [
+      [
+        "min-height",
+        "0",
+        false
+      ],
+      [
+        "overflow-y",
+        "auto",
+        false
+      ],
+      [
+        "overscroll-behavior",
+        "contain",
+        false
+      ],
+      [
+        "flex",
+        "0 1 auto",
+        false
+      ],
+      [
+        "scroll-padding-block",
+        "64px max(80px, calc(var(--mia-keyboard-actions-height, 0px) + 24px))",
+        false
+      ],
+      [
+        "padding-bottom",
+        "max(18px, var(--safe-area-inset-bottom, 0px))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px)"
+      ]
+    ],
+    "selector": ".is-phone.is-floating-nav .mia-view.mia-keyboard-open,\n  .is-phone.auto-full-screen .mia-view.mia-keyboard-open,\n  .mia-view.mia-keyboard-open",
+    "declarations": [
+      [
+        "box-sizing",
+        "border-box",
+        false
+      ],
+      [
+        "height",
+        "var(--mia-keyboard-available-height, 100%)",
+        true
+      ],
+      [
+        "max-height",
+        "var(--mia-keyboard-available-height, 100%)",
+        true
+      ],
+      [
+        "margin-bottom",
+        "0",
+        false
+      ],
+      [
+        "padding-bottom",
+        "24px",
+        false
+      ],
+      [
+        "scroll-padding-bottom",
+        "96px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px)"
+      ]
+    ],
+    "selector": ".mia-keyboard-settings.mia-keyboard-open",
+    "declarations": [
+      [
+        "box-sizing",
+        "border-box",
+        false
+      ],
+      [
+        "max-height",
+        "var(--mia-keyboard-available-height, 100%)",
+        true
+      ],
+      [
+        "overflow-y",
+        "auto",
+        false
+      ],
+      [
+        "scroll-padding-block",
+        "72px 112px",
+        false
+      ],
+      [
+        "padding-bottom",
+        "24px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) :is(button, input, select, textarea, summary):focus-visible",
+    "declarations": [
+      [
+        "outline",
+        "2px solid var(--interactive-accent)",
+        false
+      ],
+      [
+        "outline-offset",
+        "3px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-nav button:hover",
+    "declarations": [
+      [
+        "background",
+        "var(--background-modifier-hover)",
+        false
+      ],
+      [
+        "color",
+        "var(--text-normal)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-study-navigation button:hover",
+    "declarations": [
+      [
+        "background",
+        "var(--background-modifier-hover)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-related-item .mia-related-open:hover strong",
+    "declarations": [
+      [
+        "color",
+        "var(--interactive-accent)",
+        false
+      ],
+      [
+        "text-decoration",
+        "underline",
+        false
+      ],
+      [
+        "text-underline-offset",
+        "3px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-study-dock .mia-ratings button:hover:not(:disabled)",
+    "declarations": [
+      [
+        "background",
+        "color-mix(in srgb, var(--mia-rating-color) 17%, var(--background-primary))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-thumb-navigation > button:hover:not(:disabled)",
+    "declarations": [
+      [
+        "background",
+        "var(--background-modifier-hover)",
+        false
+      ],
+      [
+        "color",
+        "var(--text-normal)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-recovery-modal, .mia-confirm-modal) .modal-content",
+    "declarations": [
+      [
+        "display",
+        "block",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-confirm-modal",
+    "declarations": [
+      [
+        "width",
+        "min(560px, calc(100vw - 28px))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-header h2 .mia-home-button:hover",
+    "declarations": [
+      [
+        "color",
+        "var(--interactive-accent)",
+        false
+      ],
+      [
+        "background",
+        "transparent",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-header h2 .mia-home-button:focus-visible",
+    "declarations": [
+      [
+        "outline",
+        "2px solid var(--interactive-accent)",
+        false
+      ],
+      [
+        "outline-offset",
+        "3px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal)",
+    "declarations": [
+      [
+        "--mia-control-height",
+        "32px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-mobile :is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal)",
+    "declarations": [
+      [
+        "--mia-control-height",
+        "44px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px), (pointer: coarse)"
+      ]
+    ],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal)",
+    "declarations": [
+      [
+        "--mia-control-height",
+        "44px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) button:not(.modal-close-button, .checkbox-container)",
+    "declarations": [
+      [
+        "box-sizing",
+        "border-box",
+        false
+      ],
+      [
+        "min-height",
+        "var(--mia-control-height)",
+        false
+      ],
+      [
+        "height",
+        "auto",
+        false
+      ],
+      [
+        "padding-inline",
+        "14px",
+        false
+      ],
+      [
+        "line-height",
+        "1.35",
+        false
+      ],
+      [
+        "white-space",
+        "normal",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-appearance-modal) :is(input:not([type=\"checkbox\"], [type=\"radio\"]), select)",
+    "declarations": [
+      [
+        "box-sizing",
+        "border-box",
+        false
+      ],
+      [
+        "min-height",
+        "var(--mia-control-height)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-mobile .modal-container:not(.mia-keyboard-open):has(> :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-keyboard-modal))",
+    "declarations": [
+      [
+        "--mia-modal-top",
+        "max(var(--safe-area-inset-top, 0px), env(safe-area-inset-top, 0px))",
+        false
+      ],
+      [
+        "--mia-modal-bottom",
+        "max(var(--safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px))",
+        false
+      ],
+      [
+        "--mia-modal-left",
+        "max(var(--safe-area-inset-left, 0px), env(safe-area-inset-left, 0px))",
+        false
+      ],
+      [
+        "--mia-modal-right",
+        "max(var(--safe-area-inset-right, 0px), env(safe-area-inset-right, 0px))",
+        false
+      ],
+      [
+        "box-sizing",
+        "border-box",
+        false
+      ],
+      [
+        "padding",
+        "calc(12px + var(--mia-modal-top)) calc(12px + var(--mia-modal-right)) calc(12px + var(--mia-modal-bottom)) calc(12px + var(--mia-modal-left))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-mobile .modal-container:not(.mia-keyboard-open) > :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-keyboard-modal)",
+    "declarations": [
+      [
+        "box-sizing",
+        "border-box",
+        false
+      ],
+      [
+        "display",
+        "flex",
+        false
+      ],
+      [
+        "flex-direction",
+        "column",
+        false
+      ],
+      [
+        "min-height",
+        "0",
+        false
+      ],
+      [
+        "max-width",
+        "100%",
+        false
+      ],
+      [
+        "max-height",
+        "calc(100dvh - var(--mia-modal-top) - var(--mia-modal-bottom) - 24px)",
+        true
+      ],
+      [
+        "margin",
+        "0",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-sync-warning",
+    "declarations": [
+      [
+        "padding",
+        "14px",
+        false
+      ],
+      [
+        "margin-bottom",
+        "16px",
+        false
+      ],
+      [
+        "border",
+        "1px solid var(--text-warning)",
+        false
+      ],
+      [
+        "border-radius",
+        "12px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-sync-warning p",
+    "declarations": [
+      [
+        "margin-top",
+        "0",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-mobile .mia-keyboard-modal-container.mia-keyboard-open",
+    "declarations": [
+      [
+        "--mia-keyboard-safe-top",
+        "max(0px, calc(max(var(--safe-area-inset-top, 0px), env(safe-area-inset-top, 0px)) - var(--mia-viewport-offset-top, 0px)))",
+        false
+      ],
+      [
+        "box-sizing",
+        "border-box",
+        false
+      ],
+      [
+        "top",
+        "var(--mia-viewport-offset-top, 0px)",
+        true
+      ],
+      [
+        "bottom",
+        "auto",
+        true
+      ],
+      [
+        "height",
+        "var(--mia-visible-viewport-height, 100dvh)",
+        true
+      ],
+      [
+        "max-height",
+        "var(--mia-visible-viewport-height, 100dvh)",
+        true
+      ],
+      [
+        "align-items",
+        "flex-end",
+        false
+      ],
+      [
+        "padding",
+        "calc(8px + var(--mia-keyboard-safe-top)) 8px 8px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-mobile .mia-keyboard-modal-container.mia-keyboard-open .mia-keyboard-modal",
+    "declarations": [
+      [
+        "max-height",
+        "calc(var(--mia-visible-viewport-height, 100dvh) - var(--mia-keyboard-safe-top) - 16px)",
+        true
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-mobile .mia-view.mia-keyboard-open",
+    "declarations": [
+      [
+        "box-sizing",
+        "border-box",
+        false
+      ],
+      [
+        "height",
+        "var(--mia-keyboard-available-height, 100%)",
+        true
+      ],
+      [
+        "max-height",
+        "var(--mia-keyboard-available-height, 100%)",
+        true
+      ],
+      [
+        "margin-bottom",
+        "0",
+        false
+      ],
+      [
+        "padding-bottom",
+        "16px",
+        false
+      ],
+      [
+        "scroll-padding-bottom",
+        "72px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-dismiss",
+    "declarations": [
+      [
+        "position",
+        "sticky",
+        false
+      ],
+      [
+        "bottom",
+        "0",
+        false
+      ],
+      [
+        "z-index",
+        "6",
+        false
+      ],
+      [
+        "display",
+        "block",
+        false
+      ],
+      [
+        "min-height",
+        "44px",
+        false
+      ],
+      [
+        "height",
+        "auto",
+        false
+      ],
+      [
+        "width",
+        "max-content",
+        false
+      ],
+      [
+        "max-width",
+        "100%",
+        false
+      ],
+      [
+        "margin",
+        "8px auto 0",
+        false
+      ],
+      [
+        "padding",
+        "8px 16px",
+        false
+      ],
+      [
+        "box-shadow",
+        "var(--shadow-s)",
+        false
+      ],
+      [
+        "background",
+        "var(--background-primary)",
+        false
+      ],
+      [
+        "color",
+        "var(--interactive-accent)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-actions > .mia-keyboard-dismiss",
+    "declarations": [
+      [
+        "position",
+        "static",
+        false
+      ],
+      [
+        "width",
+        "auto",
+        false
+      ],
+      [
+        "min-width",
+        "0",
+        false
+      ],
+      [
+        "margin",
+        "0",
+        false
+      ],
+      [
+        "box-shadow",
+        "none",
+        false
+      ],
+      [
+        "background",
+        "var(--interactive-normal)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-export-subjects",
+    "declarations": [
+      [
+        "display",
+        "flex",
+        false
+      ],
+      [
+        "flex-direction",
+        "column",
+        false
+      ],
+      [
+        "gap",
+        "10px",
+        false
+      ],
+      [
+        "margin-block",
+        "16px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-export-subjects button",
+    "declarations": [
+      [
+        "min-height",
+        "44px",
+        false
+      ],
+      [
+        "height",
+        "auto",
+        false
+      ],
+      [
+        "padding",
+        "12px 16px",
+        false
+      ],
+      [
+        "text-align",
+        "start",
+        false
+      ],
+      [
+        "white-space",
+        "normal",
+        false
+      ],
+      [
+        "overflow-wrap",
+        "anywhere",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-export-status",
+    "declarations": [
+      [
+        "overflow-wrap",
+        "anywhere",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-followup-option",
+    "declarations": [
+      [
+        "height",
+        "auto",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-followup-option > input[type=\"checkbox\"]",
+    "declarations": [
+      [
+        "flex",
+        "0 0 20px",
+        false
+      ],
+      [
+        "width",
+        "20px",
+        false
+      ],
+      [
+        "height",
+        "20px",
+        false
+      ],
+      [
+        "min-width",
+        "20px",
+        false
+      ],
+      [
+        "min-height",
+        "20px",
+        false
+      ],
+      [
+        "margin",
+        "2px 0 0",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-followup-option > span",
+    "declarations": [
+      [
+        "overflow-wrap",
+        "anywhere",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-phone .mia-keyboard-settings .setting-item-control > textarea",
+    "declarations": [
+      [
+        "width",
+        "100%",
+        false
+      ],
+      [
+        "max-width",
+        "100%",
+        false
+      ],
+      [
+        "min-height",
+        "92px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) button:not(.modal-close-button, .mia-home-button, .mia-nav button)",
+    "declarations": [
+      [
+        "font-size",
+        "max(13px, var(--font-ui-small))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-keyboard-settings, .mia-keyboard-modal, .mia-appearance-modal) select",
+    "declarations": [
+      [
+        "font-size",
+        "max(13px, var(--font-ui-small))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-mobile :is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) button:not(.modal-close-button, .mia-home-button, .mia-nav button)",
+    "declarations": [
+      [
+        "font-size",
+        "max(14px, var(--font-ui-small))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-follow-up-picker, .mia-follow-up-selected",
+    "declarations": [
+      [
+        "display",
+        "flex",
+        false
+      ],
+      [
+        "flex-direction",
+        "column",
+        false
+      ],
+      [
+        "flex-shrink",
+        "0",
+        false
+      ],
+      [
+        "gap",
+        "6px",
+        false
+      ],
+      [
+        "max-height",
+        "260px",
+        false
+      ],
+      [
+        "overflow-y",
+        "auto",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-follow-up-picker, .mia-follow-up-selected) button",
+    "declarations": [
+      [
+        "flex-shrink",
+        "0",
+        false
+      ],
+      [
+        "width",
+        "100%",
+        false
+      ],
+      [
+        "white-space",
+        "normal",
+        false
+      ],
+      [
+        "overflow-wrap",
+        "anywhere",
+        false
+      ],
+      [
+        "height",
+        "auto",
+        false
+      ],
+      [
+        "text-align",
+        "left",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-study-management-modal, .mia-keyboard-settings) .mia-study-management-settings .mia-settings-basic > .setting-item",
+    "declarations": [
+      [
+        "display",
+        "flex",
+        false
+      ],
+      [
+        "flex-direction",
+        "column",
+        false
+      ],
+      [
+        "align-items",
+        "stretch",
+        false
+      ],
+      [
+        "gap",
+        "0",
+        false
+      ],
+      [
+        "border",
+        "0",
+        false
+      ],
+      [
+        "padding",
+        "0",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-study-management-settings .setting-item-control:has(> .mia-settings-field-error)",
+    "declarations": [
+      [
+        "flex-wrap",
+        "wrap",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-settings-field-error",
+    "declarations": [
+      [
+        "grid-column",
+        "1 / -1",
+        false
+      ],
+      [
+        "flex",
+        "1 0 100%",
+        false
+      ],
+      [
+        "min-width",
+        "0",
+        false
+      ],
+      [
+        "width",
+        "100%",
+        false
+      ],
+      [
+        "max-width",
+        "100%",
+        false
+      ],
+      [
+        "text-align",
+        "start",
+        false
+      ],
+      [
+        "white-space",
+        "normal",
+        false
+      ],
+      [
+        "margin",
+        "4px 0",
+        false
+      ],
+      [
+        "color",
+        "var(--text-error)",
+        false
+      ],
+      [
+        "font-size",
+        "var(--font-ui-small)",
+        false
+      ],
+      [
+        "line-height",
+        "1.6",
+        false
+      ],
+      [
+        "overflow-wrap",
+        "anywhere",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-appearance-modal:focus",
+    "declarations": [
+      [
+        "outline",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 480px)"
+      ]
+    ],
+    "selector": ".mia-learning-settings-actions:has(> .mia-keyboard-dismiss) > button:first-of-type",
+    "declarations": [
+      [
+        "grid-column",
+        "auto",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 480px)"
+      ]
+    ],
+    "selector": ".mia-learning-settings-actions > .mia-keyboard-dismiss",
+    "declarations": [
+      [
+        "grid-column",
+        "2",
+        false
+      ],
+      [
+        "grid-row",
+        "1",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-study-management-modal:focus",
+    "declarations": [
+      [
+        "outline",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".modal-container > :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) .modal-close-button",
+    "declarations": [
+      [
+        "min-width",
+        "44px",
+        false
+      ],
+      [
+        "min-height",
+        "44px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-session-edit-target",
+    "declarations": [
+      [
+        "border",
+        "2px solid var(--interactive-accent)",
+        false
+      ],
+      [
+        "border-radius",
+        "var(--radius-m)",
+        false
+      ],
+      [
+        "padding",
+        "12px",
+        false
+      ],
+      [
+        "margin-bottom",
+        "12px",
+        false
+      ],
+      [
+        "scroll-margin-top",
+        "12px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-session-edit-actions button, .mia-session-edit-target > button",
+    "declarations": [
+      [
+        "max-width",
+        "100%",
+        false
+      ],
+      [
+        "white-space",
+        "normal",
+        false
+      ],
+      [
+        "overflow-wrap",
+        "anywhere",
+        false
+      ],
+      [
+        "min-height",
+        "44px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-settings-help > summary:focus-visible",
+    "declarations": [
+      [
+        "outline",
+        "2px solid var(--interactive-accent)",
+        false
+      ],
+      [
+        "outline-offset",
+        "2px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-profile-row",
+    "declarations": [
+      [
+        "border-block-start",
+        "1px solid var(--background-modifier-border)",
+        false
+      ],
+      [
+        "padding-block",
+        "12px",
+        false
+      ],
+      [
+        "overflow-wrap",
+        "anywhere",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-profile-row button",
+    "declarations": [
+      [
+        "margin",
+        "4px",
+        false
+      ],
+      [
+        "min-height",
+        "44px",
+        false
+      ],
+      [
+        "white-space",
+        "normal",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-profile-rename",
+    "declarations": [
+      [
+        "display",
+        "flex",
+        false
+      ],
+      [
+        "flex-wrap",
+        "wrap",
+        false
+      ],
+      [
+        "gap",
+        "8px",
+        false
+      ],
+      [
+        "margin-top",
+        "8px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-profile-rename input",
+    "declarations": [
+      [
+        "flex",
+        "1 1 10rem",
+        false
+      ],
+      [
+        "min-width",
+        "0",
+        false
+      ],
+      [
+        "width",
+        "100%",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-modal .modal-content.mia-keyboard-actions-inline",
+    "declarations": [
+      [
+        "scroll-padding-bottom",
+        "24px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-modal .mia-keyboard-actions-inline .mia-keyboard-actions",
+    "declarations": [
+      [
+        "position",
+        "static",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal)",
+    "declarations": [
+      [
+        "--mia-radius",
+        "14px",
+        false
+      ],
+      [
+        "--mia-radius-s",
+        "10px",
+        false
+      ],
+      [
+        "--mia-line",
+        "color-mix(in srgb, var(--background-modifier-border) 80%, transparent)",
+        false
+      ],
+      [
+        "--mia-surface",
+        "color-mix(in srgb, var(--background-primary-alt) 70%, var(--background-primary))",
+        false
+      ],
+      [
+        "--mia-surface-hover",
+        "color-mix(in srgb, var(--text-normal) 5%, var(--mia-surface))",
+        false
+      ],
+      [
+        "--mia-accent-soft",
+        "color-mix(in srgb, var(--interactive-accent) 12%, transparent)",
+        false
+      ],
+      [
+        "--mia-accent-line",
+        "color-mix(in srgb, var(--interactive-accent) 38%, var(--background-modifier-border))",
+        false
+      ],
+      [
+        "--mia-danger",
+        "var(--text-error, #e5484d)",
+        false
+      ],
+      [
+        "--mia-ease",
+        "cubic-bezier(.2, .7, .2, 1)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-settings-buttons > button:hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-surface-hover)",
+        false
+      ],
+      [
+        "color",
+        "var(--text-normal)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-nav button.mod-cta,\n.mia-view .mia-nav button.mod-cta:hover",
+    "declarations": [
+      [
+        "background",
+        "var(--background-primary)",
+        false
+      ],
+      [
+        "color",
+        "var(--interactive-accent)",
+        false
+      ],
+      [
+        "font-weight",
+        "700",
+        false
+      ],
+      [
+        "box-shadow",
+        "0 1px 2px rgb(0 0 0 / 12%), 0 0 0 1px var(--mia-accent-line)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view :is(.mia-row, .mia-keyword, .mia-subject-card, button.mia-stat):hover",
+    "declarations": [
+      [
+        "border-color",
+        "var(--mia-accent-line)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view :is(.mia-sync-warning, .mia-storage-warning)",
+    "declarations": [
+      [
+        "border",
+        "1px solid var(--mia-line)",
+        false
+      ],
+      [
+        "border-left",
+        "3px solid var(--text-warning)",
+        false
+      ],
+      [
+        "border-radius",
+        "var(--mia-radius-s)",
+        false
+      ],
+      [
+        "background",
+        "color-mix(in srgb, var(--text-warning) 7%, var(--background-primary))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view :is(.mia-subject-card .mia-inline-actions) > button:not(.mod-cta, .mod-warning):hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-surface-hover)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-detail-modal) button.mod-warning:hover",
+    "declarations": [
+      [
+        "background",
+        "color-mix(in srgb, var(--mia-danger) 12%, transparent)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-danger)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-study-dock .mia-ratings button:hover:not(:disabled)",
+    "declarations": [
+      [
+        "background",
+        "color-mix(in srgb, var(--mia-rating-color) 16%, var(--background-primary))",
+        false
+      ],
+      [
+        "border-color",
+        "color-mix(in srgb, var(--mia-rating-color) 55%, var(--mia-line))",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal)",
+    "declarations": [
+      [
+        "border-radius",
+        "calc(var(--mia-radius) + 4px)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view.mia-route-dashboard .mia-primary-card .mia-inline-actions > button:not(.mod-cta):hover",
+    "declarations": [
+      [
+        "border-color",
+        "var(--mia-accent-line)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view button.mia-stat:hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-surface-hover)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view.mia-route-dashboard .mia-manage-actions button:hover",
+    "declarations": [
+      [
+        "border-color",
+        "var(--interactive-accent)",
+        false
+      ],
+      [
+        "color",
+        "var(--interactive-accent)",
+        false
+      ],
+      [
+        "background",
+        "var(--mia-accent-soft)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-progress-subject-values button:hover",
+    "declarations": [
+      [
+        "color",
+        "var(--text-normal)",
+        false
+      ],
+      [
+        "border-color",
+        "var(--mia-accent-line)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-row:hover",
+    "declarations": [
+      [
+        "box-shadow",
+        "inset 3px 0 0 var(--interactive-accent), 0 6px 18px -12px rgb(0 0 0 / 45%)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-keyword:hover",
+    "declarations": [
+      [
+        "transform",
+        "translateY(-1px)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view button.mia-stat:hover",
+    "declarations": [
+      [
+        "box-shadow",
+        "var(--mia-shadow)",
+        false
+      ],
+      [
+        "transform",
+        "translateY(-1px)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-session-edit-actions button:hover",
+    "declarations": [
+      [
+        "color",
+        "var(--text-normal)",
+        false
+      ],
+      [
+        "background",
+        "var(--mia-surface-hover)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(prefers-reduced-motion: reduce)"
+      ]
+    ],
+    "selector": ".mia-view button.mia-stat:hover",
+    "declarations": [
+      [
+        "transform",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-study-management-settings .mia-settings-modes button:hover",
+    "declarations": [
+      [
+        "color",
+        "var(--text-normal)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-study-management-settings .setting-item-control > button:hover,\n.mia-study-management-settings .mia-step-row > button:hover",
+    "declarations": [
+      [
+        "color",
+        "var(--text-normal)",
+        false
+      ],
+      [
+        "background",
+        "var(--mia-surface-hover)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-study-management-modal, .mia-keyboard-settings) .mia-study-management-settings .mia-settings-basic > .setting-item",
+    "declarations": [
+      [
+        "padding",
+        "14px 16px",
+        false
+      ],
+      [
+        "border",
+        "1px solid var(--mia-line)",
+        false
+      ],
+      [
+        "border-radius",
+        "var(--mia-radius)",
+        false
+      ],
+      [
+        "background",
+        "var(--mia-surface)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary",
+    "declarations": [
+      [
+        "display",
+        "flex",
+        false
+      ],
+      [
+        "align-items",
+        "center",
+        false
+      ],
+      [
+        "gap",
+        "10px",
+        false
+      ],
+      [
+        "list-style",
+        "none",
+        false
+      ],
+      [
+        "color",
+        "var(--text-muted)",
+        false
+      ],
+      [
+        "font-size",
+        "13px",
+        false
+      ],
+      [
+        "font-weight",
+        "600",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary::-webkit-details-marker",
+    "declarations": [
+      [
+        "display",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary::before",
+    "declarations": [
+      [
+        "content",
+        "\"\"",
+        false
+      ],
+      [
+        "flex",
+        "0 0 auto",
+        false
+      ],
+      [
+        "width",
+        "6px",
+        false
+      ],
+      [
+        "height",
+        "6px",
+        false
+      ],
+      [
+        "margin-inline",
+        "2px",
+        false
+      ],
+      [
+        "border-right",
+        "2px solid currentColor",
+        false
+      ],
+      [
+        "border-bottom",
+        "2px solid currentColor",
+        false
+      ],
+      [
+        "transform",
+        "rotate(-45deg)",
+        false
+      ],
+      [
+        "transition",
+        "transform 140ms var(--mia-ease)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help[open] > summary::before",
+    "declarations": [
+      [
+        "transform",
+        "rotate(45deg)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary:hover",
+    "declarations": [
+      [
+        "color",
+        "var(--interactive-accent)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help[open]",
+    "declarations": [
+      [
+        "padding",
+        "0 14px 12px",
+        false
+      ],
+      [
+        "border-radius",
+        "var(--mia-radius-s)",
+        false
+      ],
+      [
+        "background",
+        "var(--mia-surface)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help[open] > summary",
+    "declarations": [
+      [
+        "color",
+        "var(--text-normal)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-study-management-settings .mia-profile-row",
+    "declarations": [
+      [
+        "border-block-start-color",
+        "var(--mia-line)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-study-management-settings .mia-profile-row strong",
+    "declarations": [
+      [
+        "font-size",
+        "14px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-learning-settings-actions, .mia-appearance-actions) > button:not(.mod-cta):hover",
+    "declarations": [
+      [
+        "color",
+        "var(--text-normal)",
+        false
+      ],
+      [
+        "background",
+        "var(--mia-surface-hover)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-learning-settings-actions, .mia-appearance-actions) > button.mod-cta:disabled",
+    "declarations": [
+      [
+        "box-shadow",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-settings .mia-device-sync-settings",
+    "declarations": [
+      [
+        "margin-top",
+        "24px",
+        false
+      ],
+      [
+        "padding",
+        "18px",
+        false
+      ],
+      [
+        "border",
+        "1px solid var(--mia-line)",
+        false
+      ],
+      [
+        "border-radius",
+        "var(--mia-radius)",
+        false
+      ],
+      [
+        "background",
+        "var(--mia-surface)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-settings .mia-device-sync-settings > h3",
+    "declarations": [
+      [
+        "margin",
+        "0 0 8px",
+        false
+      ],
+      [
+        "font-size",
+        "15px",
+        false
+      ],
+      [
+        "font-weight",
+        "700",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-settings .mia-device-sync-settings > .mia-muted",
+    "declarations": [
+      [
+        "display",
+        "inline-flex",
+        false
+      ],
+      [
+        "align-items",
+        "center",
+        false
+      ],
+      [
+        "gap",
+        "7px",
+        false
+      ],
+      [
+        "padding",
+        "4px 11px",
+        false
+      ],
+      [
+        "border-radius",
+        "999px",
+        false
+      ],
+      [
+        "border",
+        "1px solid var(--mia-line)",
+        false
+      ],
+      [
+        "background",
+        "var(--background-primary)",
+        false
+      ],
+      [
+        "font-size",
+        "12px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-settings .mia-device-sync-settings > .mia-muted::before",
+    "declarations": [
+      [
+        "content",
+        "\"\"",
+        false
+      ],
+      [
+        "width",
+        "7px",
+        false
+      ],
+      [
+        "height",
+        "7px",
+        false
+      ],
+      [
+        "border-radius",
+        "50%",
+        false
+      ],
+      [
+        "background",
+        "var(--text-muted)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-settings .mia-device-sync-settings > button",
+    "declarations": [
+      [
+        "border-radius",
+        "var(--mia-radius-s)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-settings > h2:first-child",
+    "declarations": [
+      [
+        "display",
+        "flex",
+        false
+      ],
+      [
+        "align-items",
+        "center",
+        false
+      ],
+      [
+        "gap",
+        "10px",
+        false
+      ],
+      [
+        "font-weight",
+        "750",
+        false
+      ],
+      [
+        "letter-spacing",
+        "-.02em",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-settings > h2:first-child::before",
+    "declarations": [
+      [
+        "content",
+        "\"M\"",
+        false
+      ],
+      [
+        "display",
+        "inline-grid",
+        false
+      ],
+      [
+        "place-items",
+        "center",
+        false
+      ],
+      [
+        "width",
+        "28px",
+        false
+      ],
+      [
+        "height",
+        "28px",
+        false
+      ],
+      [
+        "border-radius",
+        "8px",
+        false
+      ],
+      [
+        "background",
+        "linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent) 70%, #fff), var(--interactive-accent))",
+        false
+      ],
+      [
+        "color",
+        "var(--text-on-accent)",
+        false
+      ],
+      [
+        "font-size",
+        "15px",
+        false
+      ],
+      [
+        "font-weight",
+        "800",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-settings > .mia-study-management-settings > h3",
+    "declarations": [
+      [
+        "font-size",
+        "17px",
+        false
+      ],
+      [
+        "font-weight",
+        "750",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(prefers-reduced-motion: reduce)"
+      ]
+    ],
+    "selector": ":is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary::before",
+    "declarations": [
+      [
+        "transition",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-study-management-modal .mia-keyboard-actions-inline .mia-learning-settings-actions::before",
+    "declarations": [
+      [
+        "display",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-study-management-modal, .mia-appearance-modal, .mia-keyboard-settings)",
+    "declarations": [
+      [
+        "--button-radius",
+        "var(--mia-radius-s)",
+        false
+      ],
+      [
+        "--input-radius",
+        "var(--mia-radius-s)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-study-management-settings, .mia-appearance-modal, .mia-keyboard-settings .mia-device-sync-settings) :is(button:not(.modal-close-button, .checkbox-container), input:not([type=\"checkbox\"], [type=\"radio\"]), select, textarea)",
+    "declarations": [
+      [
+        "border-radius",
+        "var(--mia-radius-s)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help[open],\n.mia-study-management-settings .mia-settings-changes",
+    "declarations": [
+      [
+        "border-radius",
+        "var(--mia-radius)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-study-management-settings .mia-settings-status,\n.mia-keyboard-settings .mia-device-sync-settings > .mia-muted",
+    "declarations": [
+      [
+        "border-radius",
+        "var(--mia-radius-s)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact)",
+    "declarations": [
+      [
+        "--mia-bg",
+        "#f3efe4",
+        false
+      ],
+      [
+        "--mia-ink",
+        "#121212",
+        false
+      ],
+      [
+        "--mia-muted",
+        "#46433b",
+        false
+      ],
+      [
+        "--mia-panel",
+        "#fffdf6",
+        false
+      ],
+      [
+        "--mia-red",
+        "#d42a1f",
+        false
+      ],
+      [
+        "--mia-yellow",
+        "#f4c20d",
+        false
+      ],
+      [
+        "--mia-blue",
+        "#1f4fd8",
+        false
+      ],
+      [
+        "--mia-on-color",
+        "#ffffff",
+        false
+      ],
+      [
+        "--mia-on-yellow",
+        "#121212",
+        false
+      ],
+      [
+        "--mia-focus",
+        "#1f4fd8",
+        false
+      ],
+      [
+        "--mia-head",
+        "\"Black Han Sans\", \"Do Hyeon\", \"Apple SD Gothic Neo\", \"Malgun Gothic\", \"Noto Sans KR\", var(--font-interface), sans-serif",
+        false
+      ],
+      [
+        "--mia-radius",
+        "0",
+        false
+      ],
+      [
+        "--mia-radius-s",
+        "0",
+        false
+      ],
+      [
+        "--mia-line",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "--mia-surface",
+        "var(--mia-panel)",
+        false
+      ],
+      [
+        "--mia-surface-hover",
+        "var(--mia-yellow)",
+        false
+      ],
+      [
+        "--mia-accent-soft",
+        "var(--mia-panel)",
+        false
+      ],
+      [
+        "--mia-accent-line",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "--mia-danger",
+        "var(--mia-red)",
+        false
+      ],
+      [
+        "--mia-again",
+        "var(--mia-red)",
+        false
+      ],
+      [
+        "--mia-hard",
+        "var(--mia-yellow)",
+        false
+      ],
+      [
+        "--mia-good",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "--mia-easy",
+        "var(--mia-blue)",
+        false
+      ],
+      [
+        "--mia-shadow",
+        "none",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-ink)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": "body.theme-dark :is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact)",
+    "declarations": [
+      [
+        "--mia-bg",
+        "#121212",
+        false
+      ],
+      [
+        "--mia-ink",
+        "#f3efe4",
+        false
+      ],
+      [
+        "--mia-muted",
+        "#c9c5b8",
+        false
+      ],
+      [
+        "--mia-panel",
+        "#1c1c1c",
+        false
+      ],
+      [
+        "--mia-blue",
+        "#3d63e8",
+        false
+      ],
+      [
+        "--mia-focus",
+        "#f4c20d",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact):not(.checkbox-container),\n:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) *:not(.checkbox-container):not(.checkbox-container *)",
+    "declarations": [
+      [
+        "border-radius",
+        "0",
+        true
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(h1, h2, h3, .modal-title)",
+    "declarations": [
+      [
+        "font-family",
+        "var(--mia-head)",
+        false
+      ],
+      [
+        "font-weight",
+        "700",
+        false
+      ],
+      [
+        "letter-spacing",
+        "-.01em",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-ink)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-warning, .mia-view .mia-sync-warning, .mia-view .mia-storage-warning",
+    "declarations": [
+      [
+        "color",
+        "var(--mia-ink)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(button, input, select, textarea, summary, a):focus-visible",
+    "declarations": [
+      [
+        "outline",
+        "4px solid var(--mia-focus)",
+        false
+      ],
+      [
+        "outline-offset",
+        "2px",
+        false
+      ],
+      [
+        "box-shadow",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .modal:is(.mia-keyboard-modal, .mia-study-management-modal, .mia-appearance-modal, .mia-controls-modal)) .checkbox-container",
+    "declarations": [
+      [
+        "background-color",
+        "var(--mia-panel)",
+        false
+      ],
+      [
+        "box-shadow",
+        "0 0 0 3px var(--mia-ink)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .modal:is(.mia-keyboard-modal, .mia-study-management-modal, .mia-appearance-modal, .mia-controls-modal)) .checkbox-container.is-enabled",
+    "declarations": [
+      [
+        "background-color",
+        "var(--mia-blue)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .modal:is(.mia-keyboard-modal, .mia-study-management-modal, .mia-appearance-modal, .mia-controls-modal)) .checkbox-container:focus-visible",
+    "declarations": [
+      [
+        "box-shadow",
+        "0 0 0 3px var(--mia-ink)",
+        false
+      ],
+      [
+        "outline",
+        "4px solid var(--mia-focus)",
+        false
+      ],
+      [
+        "outline-offset",
+        "5px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-header h2 .mia-home-button:hover",
+    "declarations": [
+      [
+        "color",
+        "var(--mia-red)",
+        false
+      ],
+      [
+        "background",
+        "transparent",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view button:where(:not(.mia-home-button, .mia-stat, .mia-nav button, .mia-progress-stat, .mia-keyword, .mia-grade-key)),\n.modal.mia-controls-modal button:where(:not(.checkbox-container)), :where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button:where(:not(.modal-close-button, .checkbox-container)),\n.mia-keyboard-settings button:where(:not(.checkbox-container))",
+    "declarations": [
+      [
+        "border",
+        "3px solid var(--mia-ink)",
+        false
+      ],
+      [
+        "background",
+        "var(--mia-panel)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "box-shadow",
+        "none",
+        false
+      ],
+      [
+        "font-weight",
+        "800",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view button:where(:not(.mia-home-button, .mia-stat, .mia-nav button, .mia-progress-stat, .mia-keyword, .mia-grade-key)):not(:disabled):hover,\n.mia-keyboard-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-detail-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-result-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-preview-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-appearance-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-study-management-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-confirm-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-recovery-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-controls-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover,\n.mia-keyboard-settings button:not(.checkbox-container):not(:disabled):hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-yellow)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-on-yellow)",
+        false
+      ],
+      [
+        "border-color",
+        "var(--mia-ink)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view button.mod-cta, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-controls-modal) button.mod-cta, .mia-keyboard-settings button.mod-cta,\n.mia-view.mia-route-dashboard .mia-manage-actions button.mod-cta",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-red)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-on-color)",
+        false
+      ],
+      [
+        "border",
+        "3px solid var(--mia-ink)",
+        false
+      ],
+      [
+        "box-shadow",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view button.mod-cta:not(:disabled):hover, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-controls-modal) button.mod-cta:not(:disabled):hover, .mia-keyboard-settings button.mod-cta:not(:disabled):hover,\n.mia-view.mia-route-dashboard .mia-manage-actions button.mod-cta:not(:disabled):hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-bg)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view button.mod-warning, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button.mod-warning",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-panel)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-red)",
+        false
+      ],
+      [
+        "border-color",
+        "var(--mia-red)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": "body.theme-dark .mia-view button.mod-warning, body.theme-dark :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button.mod-warning",
+    "declarations": [
+      [
+        "color",
+        "#ff7a70",
+        false
+      ],
+      [
+        "border-color",
+        "#ff7a70",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view button.mod-warning:not(:disabled):hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-red)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-on-color)",
+        false
+      ],
+      [
+        "border-color",
+        "var(--mia-ink)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view button:disabled, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button:disabled",
+    "declarations": [
+      [
+        "opacity",
+        ".45",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-study-navigation button:hover, .mia-view .mia-dock-utility .mia-skip:hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-yellow)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-on-yellow)",
+        false
+      ],
+      [
+        "border-color",
+        "var(--mia-ink)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-nav button:hover",
+    "declarations": [
+      [
+        "background",
+        "transparent",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "border-bottom-color",
+        "var(--mia-red)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-nav button.mod-cta:hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-bg)",
+        false
+      ],
+      [
+        "border-bottom-color",
+        "var(--mia-red)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(input:not([type=\"checkbox\"]):not([type=\"radio\"]):not([type=\"range\"]), select, textarea)",
+    "declarations": [
+      [
+        "border",
+        "3px solid var(--mia-ink)",
+        false
+      ],
+      [
+        "background",
+        "var(--mia-panel)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "box-shadow",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(input, select, textarea)::placeholder",
+    "declarations": [
+      [
+        "color",
+        "var(--mia-muted)",
+        false
+      ],
+      [
+        "opacity",
+        ".8",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view :is(.mia-stat, .mia-primary-card, .mia-row, .mia-keyword, .mia-subject-card, .mia-progress-subject, .mia-resume-card, .mia-related, .mia-empty, .mia-candidate, .mia-history, .mia-settings-group, .mia-settings-summary, .mia-settings-changes, .mia-device-sync-settings, .mia-anki-settings-section, .mia-profile-row)",
+    "declarations": [
+      [
+        "border",
+        "3px solid var(--mia-ink)",
+        false
+      ],
+      [
+        "background",
+        "var(--mia-panel)",
+        false
+      ],
+      [
+        "box-shadow",
+        "none",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-ink)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view button.mia-stat:hover, .mia-view button.mia-progress-stat:hover, .mia-view button.mia-keyword:hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-yellow)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-on-yellow)",
+        false
+      ],
+      [
+        "border-color",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "box-shadow",
+        "6px 6px 0 var(--mia-ink)",
+        false
+      ],
+      [
+        "transform",
+        "translate(-2px, -2px)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view button.mia-stat:hover :is(strong, span), .mia-view button.mia-progress-stat:hover :is(strong, span)",
+    "declarations": [
+      [
+        "color",
+        "var(--mia-on-yellow)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-row:hover",
+    "declarations": [
+      [
+        "border-color",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "background",
+        "var(--mia-panel)",
+        false
+      ],
+      [
+        "box-shadow",
+        "inset 8px 0 0 var(--mia-yellow)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-study-dock .mia-ratings button:hover:not(:disabled)",
+    "declarations": [
+      [
+        "box-shadow",
+        "5px 5px 0 var(--mia-ink)",
+        false
+      ],
+      [
+        "transform",
+        "translate(-2px, -2px)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-study-dock .mia-ratings button:active:not(:disabled)",
+    "declarations": [
+      [
+        "box-shadow",
+        "none",
+        false
+      ],
+      [
+        "transform",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-undo-feedback button:hover:not(:disabled)",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-bg)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact)",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-panel)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "border",
+        "4px solid var(--mia-ink)",
+        false
+      ],
+      [
+        "box-shadow",
+        "10px 10px 0 var(--mia-ink)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) .modal-title",
+    "declarations": [
+      [
+        "border-bottom",
+        "4px solid var(--mia-ink)",
+        false
+      ],
+      [
+        "padding-bottom",
+        "10px",
+        false
+      ],
+      [
+        "font-size",
+        "22px",
+        false
+      ],
+      [
+        "font-weight",
+        "800",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) .modal-close-button",
+    "declarations": [
+      [
+        "color",
+        "var(--mia-ink)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(.setting-item, .setting-item-description, .setting-item-name)",
+    "declarations": [
+      [
+        "color",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "border-color",
+        "var(--mia-ink)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) .setting-item-description",
+    "declarations": [
+      [
+        "color",
+        "var(--mia-muted)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) .setting-item-name",
+    "declarations": [
+      [
+        "font-weight",
+        "800",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) :is(.mia-settings-group, .mia-settings-summary, .mia-settings-changes, .mia-device-sync-settings, .mia-anki-settings-section, .mia-profile-row, .mia-step-row, .mia-step-editor, .mia-settings-modes, .mia-follow-up-picker, .mia-candidate, .mia-followup-option)",
+    "declarations": [
+      [
+        "border",
+        "3px solid var(--mia-ink)",
+        false
+      ],
+      [
+        "background",
+        "var(--mia-panel)",
+        false
+      ],
+      [
+        "box-shadow",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) :is(.mia-settings-group-title)",
+    "declarations": [
+      [
+        "font-family",
+        "var(--mia-head)",
+        false
+      ],
+      [
+        "font-weight",
+        "800",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-ink)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) .mia-settings-status",
+    "declarations": [
+      [
+        "border",
+        "3px solid var(--mia-ink)",
+        false
+      ],
+      [
+        "background",
+        "var(--mia-yellow)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-on-yellow)",
+        false
+      ],
+      [
+        "font-weight",
+        "800",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) .mia-settings-modes button[aria-pressed=\"true\"], :is(.mia-keyboard-modal, .mia-study-management-modal) .mia-settings-modes button.is-active",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-bg)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-settings",
+    "declarations": [
+      [
+        "color",
+        "var(--mia-ink)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-settings :is(h1, h2, h3)",
+    "declarations": [
+      [
+        "font-family",
+        "var(--mia-head)",
+        false
+      ],
+      [
+        "font-weight",
+        "800",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(prefers-reduced-motion: reduce)"
+      ]
+    ],
+    "selector": ".mia-view button:hover",
+    "declarations": [
+      [
+        "transform",
+        "none",
+        true
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(input, select, textarea):focus-visible",
+    "declarations": [
+      [
+        "outline-offset",
+        "-3px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-keyboard-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal) .mia-settings-group-title",
+    "declarations": [
+      [
+        "padding",
+        "10px 14px 8px",
+        false
+      ],
+      [
+        "margin",
+        "0",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:first-child:not(:disabled):hover,\n.mia-view.mia-view .mia-keyword > button:nth-of-type(2):not(:disabled):hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-bg)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(n+3):not(:disabled):hover,\n.mia-view.mia-view .mia-keyword > button:nth-of-type(1):not(:disabled):hover,\n.mia-view.mia-view .mia-keyword > button.mod-warning:not(:disabled):hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-yellow)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-on-yellow)",
+        false
+      ],
+      [
+        "border-color",
+        "var(--mia-hair)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view.mia-view .mia-subject-card > .mia-inline-actions > button.mod-warning:not(:disabled):hover,\n.mia-view.mia-view .mia-keyword > button.mod-warning:not(:disabled):hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-red)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-on-color)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view.mia-view .mia-progress-subject-values > button:not(:disabled):hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-yellow)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-on-yellow)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view.mia-view button.mia-row-delete:not(:disabled):hover,\n:is(.modal.mia-detail-modal, .mia-detail-panel) button.mia-detail-reset:not(:disabled):hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-red)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-on-color)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.modal.mia-detail-modal, .mia-detail-panel) button.mia-detail-reset:disabled",
+    "declarations": [
+      [
+        "color",
+        "var(--mia-muted)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-hero .mia-resume-card > button.mod-cta:not(:disabled):hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-yellow)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-on-yellow)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(2):not(:disabled):hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-yellow)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-on-yellow)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-row-urgency",
+    "declarations": [
+      [
+        "font-weight",
+        "700",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-related-row",
+    "declarations": [
+      [
+        "padding",
+        "6px 0 6px 10px",
+        false
+      ],
+      [
+        "border-left",
+        "4px solid var(--mia-ink)",
+        false
+      ],
+      [
+        "line-height",
+        "1.5",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button:not(:disabled):hover",
+    "declarations": [
+      [
+        "background",
+        "color-mix(in srgb, var(--mia-grade) 22%, var(--mia-panel))",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-ink)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button:first-child:not(:disabled):hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-bg)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button.mod-warning:not(:disabled):hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-red)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-on-color)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(max-width: 640px), (max-height: 500px) and (pointer: coarse)"
+      ]
+    ],
+    "selector": ".mia-view[data-device=\"phone\"].mia-keyboard-open .mia-nav",
+    "declarations": [
+      [
+        "display",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-phone .modal-container:not(.mia-keyboard-open):has(> .modal.mia-detail-modal)",
+    "declarations": [
+      [
+        "padding",
+        "var(--mia-modal-top, 0px) var(--mia-modal-right, 0px) var(--mia-modal-bottom, 0px) var(--mia-modal-left, 0px)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-phone .modal-container:not(.mia-keyboard-open) > .modal.mia-detail-modal",
+    "declarations": [
+      [
+        "width",
+        "100%",
+        false
+      ],
+      [
+        "max-width",
+        "100%",
+        false
+      ],
+      [
+        "height",
+        "calc(100vh - var(--mia-modal-top, 0px) - var(--mia-modal-bottom, 0px))",
+        false
+      ],
+      [
+        "height",
+        "calc(100dvh - var(--mia-modal-top, 0px) - var(--mia-modal-bottom, 0px))",
+        false
+      ],
+      [
+        "max-height",
+        "calc(100vh - var(--mia-modal-top, 0px) - var(--mia-modal-bottom, 0px))",
+        true
+      ],
+      [
+        "max-height",
+        "calc(100dvh - var(--mia-modal-top, 0px) - var(--mia-modal-bottom, 0px))",
+        true
+      ],
+      [
+        "border-width",
+        "0",
+        false
+      ],
+      [
+        "box-shadow",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-setting-controls .setting-item-control > button:not(.mod-cta, .mod-warning, .checkbox-container):not(:disabled):hover",
+    "declarations": [
+      [
+        "background",
+        "var(--mia-yellow, var(--background-modifier-hover))",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-on-yellow, var(--text-normal))",
+        false
+      ]
+    ]
+  }
+]

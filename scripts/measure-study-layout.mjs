@@ -1,8 +1,17 @@
-import { spawn } from "node:child_process";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { spawn, spawnSync } from "node:child_process";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+
+// Regenerate the additional screens from the current source before fingerprinting.
+// Set MIA_LAYOUT_EXTENDED=0 only to reproduce the original five-route baseline.
+const extendedEnabled = process.env.MIA_LAYOUT_EXTENDED !== "0";
+if (extendedEnabled) {
+  const generated = spawnSync(process.execPath, ["scripts/generate-study-layout-harness.mjs"], { stdio: "inherit", env: process.env });
+  if (generated.error) throw generated.error;
+  if (generated.status !== 0) throw new Error("Layout harness generation failed.");
+}
 
 // Native CDP avoids Chrome's minimum window width (500px) for phone measurements.
 const profile = await mkdtemp(join(tmpdir(), "mia-layout-"));
@@ -41,14 +50,16 @@ try {
     socket.send(JSON.stringify({ id, method, params }));
   });
   const results = [];
+  const extras = extendedEnabled ? JSON.parse(await readFile(".claude/slim/layout-extra-cases.json", "utf8")) : [];
   if (process.env.MIA_LAYOUT_SCREENSHOTS) await mkdir(process.env.MIA_LAYOUT_SCREENSHOTS, { recursive: true });
   const sizes = [[1366, 1024, "tablet"], [1194, 834, "tablet"], [834, 1194, "tablet"], [678, 1024, "tablet"], [390, 844, "phone"], [844, 390, "phone"], [1440, 900, "desktop"], [1920, 1080, "desktop"], [1920, 1080, "tablet"]];
-  for (const [width, height, device] of sizes) {
+  for (const [width, height, device] of sizes.filter(size => !process.env.MIA_LAYOUT_SIZE || process.env.MIA_LAYOUT_SIZE.split(",").map(Number).includes(size[0]))) {
     await call("Emulation.setTouchEmulationEnabled", { enabled: device !== "desktop", maxTouchPoints: 1 });
     for (const theme of process.env.MIA_LAYOUT_STYLES ? ["theme-light", "theme-dark"] : [null]) {
-      for (const route of ["dashboard", "progress", "questions", "keywords", "study"]) {
+      for (const route of ["dashboard", "progress", "questions", "keywords", "study", ...extras].filter(route => !process.env.MIA_LAYOUT_ROUTE || process.env.MIA_LAYOUT_ROUTE.split(",").includes(route))) {
+        const extended = extras.includes(route);
         await call("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: false });
-        const url = pathToFileURL(join(process.cwd(), "tests/fixtures/study-layout-harness.html"));
+        const url = pathToFileURL(join(process.cwd(), extended ? ".claude/slim/layout-extra.html" : "tests/fixtures/study-layout-harness.html"));
         url.search = new URLSearchParams({ route, device, ...(width === 844 ? { safeLeft: "47", safeRight: "47" } : {}) });
         await call("Page.navigate", { url: url.href });
         const { result, exceptionDetails } = await call("Runtime.evaluate", {
@@ -59,7 +70,7 @@ try {
               const report = window.miaLayoutReport();
               if (theme) {
                 report.theme = theme;
-                const elements = [document.querySelector(".mia-view"), ...document.querySelectorAll(".mia-view *")];
+                const elements = ${extended ? '[...document.querySelectorAll(".view-content *")]' : '[document.querySelector(".mia-view"), ...document.querySelectorAll(".mia-view *")]'};
                 report.computedStyles = await Promise.all(elements.map(async element => {
                   const styles = [null, "::before", "::after"].map(pseudo => {
                     const css = getComputedStyle(element, pseudo);
@@ -69,7 +80,7 @@ try {
                   const geometry = [rect.x, rect.y, rect.width, rect.height, element.scrollWidth, element.scrollHeight, element.clientWidth, element.clientHeight];
                   const bytes = new TextEncoder().encode(JSON.stringify({ styles, geometry }));
                   const digest = await crypto.subtle.digest("SHA-256", bytes);
-                  return { tag: element.tagName, cls: element.getAttribute("class"), hash: [...new Uint8Array(digest)].map(n => n.toString(16).padStart(2, "0")).join("") };
+                  return { ...(${JSON.stringify(process.env.MIA_LAYOUT_DETAILS ?? "")} && element.matches(${JSON.stringify(process.env.MIA_LAYOUT_DETAILS || "*")}) ? { styles, geometry } : {}), tag: element.tagName, cls: element.getAttribute("class"), hash: [...new Uint8Array(digest)].map(n => n.toString(16).padStart(2, "0")).join("") };
                 }));
               }
               resolve(report);
@@ -78,7 +89,7 @@ try {
           awaitPromise: true, returnByValue: true,
         });
         if (exceptionDetails) throw new Error(JSON.stringify(exceptionDetails));
-        const report = { width, height, ...result.value };
+        const report = { width, height, ...result.value, ...(extended ? { extended: true } : {}) };
         if (report.paneWidth !== width || report.innerWidth !== width) throw new Error(`Wrong viewport: ${JSON.stringify(report)}`);
         results.push(report);
         if (process.env.MIA_LAYOUT_SCREENSHOTS) {
@@ -90,10 +101,10 @@ try {
     }
   }
   await writeFile(process.argv[2] ?? "/tmp/mia-wide-measurements.json", JSON.stringify(results, null, 2) + "\n");
-  if (results.some(r => r.device !== "desktop" && r.width < 1600 && r.contentSafePaneRatio < .94)) throw new Error("Touch content narrower than 94% of safe pane");
-  if (results.some(r => r.device !== "desktop" && r.route !== "study" && r.contentWidth > 1600)) throw new Error("Library cap exceeded");
-  if (results.some(r => r.route === "questions" && r.panelVisible !== (r.device !== "phone" && r.width >= 1000))) throw new Error("Detail panel visibility regressed");
-  if (results.some(r => r.horizontalOverflow || r.paneHorizontalOverflow || r.overflowingElements.length)) throw new Error("Horizontal overflow detected");
+  if (results.some(r => !r.extended && r.device !== "desktop" && r.width < 1600 && r.contentSafePaneRatio < .94)) throw new Error("Touch content narrower than 94% of safe pane");
+  if (results.some(r => !r.extended && r.device !== "desktop" && r.route !== "study" && r.contentWidth > 1600)) throw new Error("Library cap exceeded");
+  if (results.some(r => !r.extended && r.route === "questions" && r.panelVisible !== (r.device !== "phone" && r.width >= 1000))) throw new Error("Detail panel visibility regressed");
+  if (results.some(r => !r.extended && (r.horizontalOverflow || r.paneHorizontalOverflow || r.overflowingElements.length))) throw new Error("Horizontal overflow detected");
 } finally {
   socket?.close();
   chrome.kill();
