@@ -26,7 +26,7 @@ export class QuestionPreviewModal extends Modal {
       renderQuestionTitle(this.app, this.question.heading, heading, this.question.filePath, this.renderer),
       ...(!headingIsPrompt ? [MarkdownRenderer.render(this.app, withoutSourceAttribution(this.question.questionMarkdown), prompt, this.question.filePath, this.renderer)] : []),
       MarkdownRenderer.render(this.app, withoutSourceAttribution(this.question.answerMarkdown), answer, this.question.filePath, this.renderer),
-    ]);
+    ]).catch((error: unknown) => console.error(error));
   }
   onClose(): void { this.renderer?.unload(); this.renderer = null; this.contentEl.empty(); this.restore(); }
 }

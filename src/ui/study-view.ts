@@ -1,3 +1,4 @@
+import { formatInterval, summarizeStudySession } from "./study-session-calculations";
 import { AnswerClock, MAX_ANSWER_SECONDS } from "../core/answer-time";
 import { withoutSourceAttribution } from "../core/source-attribution";
 import { StudyManagementModal } from "./study-management-modal";
@@ -7,10 +8,10 @@ import type MiaStudyPlugin from "../main";
 import { StudyGrade } from "../core/fsrs-service";
 import { planLearningQueue } from "../core/learning-queue";
 import { KeywordReference, QuestionRecord, QuestionReviewState } from "../core/models";
-import { DEFAULT_MIA_NAVIGATION_STATE, MiaRoute, MiaSessionMode, ReviewCheckpoint, parseMiaNavigationState } from "../core/navigation";
+import { MiaRoute, MiaSessionMode, ReviewCheckpoint, parseMiaNavigationState } from "../core/navigation";
 import type { ReviewFilter } from "../core/question-query";
 import { buildReviewQueue, planSelectedReview, recommendQuestions, type ReviewQueueExclusion, type ReviewQueueOptions } from "../core/recommendation-engine";
-import { errorMessage } from "./error-message";
+import { errorMessage, reportUiFailure } from "./error-message";
 import { bindKeyboardViewport, KeyboardViewportBinding } from "./mobile-keyboard";
 import { StudyResult, StudyResultModal } from "./study-result-modal";
 import { GRADE_LABELS, GRADE_HINTS } from "./study-grades";
@@ -34,20 +35,6 @@ interface BlockedSelection {
   exclusions: ReviewQueueExclusion[];
 }
 
-function formatInterval(due: Date, days: number, fixedMinutes?: number, now = new Date()): string {
-  if (fixedMinutes !== undefined) {
-    if (fixedMinutes % 1440 === 0) return `${fixedMinutes / 1440}일`;
-    if (fixedMinutes % 60 === 0) return `${fixedMinutes / 60}시간`;
-    return `${fixedMinutes}분`;
-  }
-  const minutes = Math.max(1, Math.round((due.getTime() - now.getTime()) / 60_000));
-  if (days === 0 || minutes !== days * 1440) {
-    return [Math.floor(minutes / 1440) ? `${Math.floor(minutes / 1440)}일` : "", Math.floor(minutes % 1440 / 60) ? `${Math.floor(minutes % 1440 / 60)}시간` : "", minutes % 60 ? `${minutes % 60}분` : ""].filter(Boolean).join(" ");
-  }
-  if (days < 30) return `${days}일`;
-  if (days < 365) return `약 ${Math.round(days / 30)}개월`;
-  return `약 ${(days / 365).toFixed(1)}년`;
-}
 
 /**
  * The MIA tab. Owns navigation and the study session (queue, ratings, undo,
@@ -337,11 +324,11 @@ export class MiaStudyView extends ItemView {
   private navigate(route: MiaRoute): void {
     if (this.reviewSavePending()) return;
     if (route !== "study") this.flushReadingPosition();
-    void this.leaf.setViewState({
+    reportUiFailure(this.leaf.setViewState({
       type: MIA_VIEW_TYPE,
       active: true,
       state: { ...this.navigationState(), route },
-    });
+    }));
     if (route === "dashboard") {
       void this.plugin.studyUi.load().then(() => {
         if (this.route === "dashboard" && !this.closed) {
@@ -384,6 +371,7 @@ export class MiaStudyView extends ItemView {
       await this.plugin.synchronizeStudyData();
       if (this.closed) return;
       await this.plugin.studyUi.load();
+      if (this.closed || this.isMutatingReview) return;
       // A focus event can occur between pointerdown and click. Replacing unchanged
       // controls here drops that first tap; visibility changes still refresh timers.
       const pruned = this.route === "study" && !this.isMutatingReview && this.pruneExternallyRated(false);
@@ -1237,21 +1225,8 @@ export class MiaStudyView extends ItemView {
   }
 
   private studyResult(): StudyResult {
-    const grades = [...this.sessionGrades.values()];
-    const times = [...this.sessionGrades.keys()].flatMap(id => {
-      const ms = this.plugin.store.getReview(id)?.history.at(-1)?.answer_ms;
-      return ms === undefined ? [] : [ms];
-    });
-    return {
-      total: new Set(this.queue).size,
-      again: grades.filter((grade) => grade === Rating.Again).length,
-      hard: grades.filter((grade) => grade === Rating.Hard).length,
-      good: grades.filter((grade) => grade === Rating.Good).length,
-      easy: grades.filter((grade) => grade === Rating.Easy).length,
-      skipped: [...this.sessionSkipped].filter((id) => !this.sessionGrades.has(id)).length,
-      ...(times.length ? { averageAnswerMs: times.reduce((sum, ms) => sum + ms, 0) / times.length } : {}),
-      durationSeconds: Math.max(0, Math.round((Date.now() - this.sessionStartedAt) / 1000)),
-    };
+    return summarizeStudySession({ queue: this.queue, grades: this.sessionGrades, skipped: this.sessionSkipped,
+      startedAt: this.sessionStartedAt, now: () => Date.now(), reviewFor: id => this.plugin.store.getReview(id) });
   }
 
   private restartSession(): void {

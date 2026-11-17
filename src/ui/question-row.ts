@@ -1,3 +1,4 @@
+import { reportUiFailure } from "./error-message";
 import { MarkdownRenderer } from "obsidian";
 import { Rating } from "ts-fsrs";
 import type { QuestionRecord } from "../core/models";
@@ -35,7 +36,7 @@ function reviewState(ctx: StudyPageContext, question: RegisteredQuestion): { lab
  * Pressing the row (outside its own buttons and links) opens the detail too.
  */
 export function renderQuestionRow(ctx: StudyPageContext, parent: HTMLElement, question: RegisteredQuestion, component = ctx.component, options: QuestionRowOptions = {}): void {
-  const openDetail = options.openDetail ?? ((target: RegisteredQuestion) => void ctx.plugin.openQuestionDetail(target));
+  const openDetail = options.openDetail ?? ((target: RegisteredQuestion) => reportUiFailure(ctx.plugin.openQuestionDetail(target)));
   const row = parent.createDiv({ cls: "mia-row" });
   row.dataset.questionId = question.id;
   if (options.selected) { row.addClass("mia-row-selected"); row.setAttr("aria-current", "true"); }

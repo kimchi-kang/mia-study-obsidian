@@ -6,13 +6,12 @@ import { SubjectExportModal } from "./ui/subject-export-modal";
 import { FsrsService, StudyGrade } from "./core/fsrs-service";
 import { StudyUiStore } from "./services/study-ui-store";
 import { QuestionPreviewModal } from "./ui/question-preview-modal";
-import { errorMessage } from "./ui/error-message";
+import { errorMessage, reportUiFailure } from "./ui/error-message";
 import { openEditorWithNotice } from "./ui/editor-notice";
 import { planFollowUpChanges } from "./core/follow-up";
 import { rebaseMarkdownLinks } from "./core/markdown-links";
 import type { ManagedQuestionDraft } from "./core/managed-question";
 import { MiaSettings, QuestionRecord, QuestionReviewState } from "./core/models";
-import { parseQuestionFile } from "./core/question-parser";
 import { QuestionMetadataInput, assertQuestionUnchanged } from "./core/question-writer";
 import { MiaDataStore } from "./services/data-store";
 import { FollowUpLinks } from "./services/follow-up-links";
@@ -127,8 +126,8 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     this.index = new QuestionIndex(this.app, () => this.store.settings.sourceRoots, () => this.managedRoot);
 
     this.registerView(MIA_VIEW_TYPE, (leaf) => new MiaStudyView(leaf, this));
-    this.addRibbonIcon("brain-circuit", "MIA Study 열기", () => this.activateView());
-    this.addCommand({ id: "open-mia-study", name: "MIA Study 열기", callback: () => this.activateView() });
+    this.addRibbonIcon("brain-circuit", "MIA Study 열기", () => reportUiFailure(this.activateView()));
+    this.addCommand({ id: "open-mia-study", name: "MIA Study 열기", callback: () => reportUiFailure(this.activateView()) });
     this.addCommand({ id: "show-startup-status", name: "시작 상태 확인", callback: () => {
       new Notice(this.startupDiagnostics?.summary() ?? "시작 기록이 없습니다.", 12000);
     } });
@@ -159,7 +158,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
         if (!view.file) return false;
         const question = this.questionAtLine(view.file.path, editor.getCursor().line);
         if (!question?.id) return false;
-        if (!checking) void this.activateView([question.id]);
+        if (!checking) reportUiFailure(this.activateView([question.id]));
         return true;
       },
     });
@@ -248,7 +247,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
   editMetadata(question: QuestionRecord): void {
     if (!question.questionMarkdown.trim() || !question.answerMarkdown.trim()) {
       new Notice("질문과 풀이가 모두 있어야 MIA에 등록할 수 있습니다. 원문을 먼저 확인하세요.");
-      void this.openQuestion(question);
+      reportUiFailure(this.openQuestion(question));
       return;
     }
     this.modalOpenGuard.open(dialogKey("question-metadata", question.id ?? `${question.filePath}:${question.location.headingLine}`), () => new QuestionMetadataModal(
@@ -439,7 +438,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
 
   openQuestionPreview(question: QuestionRecord & { id: string }, restore: () => void): void {
     const current = this.index.questionById(question.id) ?? question;
-    this.modalOpenGuard.open(dialogKey("question-preview", question.id), () => new QuestionPreviewModal(this.app, current, () => void this.openQuestionDetail(current), restore, this.studyUi.appearance));
+    this.modalOpenGuard.open(dialogKey("question-preview", question.id), () => new QuestionPreviewModal(this.app, current, () => reportUiFailure(this.openQuestionDetail(current)), restore, this.studyUi.appearance));
   }
 
   /** Resolves a question's detail (status, keyword meanings, related questions) and its actions. */
@@ -454,7 +453,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
       recommendations,
       meanings,
       actions: {
-        study: () => { void this.activateView([current.id]); },
+        study: () => { reportUiFailure(this.activateView([current.id])); },
         edit: () => openEditorWithNotice("문제 편집", () => this.openManagedQuestionEditor(current)),
         connections: () => openEditorWithNotice("문제 연결", () => this.openFollowUpEditor(current)),
         remove: () => this.confirmDeleteQuestion(current),

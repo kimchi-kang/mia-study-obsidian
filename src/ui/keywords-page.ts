@@ -1,3 +1,4 @@
+import { reportUiFailure } from "./error-message";
 import type { KeywordReference, QuestionRecord } from "../core/models";
 import type { KeywordNoteEntry } from "../services/keyword-operations";
 import { renderQuestionHeading } from "./question-row";
@@ -81,7 +82,7 @@ export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
         for (const question of questions.slice(0, 300)) {
           const questionButton = details.createEl("button");
           renderQuestionHeading(ctx, questionButton, question);
-          questionButton.addEventListener("click", () => void ctx.plugin.openQuestionDetail(question));
+          questionButton.addEventListener("click", () => reportUiFailure(ctx.plugin.openQuestionDetail(question)));
         }
       }
       const remove = card.createEl("button", { text: "삭제", cls: "mod-warning", attr: { "aria-label": `키워드 ${item.keyword.label} 삭제` } });

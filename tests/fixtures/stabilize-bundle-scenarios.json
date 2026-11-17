@@ -1,0 +1,70 @@
+{
+  "commands": [
+    "open-mia-study",
+    "show-startup-status",
+    "export-subject-word",
+    "add-managed-subject",
+    "add-managed-question",
+    "add-managed-keyword",
+    "sync-managed-subject-notes",
+    "register-question-at-cursor",
+    "study-question-at-cursor"
+  ],
+  "viewTypes": [
+    "mia-study-view"
+  ],
+  "loaded": "{\n  \"version\": 1,\n  \"settings\": {\n    \"studyManagement\": {\n      \"newCardsPerDay\": 20,\n      \"reviewsPerDay\": 200,\n      \"dayStartsAt\": 4,\n      \"learnAheadMinutes\": 20,\n      \"newCardsIgnoreReviewLimit\": false,\n      \"learningSteps\": [\n        \"1m\",\n        \"10m\"\n      ],\n      \"relearningSteps\": [\n        \"10m\"\n      ],\n      \"newCardOrder\": \"sequential\",\n      \"newReviewOrder\": \"mix\",\n      \"interdayLearningOrder\": \"mix\",\n      \"reviewOrder\": \"due\",\n      \"enableFuzz\": true,\n      \"fsrsParameters\": []\n    },\n    \"sourceRoots\": [\n      \"MIA\"\n    ],\n    \"targetRetention\": 0.9,\n    \"maximumIntervalDays\": 36500,\n    \"gradeIntervalsMinutes\": {},\n    \"keywordFolder\": \"MIA/키워드\"\n  },\n  \"reviews\": {},\n  \"quarantinedReviews\": {},\n  \"reviewVersions\": {},\n  \"reviewConflicts\": {},\n  \"settingsSync\": {\n    \"id\": \"fixed-1\",\n    \"ancestors\": [\n      \"legacy:{\\\"gradeIntervalsMinutes\\\":{},\\\"keywordFolder\\\":\\\"MIA/키워드\\\",\\\"maximumIntervalDays\\\":36500,\\\"sourceRoots\\\":[\\\"MIA\\\"],\\\"studyManagement\\\":{\\\"dayStartsAt\\\":4,\\\"enableFuzz\\\":true,\\\"fsrsParameters\\\":[],\\\"interdayLearningOrder\\\":\\\"mix\\\",\\\"learnAheadMinutes\\\":20,\\\"learningSteps\\\":[\\\"1m\\\",\\\"10m\\\"],\\\"newCardOrder\\\":\\\"sequential\\\",\\\"newCardsIgnoreReviewLimit\\\":false,\\\"newCardsPerDay\\\":20,\\\"newReviewOrder\\\":\\\"mix\\\",\\\"relearningSteps\\\":[\\\"10m\\\"],\\\"reviewOrder\\\":\\\"due\\\",\\\"reviewsPerDay\\\":200},\\\"targetRetention\\\":0.9}\"\n    ],\n    \"conflicts\": []\n  }\n}",
+  "recallBefore": {
+    "route": "study",
+    "queue": [
+      "mia-q-one",
+      "mia-q-two"
+    ],
+    "queueIndex": 0,
+    "answerVisible": false,
+    "sessionMode": "recall",
+    "reviewCheckpoint": {
+      "id": "mia-q-one",
+      "version": null
+    }
+  },
+  "rated": "{\n  \"version\": 1,\n  \"settings\": {\n    \"studyManagement\": {\n      \"newCardsPerDay\": 20,\n      \"reviewsPerDay\": 200,\n      \"dayStartsAt\": 4,\n      \"learnAheadMinutes\": 20,\n      \"newCardsIgnoreReviewLimit\": false,\n      \"learningSteps\": [\n        \"1m\",\n        \"10m\"\n      ],\n      \"relearningSteps\": [\n        \"10m\"\n      ],\n      \"newCardOrder\": \"sequential\",\n      \"newReviewOrder\": \"mix\",\n      \"interdayLearningOrder\": \"mix\",\n      \"reviewOrder\": \"due\",\n      \"enableFuzz\": true,\n      \"fsrsParameters\": []\n    },\n    \"sourceRoots\": [\n      \"MIA\"\n    ],\n    \"targetRetention\": 0.9,\n    \"maximumIntervalDays\": 36500,\n    \"gradeIntervalsMinutes\": {},\n    \"keywordFolder\": \"MIA/키워드\"\n  },\n  \"reviews\": {\n    \"mia-q-one\": {\n      \"card\": {\n        \"due\": \"2026-11-17T00:10:01.250Z\",\n        \"stability\": 2.3065,\n        \"difficulty\": 2.11810397,\n        \"elapsed_days\": 0,\n        \"scheduled_days\": 0,\n        \"learning_steps\": 1,\n        \"reps\": 1,\n        \"lapses\": 0,\n        \"state\": 1,\n        \"last_review\": \"2026-11-17T00:00:01.250Z\"\n      },\n      \"history\": [\n        {\n          \"rating\": 3,\n          \"state\": 0,\n          \"due\": \"2026-11-17T00:00:01.250Z\",\n          \"stability\": 0,\n          \"difficulty\": 0,\n          \"elapsed_days\": 0,\n          \"last_elapsed_days\": 0,\n          \"scheduled_days\": 0,\n          \"learning_steps\": 0,\n          \"review\": \"2026-11-17T00:00:01.250Z\",\n          \"answer_ms\": 0\n        }\n      ],\n      \"lastRating\": 3\n    }\n  },\n  \"quarantinedReviews\": {},\n  \"reviewVersions\": {\n    \"mia-q-one\": \"2026-11-17T00:00:01.250Z:fixed-2\"\n  },\n  \"reviewConflicts\": {},\n  \"settingsSync\": {\n    \"id\": \"fixed-1\",\n    \"ancestors\": [\n      \"legacy:{\\\"gradeIntervalsMinutes\\\":{},\\\"keywordFolder\\\":\\\"MIA/키워드\\\",\\\"maximumIntervalDays\\\":36500,\\\"sourceRoots\\\":[\\\"MIA\\\"],\\\"studyManagement\\\":{\\\"dayStartsAt\\\":4,\\\"enableFuzz\\\":true,\\\"fsrsParameters\\\":[],\\\"interdayLearningOrder\\\":\\\"mix\\\",\\\"learnAheadMinutes\\\":20,\\\"learningSteps\\\":[\\\"1m\\\",\\\"10m\\\"],\\\"newCardOrder\\\":\\\"sequential\\\",\\\"newCardsIgnoreReviewLimit\\\":false,\\\"newCardsPerDay\\\":20,\\\"newReviewOrder\\\":\\\"mix\\\",\\\"relearningSteps\\\":[\\\"10m\\\"],\\\"reviewOrder\\\":\\\"due\\\",\\\"reviewsPerDay\\\":200},\\\"targetRetention\\\":0.9}\"\n    ],\n    \"conflicts\": []\n  }\n}",
+  "ratedReview": "{\"card\":{\"due\":\"2026-11-17T00:10:01.250Z\",\"stability\":2.3065,\"difficulty\":2.11810397,\"elapsed_days\":0,\"scheduled_days\":0,\"learning_steps\":1,\"reps\":1,\"lapses\":0,\"state\":1,\"last_review\":\"2026-11-17T00:00:01.250Z\"},\"history\":[{\"rating\":3,\"state\":0,\"due\":\"2026-11-17T00:00:01.250Z\",\"stability\":0,\"difficulty\":0,\"elapsed_days\":0,\"last_elapsed_days\":0,\"scheduled_days\":0,\"learning_steps\":0,\"review\":\"2026-11-17T00:00:01.250Z\",\"answer_ms\":0}],\"lastRating\":3}",
+  "result": {
+    "total": 2,
+    "again": 0,
+    "hard": 0,
+    "good": 1,
+    "easy": 0,
+    "skipped": 0,
+    "averageAnswerMs": 0,
+    "durationSeconds": 1
+  },
+  "undone": "{\n  \"version\": 1,\n  \"settings\": {\n    \"studyManagement\": {\n      \"newCardsPerDay\": 20,\n      \"reviewsPerDay\": 200,\n      \"dayStartsAt\": 4,\n      \"learnAheadMinutes\": 20,\n      \"newCardsIgnoreReviewLimit\": false,\n      \"learningSteps\": [\n        \"1m\",\n        \"10m\"\n      ],\n      \"relearningSteps\": [\n        \"10m\"\n      ],\n      \"newCardOrder\": \"sequential\",\n      \"newReviewOrder\": \"mix\",\n      \"interdayLearningOrder\": \"mix\",\n      \"reviewOrder\": \"due\",\n      \"enableFuzz\": true,\n      \"fsrsParameters\": []\n    },\n    \"sourceRoots\": [\n      \"MIA\"\n    ],\n    \"targetRetention\": 0.9,\n    \"maximumIntervalDays\": 36500,\n    \"gradeIntervalsMinutes\": {},\n    \"keywordFolder\": \"MIA/키워드\"\n  },\n  \"reviews\": {},\n  \"quarantinedReviews\": {},\n  \"reviewVersions\": {\n    \"mia-q-one\": \"2026-11-17T00:00:01.251Z:fixed-3\"\n  },\n  \"reviewConflicts\": {},\n  \"settingsSync\": {\n    \"id\": \"fixed-1\",\n    \"ancestors\": [\n      \"legacy:{\\\"gradeIntervalsMinutes\\\":{},\\\"keywordFolder\\\":\\\"MIA/키워드\\\",\\\"maximumIntervalDays\\\":36500,\\\"sourceRoots\\\":[\\\"MIA\\\"],\\\"studyManagement\\\":{\\\"dayStartsAt\\\":4,\\\"enableFuzz\\\":true,\\\"fsrsParameters\\\":[],\\\"interdayLearningOrder\\\":\\\"mix\\\",\\\"learnAheadMinutes\\\":20,\\\"learningSteps\\\":[\\\"1m\\\",\\\"10m\\\"],\\\"newCardOrder\\\":\\\"sequential\\\",\\\"newCardsIgnoreReviewLimit\\\":false,\\\"newCardsPerDay\\\":20,\\\"newReviewOrder\\\":\\\"mix\\\",\\\"relearningSteps\\\":[\\\"10m\\\"],\\\"reviewOrder\\\":\\\"due\\\",\\\"reviewsPerDay\\\":200},\\\"targetRetention\\\":0.9}\"\n    ],\n    \"conflicts\": []\n  }\n}",
+  "browse": {
+    "route": "study",
+    "queue": [
+      "mia-q-one",
+      "mia-q-two"
+    ],
+    "queueIndex": 0,
+    "answerVisible": true,
+    "sessionMode": "browse"
+  },
+  "resumeBytes": "{\n  \"version\": 1,\n  \"resume\": {\n    \"queue\": [\n      \"mia-q-one\",\n      \"mia-q-two\"\n    ],\n    \"seed\": [\n      \"mia-q-one\",\n      \"mia-q-two\"\n    ],\n    \"skipped\": [],\n    \"queueIndex\": 1,\n    \"answerVisible\": true,\n    \"sessionMode\": \"browse\",\n    \"updatedAt\": \"2026-11-17T00:00:01.250Z\",\n    \"scrollTop\": 0,\n    \"pageScrollTop\": 0,\n    \"conceptsOpen\": false\n  },\n  \"updatedAt\": \"2026-11-17T00:00:01.250Z\"\n}",
+  "resumed": {
+    "route": "study",
+    "queue": [
+      "mia-q-one",
+      "mia-q-two"
+    ],
+    "queueIndex": 1,
+    "answerVisible": true,
+    "sessionMode": "browse"
+  },
+  "merged": "{\n  \"version\": 1,\n  \"settings\": {\n    \"studyManagement\": {\n      \"newCardsPerDay\": 20,\n      \"reviewsPerDay\": 200,\n      \"dayStartsAt\": 4,\n      \"learnAheadMinutes\": 20,\n      \"newCardsIgnoreReviewLimit\": false,\n      \"learningSteps\": [\n        \"1m\",\n        \"10m\"\n      ],\n      \"relearningSteps\": [\n        \"10m\"\n      ],\n      \"newCardOrder\": \"sequential\",\n      \"newReviewOrder\": \"mix\",\n      \"interdayLearningOrder\": \"mix\",\n      \"reviewOrder\": \"due\",\n      \"enableFuzz\": true,\n      \"fsrsParameters\": []\n    },\n    \"sourceRoots\": [\n      \"MIA\"\n    ],\n    \"targetRetention\": 0.9,\n    \"maximumIntervalDays\": 36500,\n    \"gradeIntervalsMinutes\": {},\n    \"keywordFolder\": \"MIA/키워드\"\n  },\n  \"reviews\": {\n    \"mia-q-two\": {\n      \"card\": {\n        \"due\": \"2026-11-23T00:00:01.250Z\",\n        \"stability\": 8.2956,\n        \"difficulty\": 1,\n        \"elapsed_days\": 0,\n        \"scheduled_days\": 6,\n        \"learning_steps\": 0,\n        \"reps\": 1,\n        \"lapses\": 0,\n        \"state\": 2,\n        \"last_review\": \"2026-11-17T00:00:01.250Z\"\n      },\n      \"history\": [\n        {\n          \"rating\": 4,\n          \"state\": 0,\n          \"due\": \"2026-11-17T00:00:01.250Z\",\n          \"stability\": 0,\n          \"difficulty\": 0,\n          \"elapsed_days\": 0,\n          \"last_elapsed_days\": 0,\n          \"scheduled_days\": 0,\n          \"learning_steps\": 0,\n          \"review\": \"2026-11-17T00:00:01.250Z\",\n          \"answer_ms\": 4321\n        }\n      ],\n      \"lastRating\": 4\n    }\n  },\n  \"quarantinedReviews\": {},\n  \"reviewVersions\": {\n    \"mia-q-one\": \"2026-11-17T00:00:01.251Z:fixed-3\",\n    \"mia-q-two\": \"2026-11-17T00:00:00.000Z:remote\"\n  },\n  \"reviewConflicts\": {},\n  \"settingsSync\": {\n    \"id\": \"fixed-1\",\n    \"ancestors\": [\n      \"legacy:{\\\"gradeIntervalsMinutes\\\":{},\\\"keywordFolder\\\":\\\"MIA/키워드\\\",\\\"maximumIntervalDays\\\":36500,\\\"sourceRoots\\\":[\\\"MIA\\\"],\\\"studyManagement\\\":{\\\"dayStartsAt\\\":4,\\\"enableFuzz\\\":true,\\\"fsrsParameters\\\":[],\\\"interdayLearningOrder\\\":\\\"mix\\\",\\\"learnAheadMinutes\\\":20,\\\"learningSteps\\\":[\\\"1m\\\",\\\"10m\\\"],\\\"newCardOrder\\\":\\\"sequential\\\",\\\"newCardsIgnoreReviewLimit\\\":false,\\\"newCardsPerDay\\\":20,\\\"newReviewOrder\\\":\\\"mix\\\",\\\"relearningSteps\\\":[\\\"10m\\\"],\\\"reviewOrder\\\":\\\"due\\\",\\\"reviewsPerDay\\\":200},\\\"targetRetention\\\":0.9}\"\n    ],\n    \"conflicts\": []\n  }\n}",
+  "roundtrip": "{\n  \"version\": 1,\n  \"settings\": {\n    \"studyManagement\": {\n      \"newCardsPerDay\": 20,\n      \"reviewsPerDay\": 200,\n      \"dayStartsAt\": 4,\n      \"learnAheadMinutes\": 20,\n      \"newCardsIgnoreReviewLimit\": false,\n      \"learningSteps\": [\n        \"1m\",\n        \"10m\"\n      ],\n      \"relearningSteps\": [\n        \"10m\"\n      ],\n      \"newCardOrder\": \"sequential\",\n      \"newReviewOrder\": \"mix\",\n      \"interdayLearningOrder\": \"mix\",\n      \"reviewOrder\": \"due\",\n      \"enableFuzz\": true,\n      \"fsrsParameters\": []\n    },\n    \"sourceRoots\": [\n      \"MIA\"\n    ],\n    \"targetRetention\": 0.9,\n    \"maximumIntervalDays\": 36500,\n    \"gradeIntervalsMinutes\": {},\n    \"keywordFolder\": \"MIA/키워드\"\n  },\n  \"reviews\": {\n    \"mia-q-two\": {\n      \"card\": {\n        \"due\": \"2026-11-23T00:00:01.250Z\",\n        \"stability\": 8.2956,\n        \"difficulty\": 1,\n        \"elapsed_days\": 0,\n        \"scheduled_days\": 6,\n        \"learning_steps\": 0,\n        \"reps\": 1,\n        \"lapses\": 0,\n        \"state\": 2,\n        \"last_review\": \"2026-11-17T00:00:01.250Z\"\n      },\n      \"history\": [\n        {\n          \"rating\": 4,\n          \"state\": 0,\n          \"due\": \"2026-11-17T00:00:01.250Z\",\n          \"stability\": 0,\n          \"difficulty\": 0,\n          \"elapsed_days\": 0,\n          \"last_elapsed_days\": 0,\n          \"scheduled_days\": 0,\n          \"learning_steps\": 0,\n          \"review\": \"2026-11-17T00:00:01.250Z\",\n          \"answer_ms\": 4321\n        }\n      ],\n      \"lastRating\": 4\n    }\n  },\n  \"quarantinedReviews\": {},\n  \"reviewVersions\": {\n    \"mia-q-one\": \"2026-11-17T00:00:01.251Z:fixed-3\",\n    \"mia-q-two\": \"2026-11-17T00:00:00.000Z:remote\"\n  },\n  \"reviewConflicts\": {},\n  \"settingsSync\": {\n    \"id\": \"fixed-1\",\n    \"ancestors\": [\n      \"legacy:{\\\"gradeIntervalsMinutes\\\":{},\\\"keywordFolder\\\":\\\"MIA/키워드\\\",\\\"maximumIntervalDays\\\":36500,\\\"sourceRoots\\\":[\\\"MIA\\\"],\\\"studyManagement\\\":{\\\"dayStartsAt\\\":4,\\\"enableFuzz\\\":true,\\\"fsrsParameters\\\":[],\\\"interdayLearningOrder\\\":\\\"mix\\\",\\\"learnAheadMinutes\\\":20,\\\"learningSteps\\\":[\\\"1m\\\",\\\"10m\\\"],\\\"newCardOrder\\\":\\\"sequential\\\",\\\"newCardsIgnoreReviewLimit\\\":false,\\\"newCardsPerDay\\\":20,\\\"newReviewOrder\\\":\\\"mix\\\",\\\"relearningSteps\\\":[\\\"10m\\\"],\\\"reviewOrder\\\":\\\"due\\\",\\\"reviewsPerDay\\\":200},\\\"targetRetention\\\":0.9}\"\n    ],\n    \"conflicts\": []\n  }\n}",
+  "notices": [
+    "직전 평가를 취소했습니다."
+  ]
+}

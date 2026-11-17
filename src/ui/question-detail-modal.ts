@@ -35,7 +35,9 @@ export class QuestionDetailModal extends Modal {
     this.modalEl.addClass("mia-detail-modal");
     this.renderer = new Component();
     this.renderer.load();
-    await this.detail.render(this.contentEl, this.titleEl, this.renderer, () => revision === this.renderRevision);
+    // Modal.open is synchronous: observe renderer failures at this host boundary.
+    await this.detail.render(this.contentEl, this.titleEl, this.renderer, () => revision === this.renderRevision)
+      .catch((error: unknown) => console.error(error));
   }
 
   onClose(): void {

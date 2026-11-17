@@ -1,3 +1,4 @@
+import { reportUiFailure } from "./error-message";
 import { Component, Platform } from "obsidian";
 import { QUESTION_TYPES, type QuestionType } from "../core/models";
 import { type QuestionSort, type ReviewFilter, queryQuestions } from "../core/question-query";
@@ -297,7 +298,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
     && panel.ownerDocument?.defaultView?.getComputedStyle(panel).display !== "none";
   /** Wide panes open the detail beside the list, moving focus to its title; narrow ones and phones keep the dialog. */
   const openDetail = (question: RegisteredQuestion): void => {
-    if (!panelVisible()) { void ctx.plugin.openQuestionDetail(question); return; }
+    if (!panelVisible()) { reportUiFailure(ctx.plugin.openQuestionDetail(question)); return; }
     state.panelFocus = "title";
     if (state.selectedId !== question.id) state.panelScroll = null;
     state.selectedId = question.id;
@@ -372,7 +373,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
       const row = details.createDiv({ cls: "mia-candidate" });
       row.createSpan({ text: `${diagnostic.message} · ${diagnostic.filePath}:${diagnostic.line + 1}` });
       row.createEl("button", { text: "원문" }).addEventListener("click", () => {
-        void ctx.plugin.openLocation(diagnostic.filePath, diagnostic.line);
+        reportUiFailure(ctx.plugin.openLocation(diagnostic.filePath, diagnostic.line));
       });
     }
   }
@@ -395,7 +396,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
         label.createEl("small", { text: question.filePath });
         const candidateActions = row.createDiv({ cls: "mia-inline-actions" });
         candidateActions.createEl("button", { text: "등록" }).addEventListener("click", () => ctx.plugin.editMetadata(question));
-        candidateActions.createEl("button", { text: "원문" }).addEventListener("click", () => void ctx.plugin.openQuestion(question));
+        candidateActions.createEl("button", { text: "원문" }).addEventListener("click", () => reportUiFailure(ctx.plugin.openQuestion(question)));
       }
       if (matches.length > state.candidateLimit) {
         const more = candidateList.createEl("button", { text: `${Math.min(100, matches.length - state.candidateLimit)}개 더 보기`, cls: "mia-load-more" });

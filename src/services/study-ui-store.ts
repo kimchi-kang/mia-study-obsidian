@@ -110,6 +110,7 @@ export class StudyUiStore {
   private committedResume: StudyResume | null = null;
   private currentAppearance: StudyAppearance;
   private revision = 0;
+  private loadRevision = 0;
   private filePresent = false;
   private committedUpdatedAt = "1970-01-01T00:00:00.000Z";
   private readonly resumeKey: string;
@@ -136,6 +137,7 @@ export class StudyUiStore {
   get resumeRevision(): number { return this.sharedWrites.checkpointRevision; }
 
   async load(): Promise<void> {
+    const loadRevision = ++this.loadRevision;
     const revision = this.revision;
     // A local move still being saved must finish before checking the synced file.
     await this.writes;
@@ -152,7 +154,7 @@ export class StudyUiStore {
       const local = parseStudyResume(checkpoint.resume);
       if ((checkpoint.resume === null || local) && Date.parse(checkpoint.updatedAt) > Date.parse(diskTime)) { chosen = local; updatedAt = checkpoint.updatedAt; }
     }
-    if (revision === this.revision) { this.currentResume = chosen; this.committedResume = chosen; this.committedUpdatedAt = updatedAt; this.filePresent = exists; }
+    if (revision === this.revision && loadRevision === this.loadRevision) { this.currentResume = chosen; this.committedResume = chosen; this.committedUpdatedAt = updatedAt; this.filePresent = exists; }
   }
 
   saveResume(resume: StudyResume | null): Promise<void> {

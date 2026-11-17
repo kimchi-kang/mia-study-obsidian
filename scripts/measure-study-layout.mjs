@@ -11,6 +11,7 @@ const chrome = spawn(process.env.CHROME ?? "/Applications/Google Chrome.app/Cont
   "--remote-debugging-port=0", `--user-data-dir=${profile}`, "about:blank",
 ], { stdio: ["ignore", "ignore", "pipe"] });
 let socket;
+const exited = new Promise(resolve => { chrome.once("exit", resolve); chrome.once("error", resolve); });
 try {
   const endpoint = await new Promise((resolve, reject) => {
     let log = "";
@@ -44,24 +45,48 @@ try {
   const sizes = [[1366, 1024, "tablet"], [1194, 834, "tablet"], [834, 1194, "tablet"], [678, 1024, "tablet"], [390, 844, "phone"], [844, 390, "phone"], [1440, 900, "desktop"], [1920, 1080, "desktop"], [1920, 1080, "tablet"]];
   for (const [width, height, device] of sizes) {
     await call("Emulation.setTouchEmulationEnabled", { enabled: device !== "desktop", maxTouchPoints: 1 });
-    for (const route of ["dashboard", "progress", "questions", "keywords", "study"]) {
-      await call("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: false });
-      const url = pathToFileURL(join(process.cwd(), "tests/fixtures/study-layout-harness.html"));
-      url.search = new URLSearchParams({ route, device, ...(width === 844 ? { safeLeft: "47", safeRight: "47" } : {}) });
-      await call("Page.navigate", { url: url.href });
-      const { result, exceptionDetails } = await call("Runtime.evaluate", {
-        expression: `new Promise(resolve => { const check = () => { if (location.href === ${JSON.stringify(url.href)} && document.readyState === 'complete' && window.miaLayoutReport) requestAnimationFrame(() => requestAnimationFrame(() => resolve(window.miaLayoutReport()))); else setTimeout(check, 10); }; check(); })`,
-        awaitPromise: true, returnByValue: true,
-      });
-      if (exceptionDetails) throw new Error(JSON.stringify(exceptionDetails));
-      const report = { width, height, ...result.value };
-      if (report.paneWidth !== width || report.innerWidth !== width) throw new Error(`Wrong viewport: ${JSON.stringify(report)}`);
-      results.push(report);
-      if (process.env.MIA_LAYOUT_SCREENSHOTS) {
-        const { data } = await call("Page.captureScreenshot", { format: "png" });
-        await writeFile(join(process.env.MIA_LAYOUT_SCREENSHOTS, `${width}-${height}-${device}-${route}.png`), Buffer.from(data, "base64"));
+    for (const theme of process.env.MIA_LAYOUT_STYLES ? ["theme-light", "theme-dark"] : [null]) {
+      for (const route of ["dashboard", "progress", "questions", "keywords", "study"]) {
+        await call("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: false });
+        const url = pathToFileURL(join(process.cwd(), "tests/fixtures/study-layout-harness.html"));
+        url.search = new URLSearchParams({ route, device, ...(width === 844 ? { safeLeft: "47", safeRight: "47" } : {}) });
+        await call("Page.navigate", { url: url.href });
+        const { result, exceptionDetails } = await call("Runtime.evaluate", {
+          expression: `new Promise((resolve, reject) => { const check = () => { if (location.href === ${JSON.stringify(url.href)} && document.readyState === 'complete' && window.miaLayoutReport) requestAnimationFrame(() => requestAnimationFrame(async () => {
+            try {
+              const theme = ${JSON.stringify(theme)};
+              if (theme) { document.body.classList.remove("theme-light", "theme-dark"); document.body.classList.add(theme); }
+              const report = window.miaLayoutReport();
+              if (theme) {
+                report.theme = theme;
+                const elements = [document.querySelector(".mia-view"), ...document.querySelectorAll(".mia-view *")];
+                report.computedStyles = await Promise.all(elements.map(async element => {
+                  const styles = [null, "::before", "::after"].map(pseudo => {
+                    const css = getComputedStyle(element, pseudo);
+                    return [...css].sort().map(prop => [prop, css.getPropertyValue(prop)]);
+                  });
+                  const rect = element.getBoundingClientRect();
+                  const geometry = [rect.x, rect.y, rect.width, rect.height, element.scrollWidth, element.scrollHeight, element.clientWidth, element.clientHeight];
+                  const bytes = new TextEncoder().encode(JSON.stringify({ styles, geometry }));
+                  const digest = await crypto.subtle.digest("SHA-256", bytes);
+                  return { tag: element.tagName, cls: element.getAttribute("class"), hash: [...new Uint8Array(digest)].map(n => n.toString(16).padStart(2, "0")).join("") };
+                }));
+              }
+              resolve(report);
+            } catch (error) { reject(error); }
+          })); else setTimeout(check, 10); }; check(); })`,
+          awaitPromise: true, returnByValue: true,
+        });
+        if (exceptionDetails) throw new Error(JSON.stringify(exceptionDetails));
+        const report = { width, height, ...result.value };
+        if (report.paneWidth !== width || report.innerWidth !== width) throw new Error(`Wrong viewport: ${JSON.stringify(report)}`);
+        results.push(report);
+        if (process.env.MIA_LAYOUT_SCREENSHOTS) {
+          const { data } = await call("Page.captureScreenshot", { format: "png" });
+          await writeFile(join(process.env.MIA_LAYOUT_SCREENSHOTS, `${width}-${height}-${device}-${theme ? `${theme}-` : ""}${route}.png`), Buffer.from(data, "base64"));
+        }
+        console.log(`${width}×${height} ${route}: ${report.contentWidth.toFixed(1)}px / ${(100 * report.contentSafePaneRatio).toFixed(1)}%, overflow=${report.horizontalOverflow || report.paneHorizontalOverflow}, grids=${JSON.stringify(report.grids)}`);
       }
-      console.log(`${width}×${height} ${route}: ${report.contentWidth.toFixed(1)}px / ${(100 * report.contentSafePaneRatio).toFixed(1)}%, overflow=${report.horizontalOverflow || report.paneHorizontalOverflow}, grids=${JSON.stringify(report.grids)}`);
     }
   }
   await writeFile(process.argv[2] ?? "/tmp/mia-wide-measurements.json", JSON.stringify(results, null, 2) + "\n");
@@ -72,6 +97,6 @@ try {
 } finally {
   socket?.close();
   chrome.kill();
-  await new Promise(resolve => chrome.exitCode !== null ? resolve() : chrome.once("exit", resolve));
+  await exited;
   await rm(profile, { recursive: true, force: true });
 }
