@@ -72,8 +72,8 @@ export class StudyAppearanceModal extends Modal {
     this.saveButton.addEventListener("click", () => {
       try { this.store.updateAppearance(this.draft); }
       catch (error) { new Notice(`보기 설정 저장 실패: ${errorMessage(error)}`); return; }
-      this.onChange();
       this.close();
+      this.onChange();
     });
   }
 

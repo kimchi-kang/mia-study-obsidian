@@ -81,13 +81,20 @@ export class KeywordOperations {
   }
 
   async loadMeanings(question: QuestionRecord): Promise<Map<string, string>> {
-    const { app } = this.host;
     const output = new Map<string, string>();
     for (const keyword of [...question.coreKeywords, ...question.subKeywords]) {
-      const file = this.resolveReferenceFile(keyword.target, question.filePath);
-      output.set(keyword.target, file?.extension === "md" ? readKeywordMeaning(await app.vault.cachedRead(file)) : "");
+      output.set(keyword.target, await this.loadReferenceMeaning(keyword.target, question.filePath));
     }
     return output;
+  }
+
+  async loadReferenceMeaning(target: string, sourcePath: string, fallbackLabel?: string): Promise<string> {
+    const { app } = this.host;
+    const file = this.resolveReferenceFile(target, sourcePath);
+    if (file?.extension === "md") return readKeywordMeaning(await app.vault.cachedRead(file));
+    return !file && fallbackLabel !== undefined
+      ? this.readMeaning(keywordNotePath(target, fallbackLabel, this.host.store.settings.keywordFolder))
+      : "";
   }
 
   private resolveReferenceFile(target: string, sourcePath: string): TFile | null {

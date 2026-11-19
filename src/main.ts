@@ -372,6 +372,9 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
         },
         this.index.registered,
         onClosed,
+        (keyword, subject) => this.keywords.loadReferenceMeaning(
+          keyword.target, editorPath ?? `${this.managedRoot}/${subject}/문제은행.md`, keyword.label,
+        ),
       );
     });
   }

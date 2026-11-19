@@ -5,6 +5,14 @@ export interface FileChange {
   update(content: string): string;
 }
 
+/** Check existing files and their update callbacks before an irreversible step. */
+export async function validateFileChanges(vault: Pick<Vault, "read">, changes: readonly FileChange[]): Promise<void> {
+  const pending = new Map<TFile, string>();
+  for (const { file, update } of changes) {
+    pending.set(file, update(pending.get(file) ?? await vault.read(file)));
+  }
+}
+
 /** Compensate completed writes only while their contents still belong to this operation. */
 export async function applyFileChanges(
   vault: Pick<Vault, "read" | "process">,

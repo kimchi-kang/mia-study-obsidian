@@ -739,6 +739,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
   max-width: 100%;
 }
 .mia-editor-modal-long textarea { resize: vertical; }
+.mia-keyword-meanings .setting-item-info { min-width: 0; overflow-wrap: anywhere; }
 .mia-keyboard-modal .modal-header { flex: 0 0 auto; }
 .mia-keyboard-modal .modal-content {
   scroll-padding-bottom: calc(var(--mia-keyboard-actions-height, 0px) + 24px);

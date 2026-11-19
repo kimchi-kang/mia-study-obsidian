@@ -559,6 +559,15 @@ export class MiaStudyView extends ItemView {
     this.contentEl.dataset.focus = String(this.plugin.studyUi.appearance.focus);
     this.contentEl.dataset.answerLayout = this.plugin.studyUi.appearance.answerLayout;
     this.contentEl.dataset.swipeEnabled = String(this.plugin.studyUi.appearance.swipeEnabled);
+    if (this.closed || this.route !== "study") return;
+    const id = this.queue[this.queueIndex];
+    const context = this.contentEl.querySelector<HTMLElement>(".mia-card-context");
+    if (!id || !context) return;
+    this.clearAnswerInterval();
+    context.querySelectorAll(".mia-answer-timer, .mia-auto-advance").forEach(el => el.remove());
+    const contextLabel = context.querySelector(".mia-auto-context");
+    if (contextLabel) contextLabel.replaceWith(...Array.from(contextLabel.childNodes));
+    this.renderAnswerTimer(context, id);
   }
 
   private render(): void {

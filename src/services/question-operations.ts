@@ -1,4 +1,5 @@
 import { Notice, TFile, normalizePath } from "obsidian";
+import { followUpBlockLinks } from "../core/follow-up";
 import { validateKeywordMeaning } from "../core/keyword-note";
 import {
   appendManagedQuestion,
@@ -23,7 +24,7 @@ import {
   updateQuestionMetadata,
   type QuestionMetadataInput,
 } from "../core/question-writer";
-import { applyFileChanges, type FileChange } from "./file-change-batch";
+import { applyFileChanges, validateFileChanges, type FileChange } from "./file-change-batch";
 import type { FollowUpLinks } from "./follow-up-links";
 import type { KeywordOperations } from "./keyword-operations";
 import type { MiaHost } from "./mia-host";
@@ -87,6 +88,14 @@ export class QuestionOperations {
     const folderPath = normalizePath(`${this.host.managedRoot}/${subject}`);
     const filePath = normalizePath(`${folderPath}/문제은행.md`);
     this.validateDraft(draft, filePath);
+    if (draft.followUpLinks?.length) {
+      await this.host.index.rebuild();
+      for (const { id } of followUpBlockLinks(draft.followUpLinks.join(", "))) {
+        if (!this.host.index.questionById(id)) {
+          throw new Error("연결할 질문이 변경 또는 삭제되었습니다. 최신 목록을 다시 확인하세요.");
+        }
+      }
+    }
     await ensureFolder(app, folderPath);
     assertPortablePath(app, filePath);
     let file = app.vault.getAbstractFileByPath(filePath);
@@ -144,6 +153,7 @@ export class QuestionOperations {
     this.validateDraft(draft, question.filePath, { content: latest, original: current, questions });
     const managed = this.notes.containsQuestion(question);
     if (managed) await this.notes.assertWritable(question.subject);
+    await this.followUps.validateIncoming([question.id]);
     let updatedContent = "";
     try {
       await app.vault.process(file, (content) => {
@@ -211,6 +221,7 @@ export class QuestionOperations {
     const managedSource = this.notes.containsQuestion(question);
     if (managedSource) await this.notes.assertWritable(question.subject);
     await this.notes.assertWritable(draft.subject);
+    await this.followUps.validateIncoming([question.id]);
     await ensureFolder(app, nextFolder);
     assertPortablePath(app, nextPath);
     let nextFile = app.vault.getAbstractFileByPath(nextPath);
@@ -299,12 +310,13 @@ export class QuestionOperations {
     const managed = this.notes.containsQuestion(question);
     if (managed) await this.notes.assertWritable(question.subject);
     const review = this.host.store.getReview(question.id);
-    const links = this.followUps.removedChanges([question.id]);
+    const links = this.followUps.removalFileChanges([question.id]);
     let updatedContent = "";
     const writes: FileChange[] = [{ file, update: content => {
       updatedContent = deleteCurrentManagedQuestion(content, question, latest => parseQuestionFile(question.filePath, latest).questions);
       return updatedContent;
-    } }, ...this.followUps.fileChanges(links)];
+    } }, ...links];
+    await validateFileChanges(app.vault, writes);
     await applyFileChanges(app.vault, writes, () => this.host.store.removeReview(question.id, { state: review, removeArchives: true }));
     await this.host.index.rebuild();
     try {

@@ -3,12 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("obsidian", () => {
   class Element {
     children = []; handlers = new Map(); text = ""; disabled = false; dataset = {};
-    constructor(options = {}) { this.text = options.text ?? ""; }
+    constructor(options = {}) { this.text = options.text ?? ""; this.cls = options.cls ?? ""; this.attributes = {}; }
     createEl(tag, options = {}) { const child = new Element(options); child.tag = tag; this.children.push(child); return child; }
     createDiv(options) { return this.createEl("div", options); }
     createSpan(options) { return this.createEl("span", options); }
     empty() { this.children = []; }
-    addClass() {} removeClass() {} setAttribute() {} setText(text) { this.text = text; }
+    addClass() {} removeClass() {} setAttribute(name, value) { this.attributes[name] = value; } setText(text) { this.text = text; }
     addEventListener(name, handler) { this.handlers.set(name, handler); }
     scrollIntoView() {}
     focus() { this.focused = true; }
@@ -29,7 +29,7 @@ vi.mock("obsidian", () => {
     }
     addText(callback) {
       const input = this.parent.createEl("input");
-      callback({ setPlaceholder() { return this; }, setValue(value) { input.value = value; return this; }, onChange(handler) { input.handlers.set("change", handler); return this; } });
+      callback({ inputEl: input, setPlaceholder() { return this; }, setValue(value) { input.value = value; return this; }, onChange(handler) { input.handlers.set("change", handler); return this; } });
       return this;
     }
     addTextArea(callback) {
@@ -321,6 +321,7 @@ import { ManagedQuestionModal } from "../src/ui/manage-modals";
 import { appendManagedQuestion, createSubjectBank } from "../src/core/managed-question";
 import { parseQuestionFile } from "../src/core/question-parser";
 import { MAX_FOLLOW_UPS } from "../src/core/follow-up";
+import { readKeywordMeaning, updateKeywordMeaning } from "../src/core/keyword-note";
 
 describe("manual question follow-up selection", () => {
   function editor(questions) {
@@ -567,41 +568,112 @@ it("locks draft inputs during a pending save and restores them after failure for
   expect(fields.map(f=>f.disabled)).toEqual(original);expect(modal.contentEl.find("취소하고 학습으로 돌아가기").disabled).toBe(false);
 });
 
-describe("keyword meaning preservation while editing a question",()=>{
-  const refs=[{target:"키워드/첫째",label:"첫째",raw:"[[키워드/첫째|첫째]]"},{target:"키워드/둘째",label:"둘째",raw:"[[키워드/둘째|둘째]]"}];
-  function editor(keywords=refs){
-    const original=new Map([[refs[0].target,"첫 줄\n둘째 줄\n\n끝 문단"],[refs[1].target,"다른 키워드 의미"]]);
-    const disk=new Map(original);const save=vi.fn(async draft=>{for(const item of draft.keywordMeanings)disk.set(item.target,item.meaning);});
-    const modal=new ManagedQuestionModal({},["과목"],"키워드",{...question,coreKeywords:keywords,subKeywords:[]},original,save);
-    modal.onOpen();return{modal,disk,original,save,submit:()=>modal.contentEl.find("저장").handlers.get("click")()};
+describe("keyword meaning preservation while editing a question", () => {
+  const refs = ["평균", "중앙값", "범위"].map(label => ({
+    target: `키워드/${label}`, label, raw: `[[키워드/${label}|${label}]]`,
+  }));
+  const notes = ["첫 줄\n둘째 줄\n\n끝 문단", "다른 키워드 의미", "보조 첫 줄\n보조 둘째 줄"];
+  const note = (label, meaning) => `# ${label}\r\n\r\n## 의미\r\n\r\n${meaning.replaceAll("\n", "\r\n")}\r\n\r\n## 연결\r\n\r\n보존할 메모\r\n`;
+  function editor(core = refs.slice(0, 2), sub = [], creating = false, loadMeaning) {
+    const original = new Map(refs.map(({ target, label }, index) => [target, note(label, notes[index])]));
+    const disk = new Map(original);
+    const meanings = new Map([...core, ...sub].map(({ target }) => [target, readKeywordMeaning(disk.get(target))]));
+    const save = vi.fn(async draft => {
+      for (const { target, label, meaning, preserveExistingWhenEmpty } of draft.keywordMeanings) {
+        const existing = disk.get(target);
+        if (existing && preserveExistingWhenEmpty && !meaning) continue;
+        disk.set(target, existing ? updateKeywordMeaning(existing, label, meaning) : note(label, meaning));
+      }
+    });
+    const modal = new ManagedQuestionModal({}, ["통계이론"], "키워드",
+      creating ? null : { ...question, subject: "통계이론", coreKeywords: core, subKeywords: sub }, meanings, save, [], undefined, loadMeaning);
+    modal.onOpen();
+    const inputs = modal.contentEl.children.filter(child => child.tag === "input");
+    const areas = modal.contentEl.children.filter(child => child.tag === "textarea");
+    if (creating) {
+      areas[0].handlers.get("change")("대표값은 무엇인가요?");
+      areas[1].handlers.get("change")("자료를 대표하는 값입니다.");
+    }
+    const groups = modal.contentEl.children.filter(child => child.cls === "mia-keyword-meanings");
+    const fields = (group = 0) => groups[group].querySelectorAll("textarea");
+    const nameInput = (value, group = 0, blur = true) => {
+      const input = inputs[group + 1];
+      input.handlers.get("change")(value);
+      if (blur) input.handlers.get("blur")();
+    };
+    const edit = (index, value, group = 0) => fields(group)[index].handlers.get("change")(value);
+    return { modal, disk, original, save, fields, nameInput, edit, submit: () => modal.contentEl.find("저장").handlers.get("click")() };
   }
-  it("does not truncate or reassign multiline meanings when only the answer changes",async()=>{
-    const ui=editor();ui.modal.answer="질문의 정답만 수정";await ui.submit();
-    expect(ui.save).toHaveBeenCalledOnce();expect(ui.disk).toEqual(ui.original);
-  });
-  it("preserves a meaning updated externally while the question editor was open",async()=>{
-    const ui=editor([refs[0]]);ui.disk.set(refs[0].target,"외부에서 갱신한 의미");await ui.submit();
-    expect(ui.disk.get(refs[0].target)).toBe("외부에서 갱신한 의미");
-  });
-  it("keeps meanings attached to their targets when keyword order alone changes",async()=>{
-    const ui=editor();ui.modal.coreNames=refs.toReversed().map(x=>x.raw).join(", ");await ui.submit();
+
+  it("does not send a meaning change when only the answer changes", async () => {
+    const ui = editor();
+    ui.modal.answer = "질문의 정답만 수정";
+    await ui.submit();
+    expect(ui.save.mock.calls[0][0].keywordMeanings).toEqual([]);
     expect(ui.disk).toEqual(ui.original);
   });
-  it("saves every line of an explicitly edited single-keyword meaning",async()=>{
-    const ui=editor([refs[0]]);ui.modal.coreMeanings="새 첫 줄\n새 둘째 줄\n\n새 문단";await ui.submit();
-    expect(ui.disk.get(refs[0].target)).toBe("새 첫 줄\n새 둘째 줄\n\n새 문단");
-  });
-  it("does not silently discard extra lines in an edited multi-keyword field",async()=>{
-    const ui=editor();ui.modal.coreMeanings="새 첫째 의미\n새 둘째 의미\n버리면 안 되는 줄";await ui.submit();
-    expect(ui.save).not.toHaveBeenCalled();expect(ui.disk).toEqual(ui.original);expect(ui.modal.close).not.toHaveBeenCalled();
-  });
-});
 
-it("preserves unedited multiline auxiliary keyword meanings and allows an explicit clear",async()=>{
-  const core={target:"키워드/핵심",label:"핵심",raw:"[[키워드/핵심|핵심]]"},sub={target:"키워드/보조",label:"보조",raw:"[[키워드/보조|보조]]"};
-  const save=vi.fn().mockResolvedValue(undefined);const modal=new ManagedQuestionModal({},["과목"],"키워드",{...question,coreKeywords:[core],subKeywords:[sub]},new Map([[core.target,"기존 핵심 의미"],[sub.target,"보조 첫 줄\n보조 둘째 줄"]]),save);
-  modal.onOpen();modal.coreMeanings="";await modal.contentEl.find("저장").handlers.get("click")();
-  expect(save.mock.calls[0][0].keywordMeanings).toEqual([{target:core.target,label:core.label,meaning:""}]);
+  it("preserves a meaning updated externally while the question editor was open", async () => {
+    const ui = editor([refs[0]]);
+    const external = note(refs[0].label, "외부에서 갱신한 의미");
+    ui.disk.set(refs[0].target, external);
+    await ui.submit();
+    expect(ui.disk.get(refs[0].target)).toBe(external);
+  });
+
+  it.each([2, 3])("writes only the edited multiline meaning with %i keywords", async count => {
+    const ui = editor(refs.slice(0, count));
+    expect(ui.fields().map(field => field.value)).toEqual(notes.slice(0, count));
+    expect(ui.fields().map(field => field.attributes["aria-label"])).toEqual(refs.slice(0, count).map(ref => `${ref.label} 의미`));
+    const meaning = "새 첫 줄\n새 둘째 줄\n\n새 문단";
+    ui.edit(0, meaning);
+    await ui.submit();
+    expect(ui.save.mock.calls[0][0].keywordMeanings).toEqual([{ target: refs[0].target, label: refs[0].label, meaning }]);
+    expect(readKeywordMeaning(ui.disk.get(refs[0].target))).toBe(meaning);
+    for (const { target } of refs.slice(1)) expect(ui.disk.get(target)).toBe(ui.original.get(target));
+  });
+
+  it("keeps edits with their targets after reordering, removing, and adding keywords on blur", async () => {
+    const ui = editor();
+    const initial = ui.fields();
+    ui.edit(0, "평균 초안");
+    ui.edit(1, "중앙값 초안");
+    ui.nameInput("중앙값, 평균", 0, false);
+    expect(ui.fields()).toEqual(initial);
+    ui.nameInput("중앙값, 평균");
+    expect(ui.fields().map(field => field.value)).toEqual(["중앙값 초안", "평균 초안"]);
+    ui.nameInput("범위, 중앙값");
+    expect(ui.fields().map(field => field.value)).toEqual(["", "중앙값 초안"]);
+    await ui.submit();
+    expect(ui.save.mock.calls[0][0].keywordMeanings).toEqual([{ target: refs[1].target, label: refs[1].label, meaning: "중앙값 초안" }]);
+    expect(ui.disk.get(refs[0].target)).toBe(ui.original.get(refs[0].target));
+  });
+
+  it("preserves unedited multiline auxiliary meanings and allows an explicit clear", async () => {
+    const ui = editor([refs[0]], [refs[2]]);
+    expect(ui.fields(1)[0].value).toBe(notes[2]);
+    ui.edit(0, "");
+    await ui.submit();
+    expect(ui.save.mock.calls[0][0].keywordMeanings).toEqual([{ target: refs[0].target, label: refs[0].label, meaning: "" }]);
+    expect(ui.disk.get(refs[2].target)).toBe(ui.original.get(refs[2].target));
+  });
+
+  it("previews a reused note on create and preserves it if the new meaning is left empty", async () => {
+    const ui = editor([], [], true, async ({ target }) => notes[refs.findIndex(ref => ref.target === target)] ?? "");
+    expect(ui.fields()).toHaveLength(0);
+    ui.nameInput("평균, 사분위수, 범위");
+    await vi.waitFor(() => expect(ui.fields()[0].value).toBe(notes[0]));
+    expect(ui.fields().map(field => field.value)).toEqual([notes[0], "", notes[2]]);
+    ui.edit(0, "");
+    ui.edit(1, "첫 줄\n새 질문에 쓸 둘째 줄");
+    await ui.submit();
+    expect(ui.save.mock.calls[0][0].keywordMeanings).toEqual([
+      { target: refs[0].target, label: refs[0].label, meaning: "", preserveExistingWhenEmpty: true },
+      { target: "키워드/사분위수", label: "사분위수", meaning: "첫 줄\n새 질문에 쓸 둘째 줄" },
+    ]);
+    for (const { target } of refs) expect(ui.disk.get(target)).toBe(ui.original.get(target));
+    expect(readKeywordMeaning(ui.disk.get("키워드/사분위수"))).toBe("첫 줄\n새 질문에 쓸 둘째 줄");
+  });
 });
 
 it("does not present the FSRS log's previous-review timestamp as a scheduled due date", async () => {

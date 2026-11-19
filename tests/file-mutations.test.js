@@ -13,6 +13,7 @@ import MiaStudyPlugin from "../src/main";
 import { QuestionIndex } from "../src/services/question-index";
 import { appendManagedQuestion,createSubjectBank } from "../src/core/managed-question";
 import { readKeywordMeaning } from "../src/core/keyword-note";
+import { questionBlockLink } from "../src/core/follow-up";
 import { parseQuestionFile } from "../src/core/question-parser";
 import { renderSubjectNote } from "../src/core/subject-note";
 
@@ -434,10 +435,104 @@ describe("late reverse-link conflicts",()=>{
     await expect(editor.submit(["mia-q-two"],true)).rejects.toThrow(/변경/);
     expect(env.contents.get(oldPath)).toBe(original);expect(env.contents.get(nextPath)).toBe(external);
   });
-  it("does not silently remove another unresolved link while refreshing a valid target",async()=>{
-    const env=await connectedEnvironment();const {updateQuestionMetadata}=await import("../src/core/question-writer");
-    const q=env.plugin.index.questionById("mia-q-one");env.contents.set(oldPath,updateQuestionMetadata(env.contents.get(oldPath),q,{...q,followUpLinks:["[[bank#^mia-q-two|둘]]","[[missing#^mia-q-missing|누락]]"]}));await env.plugin.index.rebuild();const before=env.contents.get(oldPath);
-    await expect(env.plugin.followUps.refreshIncoming(["mia-q-two"])).rejects.toThrow();expect(env.contents.get(oldPath)).toBe(before);
+  it("preserves an unresolved link while refreshing a valid target", async () => {
+    const { plugin, contents } = await connectedEnvironment();
+    const unresolved = "[[missing#^mia-q-missing|누락, 원문]]";
+    const oldLink = "[[bank#^mia-q-two|둘]]";
+    contents.set(oldPath, contents.get(oldPath).replace("> 보조:", `> 보조:\n> 이어볼 질문: ${oldLink} ,  ${unresolved}`));
+    await plugin.index.rebuild();
+    const before = contents.get(oldPath);
+    await plugin.followUps.refreshIncoming(["mia-q-two"]);
+    const newLink = questionBlockLink(plugin.index.questionById("mia-q-two"));
+    expect(contents.get(oldPath)).toContain(`> 이어볼 질문: ${newLink} ,  ${unresolved}`);
+    expect(before).toContain(oldLink);
+  });
+});
+
+describe("automatic cleanup with dangling follow-ups", () => {
+  const sourceSubject = "지리학", incomingSubject = "통계이론", nextSubject = "레시피";
+  const bankPath = subject => `MIA/${subject}/문제은행.md`;
+  const sourcePath = bankPath(sourceSubject), incomingPath = bankPath(incomingSubject);
+  const sourceId = "mia-q-region", incomingId = "mia-q-statistics";
+  const dangling = "[[기록/이전 문제은행.md#^mia-q-missing|  누락, 원본 별칭  ]]";
+  const untouched = "[[기록/이전 문제은행.md#^mia-q-two|수정 대상 밖의 링크]]";
+  const affected = "[[이전 파일#^mia-q-region|이전 이름]]";
+  const outgoing = "[[기록/다른 파일#^mia-q-also-missing|누락된 다른 질문]]";
+
+  async function setup() {
+    const env = await connectedEnvironment();
+    for (const subject of [sourceSubject, incomingSubject]) {
+      env.add(`MIA/${subject}`, new TFolder());
+      env.add(bankPath(subject), new TFile());
+    }
+    env.contents.set(sourcePath, appendManagedQuestion(createSubjectBank(sourceSubject),
+      { ...input, questionMarkdown: "유역이란 무엇인가요?", followUpLinks: [outgoing] }, sourceId));
+    env.contents.set(incomingPath, appendManagedQuestion(createSubjectBank(incomingSubject),
+      { ...input, questionMarkdown: "중앙값이란 무엇인가요?", followUpLinks: [dangling, affected, untouched] }, incomingId));
+    env.plugin.store.removeReview = vi.fn(async () => {});
+    env.plugin.store.removeReviews = vi.fn(async () => {});
+    env.plugin.store.getReview = () => undefined;
+    await env.plugin.index.rebuild();
+    return { ...env, sourceQuestion: env.plugin.index.questionById(sourceId) };
+  }
+
+  it.each(["edit-question", "move-question", "rename-subject", "delete-question", "delete-subject"])(
+    "preserves unresolved Markdown bytes and completes %s", async operation => {
+      const { plugin, contents, files, sourceQuestion } = await setup();
+      const draft = { ...input, subject: sourceSubject, questionMarkdown: "유역의 범위는 무엇인가요?", keywordMeanings: [] };
+      if (operation === "edit-question") await plugin.updateManagedQuestion(sourceQuestion, draft);
+      if (operation === "move-question") await plugin.moveManagedQuestion(sourceQuestion, { ...draft, subject: nextSubject });
+      if (operation === "rename-subject") await plugin.renameSubject(sourceSubject, nextSubject);
+      if (operation === "delete-question") await plugin.deleteManagedQuestion(sourceQuestion);
+      if (operation === "delete-subject") await plugin.deleteSubject(sourceSubject);
+
+      const text = contents.get(incomingPath);
+      const updated = plugin.index.questionById(sourceId);
+      const links = parseQuestionFile(incomingPath, text).questions[0].followUpIds;
+      if (operation.startsWith("delete")) {
+        expect(updated).toBeUndefined();
+        expect(links).toEqual(["mia-q-missing", "mia-q-two"]);
+        expect(text).toContain(`> 이어보기: ${dangling}, ${untouched}`);
+        if (operation === "delete-question") expect(plugin.store.removeReview).toHaveBeenCalledWith(sourceId, expect.anything());
+        else {
+          expect(plugin.store.removeReviews).toHaveBeenCalledWith([sourceId]);
+          expect(files.has(sourcePath)).toBe(false);
+        }
+      } else {
+        expect(updated.subject).toBe(operation === "edit-question" ? sourceSubject : nextSubject);
+        expect(contents.get(updated.filePath)).toContain(outgoing);
+        expect(links).toEqual(["mia-q-missing", sourceId, "mia-q-two"]);
+        expect(text).toContain(`> 이어보기: ${dangling}, ${questionBlockLink(updated)}, ${untouched}`);
+      }
+    },
+  );
+
+  it.each(["delete", "rename", "move"])("validates incoming files before a subject or question %s", async operation => {
+    const { plugin, contents, sourceQuestion, trashFile, renameFile, vault } = await setup();
+    contents.set(incomingPath, contents.get(incomingPath).replace(affected, outgoing));
+    const before = new Map(contents);
+    const operationPromise = operation === "delete" ? plugin.deleteSubject(sourceSubject)
+      : operation === "rename" ? plugin.renameSubject(sourceSubject, nextSubject)
+        : plugin.moveManagedQuestion(sourceQuestion, { ...input, subject: nextSubject, keywordMeanings: [] });
+    await expect(operationPromise).rejects.toThrow(/연결이 다른 작업에서 변경/);
+    expect(trashFile).not.toHaveBeenCalled();
+    expect(renameFile).not.toHaveBeenCalled();
+    expect(vault.process).not.toHaveBeenCalled();
+    expect(contents).toEqual(before);
+    expect(plugin.store.removeReviews).not.toHaveBeenCalled();
+  });
+
+  it("rejects a vanished follow-up selected while creating a question before writing", async () => {
+    const { plugin, contents, files, vault, sourceQuestion } = await setup();
+    const selected = questionBlockLink(sourceQuestion);
+    files.delete(sourcePath);
+    contents.delete(sourcePath);
+    const before = new Map(contents);
+    await expect(plugin.createManagedQuestion({
+      ...input, subject: nextSubject, followUpLinks: [selected], keywordMeanings: [],
+    })).rejects.toThrow(/연결할 질문이 변경 또는 삭제/);
+    expect(contents).toEqual(before);
+    expect(vault.createFolder).not.toHaveBeenCalled();
   });
 });
 

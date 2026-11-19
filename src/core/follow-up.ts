@@ -4,6 +4,14 @@ export const MAX_FOLLOW_UPS = 50;
 
 type RegisteredQuestion = QuestionRecord & { id: string };
 
+/** Raw block links and their offsets, shared by the parser and automatic updates. */
+export function* followUpBlockLinks(value: string) {
+  for (const match of value.matchAll(/\[\[((?:(?!\[\[|\]\]|\|).)+)(?:\|.*?)?\]\]/g)) {
+    const id = match[1]?.trim().match(/#\^(mia-q-[A-Za-z0-9-]+)$/)?.[1];
+    if (id) yield { id, raw: match[0], offset: match.index };
+  }
+}
+
 export function normalizeFollowUpIds(baseId: string, ids: readonly string[]): string[] {
   return [...new Set(ids.map((id) => id.trim()).filter((id) => id && id !== baseId))].slice(0, MAX_FOLLOW_UPS);
 }

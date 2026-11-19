@@ -2,7 +2,7 @@ import { Notice, TFile, TFolder, normalizePath } from "obsidian";
 import { createSubjectBank, renameSubjectBank, validateSubjectName } from "../core/managed-question";
 import { portableNameKey } from "../core/note-name";
 import { isManagedSubjectNote, renderSubjectNote, subjectNoteFileName } from "../core/subject-note";
-import { applyFileChanges, type FileChange } from "./file-change-batch";
+import { applyFileChanges, validateFileChanges, type FileChange } from "./file-change-batch";
 import type { FollowUpLinks } from "./follow-up-links";
 import type { MiaHost } from "./mia-host";
 import type { SubjectNotes } from "./subject-notes";
@@ -62,6 +62,8 @@ export class SubjectOperations {
       && isManagedSubjectNote(await app.vault.cachedRead(oldNote));
     const futureNote = app.vault.getAbstractFileByPath(normalizePath(`${currentPath}/${subjectNoteFileName(next)}`));
     if (futureNote && futureNote.path !== oldNotePath) throw new Error("변경할 과목 노트 이름과 같은 파일이 이미 있습니다.");
+    await this.followUps.validateIncoming(this.host.index.registered
+      .filter(question => question.filePath.startsWith(`${currentPath}/`)).map(question => question.id));
     let createdNote: { path: string; content: string } | undefined;
     try {
       await app.fileManager.renameFile(folder, nextPath);
@@ -130,10 +132,11 @@ export class SubjectOperations {
     const ids = this.host.index.registered
       .filter((question) => question.filePath.startsWith(`${folderPath}/`))
       .map((question) => question.id);
+    const writes = this.followUps.removalFileChanges(ids);
+    await validateFileChanges(app.vault, writes);
     await trashFileVerified(app, folder);
     try {
       await this.host.index.rebuild();
-      const writes = this.followUps.fileChanges(this.followUps.removedChanges(ids));
       await applyFileChanges(app.vault, writes, () => this.host.store.removeReviews(ids));
       await this.host.index.rebuild();
     } catch (error) {

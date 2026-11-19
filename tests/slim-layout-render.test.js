@@ -20,6 +20,7 @@ import { FollowUpModal } from "../src/ui/follow-up-modal";
 import { SubjectExportModal } from "../src/ui/subject-export-modal";
 import { bindKeyboardViewport } from "../src/ui/mobile-keyboard";
 import { DEFAULT_SETTINGS } from "../src/core/models";
+import { keywordReferencesFromInput } from "../src/core/keyword-path";
 let dom;
 beforeEach(() => {
   vi.useFakeTimers(); vi.setSystemTime(new Date("2026-11-16T00:00:00Z"));
@@ -156,10 +157,31 @@ it("renders additional real screens and states for computed-style equivalence", 
   expect(cases["auto-question"]).toContain("자동 10");
   expect(cases["auto-answer"]).toContain("자동 5");
   expect(cases["leech-rows"]).toContain("mia-leech");
+  const names = ["평균", "중앙값", "최빈값", "범위", "사분위수", "백분위수", "누적 도수", "상대 도수"];
+  for (const count of [1, 3, 8]) {
+    const keywords = keywordReferencesFromInput(names.slice(0, count).join(", "), "키워드");
+    const record = { ...question, subject: "통계이론", coreKeywords: keywords.slice(0, 3), subKeywords: keywords.slice(3) };
+    const meanings = new Map(keywords.map(({ target, label }) => [target, `${label}의 의미\n둘째 줄\n\n마지막 문단`]));
+    const modal = new ManagedQuestionModal(app, ["통계이론"], "키워드", record, meanings, async () => {});
+    modal.open();
+    const fields = modal.contentEl.querySelectorAll(".mia-keyword-meanings textarea");
+    expect(fields).toHaveLength(count);
+    expect(fields[0].value).toBe("평균의 의미\n둘째 줄\n\n마지막 문단");
+    capture(`question-editor-${count}`, modal.containerEl);
+    modal.close();
+  }
   if (process.env.MIA_GENERATE_LAYOUT_HARNESS === "1") {
     await mkdir(".claude/slim", { recursive: true });
     // Reuse the exact host defaults; only replace the standalone boot script.
-    const base = layoutHarness({ short: cases.hidden });
+    const base = layoutHarness({ short: cases.hidden }).replace('<link rel="stylesheet"', `<style>
+:where(.mia-keyboard-modal-container) { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+:where(.mia-keyboard-modal) { position: relative; max-width: 100%; }
+:where(.mia-keyboard-modal .modal-header) { padding: 18px 20px 8px; }
+:where(.mia-keyboard-modal .modal-content) { padding: 8px 20px 20px; }
+:where(.mia-keyboard-modal .setting-item) { padding-block: 14px; }
+:where(.mia-keyboard-modal .setting-item-control) { display: flex; }
+</style>
+<link rel="stylesheet"`);
     const html = base.slice(0, base.indexOf('<script id="mia-cases"')) + `<script id="mia-extra-cases" type="application/json">${JSON.stringify(cases).replaceAll("<", "\\u003c")}</script>
 <script>
 const params = new URLSearchParams(location.search), cases = JSON.parse(document.getElementById('mia-extra-cases').textContent);
@@ -175,12 +197,12 @@ for (const [key,value] of Object.entries({width:innerWidth,height:innerHeight,le
 for (const edge of ['Left','Right','Top','Bottom']) root.style.setProperty('--safe-area-inset-'+edge.toLowerCase(),(Number(params.get('safe'+edge))||0)+'px');
 root.dataset.viewportHeight = innerHeight < 440 ? 'short' : innerHeight < 600 ? 'compact' : 'regular';
 window.miaLayoutReport = () => {
-  const surface = root.querySelector('.mia-recovery-modal, .mia-confirm-modal');
+  const surface = root.querySelector('.mia-recovery-modal, .mia-confirm-modal, .mia-editor-modal-long');
   const content = surface?.querySelector('.modal-content');
   return {
     route, device, paneWidth: innerWidth, innerWidth, contentWidth: root.getBoundingClientRect().width,
     contentSafePaneRatio: 1, grids: {}, elements: document.querySelectorAll('.view-content *').length,
-    horizontalOverflow: surface && [surface, content].some(el => el.scrollWidth > el.clientWidth + 1),
+    horizontalOverflow: surface && [surface, content, ...surface.querySelectorAll(".mia-keyword-meanings, .setting-item-control, textarea")].some(el => el.scrollWidth > el.clientWidth + 1),
     paneHorizontalOverflow: surface && (Math.min(surface.getBoundingClientRect().left, content.getBoundingClientRect().left) < -1
       || Math.max(surface.getBoundingClientRect().right, content.getBoundingClientRect().right) > innerWidth + 1),
   };
@@ -190,3 +212,108 @@ window.miaLayoutReport = () => {
     await writeFile(".claude/slim/layout-extra-cases.json", JSON.stringify(Object.keys(cases)));
   }
 });
+
+async function timedStudy(appearance) {
+  const { view, root } = await renderLayoutCase({ revealed: false });
+  view.plugin.modalOpenGuard = { open: (_key, create) => create().open() };
+  view.plugin.studyUi.updateAppearance(appearance);
+  view.startReview(["q", "related"]);
+  const saveReview = vi.fn(async (id, state) => { view.plugin.store.reviews[id] = state; });
+  view.plugin.store.setReview = saveReview;
+  const saveAppearance = changes => {
+    root.querySelector(".mia-appearance-button").click();
+    const modal = document.querySelector(".mia-appearance-modal");
+    for (const [label, value] of changes) {
+      const name = [...modal.querySelectorAll(".setting-item-name")].find(el => el.textContent === label);
+      const control = name.closest(".setting-item").querySelector("select, input");
+      if (control.type === "checkbox") control.checked = value;
+      else control.value = value;
+      control.dispatchEvent(new window.Event("change"));
+    }
+    [...modal.querySelectorAll("button")].find(el => el.textContent === "보기 설정 저장").click();
+    expect(modal.isConnected).toBe(false);
+  };
+  return { view, root, saveReview, saveAppearance };
+}
+
+it.each([["question", "skip"], ["answer", "skip"], ["answer", "again"]])(
+  "stops automatic progress immediately on the %s phase with %s action", async (phase, action) => {
+    const intervals = vi.spyOn(globalThis, "setInterval");
+    const { view, root, saveReview, saveAppearance } = await timedStudy({
+      autoQuestionSeconds: 5, autoAnswerSeconds: 3, autoAnswerAction: action,
+    });
+    const revealed = phase === "answer";
+    if (revealed) root.querySelector(".mia-reveal").click();
+    const card = root.querySelector(".mia-study-card");
+    const history = structuredClone(view.plugin.store.reviews);
+    const [lateTick] = intervals.mock.calls.at(-1);
+    await vi.advanceTimersByTimeAsync(2000);
+    root.scrollTop = 57;
+    saveAppearance([[revealed ? "정답 시간" : "질문 시간", "0"]]);
+    expect(root.querySelector(".mia-auto-advance")).toBeNull();
+    expect(root.querySelector(".mia-study-card")).toBe(card);
+    expect(root.scrollTop).toBe(57);
+    lateTick();
+    await vi.advanceTimersByTimeAsync(12_000);
+    expect(view.queueIndex).toBe(0);
+    expect(view.answerVisible).toBe(revealed);
+    expect(view.plugin.store.reviews).toEqual(history);
+    expect(saveReview).not.toHaveBeenCalled();
+    await view.onClose();
+    expect(view.answerTimer).toBeNull();
+  },
+);
+
+it("applies a new limit and timer visibility to the current card without resetting recall time or leaking intervals", async () => {
+  const active = new Set();
+  const set = globalThis.setInterval, clear = globalThis.clearInterval;
+  vi.spyOn(globalThis, "setInterval").mockImplementation((fn, ms) => {
+    const id = set(fn, ms);
+    if (ms === 1000) active.add(id);
+    return id;
+  });
+  vi.spyOn(globalThis, "clearInterval").mockImplementation(id => { active.delete(id); clear(id); });
+  const { view, root, saveAppearance, saveReview } = await timedStudy({ autoQuestionSeconds: 15, answerTimer: true });
+  const clock = view.answerClock;
+  await vi.advanceTimersByTimeAsync(4000);
+  saveAppearance([["질문 시간", "10"], ["답변 타이머", false]]);
+  expect(root.querySelector(".mia-auto-advance").textContent).toBe("자동 6");
+  expect(root.querySelector(".mia-answer-timer")).toBeNull();
+  expect(active.size).toBe(1);
+  await vi.advanceTimersByTimeAsync(1000);
+  saveAppearance([["답변 타이머", true]]);
+  expect(root.querySelector(".mia-answer-timer").textContent).toBe("0:05");
+  expect(view.answerClock).toBe(clock);
+  expect(active.size).toBe(1);
+  await vi.advanceTimersByTimeAsync(4000);
+  expect(view.answerVisible).toBe(false);
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(view.answerVisible).toBe(true);
+  root.querySelector(".mia-ratings button[data-grade='4']").click();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(saveReview.mock.calls[0][1].history[0].answer_ms).toBe(10_000);
+  await view.onClose();
+  expect(active.size).toBe(0);
+});
+
+it.each([["skip", "again"], ["again", "skip"]])(
+  "restarts an overdue shortened countdown safely and changes the action from %s to %s", async (before, after) => {
+    const { view, root, saveAppearance, saveReview } = await timedStudy({
+      autoAnswerSeconds: 15, autoAnswerAction: before,
+    });
+    root.querySelector(".mia-reveal").click();
+    await vi.advanceTimersByTimeAsync(6000);
+    saveAppearance([["정답 시간", "3"], ["정답 후 동작", after]]);
+    expect(root.querySelector(".mia-auto-advance").textContent).toBe("자동 3");
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(view.queueIndex).toBe(0);
+    expect(saveReview).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(view.queueIndex).toBe(1);
+    if (after === "again") expect(saveReview.mock.calls[0][1].lastRating).toBe(1);
+    else expect(saveReview).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(saveReview).toHaveBeenCalledTimes(after === "again" ? 1 : 0);
+    await view.onClose();
+  },
+);

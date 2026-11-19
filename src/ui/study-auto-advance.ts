@@ -21,7 +21,10 @@ export class StudyAutoAdvance {
     if (key !== this.key) {
       this.key = key;
       this.paused = false;
-      this.clock = new AnswerClock(this.document?.hidden ?? false);
+      this.clock = new AnswerClock(this.blocked);
+    } else if (seconds !== this.seconds && this.clock && autoRemaining(seconds, this.clock.milliseconds) === 0) {
+      // A shorter, already elapsed limit starts a fresh countdown for this phase.
+      this.clock = new AnswerClock(this.blocked);
     }
     this.seconds = seconds;
     const context = parent.ownerDocument?.createElement("span");

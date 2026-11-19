@@ -6,6 +6,7 @@ import {
   QuestionType,
   KeywordReference,
 } from "./models";
+import { followUpBlockLinks } from "./follow-up";
 import { fencedCodeLines } from "./markdown-structure";
 
 export const QUESTION_CALLOUT = /^>\s*\[!question\](?:[+-])?(?:\s+.*)?$/i;
@@ -63,12 +64,7 @@ function parseKeywordReferences(value: string): KeywordReference[] {
 }
 
 function parseFollowUpIds(value: string): string[] {
-  const ids = new Set<string>();
-  for (const [, target] of value.matchAll(/\[\[((?:(?!\[\[|\]\]|\|).)+)(?:\|.*?)?\]\]/g)) {
-    const id = target?.trim().match(/#\^(mia-q-[A-Za-z0-9-]+)$/)?.[1];
-    if (id) ids.add(id);
-  }
-  return [...ids];
+  return [...new Set(Array.from(followUpBlockLinks(value), link => link.id))];
 }
 
 function parseMetadataBlock(lines: string[], startLine: number): MetadataBlock {

@@ -1,8 +1,8 @@
 import { renderQuestionTitle } from "./question-title";
-import { App, Component, Modal, Notice, Setting } from "obsidian";
+import { App, Component, Modal, Notice, Setting, type TextComponent } from "obsidian";
 import { keywordReferencesFromInput } from "../core/keyword-path";
 import type { ManagedQuestionDraft } from "../core/managed-question";
-import { QUESTION_TYPES, QuestionRecord, QuestionType } from "../core/models";
+import { QUESTION_TYPES, KeywordReference, QuestionRecord, QuestionType } from "../core/models";
 import { MAX_FOLLOW_UPS, questionBlockLink } from "../core/follow-up";
 import { errorMessage } from "./error-message";
 import { KeyboardAwareModal } from "./mobile-keyboard";
@@ -47,19 +47,10 @@ export class ConfirmDeleteModal extends Modal {
   onClose(): void { this.contentEl.empty(); }
 }
 
-function keywordMeanings(
-  keywords: ReturnType<typeof keywordReferencesFromInput>,
-  value: string,
-): Array<{ target: string; label: string; meaning: string }> {
-  const meanings = value.replaceAll("\r\n", "\n").split("\n");
-  if (keywords.length > 1 && meanings.length > keywords.length) {
-    throw new Error("여러 키워드의 의미는 순서대로 한 줄씩 입력하세요. 여러 줄 의미는 키워드 편집에서 수정할 수 있습니다.");
-  }
-  return keywords.map((keyword, index) => ({
-    target: keyword.target,
-    label: keyword.label,
-    meaning: keywords.length === 1 ? value.trim() : meanings[index]?.trim() ?? "",
-  }));
+interface MeaningEdit {
+  original: string;
+  value?: string;
+  loading?: Promise<void>;
 }
 
 export class SubjectEditorModal extends KeyboardAwareModal {
@@ -105,12 +96,9 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
   private answer: string;
   private type: QuestionType;
   private coreNames: string;
-  private coreMeanings: string;
   private subNames: string;
-  private subMeanings: string;
   private readonly originalMeanings: ReadonlyMap<string, string>;
-  private readonly originalCoreMeanings: string;
-  private readonly originalSubMeanings: string;
+  private readonly meaningEdits = new Map<string, MeaningEdit>();
   private readonly selectedFollowUps = new Map<string, QuestionRecord & { id: string }>();
 
   constructor(
@@ -122,6 +110,7 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
     private readonly onSubmit: (draft: ManagedQuestionDraft) => Promise<void>,
     private readonly availableQuestions: ReadonlyArray<QuestionRecord & { id: string }> = [],
     private readonly onClosed?: () => void,
+    private readonly loadMeaning?: (keyword: KeywordReference, subject: string) => Promise<string>,
   ) {
     super(app, "long");
     this.subject = existing?.subject ?? subjects[0] ?? "";
@@ -129,12 +118,8 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
     this.answer = existing?.answerMarkdown ?? "";
     this.type = existing?.questionType ?? "정의형";
     this.coreNames = existing?.coreKeywords.map((item) => item.raw).join(", ") ?? "";
-    this.coreMeanings = existing?.coreKeywords.map((item) => meanings.get(item.target) ?? "").join("\n") ?? "";
     this.subNames = existing?.subKeywords.map((item) => item.raw).join(", ") ?? "";
-    this.subMeanings = existing?.subKeywords.map((item) => meanings.get(item.target) ?? "").join("\n") ?? "";
     this.originalMeanings = new Map(meanings);
-    this.originalCoreMeanings = this.coreMeanings;
-    this.originalSubMeanings = this.subMeanings;
     this.setTitle(existing ? "질문 수정" : "질문 추가");
   }
 
@@ -162,21 +147,28 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
       QUESTION_TYPES.forEach((type) => dropdown.addOption(type, type));
       dropdown.setValue(this.type).onChange((value) => { this.type = value as QuestionType; });
     });
-    new Setting(this.contentEl).setName("핵심 키워드").setDesc("쉼표로 구분합니다. 하나 이상 필요합니다.").addText((text) => {
-      text.setPlaceholder("레시피 원칙, 인구 분석").setValue(this.coreNames).onChange((value) => { this.coreNames = value; });
-    });
-    const meaningDescription = "키워드 하나는 여러 줄, 여러 키워드는 순서대로 한 줄씩 입력합니다. 수정하지 않은 기존 의미는 유지합니다. 새로 연결한 키워드의 의미를 비우면 기존 내용을 유지합니다.";
-    new Setting(this.contentEl).setName("핵심 키워드 의미").setDesc(meaningDescription).addTextArea((text) => {
-      text.setValue(this.coreMeanings).onChange((value) => { this.coreMeanings = value; });
-      text.inputEl.rows = 4;
-    });
-    new Setting(this.contentEl).setName("보조 키워드").setDesc("쉼표로 구분합니다.").addText((text) => {
-      text.setPlaceholder("대칭성, 폐곡면").setValue(this.subNames).onChange((value) => { this.subNames = value; });
-    });
-    new Setting(this.contentEl).setName("보조 키워드 의미").setDesc(meaningDescription).addTextArea((text) => {
-      text.setValue(this.subMeanings).onChange((value) => { this.subMeanings = value; });
-      text.inputEl.rows = 4;
-    });
+    const meaningFields: Array<{ parent: HTMLElement; names: () => string }> = [];
+    const keywordSetting = (name: string, description: string, configure: (text: TextComponent) => void, names: () => string) => {
+      const setting = new Setting(this.contentEl).setName(name).setDesc(description);
+      const parent = this.contentEl.createDiv({ cls: "mia-keyword-meanings" });
+      meaningFields.push({ parent, names });
+      setting.addText(text => {
+        configure(text);
+        let renderedNames = names();
+        text.inputEl.addEventListener("blur", () => {
+          if (names() === renderedNames) return;
+          renderedNames = names();
+          this.renderMeaningFields(meaningFields);
+        });
+      });
+    };
+    keywordSetting("핵심 키워드", "쉼표로 구분합니다. 하나 이상 필요합니다.", text => {
+      text.setPlaceholder("레시피 원칙, 인구 분석").setValue(this.coreNames).onChange(value => { this.coreNames = value; });
+    }, () => this.coreNames);
+    keywordSetting("보조 키워드", "쉼표로 구분합니다.", text => {
+      text.setPlaceholder("중앙값, 분포").setValue(this.subNames).onChange(value => { this.subNames = value; });
+    }, () => this.subNames);
+    this.renderMeaningFields(meaningFields);
     if (!this.existing && this.availableQuestions.length) this.renderFollowUpPicker();
     new Setting(this.contentEl).addButton((button) => button.setButtonText(this.onClosed ? "취소하고 학습으로 돌아가기" : "취소").onClick(() => this.close()));
     const status = this.contentEl.createEl("p", { cls: "mia-muted", attr: { role: "status", "aria-live": "polite" } });
@@ -204,6 +196,12 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
         button.setDisabled(true).setButtonText("저장 중…");
         status.setText("질문을 저장하고 있습니다…");
         button.buttonEl.scrollIntoView({ block: "nearest" });
+        const keywords = [...coreKeywords, ...subKeywords];
+        const pending = keywords.flatMap(({ target }) => {
+          const edit = this.meaningEdits.get(target);
+          return edit?.value !== undefined && edit.loading ? [edit.loading] : [];
+        });
+        if (pending.length) await Promise.all(pending);
         await this.onSubmit({
           subject,
           questionMarkdown: question,
@@ -212,10 +210,7 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
           coreKeywords,
           subKeywords,
           ...(!this.existing ? { followUpLinks: [...this.selectedFollowUps.values()].map(questionBlockLink) } : {}),
-          keywordMeanings: [
-            ...this.meaningChanges(coreKeywords, this.coreMeanings, this.originalCoreMeanings),
-            ...this.meaningChanges(subKeywords, this.subMeanings, this.originalSubMeanings),
-          ],
+          keywordMeanings: this.meaningChanges(keywords),
         });
         this.saving = false;
         this.close();
@@ -240,16 +235,57 @@ export class ManagedQuestionModal extends KeyboardAwareModal {
     }
   }
 
-  private meaningChanges(keywords: ReturnType<typeof keywordReferencesFromInput>, value: string, original: string): ManagedQuestionDraft["keywordMeanings"] {
-    // A flat textarea cannot round-trip several multiline notes. Unedited notes
-    // stay attached to their targets, even if the question's keyword order changes.
-    const changes = this.existing && value === original
-      ? keywords.filter(keyword => !this.originalMeanings.has(keyword.target))
-        .map(keyword => ({ target: keyword.target, label: keyword.label, meaning: "" }))
-      : keywordMeanings(keywords, value).filter(item => !this.originalMeanings.has(item.target)
-        || this.originalMeanings.get(item.target) !== item.meaning);
-    return changes.map(item => !item.meaning && !this.originalMeanings.has(item.target)
-      ? { ...item, preserveExistingWhenEmpty: true } : item);
+  private renderMeaningFields(groups: ReadonlyArray<{ parent: HTMLElement; names: () => string }>): void {
+    const rendered = new Set<string>();
+    for (const { parent, names } of groups) {
+      let keywords: KeywordReference[];
+      try {
+        keywords = keywordReferencesFromInput(names(), this.keywordFolder);
+      } catch {
+        // Invalid input is reported at save, while the meaning drafts stay intact.
+        keywords = [];
+      }
+      parent.empty();
+      for (const keyword of keywords) {
+        if (rendered.has(keyword.target)) continue;
+        rendered.add(keyword.target);
+        let edit = this.meaningEdits.get(keyword.target);
+        if (!edit) {
+          edit = { original: this.originalMeanings.get(keyword.target) ?? "" };
+          this.meaningEdits.set(keyword.target, edit);
+          if (!this.originalMeanings.has(keyword.target) && this.loadMeaning) {
+            const field = edit;
+            field.loading = this.loadMeaning(keyword, this.newSubject.trim() || this.subject)
+              .then(value => { field.original = value; })
+              .catch(error => { new Notice(`키워드 의미를 불러오지 못했습니다: ${errorMessage(error)}`); })
+              .finally(() => { delete field.loading; });
+          }
+        }
+        const field = edit;
+        new Setting(parent).setName(keyword.label).addTextArea(text => {
+          text.inputEl.rows = 4;
+          text.inputEl.setAttribute("aria-label", `${keyword.label} 의미`);
+          text.setValue(field.value ?? field.original).onChange(value => { field.value = value; });
+          void field.loading?.then(() => {
+            if (field.value === undefined) text.setValue(field.original);
+          });
+        });
+      }
+    }
+  }
+
+  private meaningChanges(keywords: readonly KeywordReference[]): ManagedQuestionDraft["keywordMeanings"] {
+    const changes = new Map<string, ManagedQuestionDraft["keywordMeanings"][number]>();
+    for (const { target, label } of keywords) {
+      const edit = this.meaningEdits.get(target);
+      if (edit?.value === undefined || changes.has(target)) continue;
+      const meaning = edit.value.trim();
+      if (meaning === edit.original.trim() && (meaning || this.originalMeanings.has(target))) continue;
+      changes.set(target, !meaning && !this.originalMeanings.has(target)
+        ? { target, label, meaning, preserveExistingWhenEmpty: true }
+        : { target, label, meaning });
+    }
+    return [...changes.values()];
   }
 
   private renderFollowUpPicker(): void {
@@ -342,5 +378,3 @@ export class KeywordEditorModal extends KeyboardAwareModal {
 
   onClose(): void { this.contentEl.empty(); }
 }
-
-export const ManageModalInternals = { keywordMeanings };
