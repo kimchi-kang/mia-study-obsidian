@@ -380,9 +380,10 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
   }
 
   openKeywordEditor(entry: KeywordNoteEntry | null = null): void {
-    const target = entry?.filePath ?? "new";
+    if (entry) entry = this.keywords.withExistingNote(entry);
+    const target = entry?.filePath ?? entry?.target;
     void this.modalOpenGuard.openAsync(dialogKey("keyword-editor", target), async () => {
-      const meaning = entry ? await this.readKeywordNote(entry.filePath) : "";
+      const meaning = entry?.filePath ? await this.readKeywordNote(entry.filePath) : "";
       return new KeywordEditorModal(this.app, entry ? { name: entry.name, meaning } : null, (name, value) =>
         this.saveKeyword(entry, name, value),
       );
@@ -390,11 +391,15 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
   }
 
   confirmDeleteKeyword(entry: KeywordNoteEntry): void {
-    const linked = this.keywords.questionsUsing([entry.target]);
-    this.modalOpenGuard.open(dialogKey("keyword-delete", entry.filePath), () => new ConfirmDeleteModal(
+    entry = this.keywords.withExistingNote(entry);
+    const targets = [entry.target];
+    const linked = this.keywords.questionsUsing(targets, entry.filePath ? targets : []);
+    this.modalOpenGuard.open(dialogKey("keyword-delete", entry.filePath ?? entry.target), () => new ConfirmDeleteModal(
       this.app,
       `${entry.name} 키워드 삭제`,
-      `키워드 노트를 휴지통으로 이동하고 연결된 질문 ${linked.length}개의 핵심·보조 키워드 목록에서도 제거합니다.`,
+      entry.filePath
+        ? `키워드 노트를 휴지통으로 이동하고 연결된 질문 ${linked.length}개의 핵심·보조 키워드 목록에서도 제거합니다.`
+        : `키워드 노트가 없습니다. 연결된 질문 ${linked.length}개의 핵심·보조 키워드 목록에서 제거합니다.`,
       "키워드 삭제",
       () => this.deleteKeyword(entry),
     ));

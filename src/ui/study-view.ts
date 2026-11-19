@@ -141,11 +141,19 @@ export class MiaStudyView extends ItemView {
     this.render();
     this.adaptiveLayout = bindAdaptiveLayout(this.contentEl);
     this.registerDomEvent(this.contentEl.ownerDocument, "visibilitychange", () => {
-      if (this.contentEl.ownerDocument.hidden) { this.answerClock?.pause(); this.autoAdvance?.pause(); this.flushReadingPosition(); }
-      else if (this.pollingOverview && this.isOverview) this.forceOverviewRefresh = true;
+      if (this.contentEl.ownerDocument.hidden) {
+        this.answerClock?.pause(); this.autoAdvance?.pause(); this.flushReadingPosition();
+        return;
+      }
+      this.resumeStudyTimers();
+      if (this.pollingOverview && this.isOverview) this.forceOverviewRefresh = true;
       else void this.refreshAfterReturn();
     });
-    this.registerDomEvent(window, "focus", () => void this.refreshAfterReturn(false));
+    this.registerDomEvent(window, "focus", () => {
+      this.resumeStudyTimers();
+      void this.refreshAfterReturn(false);
+    });
+    this.registerDomEvent(window, "pageshow", () => this.resumeStudyTimers());
     this.registerDomEvent(window, "pagehide", () => { this.answerTimerSuspended = true; this.answerClock?.pause(); this.autoAdvance?.pause(); this.flushReadingPosition(); });
     this.registerInterval(window.setInterval(() => {
       if (!this.contentEl.ownerDocument.hidden && this.isOverview) void this.refreshAfterReturn(true, false, true);
@@ -214,9 +222,11 @@ export class MiaStudyView extends ItemView {
     const selected = mode === "recall" && requestedIds?.size ? planSelectedReview(questions, requestedIds, reviews, fsrs, options) : null;
     const eligible = selected?.queue ?? buildReviewQueue(scope, reviews, fsrs, options);
     this.blockedSelection = selected && !eligible.length && requestedIds ? { ids: [...requestedIds], exclusions: selected.exclusions } : null;
-    const eligibleIds = new Set(eligible.map((question) => question.id));
-    this.queue = (sequential ? scope.filter((question) => question.id && eligibleIds.has(question.id)) : eligible)
-      .map((question) => question.id);
+    const eligibleIds = eligible.map((question) => question.id);
+    if (sequential && requestedIds) {
+      const found = new Set(eligibleIds);
+      this.queue = [...requestedIds].filter((id) => found.has(id));
+    } else this.queue = eligibleIds;
     this.sessionSeed = [...this.queue];
     if (this.route !== "study") this.sessionOrigin = this.route;
     this.queueIndex = 0;
@@ -381,9 +391,6 @@ export class MiaStudyView extends ItemView {
 
   private async refreshAfterReturn(refreshTime = true, notify = false, interval = false): Promise<void> {
     if (this.closed || this.refreshingAfterReturn || this.isMutatingReview) return;
-    this.answerTimerSuspended = false;
-    this.syncAnswerClock();
-    this.autoAdvance?.resume();
     this.refreshingAfterReturn = true;
     this.pollingOverview = interval;
     const previousResume = JSON.stringify(this.plugin.studyUi.resume);
@@ -1245,6 +1252,7 @@ export class MiaStudyView extends ItemView {
   }
 
   private resetAnswerClock(): void {
+    if (this.answerTimerSuspended && !this.contentEl.ownerDocument.hidden) this.answerTimerSuspended = false;
     this.clearAnswerInterval();
     this.answerClock = null;
     this.answerClockKey = "";
@@ -1299,6 +1307,13 @@ export class MiaStudyView extends ItemView {
   private syncAnswerClock(): void {
     if (this.answerTimerSuspended || studyTimerBlocked(this.contentEl.ownerDocument)) this.answerClock?.pause();
     else this.answerClock?.resume(false);
+  }
+
+  private resumeStudyTimers(): void {
+    if (this.closed || this.contentEl.ownerDocument.hidden) return;
+    this.answerTimerSuspended = false;
+    this.syncAnswerClock();
+    this.autoAdvance?.resume();
   }
 
   private updateAnswerTimer(): void {

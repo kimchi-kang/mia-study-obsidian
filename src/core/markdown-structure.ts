@@ -33,6 +33,19 @@ export function assertSingleLine(value: string, label: string): string {
   return value;
 }
 
+/** Split a comma-separated list without splitting complete wiki links. */
+export function splitWikiLinkList(value: string): string[] {
+  const items: string[] = [];
+  let start = 0;
+  for (const match of value.matchAll(/\[\[(?:(?!\[\[|\]\]).)*\]\]|,/g)) {
+    if (match[0] !== ",") continue;
+    items.push(value.slice(start, match.index));
+    start = match.index + 1;
+  }
+  items.push(value.slice(start));
+  return items;
+}
+
 export function hasHeadingAtOrAbove(markdown: string, maximumLevel: number): boolean {
   const lines = markdown.replaceAll("\r\n", "\n").split("\n");
   const masked = fencedCodeLines(lines);

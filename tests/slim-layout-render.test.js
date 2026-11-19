@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { mkdir, writeFile } from "node:fs/promises";
-vi.mock("obsidian", async () => (await import("./fixtures/slim-layout-obsidian")).slimLayoutBoundary());
+vi.mock("obsidian", async () => ({
+  ...(await import("./fixtures/slim-layout-obsidian")).slimLayoutBoundary(),
+  Plugin: class {}, TFile: class {}, normalizePath: path => path,
+}));
 import { createLayoutDom, renderLayoutCase } from "./fixtures/study-layout-render";
 import { installLayoutOptions, snapshotLayout } from "./fixtures/slim-layout-obsidian";
 import { layoutHarness } from "./fixtures/study-layout-harness-template";
@@ -21,6 +24,7 @@ import { SubjectExportModal } from "../src/ui/subject-export-modal";
 import { bindKeyboardViewport } from "../src/ui/mobile-keyboard";
 import { DEFAULT_SETTINGS } from "../src/core/models";
 import { keywordReferencesFromInput } from "../src/core/keyword-path";
+import MiaStudyPlugin from "../src/main";
 let dom;
 beforeEach(() => {
   vi.useFakeTimers(); vi.setSystemTime(new Date("2026-11-16T00:00:00Z"));
@@ -138,6 +142,14 @@ it("renders additional real screens and states for computed-style equivalence", 
   capture("settings-advanced", settings.containerEl);
   settings.hide();
   expect(Object.keys(cases)).toHaveLength(43);
+  const keywordPlugin = new MiaStudyPlugin();
+  keywordPlugin.app = { vault: { getAbstractFileByPath: () => null } };
+  keywordPlugin.index = plugin.index;
+  keywordPlugin.confirmDeleteKeyword({ name: "재료 보존", target: "재료 보존" });
+  const confirmation = document.querySelector(".mia-confirm-modal");
+  expect(confirmation.querySelector("p").textContent).toBe("키워드 노트가 없습니다. 연결된 질문 2개의 핵심·보조 키워드 목록에서 제거합니다.");
+  confirmationCases["missing-keyword-confirm"] = snapshotLayout(confirmation.closest(".modal-container"));
+  [...confirmation.querySelectorAll("button")].find(el => el.textContent === "취소").click();
   Object.assign(cases, confirmationCases);
   expect(cases["review-conflict-confirm"]).toContain("보관된 다른 기기 이력만 지웁니다");
   expect(cases["settings-conflict-confirm"]).toContain("선택한 보관 사본만 지웁니다");
@@ -174,10 +186,10 @@ it("renders additional real screens and states for computed-style equivalence", 
     await mkdir(".claude/slim", { recursive: true });
     // Reuse the exact host defaults; only replace the standalone boot script.
     const base = layoutHarness({ short: cases.hidden }).replace('<link rel="stylesheet"', `<style>
-:where(.mia-keyboard-modal-container) { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
-:where(.mia-keyboard-modal) { position: relative; max-width: 100%; }
-:where(.mia-keyboard-modal .modal-header) { padding: 18px 20px 8px; }
-:where(.mia-keyboard-modal .modal-content) { padding: 8px 20px 20px; }
+:where(.mia-keyboard-modal-container, .modal-container:has(> .mia-confirm-modal)) { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+:where(.mia-keyboard-modal, .mia-confirm-modal) { position: relative; max-width: 100%; }
+:where(:is(.mia-keyboard-modal, .mia-confirm-modal) .modal-header) { padding: 18px 20px 8px; }
+:where(:is(.mia-keyboard-modal, .mia-confirm-modal) .modal-content) { padding: 8px 20px 20px; }
 :where(.mia-keyboard-modal .setting-item) { padding-block: 14px; }
 :where(.mia-keyboard-modal .setting-item-control) { display: flex; }
 </style>

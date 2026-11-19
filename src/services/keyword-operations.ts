@@ -9,7 +9,6 @@ import {
 } from "../core/keyword-note";
 import { keywordLinkPath, keywordNotePath } from "../core/keyword-path";
 import { keywordReferenceMatches, keywordTargetMatcher, removeKeywordReferences, renameKeywordReferences } from "../core/keyword-reference";
-import { followUpLinksIn } from "../core/managed-question";
 import { assertSingleLine } from "../core/markdown-structure";
 import type { KeywordReference, QuestionRecord } from "../core/models";
 import { parseQuestionFile } from "../core/question-parser";
@@ -22,7 +21,7 @@ import { assertPortablePath, ensureFolder, trashFileVerified } from "./vault-fil
 export interface KeywordNoteEntry {
   name: string;
   target: string;
-  filePath: string;
+  filePath?: string;
 }
 
 type RegisteredQuestion = QuestionRecord & { id: string };
@@ -71,6 +70,16 @@ export class KeywordOperations {
         filePath: file.path,
       }))
       .sort((left, right) => left.name.localeCompare(right.name, "ko"));
+  }
+
+  withExistingNote(entry: KeywordNoteEntry): KeywordNoteEntry {
+    if (entry.filePath) return entry;
+    const target = keywordLinkPath(entry.target);
+    if (!target) return entry;
+    // A card can link directly to a note outside the configured keyword folder.
+    const path = normalizePath(/\.md$/i.test(target) ? target : `${target}.md`);
+    const file = this.host.app.vault.getAbstractFileByPath(path);
+    return file instanceof TFile ? { ...entry, filePath: file.path } : entry;
   }
 
   async readMeaning(path: string): Promise<string> {
@@ -153,34 +162,53 @@ export class KeywordOperations {
   async save(current: KeywordNoteEntry | null, value: string, meaning: string): Promise<void> {
     const { app } = this.host;
     const name = validateKeywordName(value);
-    if (!current) {
+    if (!current || (!current.filePath && current.name === name)) {
       await this.saveMeaning(name, meaning);
       return;
     }
-    if (current.name === name) {
+    const sourcePath = current.filePath;
+    const source = sourcePath ? app.vault.getAbstractFileByPath(sourcePath) : null;
+    if (sourcePath && !(source instanceof TFile)) throw new Error("기존 키워드 노트를 찾지 못했습니다.");
+    if (source instanceof TFile && current.name === name) {
       validateKeywordMeaning(meaning);
-      const file = app.vault.getAbstractFileByPath(current.filePath);
-      if (!(file instanceof TFile)) throw new Error("기존 키워드 노트를 찾지 못했습니다.");
-      await app.vault.process(file, content => updateExistingKeywordMeaning(file.path, content, name, meaning));
+      await app.vault.process(source, content => updateExistingKeywordMeaning(source.path, content, name, meaning));
       new Notice(`${name} 키워드를 저장했습니다.`);
       return;
     }
-    const source = app.vault.getAbstractFileByPath(current.filePath);
-    if (!(source instanceof TFile)) throw new Error("기존 키워드 노트를 찾지 못했습니다.");
     const nextPath = keywordNotePath(name, name, this.host.store.settings.keywordFolder);
     assertPortablePath(app, nextPath);
     const destination = app.vault.getAbstractFileByPath(nextPath);
     if (destination instanceof TFolder) throw new Error("변경할 키워드 경로가 폴더와 겹칩니다.");
-    const sourceContent = await app.vault.read(source);
-    assertKeywordNoteEditable(source.path, sourceContent, destination instanceof TFile ? "키워드 병합" : "키워드 이름 변경");
     const nextTarget = nextPath.replace(/\.md$/i, "");
     // Only a merge removes the source note. A rename keeps it, and Obsidian has
     // already pointed short links at its new path in the vault's link format.
     const references = (scope: ReferenceScope) => this.referenceChanges(
-      [current.target, nextTarget],
+      source ? [current.target, nextTarget] : [current.target],
       (items, spellings) => renameKeywordReferences(items, spellings, nextTarget, name),
       scope,
     );
+    if (!(source instanceof TFile) || !sourcePath) {
+      validateKeywordMeaning(meaning);
+      const writes = references({ removed: [] });
+      if (destination instanceof TFile) {
+        if (meaning.trim()) writes.unshift({ file: destination, update: content => {
+          const mergedMeaning = [...new Set([readKeywordMeaning(content), meaning.trim()].filter(Boolean))].join("\n\n");
+          return updateExistingKeywordMeaning(destination.path, content, name, mergedMeaning);
+        } });
+        await applyFileChanges(app.vault, writes);
+      } else {
+        const folder = nextPath.split("/").slice(0, -1).join("/");
+        if (folder) await ensureFolder(app, folder);
+        await applyFileChanges(app.vault, writes, async () => {
+          await app.vault.create(nextPath, createKeywordNote(name, meaning));
+        });
+      }
+      await this.host.index.rebuild();
+      new Notice(`${current.name} 키워드를 ${name}(으)로 변경했습니다.`);
+      return;
+    }
+    const sourceContent = await app.vault.read(source);
+    assertKeywordNoteEditable(source.path, sourceContent, destination instanceof TFile ? "키워드 병합" : "키워드 이름 변경");
     if (destination instanceof TFile) {
       assertMergeableKeywordNote(sourceContent);
       const sourceMeaning = readKeywordMeaning(sourceContent);
@@ -203,8 +231,8 @@ export class KeywordOperations {
       } catch (error) {
         try {
           if (source.path === nextPath) {
-            if (app.vault.getAbstractFileByPath(current.filePath)) throw new Error("원래 경로에 다른 파일이 생겨 덮어쓰지 않았습니다.");
-            await app.fileManager.renameFile(source, current.filePath);
+            if (app.vault.getAbstractFileByPath(sourcePath)) throw new Error("원래 경로에 다른 파일이 생겨 덮어쓰지 않았습니다.");
+            await app.fileManager.renameFile(source, sourcePath);
           }
         } catch (recoveryError) {
           throw new AggregateError([error, recoveryError], "키워드 이름 변경을 복구하지 못했습니다. 원래 경로와 변경 경로를 확인하세요.");
@@ -220,14 +248,14 @@ export class KeywordOperations {
 
   async delete(entry: KeywordNoteEntry): Promise<void> {
     const { app } = this.host;
-    const file = app.vault.getAbstractFileByPath(entry.filePath);
-    if (!(file instanceof TFile)) throw new Error("삭제할 키워드 노트를 찾지 못했습니다.");
-    assertKeywordNoteEditable(file.path, await app.vault.read(file), "키워드 삭제");
-    const writes = this.referenceChanges([entry.target], (references, spellings) => removeKeywordReferences(references, spellings), { removed: [entry.target] });
-    await applyFileChanges(app.vault, writes, async () => {
+    const file = entry.filePath ? app.vault.getAbstractFileByPath(entry.filePath) : null;
+    if (entry.filePath && !(file instanceof TFile)) throw new Error("삭제할 키워드 노트를 찾지 못했습니다.");
+    if (file instanceof TFile) assertKeywordNoteEditable(file.path, await app.vault.read(file), "키워드 삭제");
+    const writes = this.referenceChanges([entry.target], (references, spellings) => removeKeywordReferences(references, spellings), { removed: file ? [entry.target] : [] });
+    await applyFileChanges(app.vault, writes, file instanceof TFile ? async () => {
       assertKeywordNoteEditable(file.path, await app.vault.read(file), "키워드 삭제");
       await trashFileVerified(app, file);
-    });
+    } : undefined);
     await this.host.index.rebuild();
     new Notice(`${entry.name} 키워드를 삭제하고 연결된 문제를 갱신했습니다.`);
   }
@@ -293,7 +321,6 @@ export class KeywordOperations {
         for (const original of questions) {
           const current = findCurrentQuestion(parseQuestionFile(filePath, updated).questions, original);
           if (!current) throw new Error("키워드가 연결된 문제를 최신 원문에서 찾지 못했습니다.");
-          const followUpLinks = followUpLinksIn(updated, current);
           const matches = [...current.coreKeywords, ...current.subKeywords].some((reference) => matchesRemoved(reference, filePath))
             ? matchesMerged : matchesTargets;
           const spellingsOf = (references: readonly KeywordReference[]): string[] => [...targets, ...references
@@ -306,7 +333,6 @@ export class KeywordOperations {
             questionType: current.questionType,
             coreKeywords,
             subKeywords,
-            ...(followUpLinks ? { followUpLinks } : {}),
             createdAt: current.createdAt ?? new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           });

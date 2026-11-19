@@ -42,7 +42,11 @@ describe("study layout rendered DOM", () => {
   it.each(["dashboard", "progress", "questions", "keywords"])("renders populated %s through the real route", async route => {
     const { root } = await renderLayoutCase({ route });
     expect(root.classList.contains(`mia-route-${route}`)).toBe(true);
-    if (route === "dashboard") { expect(root.querySelector(".mia-resume-card")).not.toBeNull(); expect(root.querySelectorAll(".mia-subject-card")).toHaveLength(6); }
+    if (route === "dashboard") {
+      expect(root.querySelector(".mia-resume-card")).not.toBeNull();
+      expect(root.querySelectorAll(".mia-subject-card")).toHaveLength(6);
+      expect(root.querySelector(".mia-weak-hint").textContent).toBe("못 암기와 애매 문제만 모아 시험합니다. 출제 순서는 학습 설정을 따릅니다.");
+    }
     if (route === "progress") expect(root.querySelectorAll(".mia-progress-subject")).toHaveLength(6);
     if (route === "questions") { expect(root.querySelectorAll(".mia-row")).toHaveLength(48); expect(root.querySelector(".mia-detail-panel .mia-answer")).not.toBeNull(); expect(root.querySelector(".mia-warning")).toBeNull(); }
     if (route === "keywords") expect(root.querySelectorAll(".mia-keyword")).toHaveLength(12);
@@ -120,6 +124,51 @@ async function openWithTimers(view) {
     close: async () => { await view.onClose(); cleanups.forEach(dispose => dispose()); },
   };
 }
+
+it.each(["visibilitychange", "focus", "pageshow"])("resumes the answer clock on %s even during a refresh or rating", async event => {
+  const { view, root } = await renderLayoutCase({ revealed: false });
+  const session = await openWithTimers(view);
+  let finishRefresh;
+  try {
+    view.plugin.synchronizeStudyData.mockImplementationOnce(() => new Promise(resolve => { finishRefresh = resolve; }));
+    const refresh = event === "visibilitychange" ? view.refreshAfterReturn(false) : undefined;
+    view.isMutatingReview = event === "focus";
+    vi.advanceTimersByTime(2000);
+    window.dispatchEvent(new window.Event("pagehide"));
+    Object.defineProperty(document, "hidden", { configurable: true, value: true });
+    window.dispatchEvent(new window.Event("focus"));
+    vi.advanceTimersByTime(10_000);
+    expect(view.answerClock.milliseconds).toBe(2000);
+    Object.defineProperty(document, "hidden", { configurable: true, value: false });
+    const target = event === "visibilitychange" ? document : window;
+    target.dispatchEvent(new window.Event(event));
+    vi.advanceTimersByTime(3200);
+    expect(view.answerClock.milliseconds).toBe(5200);
+    view.isMutatingReview = false;
+    finishRefresh?.();
+    await refresh;
+    vi.advanceTimersByTime(800);
+    expect(root.querySelector(".mia-answer-timer").textContent).toBe("0:06");
+  } finally {
+    finishRefresh?.();
+    await session.close();
+  }
+});
+
+it("starts a visible new card after pagehide without needing a return event", async () => {
+  const { view, root } = await renderLayoutCase({ revealed: false });
+  const session = await openWithTimers(view);
+  try {
+    window.dispatchEvent(new window.Event("pagehide"));
+    vi.advanceTimersByTime(15_000);
+    expect(root.querySelector(".mia-answer-timer").textContent).toBe("0:00");
+    view.startReview(["related"]);
+    vi.advanceTimersByTime(2200);
+    expect(root.querySelector(".mia-answer-timer").textContent).toBe("0:02");
+  } finally {
+    await session.close();
+  }
+});
 
 it.each(["dashboard", "progress"])("keeps %s DOM when synchronized values agree, then redraws when a review becomes due", async route => {
   vi.setSystemTime(new Date(2026, 10, 16, 14, 0));

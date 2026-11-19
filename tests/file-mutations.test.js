@@ -165,6 +165,86 @@ describe("subject notes for questions outside the managed folder", () => {
 
 const keywordPath="MIA/키워드/기존.md",newKeywordPath="MIA/키워드/새이름.md";
 const keywordEntry={name:"기존",target:"MIA/키워드/기존",filePath:keywordPath};
+
+describe("keyword cards without a note", () => {
+  const name = "표본 분포";
+  const target = "자료/표본 분포.md#정의";
+  const entry = { name, target };
+  const ref = (target) => ({ target, label: name, raw: `[[${target}|${name}]]` });
+  const sameNamePath = "MIA/개념/통계이론/표본 분포.md";
+  const renamedPath = "MIA/개념/통계이론/표집 분포.md";
+  async function referenceEnvironment() {
+    const env = await environment();
+    env.plugin.store.settings.keywordFolder = "MIA/개념/통계이론";
+    env.contents.set(oldPath, appendManagedQuestion("", {
+      ...input, coreKeywords: [ref(target)], subKeywords: [ref("자료/표본 분포#예시")],
+    }, "mia-q-one"));
+    env.contents.set(nextPath, appendManagedQuestion("", {
+      ...input, coreKeywords: [ref("다른 폴더/표본 분포"), ref("MIA/개념/통계이론/표집 분포")],
+    }, "mia-q-other"));
+    await env.plugin.index.rebuild();
+    return env;
+  }
+
+  it("creates a note through the configured keyword folder without changing question files", async () => {
+    const env = await referenceEnvironment();
+    const before = new Map(env.contents);
+    expect(env.plugin.keywords.withExistingNote(entry)).toEqual(entry);
+    await env.plugin.saveKeyword(entry, name, "표본에서 계산한 통계량의 분포");
+    expect(readKeywordMeaning(env.contents.get(sameNamePath))).toBe("표본에서 계산한 통계량의 분포");
+    expect(env.vault.createFolder.mock.calls).toEqual([["MIA/개념"], ["MIA/개념/통계이론"]]);
+    expect(env.vault.process).not.toHaveBeenCalled();
+    expect(env.contents.get(oldPath)).toBe(before.get(oldPath));
+    expect(env.contents.get(nextPath)).toBe(before.get(nextPath));
+  });
+
+  it("applies the same portable path checks as creating a keyword", async () => {
+    const env = await referenceEnvironment();
+    env.add("MIA/개념", new TFolder());
+    env.add("MIA/개념/Statistics", new TFolder());
+    env.plugin.store.settings.keywordFolder = "MIA/개념/statistics";
+    await expect(env.plugin.saveKeyword(entry, name, "의미")).rejects.toThrow(/대소문자/);
+    expect(env.vault.create).not.toHaveBeenCalled();
+  });
+
+  it("finds an existing note by its explicit path without treating the heading as part of the filename", async () => {
+    const env = await referenceEnvironment();
+    env.add("자료", new TFolder());
+    const path = "자료/표본 분포.md";
+    env.add(path, new TFile());
+    env.contents.set(path, "# 표본 분포\n\n## 의미\n\n기존 의미\n");
+    const existing = env.plugin.keywords.withExistingNote(entry);
+    expect(existing.filePath).toBe(path);
+    await env.plugin.saveKeyword(existing, name, "갱신한 의미");
+    expect(readKeywordMeaning(env.contents.get(path))).toBe("갱신한 의미");
+    expect(env.vault.create).not.toHaveBeenCalled();
+  });
+
+  it.each(["rename", "delete"])("updates only the matching question references on %s", async action => {
+    const env = await referenceEnvironment();
+    const other = env.contents.get(nextPath);
+    if (action === "rename") await env.plugin.saveKeyword(entry, "표집 분포", "새 의미");
+    else await env.plugin.deleteKeyword(entry);
+    const question = env.plugin.index.questionById("mia-q-one");
+    expect(question.coreKeywords.map(keyword => keyword.target)).toEqual(
+      action === "rename" ? [renamedPath.slice(0, -3)] : [],
+    );
+    expect(question.subKeywords).toEqual([]);
+    expect(env.contents.get(nextPath)).toBe(other);
+    expect(env.trashFile).not.toHaveBeenCalled();
+    expect(env.renameFile).not.toHaveBeenCalled();
+    if (action === "rename") expect(readKeywordMeaning(env.contents.get(renamedPath))).toBe("새 의미");
+    else expect(env.vault.create).not.toHaveBeenCalled();
+  });
+
+  it("restores question references when creating the renamed note fails", async () => {
+    const env = await referenceEnvironment();
+    const before = new Map(env.contents);
+    env.vault.create.mockRejectedValueOnce(Error("disk full"));
+    await expect(env.plugin.saveKeyword(entry, "표집 분포", "새 의미")).rejects.toThrow("disk full");
+    expect(env.contents).toEqual(before);
+  });
+});
 async function connectedEnvironment(){
   const env=await environment();env.add("MIA/키워드",new TFolder());env.add(keywordPath,new TFile());
   env.contents.set(keywordPath,"# 기존\n\n## 의미\n\n원래 의미\n\n## 연결\n");
@@ -413,6 +493,20 @@ describe("stale follow-up editors and concurrent metadata",()=>{
   it("refuses an old metadata form rather than overwriting newer keywords",async()=>{
     const env=await connectedEnvironment(),old=env.plugin.index.questionById("mia-q-one");env.contents.set(oldPath,env.contents.get(oldPath).replace("> 핵심: [[MIA/키워드/기존|기존]]","> 핵심: [[새 키워드]]"));const before=env.contents.get(oldPath);
     await expect(env.plugin.writeMetadata(old,{...old})).rejects.toThrow(/변경/);expect(env.contents.get(oldPath)).toBe(before);
+  });
+  it("preserves a concurrent follow-up alias edit even when the link IDs have not changed", async () => {
+    const env = await environment();
+    const raw = "> **이어볼 질문**:  [[지리학/기후, 지형.md#^mia-q-missing|이전 별칭]]  ";
+    env.contents.set(oldPath, env.contents.get(oldPath).replace("> 보조:", `> 보조:\n${raw}`));
+    await env.plugin.index.rebuild();
+    const original = env.plugin.index.questionById("mia-q-one");
+    const newer = raw.replace("이전 별칭", "새 별칭");
+    const before = env.contents.get(oldPath).replace(raw, newer);
+    env.contents.set(oldPath, before);
+    await expect(env.plugin.writeMetadata(original, { ...input, followUpLinks: [] })).rejects.toThrow(/이어볼 문제 링크.*변경/);
+    expect(env.contents.get(oldPath)).toBe(before);
+    await env.plugin.writeMetadata(original, { ...input, questionType: "비교형" });
+    expect(env.contents.get(oldPath).split("\n")).toContain(newer);
   });
   it("still allows a fresh bidirectional selection",async()=>{
     const env=await opened();await env.editor.submit(["mia-q-two"],true);

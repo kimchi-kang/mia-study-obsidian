@@ -75,6 +75,9 @@ export class QuestionOperations {
       const latest = findCurrentQuestion(parseQuestionFile(question.filePath, content).questions, question);
       if (!latest) throw new Error("원문이 바뀌어 문제 위치를 안전하게 찾지 못했습니다. 창을 닫고 다시 등록해 주세요.");
       assertQuestionUnchanged(question, latest);
+      if (metadata.followUpLinks !== undefined && question.followUpText !== latest.followUpText) {
+        throw new Error("이어볼 문제 링크가 다른 작업에서 변경되었습니다. 최신 문제를 다시 열어 주세요.");
+      }
       const next = { ...metadata, createdAt: latest.createdAt ?? now, updatedAt: now };
       return latest.id ? updateQuestionMetadata(content, latest, next) : registerQuestion(content, latest, next, id);
     });

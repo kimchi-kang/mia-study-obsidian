@@ -10,7 +10,7 @@
 ![Platforms](https://img.shields.io/badge/desktop%20%C2%B7%20mobile-supported-2f9e5b)
 [![License](https://img.shields.io/github/license/kimchi-kang/mia-study-obsidian?color=555)](LICENSE)
 
-[**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.5.3 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.5.3/mia-study-1.5.3.zip) · [변경 내역](docs/releases/1.5.3.md) · [현재 상태](STATUS.md)
+[**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.5.4 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.5.4/mia-study-1.5.4.zip) · [변경 내역](docs/releases/1.5.4.md) · [현재 상태](STATUS.md)
 
 <img src="docs/assets/screens/desktop-dashboard.jpg" alt="MIA Study 오늘 화면. 바우하우스 디자인의 복습·새 문제 블록, 시작 패널, 취약 문제 띠와 과목별 학습 카드" width="860">
 
@@ -26,7 +26,7 @@ Obsidian 안에서 과목·질문·키워드를 폼으로 관리하면서 FSRS-6
 
 화면은 1.4.13 바우하우스 디자인(빨강·노랑·파랑, 두꺼운 테두리, 각진 모서리)과 직접 만든 일반 상식 데모 보관함(수학 기초·세계 지리·요리 과학)으로 찍었습니다. 수식·이미지·표·코드 렌더링을 보여 주는 예시 질문이며 실제 학습 내용이 아닙니다. 모바일 화면은 데스크톱 Obsidian에서 휴대폰 폭을 흉내 낸 것입니다. 이 화면들은 1.4.17 즈음에 찍어 1.4.23 이후의 넓어진 여백과 답변 타이머는 보이지 않습니다.
 
-[1.5.3 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.5.3) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.5.3 변경 내역](docs/releases/1.5.3.md) · [이전 버전 이력](docs/releases/HISTORY.md)
+[1.5.4 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.5.4) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.5.4 변경 내역](docs/releases/1.5.4.md) · [이전 버전 이력](docs/releases/HISTORY.md)
 
 Major Study 제목 바로 옆에서 현재 실행 중인 버전을 확인할 수 있습니다. 업데이트한 파일을 로드하려면 Obsidian을 다시 시작하세요. 수식은 원문에 `$...$` 또는 `$$...$$` 구분자와 TeX 문법이 있어야 표시됩니다. 예를 들어 `y(t) = A(1 - e^(-t/k))` 같은 일반 문장은 자동으로 수식으로 바뀌지 않습니다.
 
@@ -54,7 +54,7 @@ MIA Study를 설치하거나 사용하면 아래 내용에 동의한 것으로 �
 
 ### 3. 테스트는 거쳤지만 오류가 없다는 뜻이 아니다
 
-- 버전마다 자동 검사(1.5.3 기준 약 1,970개), 타입 검사, 화면 크기 측정을 한다. 그러나 자동 검사는 미리 생각한 상황만 확인한다.
+- 버전마다 자동 검사(1.5.4 기준 약 1,990개), 타입 검사, 화면 크기 측정을 한다. 그러나 자동 검사는 미리 생각한 상황만 확인한다.
 - 실제 iPad·휴대폰, 모든 Obsidian 버전·테마·다른 플러그인과의 조합, 모든 동기화 서비스 조합은 확인하지 않았다.
 
 ### 4. 생길 수 있는 문제의 예
@@ -104,6 +104,8 @@ Obsidian, Anki, FSRS, Claude, Codex, GitHub, Google Fonts 등은 각 소유자�
 4. 설치 후 커뮤니티 플러그인 목록에서 `MIA Study`를 활성화한다.
 
 데스크톱과 모바일을 모두 지원한다.
+
+계정 이름을 바꾸기 전의 예전 주소로 등록했다면 BRAT 업데이트가 404로 실패한다. BRAT 설정에서 그 항목을 지우고 위 주소로 다시 추가하면 학습 기록은 그대로 유지된다.
 
 업데이트·복구·모바일 직접 설치는 [INSTALL.md](INSTALL.md)를 따른다.
 

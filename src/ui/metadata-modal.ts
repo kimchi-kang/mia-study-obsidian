@@ -6,6 +6,7 @@ import { QuestionMetadataInput } from "../core/question-writer";
 import { errorMessage } from "./error-message";
 import { KeyboardAwareModal } from "./mobile-keyboard";
 import { MAX_FOLLOW_UPS } from "../core/follow-up";
+import { splitWikiLinkList } from "../core/markdown-structure";
 
 export class QuestionMetadataModal extends KeyboardAwareModal {
   private readonly titleRenderer = new Component();
@@ -25,7 +26,10 @@ export class QuestionMetadataModal extends KeyboardAwareModal {
     this.type = question.questionType;
     this.core = question.coreKeywords.map((item) => item.raw).join(", ");
     this.sub = question.subKeywords.map((item) => item.raw).join(", ");
-    this.followUps = question.followUpIds.map((id) => `[[${resolveQuestion(id)?.filePath ?? question.filePath}#^${id}]]`).join(", ");
+    this.followUps = question.followUpText ?? question.followUpIds.map((id) => {
+      const target = resolveQuestion(id);
+      return target ? `[[${target.filePath}#^${id}]]` : `#^${id}`;
+    }).join(", ");
   }
 
   onOpen(): void {
@@ -54,8 +58,9 @@ export class QuestionMetadataModal extends KeyboardAwareModal {
           button.setDisabled(false);
           return;
         }
-        const followUpLinks = this.followUps.split(",").map((item) => item.trim()).filter(Boolean);
-        if (followUpLinks.length > MAX_FOLLOW_UPS) {
+        const followUpLinks = this.followUps === this.question.followUpText ? undefined
+          : splitWikiLinkList(this.followUps).map((item) => item.trim()).filter(Boolean);
+        if (followUpLinks && followUpLinks.length > MAX_FOLLOW_UPS) {
           new Notice(`이어볼 문제는 최대 ${MAX_FOLLOW_UPS}개까지 연결할 수 있습니다.`);
           button.setDisabled(false);
           return;
@@ -64,7 +69,7 @@ export class QuestionMetadataModal extends KeyboardAwareModal {
           questionType: this.type,
           coreKeywords,
           subKeywords: keywordReferencesFromInput(this.sub, this.keywordFolder),
-          followUpLinks,
+          ...(followUpLinks ? { followUpLinks } : {}),
         });
         this.close();
       } catch (error) {

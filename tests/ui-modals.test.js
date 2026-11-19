@@ -59,6 +59,8 @@ import { StudyUiStore } from "../src/services/study-ui-store";
 import { QuestionDetailModal } from "../src/ui/question-detail-modal";
 import { QuestionMetadataModal } from "../src/ui/metadata-modal";
 import { ConfirmDeleteModal } from "../src/ui/manage-modals";
+import { parseQuestionFile } from "../src/core/question-parser";
+import { updateQuestionMetadata } from "../src/core/question-writer";
 
 const question = { id: "base", heading: "질문", questionMarkdown: "문제", answerMarkdown: "정답", subject: "과목", questionType: "정의형", filePath: "과목A/문제은행.md", coreKeywords: [{ target: "키워드", raw: "키워드", label: "키워드" }], subKeywords: [], followUpIds: ["other"] };
 
@@ -132,6 +134,47 @@ describe("modal interaction regressions", () => {
     expect(field.value).toBe("[[과목B/문제은행.md#^other]]");
     await modal.contentEl.find("저장").handlers.get("click")();
     expect(save).toHaveBeenCalledWith(expect.objectContaining({ followUpLinks: ["[[과목B/문제은행.md#^other]]"] }));
+  });
+
+  it("shows unresolved follow-ups and saves their original metadata line byte for byte", async () => {
+    const raw = "> **이어볼 질문**:  [[지리학/기후, 지형.md#^mia-q-missing|기후, 지형]] ,  [[이전 경로#^mia-q-indexed|별칭]]  ";
+    const source = [
+      "### 지형", "> [!question] 문제", "> 지형의 예는?", "^mia-q-geography", "",
+      "> [!mia]- 학습 정보", "> 유형: 정의형", "> 핵심: [[지형]]", "> 보조: ", raw, "",
+      "#### 정답", "", "산지와 평야.",
+    ].join("\r\n");
+    const parsed = parseQuestionFile("지리학/문제은행.md", source).questions[0];
+    let written;
+    const save = vi.fn(async metadata => { written = updateQuestionMetadata(source, parsed, metadata); });
+    const modal = new QuestionMetadataModal({}, parsed, "키워드", save,
+      id => id === "mia-q-indexed" ? { ...parsed, filePath: "새 경로.md" } : undefined);
+    modal.onOpen();
+    const field = modal.contentEl.children.filter(child => child.tag === "input").at(-1);
+    expect(field.value).toBe(raw.slice(raw.indexOf("[[")).trimEnd());
+    await modal.contentEl.find("저장").handlers.get("click")();
+    expect(save.mock.calls[0][0]).not.toHaveProperty("followUpLinks");
+    expect(written).toBe(source);
+  });
+
+  it("parses edited links with commas in their paths and aliases and retains plain text", async () => {
+    const source = [
+      "### 통계량", "> [!question] 문제", "> 통계량의 예는?", "^mia-q-statistics", "",
+      "> [!mia]- 학습 정보", "> 유형: 정의형", "> 핵심: [[통계량]]", "> 보조: ", "",
+      "#### 정답", "", "표본 평균.",
+    ].join("\n");
+    const parsed = parseQuestionFile("통계이론/문제은행.md", source).questions[0];
+    const save = vi.fn().mockResolvedValue(undefined);
+    const modal = new QuestionMetadataModal({}, parsed, "키워드", save, () => undefined);
+    modal.onOpen();
+    const field = modal.contentEl.children.filter(child => child.tag === "input").at(-1);
+    const links = ["[[통계이론/평균, 중앙값.md#^mia-q-summary|평균, 중앙값]]", "[[통계이론/산포#^mia-q-spread]]", "일반 입력"];
+    field.handlers.get("change")(links.join(", "));
+    await modal.contentEl.find("저장").handlers.get("click")();
+    const [metadata] = save.mock.calls[0];
+    expect(metadata.followUpLinks).toEqual(links);
+    const roundTrip = parseQuestionFile(parsed.filePath, updateQuestionMetadata(source, parsed, metadata)).questions[0];
+    expect(roundTrip.followUpText).toBe(links.join(", "));
+    expect(roundTrip.followUpIds).toEqual(["mia-q-summary", "mia-q-spread"]);
   });
 
   it.each([false, true])("serializes different rating/reset buttons and recovers from save failure=%s", async fail => {

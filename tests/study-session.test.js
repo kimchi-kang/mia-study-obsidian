@@ -144,7 +144,7 @@ describe("read-only memorization", () => {
   it.each([
     ["dashboard", "전체 암기 모드", ["q", "related"]],
     ["dashboard", "암기", ["q", "related"]],
-    ["questions", "검색 결과 암기", ["q", "related"]],
+    ["questions", "검색 결과 암기", ["related", "q"]],
     ["keywords", "연결 문제 암기", ["q"]],
     ["blocked", "암기 모드로 보기", ["q"]],
   ])("starts %s / %s read-only with the entire target scope", async (route, label, ids) => {
@@ -1320,6 +1320,65 @@ it("keeps the pre-commit version in a workspace snapshot while the rating promis
 
 
 describe("memorization ordering and back navigation", () => {
+  it("starts sequential memorization in the filtered list's title order", async () => {
+    const ui = setup({ start: false });
+    const [base] = ui.plugin.index.registered;
+    ui.plugin.index.registered = [
+      { ...base, id: "plateau", heading: "지형: 평원" },
+      { ...base, id: "average", heading: "통계: 평균" },
+      { ...base, id: "river", heading: "지형: 강" },
+    ];
+    ui.plugin.studyUi.updateAppearance({ memorizationOrder: "sequential" });
+    ui.view.showQuestions("all");
+    const search = ui.view.contentEl.querySelectorAll("input").find(node => node.attrs["aria-label"] === "질문 검색");
+    search.value = "지형";
+    search.handlers.get("input")();
+    const sort = ui.view.contentEl.querySelectorAll("select").find(node => node.attrs["aria-label"] === "정렬");
+    sort.value = "title";
+    sort.handlers.get("change")();
+    await ui.exactButton("검색 결과 암기").click();
+    expect(ui.view.getState().queue).toEqual(["river", "plateau"]);
+  });
+
+  it("deduplicates explicit sequential IDs without changing random browse or the exam order", () => {
+    const ui = setup({ start: false, linked: true });
+    const registered = ui.plugin.index.registered.map(question => question.id);
+    const selected = ["related", "missing", "q", "related"];
+    ui.plugin.studyUi.updateAppearance({ memorizationOrder: "sequential" });
+    ui.view.startReview(selected, "browse");
+    expect(ui.view.getState().queue).toEqual(["related", "q"]);
+    ui.view.startReview(undefined, "browse");
+    expect(ui.view.getState().queue).toEqual(registered);
+    ui.view.startReview(selected, "recall");
+    expect(ui.view.getState().queue).toEqual(registered);
+    ui.plugin.studyUi.updateAppearance({ memorizationOrder: "random" });
+    ui.view.startReview(selected, "browse");
+    expect(ui.view.getState().queue).toEqual(registered);
+    Math.random.mockReturnValue(0);
+    ui.view.startReview(selected, "browse");
+    expect(ui.view.getState().queue).toEqual(["related", "q"]);
+  });
+
+  it("uses the order of the linked questions shown on the keyword card", async () => {
+    const ui = setup({ start: false, linked: true });
+    ui.plugin.listKeywordNotes = () => [];
+    const shown = ui.plugin.index.registered.reverse();
+    for (const question of shown) {
+      question.coreKeywords = [{ target: "자료/지형.md#정의", label: "지형", raw: "[[자료/지형.md#정의|지형]]" }];
+    }
+    ui.plugin.openKeywordEditor = vi.fn();
+    ui.plugin.confirmDeleteKeyword = vi.fn();
+    ui.plugin.studyUi.updateAppearance({ memorizationOrder: "sequential" });
+    ui.view.navigate("keywords");
+    for (const label of ["편집", "삭제", "연결 문제 암기"]) {
+      await ui.exactButton(label).handlers.get("click")({ stopPropagation() {} });
+    }
+    const entry = { name: "지형", target: "자료/지형.md#정의" };
+    expect(ui.plugin.openKeywordEditor).toHaveBeenCalledWith(entry);
+    expect(ui.plugin.confirmDeleteKeyword).toHaveBeenCalledWith(entry);
+    expect(ui.view.getState().queue).toEqual(shown.map(question => question.id));
+  });
+
   it("preserves source order for eligible questions and keeps the chosen queue on resume", async () => {
     const ui = setup({ start: false }); const template = ui.plugin.index.registered[0];
     ui.plugin.index.registered.splice(0, 1, ...["new-b", "future", "due-z", "new-a", "due-a"].map(id => ({ ...template, id, heading: id })));

@@ -54,9 +54,10 @@ export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
         if (sourcePath) ctx.plugin.showKeywordMeaning(item.keyword.target, item.keyword.label, sourcePath);
       });
       const editEntry = item.entry ?? {
-        name: item.keyword.label,
+        name: item.keyword.label === item.keyword.target
+          ? (item.keyword.target.replaceAll("\\", "/").split("/").at(-1) ?? item.keyword.label).replace(/\.md$/i, "")
+          : item.keyword.label,
         target: item.keyword.target,
-        filePath: `${item.keyword.target}.md`,
       };
       const edit = card.createEl("button", { text: "편집", attr: { "aria-label": `키워드 ${item.keyword.label} 편집` } });
       edit.addEventListener("click", (event) => {

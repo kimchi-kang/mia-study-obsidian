@@ -286,7 +286,7 @@ function renderWeaknessStrip(ctx: StudyPageContext, root: HTMLElement, count: nu
   const strip = root.createDiv({ cls: "mia-weak-strip" });
   strip.createSpan({ cls: "mia-weak-mark" }).setAttr("aria-hidden", "true");
   strip.createEl("strong", { text: `취약 문제 ${count}개` });
-  strip.createEl("span", { text: "못 암기와 애매 문제를 복습 지연 시간까지 반영한 긴급도 순으로 시험합니다.", cls: "mia-muted mia-weak-hint" });
+  strip.createEl("span", { text: "못 암기와 애매 문제만 모아 시험합니다. 출제 순서는 학습 설정을 따릅니다.", cls: "mia-muted mia-weak-hint" });
   const actions = strip.createDiv({ cls: "mia-inline-actions" });
   const start = actions.createEl("button", { text: "취약 문제 시험", cls: "mod-cta" });
   start.disabled = count === 0;
