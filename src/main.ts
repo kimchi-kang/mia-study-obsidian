@@ -9,7 +9,7 @@ import { StudyUiStore } from "./services/study-ui-store";
 import { QuestionPreviewModal } from "./ui/question-preview-modal";
 import { errorMessage, reportUiFailure } from "./ui/error-message";
 import { openEditorWithNotice } from "./ui/editor-notice";
-import { planFollowUpChanges } from "./core/follow-up";
+import { MAX_FOLLOW_UPS, planFollowUpChanges } from "./core/follow-up";
 import { rebaseMarkdownLinks } from "./core/markdown-links";
 import type { ManagedQuestionDraft } from "./core/managed-question";
 import { MiaSettings, QuestionRecord, QuestionReviewState } from "./core/models";
@@ -444,10 +444,16 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     if (!current) throw new Error("연결을 편집할 질문을 찾지 못했습니다.");
     const expected = new Map(opened.map(item => [item.id, item]));
     this.modalOpenGuard.open(dialogKey("question-connections", question.id), () => new FollowUpModal(this.app, current, opened, async (ids, bidirectional) => {
-      const changes = planFollowUpChanges(current, ids, opened, bidirectional);
+      const atLimit: string[] = [];
+      const changes = planFollowUpChanges(current, ids, opened, bidirectional, question => atLimit.push(question.heading));
       await this.index.rebuild();
       await this.applyFollowUpChanges(changes, expected);
       new Notice(`${changes.size}개 질문의 연결을 갱신했습니다.`);
+      if (atLimit.length === 1) {
+        new Notice(`${atLimit[0]} 문제는 꼬리질문이 이미 ${MAX_FOLLOW_UPS}개라 반대 방향 연결을 추가하지 못했습니다.`);
+      } else if (atLimit.length > 1) {
+        new Notice(`${atLimit.length}개 문제는 꼬리질문이 이미 ${MAX_FOLLOW_UPS}개라 반대 방향 연결을 추가하지 못했습니다.`);
+      }
     }));
   }
 

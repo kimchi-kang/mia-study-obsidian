@@ -28,6 +28,7 @@ export function planFollowUpChanges(
   selectedIds: readonly string[],
   questions: readonly RegisteredQuestion[],
   bidirectional: boolean,
+  onReverseLinkLimit?: (question: RegisteredQuestion) => void,
 ): Map<string, string[]> {
   const selected = normalizeFollowUpIds(base.id, selectedIds);
   const changes = new Map<string, string[]>([[base.id, selected]]);
@@ -39,8 +40,14 @@ export function planFollowUpChanges(
     if (question.id === base.id) continue;
     if (!previous.has(question.id) && !next.has(question.id)) continue;
     const linked = new Set(question.followUpIds);
-    if (next.has(question.id)) linked.add(base.id);
-    else linked.delete(base.id);
+    if (next.has(question.id)) {
+      const current = normalizeFollowUpIds(question.id, question.followUpIds);
+      if (current.length === MAX_FOLLOW_UPS && !current.includes(base.id)) {
+        onReverseLinkLimit?.(question);
+        continue;
+      }
+      linked.add(base.id);
+    } else linked.delete(base.id);
     changes.set(question.id, normalizeFollowUpIds(question.id, [...linked]));
   }
   return changes;

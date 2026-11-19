@@ -49,10 +49,12 @@ vi.mock("obsidian", () => {
       close = vi.fn(); constructor(app) { this.app = app; } setTitle() {}
     },
     Setting, Component: class { load() {} unload() {} }, Notice: class {},
+    TFile: class {}, TFolder: class {}, normalizePath: path => path,
     MarkdownRenderer: { render: async (_app, text, element) => { element.text = text; } },
   };
 });
-import { MarkdownRenderer } from "obsidian";
+import { MarkdownRenderer, TFile, TFolder } from "obsidian";
+import { createKeywordNote } from "../src/core/keyword-note";
 import { QuestionPreviewModal } from "../src/ui/question-preview-modal";
 import { StudyAppearanceModal } from "../src/ui/study-appearance-modal";
 import { StudyUiStore } from "../src/services/study-ui-store";
@@ -425,6 +427,51 @@ describe("preview question-only markdown", () => {
 });
 
 describe("keyword meaning dialog lifetime", () => {
+  async function creationDialog(target, entries = {}) {
+    const { KeywordMeaningModal } = await import("../src/ui/keyword-modal");
+    const root = { children: Object.entries(entries).filter(([path]) => !path.includes("/"))
+      .map(([name, file]) => Object.assign(file, { name, children: file.children ?? [] })) };
+    const file = new TFile();
+    const vault = {
+      getRoot: () => root,
+      getAbstractFileByPath: path => entries[path],
+      createFolder: vi.fn(async path => { entries[path] = new TFolder(); }),
+      create: vi.fn().mockResolvedValue(file),
+    };
+    const openFile = vi.fn();
+    const app = { vault, metadataCache: { getFirstLinkpathDest: () => null }, workspace: { getLeaf: () => ({ openFile }) } };
+    const modal = new KeywordMeaningModal(app, target, "재료", "source.md", "개념/레시피");
+    await modal.onOpen();
+    await modal.contentEl.find("의미 노트 만들기").handlers.get("click")();
+    return { file, vault, openFile, modal };
+  }
+
+  it("creates parent folders and the standard meaning note", async () => {
+    const { file, vault, openFile } = await creationDialog("재료");
+    expect(vault.createFolder.mock.calls).toEqual([["개념"], ["개념/레시피"]]);
+    expect(vault.create).toHaveBeenCalledExactlyOnceWith("개념/레시피/재료.md", createKeywordNote("재료", ""));
+    expect(openFile).toHaveBeenCalledExactlyOnceWith(file);
+  });
+
+  it("opens an existing exact vault file even before the metadata cache resolves it", async () => {
+    const existing = new TFile();
+    const { vault, openFile } = await creationDialog("재료.md", { "재료.md": existing });
+    expect(vault.create).not.toHaveBeenCalled();
+    expect(openFile).toHaveBeenCalledExactlyOnceWith(existing);
+  });
+
+  it.each([
+    ["../재료", {}],
+    ["notes/재료", { Notes: new TFolder() }],
+    ["개념/재료", { 개념: new TFile() }],
+    ["재료.md", { "재료.md": new TFolder() }],
+  ])("leaves the vault untouched on invalid or conflicting path %s", async (target, entries) => {
+    const { vault, openFile, modal } = await creationDialog(target, entries);
+    expect(vault.createFolder).not.toHaveBeenCalled();
+    expect(vault.create).not.toHaveBeenCalled();
+    expect(openFile).not.toHaveBeenCalled();
+    expect(modal.contentEl.find("의미 노트 만들기").disabled).toBe(false);
+  });
   it.each(["png", "pdf"])("explains a linked %s attachment without reading it or offering note creation", async extension => {
     const { KeywordMeaningModal } = await import("../src/ui/keyword-modal");
     const target = `자료.${extension}`;

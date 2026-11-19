@@ -52,10 +52,10 @@ describe("cross-file duplicate summary",()=>{
   expect(env.index.diagnostics.find(d=>d.filePath==="a (1).md"&&d.code==="duplicate-id").message).toContain("a (2).md, a (3).md, a (4).md 외 2개");
   expect(env.index.crossFileDuplicates.hiddenQuestions).toBe(1);
  });
- it("keeps the dropping rule and the old diagnostic for duplicates inside one file",async()=>{
-  const env=environment();env.add("a.md",bank("mia-q-one","첫째")+"\n"+bank("mia-q-one","둘째"));await env.index.rebuild();
+ it("keeps the dropping rule and reports each duplicate ID once inside one file",async()=>{
+  const env=environment();env.add("a.md",["첫째","둘째","셋째"].map(title=>bank("mia-q-one",title)).join("\n"));await env.index.rebuild();
   expect(env.index.registered).toHaveLength(0);expect(env.index.crossFileDuplicates).toEqual({hiddenQuestions:0,files:[]});
-  expect(env.index.diagnostics.filter(d=>d.code==="duplicate-id").map(d=>d.message)).toContain("여러 파일에서 중복된 문제 ID: mia-q-one");
+  expect(env.index.diagnostics.filter(d=>d.code==="duplicate-id").map(d=>d.message)).toEqual(["같은 파일 안에서 중복된 문제 ID: mia-q-one"]);
   expect(env.index.diagnostics.filter(d=>d.message.includes("다른 파일"))).toEqual([]);
  });
  it("empties the summary once the copy is removed and returns a copy of the data",async()=>{

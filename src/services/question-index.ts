@@ -193,23 +193,23 @@ export class QuestionIndex {
     for (const [id, questions] of locations) {
       if (questions.length < 2) continue;
       const paths = [...new Set(questions.map(question => question.filePath))].sort();
-      const crossFile = paths.length > 1;
-      if (crossFile) hiddenIds.add(id);
+      if (paths.length < 2) continue;
+      hiddenIds.add(id);
+      const diagnosedFiles = new Set<string>();
       for (const question of questions) {
-        const others = paths.filter(path => path !== question.filePath);
-        if (crossFile) {
-          const entry = perFile.get(question.filePath) ?? { hidden: 0, sharesWith: new Set<string>() };
-          entry.hidden += 1;
-          for (const path of others) entry.sharesWith.add(path);
-          perFile.set(question.filePath, entry);
-        }
+        const filePath = question.filePath;
+        const others = paths.filter(path => path !== filePath);
+        const entry = perFile.get(filePath) ?? { hidden: 0, sharesWith: new Set<string>() };
+        entry.hidden += 1;
+        for (const path of others) entry.sharesWith.add(path);
+        perFile.set(filePath, entry);
+        if (diagnosedFiles.has(filePath)) continue;
+        diagnosedFiles.add(filePath);
         diagnostics.push({
-          filePath: question.filePath,
+          filePath,
           line: question.location.anchorLine ?? question.location.questionStartLine,
           code: "duplicate-id",
-          message: crossFile
-            ? `여러 파일에서 중복된 문제 ID: ${id} · 같은 ID가 있는 다른 파일: ${otherFilesLabel(others)}`
-            : `여러 파일에서 중복된 문제 ID: ${id}`,
+          message: `여러 파일에서 중복된 문제 ID: ${id} · 같은 ID가 있는 다른 파일: ${otherFilesLabel(others)}`,
         });
       }
     }

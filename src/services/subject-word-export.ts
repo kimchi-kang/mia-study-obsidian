@@ -48,10 +48,13 @@ export function subjectExportFilename(subject: string, options: SubjectExportOpt
 
 export async function readExportImage(app: App, target: string, source: string): Promise<ExportImage | null> {
   // Resolve vault attachments only; exporting never fetches remote resources.
-  if (/^[a-z][a-z0-9+.-]*:/iu.test(target) || target.startsWith("//")) return null;
-  let decoded: string;
-  try { decoded = decodeURIComponent(target); } catch { return null; }
-  const file = app.metadataCache.getFirstLinkpathDest(decoded, source);
+  const isExternal = (path: string) => /^[a-z][a-z0-9+.-]*:/iu.test(path) || path.startsWith("//");
+  if (isExternal(target)) return null;
+  let decoded = target;
+  try { decoded = decodeURIComponent(target); }
+  catch (error) { if (!(error instanceof URIError)) throw error; }
+  let file = isExternal(decoded) ? null : app.metadataCache.getFirstLinkpathDest(decoded, source);
+  if (!(file instanceof TFile) && decoded !== target) file = app.metadataCache.getFirstLinkpathDest(target, source);
   if (!(file instanceof TFile)) return null;
   const extension = file.extension.toLowerCase();
   if (extension !== "png" && extension !== "jpg" && extension !== "jpeg" && extension !== "gif" && extension !== "bmp") return null;

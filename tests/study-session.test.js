@@ -413,20 +413,37 @@ describe("committing vault folder settings", () => {
   });
 
   it.each([
-    ["roots", "지리학\n../잘못된 폴더", "지리학", 1],
-    ["roots", "MIA\n../잘못된 폴더", "MIA", 0],
-    ["keywords", ".obsidian/키워드", "MIA/키워드", 0],
-  ])("restores the saved %s path and explains a normalized input %j", async (key, raw, saved, writes) => {
+    ["roots", "지리학\n../잘못된 폴더", "../잘못된 폴더", "통계이론"],
+    ["roots", "통계이론\n../잘못된 폴더", "../잘못된 폴더", "통계이론"],
+    ["keywords", ".obsidian/키워드", ".obsidian/키워드", "개념/키워드"],
+    ["keywords", "../키워드", "../키워드", "개념/키워드"],
+  ])("rejects invalid %s input %j and restores the previous custom value", async (key, raw, invalid, saved) => {
     const ui = await folderSettings();
     const field = ui[key];
+    field.value = saved;
+    await field.handlers.get("change")?.();
+    ui.update.mockClear(); ui.saveData.mockClear(); ui.rebuild.mockClear();
     const before = modalBoundary.notices.length;
     field.value = raw;
     await field.handlers.get("change")?.();
     expect(field.value).toBe(saved);
-    expect(ui.update).toHaveBeenCalledTimes(writes);
-    expect(ui.rebuild).toHaveBeenCalledTimes(writes);
-    expect(modalBoundary.notices.slice(before)).toEqual([expect.stringContaining(raw)]);
-    expect(modalBoundary.notices.at(-1)).toContain(saved);
+    expect(ui.update).not.toHaveBeenCalled();
+    expect(ui.saveData).not.toHaveBeenCalled();
+    expect(ui.rebuild).not.toHaveBeenCalled();
+    expect(modalBoundary.notices.slice(before)).toEqual([`“${invalid}”은(는) 사용할 수 없는 폴더라 이전 값 “${saved}”을 유지합니다.`]);
+  });
+
+  it("still resets a blank keyword folder to its default and clears blank source roots", async () => {
+    const ui = await folderSettings();
+    ui.keywords.value = "개념/키워드";
+    await ui.keywords.handlers.get("change")?.();
+    ui.keywords.value = "";
+    await ui.keywords.handlers.get("change")?.();
+    ui.roots.value = "";
+    await ui.roots.handlers.get("change")?.();
+    expect(ui.store.settings.keywordFolder).toBe("MIA/키워드");
+    expect(ui.keywords.value).toBe("MIA/키워드");
+    expect(ui.store.settings.sourceRoots).toEqual([]);
   });
 
   it("commits both folder fields on hide without resubmitting an in-flight change", async () => {

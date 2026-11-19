@@ -45,7 +45,16 @@ function parser() {
     const opening = ["$$", "\\[", "\\(", "$"].find((value) => rest.startsWith(value));
     if (!opening) return false;
     const closing = opening === "\\[" ? "\\]" : opening === "\\(" ? "\\)" : opening;
-    const end = state.src.indexOf(closing, state.pos + opening.length);
+    const start = state.pos + opening.length;
+    let end = state.src.indexOf(closing, start);
+    if (opening === "$") {
+      if (/\s/u.test(state.src.charAt(start))) return false;
+      // A backslash escapes the next character, including another backslash.
+      end = start;
+      while (end < state.posMax && state.src[end] !== "$") end += state.src[end] === "\\" ? 2 : 1;
+      if (end === start || end >= state.posMax || /\s/u.test(state.src.charAt(end - 1))
+        || /\d/u.test(state.src.charAt(end + 1))) return false;
+    }
     if (end < 0) return false;
     if (!silent) state.push("mia_math", "", 0).content = state.src.slice(state.pos, end + closing.length);
     state.pos = end + closing.length;

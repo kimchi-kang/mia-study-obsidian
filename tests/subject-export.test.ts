@@ -63,6 +63,29 @@ describe("subject Word export", () => {
     expect(result.warnings).toEqual(["첨부 이미지를 넣지 못했습니다: missing.svg"]);
   });
 
+  it("preserves formatted currency, invalid delimiters and escaped dollars as text without math warnings", async () => {
+    const answer = String.raw`**$100에서 $200로**
+
+$ 앞뒤 공백 $
+
+$x$2
+
+\$a$`;
+    const result = await exportSubjectDocx("통계이론", question("통계이론", "mia-q-currency", "가격", answer));
+    const { xml } = await documentXml(result.data);
+    expect(xml).toMatch(/<w:r><w:rPr><w:b\/><w:bCs\/><\/w:rPr><w:t[^>]*>\$100에서 \$200로<\/w:t><\/w:r>/u);
+    for (const literal of ["$ 앞뒤 공백 $", "$x$2", "$a$"]) expect(xml).toContain(literal);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("retains valid math delimiters and skips an escaped dollar inside inline math", async () => {
+    const formulas = [String.raw`$x\$ y$`, "$$x_1+y_2$$", String.raw`\(x_1\)`, String.raw`\[y_2\]`, String.raw`$x\\$`];
+    const result = await exportSubjectDocx("통계이론", question("통계이론", "mia-q-formulas", "수식", formulas.join("\n\n")));
+    const { xml } = await documentXml(result.data);
+    for (const formula of formulas) expect(xml).toContain(`>${formula}</w:t>`);
+    expect(result.warnings).toEqual(["수식은 Word 수식으로 변환하지 않고 원문 LaTeX 표기로 저장했습니다."]);
+  });
+
   it("does not create external Word relationships or expose note paths through document metadata", async () => {
     const questions = question("수학", "mia-q-private-sentinel", "[사이트](https://example.invalid/private) <script>secret()</script>", "![원격](https://example.invalid/tracker.png) ![[로컬 없음.svg]]");
     const result = await exportSubjectDocx("수학", questions);

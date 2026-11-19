@@ -1,19 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 const followUpWindows = vi.hoisted(() => []);
+const notices = vi.hoisted(() => []);
 vi.mock("../src/ui/follow-up-modal", () => ({ FollowUpModal: class {
   constructor(app, base, questions, submit) { followUpWindows.push({ base, questions, submit }); }
   open() {}
 } }));
 vi.mock("obsidian",()=>({
   Plugin:class {},Modal:class {},ItemView:class {},PluginSettingTab:class {},MarkdownView:class {},
-  TFile:class {},TFolder:class {},Component:class {},Setting:class {},Notice:class {},Platform:{isMobile:true},normalizePath:path=>path,
+  TFile:class {},TFolder:class {},Component:class {},Setting:class {},Notice:class { constructor(message) { notices.push(message); } },Platform:{isMobile:true},normalizePath:path=>path,
 }));
 import { TFile,TFolder } from "obsidian";
 import MiaStudyPlugin from "../src/main";
 import { QuestionIndex } from "../src/services/question-index";
 import { appendManagedQuestion,createSubjectBank } from "../src/core/managed-question";
 import { readKeywordMeaning } from "../src/core/keyword-note";
-import { questionBlockLink } from "../src/core/follow-up";
+import { MAX_FOLLOW_UPS, questionBlockLink } from "../src/core/follow-up";
 import { parseQuestionFile } from "../src/core/question-parser";
 import { renderSubjectNote } from "../src/core/subject-note";
 
@@ -512,6 +513,28 @@ describe("stale follow-up editors and concurrent metadata",()=>{
     const env=await opened();await env.editor.submit(["mia-q-two"],true);
     expect(env.plugin.index.questionById("mia-q-one").followUpIds).toEqual(["mia-q-two"]);
     expect(env.plugin.index.questionById("mia-q-two").followUpIds).toEqual(["mia-q-one"]);
+  });
+
+  it.each([1, 2])("saves forward links and reports %i full reverse lists without modifying them", async fullCount => {
+    const env = await connectedEnvironment();
+    const fullIds = Array.from({ length: fullCount }, (_, index) => `mia-q-full-${index}`);
+    const links = Array.from({ length: MAX_FOLLOW_UPS }, (_, index) => `[[지리학/보관#^mia-q-related-${index}]]`);
+    const fullQuestions = fullIds.reduce((bank, id, index) => appendManagedQuestion(bank, {
+      ...input, questionMarkdown: `지리학 ${index + 1}`, followUpLinks: links,
+    }, id), createSubjectBank("지리학"));
+    env.contents.set(nextPath, fullQuestions);
+    await env.plugin.index.rebuild();
+    expect(env.plugin.index.questionById(fullIds[0]).followUpIds).toHaveLength(MAX_FOLLOW_UPS);
+    env.plugin.openFollowUpEditor(env.plugin.index.questionById("mia-q-one"));
+    const before = notices.length;
+    await followUpWindows.at(-1).submit(fullIds, true);
+    expect(env.plugin.index.questionById("mia-q-one").followUpIds).toEqual(fullIds);
+    expect(env.contents.get(nextPath)).toBe(fullQuestions);
+    const label = fullCount === 1 ? `${env.plugin.index.questionById(fullIds[0]).heading} 문제는` : "2개 문제는";
+    expect(notices.slice(before)).toEqual([
+      "1개 질문의 연결을 갱신했습니다.",
+      `${label} 꼬리질문이 이미 50개라 반대 방향 연결을 추가하지 못했습니다.`,
+    ]);
   });
 });
 

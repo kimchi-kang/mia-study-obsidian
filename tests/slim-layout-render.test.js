@@ -24,6 +24,7 @@ import { SubjectExportModal } from "../src/ui/subject-export-modal";
 import { bindKeyboardViewport } from "../src/ui/mobile-keyboard";
 import { DEFAULT_SETTINGS } from "../src/core/models";
 import { keywordReferencesFromInput } from "../src/core/keyword-path";
+import * as optimizer from "../src/core/fsrs-optimizer";
 import MiaStudyPlugin from "../src/main";
 let dom;
 beforeEach(() => {
@@ -100,8 +101,12 @@ it("renders additional real screens and states for computed-style equivalence", 
     detail: () => new QuestionDetailModal(app, question, review, [], new Map(), {}),
     preview: () => new QuestionPreviewModal(app, question, noop, noop, plugin.studyUi.appearance),
     meaning: () => new KeywordMeaningModal(app, "재료 보존", "재료 보존", "bank.md", ""),
-    "settings-conflict": () => new SettingsConflictModal(app, DEFAULT_SETTINGS, [{ id: "alternative", ancestors: [], settings: DEFAULT_SETTINGS }], async () => {}, async () => {}),
-    "review-conflict": () => new ReviewConflictModal(app, { q: [review] }, () => question.heading, async () => {}),
+    "settings-conflict": () => new SettingsConflictModal(app, DEFAULT_SETTINGS, [
+      { id: "alternative", ancestors: [], settings: DEFAULT_SETTINGS },
+      { id: "second", ancestors: [], settings: { ...DEFAULT_SETTINGS, sourceRoots: ["지리학/지도 읽기", "통계이론/표본 분포"] } },
+    ], async () => {}, async () => {}),
+    "review-conflict": () => new ReviewConflictModal(app, { q: [review], second: [review] },
+      id => id === "q" ? question.heading : "표본 크기에 따라 표본 분포는 어떻게 달라지는가?", async () => {}),
   };
   for (const [name, factory] of Object.entries(modals)) {
     const modal = factory();
@@ -116,6 +121,13 @@ it("renders additional real screens and states for computed-style equivalence", 
       const confirmation = document.querySelector(".mia-confirm-modal");
       confirmationCases[`${name}-confirm`] = snapshotLayout(confirmation.closest(".modal-container"));
       [...confirmation.querySelectorAll("button")].find(el => el.textContent === "취소").click();
+      const individualLabel = name === "review-conflict" ? "이 보관 기록 지우기" : "이 보관 사본 지우기";
+      [...modal.contentEl.querySelectorAll("button")].find(el => el.textContent === individualLabel).click();
+      const activeConfirmation = document.querySelector(".mia-confirm-modal");
+      [...activeConfirmation.querySelectorAll("button")].find(el => el.textContent === "지우기").click();
+      await vi.waitFor(() => expect(document.querySelector(".mia-confirm-modal")).toBeNull());
+      expect(modal.contentEl.querySelectorAll("details")).toHaveLength(1);
+      confirmationCases[`${name}-after-delete`] = snapshotLayout(modal.containerEl);
     }
     if (name === "export") {
       const scope = modal.contentEl.querySelector("select");
@@ -159,6 +171,12 @@ it("renders additional real screens and states for computed-style equivalence", 
   expect(cases["follow-up"]).toContain('type="checkbox"');
   expect(cases.settings).toContain('value="20"');
   expect(cases["settings-conflict"]).toContain("targetRetention");
+  for (const screen of ["management-advanced", "settings-advanced"]) {
+    expect(cases[screen]).toContain("아래 ‘내 기록으로 최적화’ 버튼에서 매개변수를 최적화할 수 있습니다.");
+    expect(cases[screen]).toContain("매개변수 평가·시뮬레이터·일괄 재예약은 지원하지 않습니다.");
+    expect(cases[screen]).toContain("오디오 제어·쉬운 요일·SM-2도 지원하지 않습니다.");
+    expect(cases[screen]).not.toMatch(/최적화·평가|타이머·자동 진행·오디오 제어/);
+  }
   expect(cases.meaning).toContain("mia-keyword-meaning"); expect(cases["management-advanced"]).toContain('aria-pressed="true"');
   await render("auto-question", { revealed: false }, ({ view }) => { view.plugin.studyUi.updateAppearance({ autoQuestionSeconds: 10 }); view.render(); });
   await render("auto-answer", {}, ({ view }) => { view.plugin.studyUi.updateAppearance({ autoAnswerSeconds: 5, answerTimer: false }); view.render(); });
@@ -186,10 +204,10 @@ it("renders additional real screens and states for computed-style equivalence", 
     await mkdir(".claude/slim", { recursive: true });
     // Reuse the exact host defaults; only replace the standalone boot script.
     const base = layoutHarness({ short: cases.hidden }).replace('<link rel="stylesheet"', `<style>
-:where(.mia-keyboard-modal-container, .modal-container:has(> .mia-confirm-modal)) { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
-:where(.mia-keyboard-modal, .mia-confirm-modal) { position: relative; max-width: 100%; }
-:where(:is(.mia-keyboard-modal, .mia-confirm-modal) .modal-header) { padding: 18px 20px 8px; }
-:where(:is(.mia-keyboard-modal, .mia-confirm-modal) .modal-content) { padding: 8px 20px 20px; }
+:where(.mia-keyboard-modal-container, .modal-container:has(> :is(.mia-confirm-modal, .mia-recovery-modal))) { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+:where(.mia-keyboard-modal, .mia-confirm-modal, .mia-recovery-modal) { position: relative; max-width: 100%; }
+:where(:is(.mia-keyboard-modal, .mia-confirm-modal, .mia-recovery-modal) .modal-header) { padding: 18px 20px 8px; }
+:where(:is(.mia-keyboard-modal, .mia-confirm-modal, .mia-recovery-modal) .modal-content) { padding: 8px 20px 20px; }
 :where(.mia-keyboard-modal .setting-item) { padding-block: 14px; }
 :where(.mia-keyboard-modal .setting-item-control) { display: flex; }
 </style>
@@ -209,8 +227,8 @@ for (const [key,value] of Object.entries({width:innerWidth,height:innerHeight,le
 for (const edge of ['Left','Right','Top','Bottom']) root.style.setProperty('--safe-area-inset-'+edge.toLowerCase(),(Number(params.get('safe'+edge))||0)+'px');
 root.dataset.viewportHeight = innerHeight < 440 ? 'short' : innerHeight < 600 ? 'compact' : 'regular';
 window.miaLayoutReport = () => {
-  const surface = root.querySelector('.mia-recovery-modal, .mia-confirm-modal, .mia-editor-modal-long');
-  const content = surface?.querySelector('.modal-content');
+  const surface = root.matches('.vertical-tab-content') ? root : root.querySelector('.mia-recovery-modal, .mia-confirm-modal, .mia-editor-modal-long');
+  const content = surface?.querySelector('.modal-content') ?? surface;
   return {
     route, device, paneWidth: innerWidth, innerWidth, contentWidth: root.getBoundingClientRect().width,
     contentSafePaneRatio: 1, grids: {}, elements: document.querySelectorAll('.view-content *').length,
@@ -223,6 +241,45 @@ window.miaLayoutReport = () => {
     await writeFile(".claude/slim/layout-extra.html", html);
     await writeFile(".claude/slim/layout-extra-cases.json", JSON.stringify(Object.keys(cases)));
   }
+});
+
+it.each(["×", "ESC", "바깥 클릭", "취소", "탭 숨김"])("aborts optimization when closing settings with %s", async dismissal => {
+  const { view, root } = await renderLayoutCase({});
+  const plugin = view.plugin;
+  const before = structuredClone(plugin.store.settings);
+  plugin.updateSettings = vi.fn();
+  let options, reject;
+  vi.spyOn(optimizer, "optimizeFsrs").mockImplementation((_items, _weights, run) => {
+    options = run;
+    return new Promise((_resolve, fail) => { reject = fail; });
+  });
+  const tab = dismissal === "탭 숨김" ? new MiaSettingTab(view.app, plugin) : null;
+  const modal = tab ? null : new StudyManagementModal(view.app, plugin, vi.fn());
+  if (tab) tab.display();
+  else modal.open();
+  const settings = tab?.containerEl ?? modal.contentEl;
+  const button = label => [...settings.querySelectorAll("button")].find(el => el.textContent === label);
+  const optimize = button("내 기록으로 최적화");
+  optimize.click();
+  options.onProgress(10);
+  const progress = [...settings.querySelectorAll("p")].find(el => el.textContent === "최적화 중 10%");
+  expect(progress).toBeDefined();
+  if (dismissal === "×") modal.modalEl.querySelector(".modal-close-button").click();
+  if (dismissal === "ESC") document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape" }));
+  if (dismissal === "바깥 클릭") modal.containerEl.querySelector(".modal-bg").click();
+  if (dismissal === "취소") button("취소").click();
+  if (tab) tab.hide();
+  expect(options.signal.aborted).toBe(true);
+  if (modal) expect(modal.modalEl.isConnected).toBe(false);
+  options.onProgress(90);
+  reject(new DOMException("취소", "AbortError"));
+  await Promise.resolve();
+  expect(progress.textContent).toBe("최적화 중 10%");
+  expect(optimize.disabled).toBe(true);
+  expect(plugin.updateSettings).not.toHaveBeenCalled();
+  expect(plugin.store.settings).toEqual(before);
+  await view.onClose();
+  root.remove();
 });
 
 async function timedStudy(appearance) {

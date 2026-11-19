@@ -46,10 +46,18 @@ describe("export attachment trust and cleanup boundaries", () => {
     expect(await run.plugin.readExportImage(target, "MIA/수학/문제은행.md")).toBeNull();
     expect(run.resolve).not.toHaveBeenCalled(); expect(run.vault.readBinary).not.toHaveBeenCalled();
   });
-  it("does not resolve malformed percent encoding", async () => {
-    const run = host(attachment());
-    expect(await run.plugin.readExportImage("%E0%A4%A", "source.md")).toBeNull();
-    expect(run.resolve).not.toHaveBeenCalled(); expect(run.vault.readBinary).not.toHaveBeenCalled();
+  it.each([
+    ["성공률 50%.png", "성공률 50%.png", ["성공률 50%.png"]],
+    ["a%20b.png", "a b.png", ["a b.png"]],
+    ["a%20b.png", "a%20b.png", ["a b.png", "a%20b.png"]],
+  ])("resolves %s to the vault filename %s", async (target, name, lookups) => {
+    const file = Object.assign(attachment(), { path: name });
+    const run = host();
+    run.resolve.mockImplementation(path => path === name ? file : null);
+    imageBoundary();
+    expect(await run.plugin.readExportImage(target, "source.md")).toMatchObject({ type: "png" });
+    expect(run.resolve.mock.calls).toEqual(lookups.map(path => [path, "source.md"]));
+    expect(run.vault.readBinary).toHaveBeenCalledExactlyOnceWith(file);
   });
   it.each(["svg", "html", "pdf", "webp"])("rejects unsupported resolved attachment type: %s", async extension => {
     const run = host(attachment(extension));
@@ -114,10 +122,10 @@ describe("export attachment trust and cleanup boundaries", () => {
 
 
 describe("attachment failures before export destination writes", () => {
-  function exportHost() {
+  function exportHost(answerMarkdown = "![[image.png]]") {
     const run = host(attachment());
     const content = renderManagedQuestion({
-      questionMarkdown: "Question", answerMarkdown: "![[image.png]]", questionType: "정의형", coreKeywords: [], subKeywords: [],
+      questionMarkdown: "Question", answerMarkdown, questionType: "정의형", coreKeywords: [], subKeywords: [],
     }, "mia-q-test");
     run.vault.getMarkdownFiles = () => [{ path: "MIA/math/a.md", extension: "md" }];
     run.vault.cachedRead = async () => content;
@@ -128,6 +136,18 @@ describe("attachment failures before export destination writes", () => {
     run.vault.getRoot = () => ({ children: [] });
     return run;
   }
+  it("embeds both a wiki image with a literal percent and a Markdown image with an encoded space", async () => {
+    const run = exportHost("![[성공률 50%.png]]\n\n![](a%20b.png)");
+    const names = ["성공률 50%.png", "a b.png"];
+    const files = new Map(names.map(path => [path, Object.assign(attachment(), { path })]));
+    run.resolve.mockImplementation(path => files.get(path) ?? null);
+    imageBoundary();
+    expect((await run.plugin.exportSubject("math")).warnings).toEqual([]);
+    expect(run.vault.readBinary.mock.calls.map(([file]) => file.path)).toEqual(names);
+    const zip = await JSZip.loadAsync(run.vault.createBinary.mock.calls[0][1]);
+    const xml = await zip.file("word/document.xml").async("string");
+    expect(xml.match(/<w:drawing>/g)).toHaveLength(2);
+  });
   it("packages renamed JPEG contents as JPEG media rather than PNG", async () => {
     const run = exportHost(); imageBoundary();
     run.vault.readBinary.mockResolvedValue(rasterFixture("jpg"));

@@ -14,12 +14,16 @@ type Save = (action: () => Promise<void>) => Promise<void>;
  * `beforeActions` renders extra sections above the action bar on every render,
  * so the dialog's sticky bar stays the last element in its scroll area.
  */
-export function renderStudyManagementSettings(container: HTMLElement, plugin: MiaStudyPlugin, save: Save, cancel?: () => void, beforeActions?: (parent: HTMLElement) => void): void {
+export function renderStudyManagementSettings(container: HTMLElement, plugin: MiaStudyPlugin, save: Save, cancel?: () => void, beforeActions?: (parent: HTMLElement) => void): () => void {
   container.addClass("mia-setting-controls");
   let baseline = structuredClone(plugin.store.settings);
   let optimizerController: AbortController | undefined;
-  const render = (initial: StudyManagementSettings) => {
+  const stopOptimization = () => {
     optimizerController?.abort();
+    optimizerController = undefined;
+  };
+  const render = (initial: StudyManagementSettings) => {
+    stopOptimization();
     container.empty();
     const draft = structuredClone(initial);
     let retention = baseline.targetRetention;
@@ -94,7 +98,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
     const stepsArea = section("새 카드 · 실패(재학습)");
     const orderArea = section("표시 순서");
     const fsrsArea = section("FSRS");
-    fsrsArea.createEl("p", { text: "MIA는 FSRS-6을 항상 사용합니다. Anki의 FSRS 끄기(SM-2), 최적화·평가·시뮬레이터·일괄 재예약은 지원하지 않습니다. 매개변수 변경은 다음 평가부터이며 기존 예약을 재계산하지 않습니다.", cls: "setting-item-description" });
+    fsrsArea.createEl("p", { text: "MIA는 FSRS-6을 항상 사용합니다. 아래 ‘내 기록으로 최적화’ 버튼에서 매개변수를 최적화할 수 있습니다. Anki의 FSRS 끄기(SM-2), 매개변수 평가·시뮬레이터·일괄 재예약은 지원하지 않습니다. 매개변수 변경은 다음 평가부터이며 기존 예약을 재계산하지 않습니다.", cls: "setting-item-description" });
     const extra = section("고급 · MIA의 추가 정책");
     const stepGroups = container.createDiv({ cls: "mia-settings-step-groups" });
     const retentionGroup = simple.createDiv({ cls: "mia-settings-retention" });
@@ -380,7 +384,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       try {
         const items = reviewsToOptimizerItems(plugin.store.reviews, draft.dayStartsAt);
         const result = await optimizeFsrs(items, current, { signal: controller.signal, numRelearningSteps: draft.relearningSteps.length,
-          onProgress: percent => optimizationStatus.setText(`최적화 중 ${percent}%`) });
+          onProgress: percent => { if (!controller.signal.aborted) optimizationStatus.setText(`최적화 중 ${percent}%`); } });
         if (controller.signal.aborted) return;
         if (result.status === "insufficient") {
           optimizationStatus.setText(`복습 기록이 부족해 기본 매개변수를 유지합니다(전체 ${result.count}건 중 최적화에 쓸 수 있는 기록 ${result.usableCount}건, 최소 8건 필요). 기존 입력값을 유지합니다.`);
@@ -394,10 +398,14 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
         parameters = result.parameters.join(", "); parameterInput.value = parameters; changed();
         optimizationStatus.setText(`${comparison} 새 값을 준비했습니다. 학습 설정 저장을 누르면 적용됩니다. 기존 복습일은 유지합니다.`);
       } catch (error) {
-        optimizationStatus.setText(controller.signal.aborted ? "최적화를 취소했습니다." : `최적화 실패: ${error instanceof Error ? error.message : String(error)}`);
+        if (optimizerController === controller) {
+          optimizationStatus.setText(controller.signal.aborted ? "최적화를 취소했습니다." : `최적화 실패: ${error instanceof Error ? error.message : String(error)}`);
+        }
       } finally {
-        optimizeButton.disabled = false; cancelOptimization.hidden = true; parameterInput.disabled = false;
-        if (optimizerController === controller) optimizerController = undefined;
+        if (optimizerController === controller) {
+          optimizeButton.disabled = false; cancelOptimization.hidden = true; parameterInput.disabled = false;
+          optimizerController = undefined;
+        }
       }
     });
     validators.push(() => {
@@ -432,7 +440,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       const validFixed = () => !input.value.trim() || parsed() !== null;
       validators.push(() => validFixed() || fail(`${label}: 1분–36500일 범위의 정확한 분 단위 간격 또는 빈칸을 입력하세요.`, input, true, validFixed));
     }
-    help(extra, "Anki와 다른 적용 범위 · 미지원 항목", "Anki: 내 기록으로 FSRS-6 매개변수를 최적화하고, 세션의 남은 문제가 없으면 미리 학습 한계 안의 당일 반복을 당깁니다. 일일 한도는 전체 과목 공통이며 시험(일반복습)모드의 새 시작에 적용됩니다. 덱 계층·오늘만 한도·노트 형제 묻기·자동 실패 카드 중단은 없습니다. 타이머·자동 진행·오디오 제어·쉬운 요일·SM-2도 지원하지 않습니다. 1m 10m의 첫 Hard(애매)는 설치 Anki에서 5분30초, MIA에서 6분입니다. MIA 입력은 분 단위이며 Anki의 초 단계를 지원하지 않습니다. 하루 경계를 넘는 단계는 Anki의 날짜 단위 변환과 달리 절대 예약 시각을 유지하며 24시간 이상 단계는 ts-fsrs의 정규 복습 상태로 전환됩니다. 고정 평가 간격이 있으면 단계/FSRS보다 우선합니다.");
+    help(extra, "Anki와 다른 적용 범위 · 미지원 항목", "Anki: 내 기록으로 FSRS-6 매개변수를 최적화하고, 세션의 남은 문제가 없으면 미리 학습 한계 안의 당일 반복을 당깁니다. 일일 한도는 전체 과목 공통이며 시험(일반복습)모드의 새 시작에 적용됩니다. 덱 계층·오늘만 한도·노트 형제 묻기·자동 실패 카드 중단은 없습니다. 오디오 제어·쉬운 요일·SM-2도 지원하지 않습니다. 1m 10m의 첫 Hard(애매)는 설치 Anki에서 5분30초, MIA에서 6분입니다. MIA 입력은 분 단위이며 Anki의 초 단계를 지원하지 않습니다. 하루 경계를 넘는 단계는 Anki의 날짜 단위 변환과 달리 절대 예약 시각을 유지하며 24시간 이상 단계는 ts-fsrs의 정규 복습 상태로 전환됩니다. 고정 평가 간격이 있으면 단계/FSRS보다 우선합니다.");
     simple.append(basic, budgetHelp, stepGroups, retentionGroup, advancedNote);
     const library = container.createEl("details", { cls: "mia-settings-help mia-study-profiles" });
     library.createEl("summary", { text: "내 설정 · 저장한 조합 관리" });
@@ -530,7 +538,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       retentionInput.value = String(retention); retentionPercentInput.value = String(Number((retention * 100).toFixed(10)));
       changed();
     });
-    if (cancel) actions.createEl("button", { text: "취소", attr: { type: "button" } }).addEventListener("click", () => { optimizerController?.abort(); cancel(); });
+    if (cancel) actions.createEl("button", { text: "취소", attr: { type: "button" } }).addEventListener("click", cancel);
     const button = actions.createEl("button", { text: "학습 설정 저장", cls: "mod-cta", attr: { type: "button" } });
     button.addEventListener("click", async () => {
       if (optimizerController) { status.setText("최적화가 끝난 뒤 저장하세요. 먼저 취소할 수도 있습니다."); return; }
@@ -570,4 +578,5 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
     refresh();
   };
   render(baseline.studyManagement);
+  return stopOptimization;
 }

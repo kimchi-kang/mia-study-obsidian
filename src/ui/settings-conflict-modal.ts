@@ -19,9 +19,10 @@ export class SettingsConflictModal extends Modal {
     this.modalEl.classList.add("mia-preview-modal", "mia-recovery-modal");
     this.contentEl.createEl("p", { text: "서로 다른 변경의 순서를 확인할 수 없어 설정을 자동으로 섞지 않았습니다. 현재 값과 보관 사본을 비교하세요. 선택한 사본은 전체 학습 설정에 적용되며 평가 기록과 이미 예약된 복습일은 바꾸지 않습니다. 적용 전 현재 설정도 보관합니다." });
     this.showSettings("현재 설정", this.active);
-    for (const item of this.alternatives) {
+    let remaining = this.alternatives.length;
+    for (const [index, item] of this.alternatives.entries()) {
       const detail = this.contentEl.createEl("details");
-      detail.createEl("summary", { text: `보관 사본 ${this.alternatives.indexOf(item) + 1}` });
+      detail.createEl("summary", { text: `보관 사본 ${index + 1}` });
       this.showSettings("보관된 값", item.settings, detail);
       const actions = detail.createEl("div", { cls: "mia-inline-actions" });
       actions.createEl("button", { text: "이 설정 전체 적용" }).addEventListener("click", async () => {
@@ -35,7 +36,8 @@ export class SettingsConflictModal extends Modal {
         if (this.busy) return;
         confirmConflictDeletion(this.app, label, "현재 설정은 그대로 두고, 선택한 보관 사본만 지웁니다. 되돌릴 수 없습니다.", async () => {
           await this.dismiss(item);
-          this.close();
+          detail.remove();
+          if (--remaining === 0) this.close();
         }, busy => this.setBusy(busy));
       });
     }

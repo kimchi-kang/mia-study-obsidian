@@ -6,15 +6,22 @@ export function slimLayoutBoundary() {
     constructor(app) {
       this.app = app;
       this.containerEl = document.body.createDiv({ cls: "modal-container" });
-      this.containerEl.createDiv({ cls: "modal-bg" });
+      this.containerEl.createDiv({ cls: "modal-bg" }).addEventListener("click", () => this.close());
       this.modalEl = this.containerEl.createDiv({ cls: "modal" });
-      this.modalEl.createDiv({ cls: "modal-close-button" });
+      this.modalEl.createDiv({ cls: "modal-close-button" }).addEventListener("click", () => this.close());
       this.titleEl = this.modalEl.createDiv({ cls: "modal-header" }).createDiv({ cls: "modal-title" });
       this.contentEl = this.modalEl.createDiv({ cls: "modal-content" });
     }
     setTitle(title) { this.titleEl.setText(title); }
-    open() { this.onOpen(); }
-    close() { this.onClose?.(); this.containerEl.remove(); }
+    escape = event => {
+      if (event.key === "Escape" && [...document.querySelectorAll(".modal-container")].at(-1) === this.containerEl) this.close();
+    };
+    open() { document.addEventListener("keydown", this.escape); this.onOpen(); }
+    close() {
+      document.removeEventListener("keydown", this.escape);
+      this.onClose?.();
+      this.containerEl.remove();
+    }
   }
   class Setting {
     constructor(parent) {

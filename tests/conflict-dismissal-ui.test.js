@@ -46,6 +46,14 @@ it("cancels a question deletion, then confirms once and blocks duplicate actions
   expect(remove.disabled).toBe(true);
   finish();
   await vi.waitFor(() => expect(confirmation()).toBeNull());
+  expect(modal.modalEl.isConnected).toBe(true);
+  expect([...modal.contentEl.querySelectorAll("h3")].map(heading => heading.textContent)).toEqual(["two"]);
+  expect(modal.contentEl.querySelectorAll("details")).toHaveLength(1);
+  action(modal.contentEl, "보관 기록 모두 지우기").click();
+  action(confirmation(), "지우기").click();
+  expect(dismiss).toHaveBeenLastCalledWith({ two: [review] }, true);
+  finish();
+  await vi.waitFor(() => expect(modal.modalEl.isConnected).toBe(false));
 });
 
 it("reports failure, preserves the review modal, and allows retrying the confirmed action", async () => {
@@ -67,7 +75,8 @@ it("reports failure, preserves the review modal, and allows retrying the confirm
 it("requires one confirmation for a settings copy and does not apply it", async () => {
   const apply = vi.fn();
   const dismiss = vi.fn().mockResolvedValue(undefined);
-  const modal = new SettingsConflictModal({}, DEFAULT_SETTINGS, [alternate], apply, dismiss);
+  const second = { ...alternate, id: "second", settings: { ...DEFAULT_SETTINGS, targetRetention: .85 } };
+  const modal = new SettingsConflictModal({}, DEFAULT_SETTINGS, [alternate, second], apply, dismiss);
   modal.open();
   const remove = action(modal.contentEl, "이 보관 사본 지우기");
   remove.click();
@@ -78,6 +87,13 @@ it("requires one confirmation for a settings copy and does not apply it", async 
   await vi.waitFor(() => expect(confirmation()).toBeNull());
   expect(dismiss).toHaveBeenCalledExactlyOnceWith(alternate);
   expect(apply).not.toHaveBeenCalled();
+  expect(modal.modalEl.isConnected).toBe(true);
+  expect(modal.contentEl.querySelectorAll("details")).toHaveLength(1);
+  expect(modal.contentEl.querySelector("summary").textContent).toBe("보관 사본 2");
+  action(modal.contentEl, "이 보관 사본 지우기").click();
+  action(confirmation(), "지우기").click();
+  await vi.waitFor(() => expect(modal.modalEl.isConnected).toBe(false));
+  expect(dismiss).toHaveBeenLastCalledWith(second);
 });
 
 it.each(["dashboard", "progress"])("clears the warning on %s after confirming all deletions", async route => {

@@ -211,6 +211,7 @@ export function parseQuestionFile(
   const questions: QuestionRecord[] = [];
   const diagnostics: QuestionDiagnostic[] = [];
   const seenIds = new Set<string>();
+  const duplicateIds = new Set<string>();
 
   for (let questionStart = 0; questionStart < lines.length; questionStart += 1) {
     if (fenced[questionStart]) continue;
@@ -252,8 +253,9 @@ export function parseQuestionFile(
       }
     }
 
-    if (id && seenIds.has(id)) {
-      diagnostics.push({ filePath, line: anchorLine ?? questionStart, code: "duplicate-id", message: `중복 문제 ID: ${id}` });
+    if (id && seenIds.has(id) && !duplicateIds.has(id)) {
+      duplicateIds.add(id);
+      diagnostics.push({ filePath, line: anchorLine ?? questionStart, code: "duplicate-id", message: `같은 파일 안에서 중복된 문제 ID: ${id}` });
     }
     if (id) seenIds.add(id);
 

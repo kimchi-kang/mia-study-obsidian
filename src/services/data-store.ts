@@ -33,7 +33,7 @@ function positiveInteger(value: unknown, fallback: number): number {
   return Number.isInteger(number) && number > 0 ? number : fallback;
 }
 
-function configuredPath(value: string, allowInternal = false): string | null {
+export function configuredPath(value: string, allowInternal = false): string | null {
   const normalized = value.replaceAll("\\", "/").replace(/^\/+|\/+$/g, "").trim();
   if (!normalized) return null;
   const segments = normalized.split("/");

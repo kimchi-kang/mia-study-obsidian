@@ -1,6 +1,7 @@
-import { Component, MarkdownRenderer, Modal, Notice, TFile } from "obsidian";
+import { Component, MarkdownRenderer, Modal, Notice, TFile, TFolder } from "obsidian";
 import { keywordLinkPath, keywordNotePath } from "../core/keyword-path";
-import { readKeywordMeaning } from "../core/keyword-note";
+import { createKeywordNote, readKeywordMeaning } from "../core/keyword-note";
+import { assertPortablePath, ensureFolder } from "../services/vault-files";
 import { errorMessage } from "./error-message";
 
 /** Shows only the keyword and its meaning; the note's link list and other sections stay in the note. */
@@ -69,10 +70,12 @@ export class KeywordMeaningModal extends Modal {
       create.disabled = true;
       try {
         const path = keywordNotePath(this.target, this.label, this.keywordFolder);
+        assertPortablePath(this.app, path);
         const folder = path.split("/").slice(0, -1).join("/");
-        if (folder && !this.app.vault.getAbstractFileByPath(folder)) await this.app.vault.createFolder(folder);
+        if (folder) await ensureFolder(this.app, folder);
         const existing = this.app.vault.getAbstractFileByPath(path);
-        const fileToOpen = existing instanceof TFile ? existing : await this.app.vault.create(path, `# ${this.label}\n\n## 의미\n\n\n## 연결\n`);
+        if (existing instanceof TFolder) throw new Error("키워드 노트 경로가 폴더와 겹칩니다.");
+        const fileToOpen = existing instanceof TFile ? existing : await this.app.vault.create(path, createKeywordNote(this.label, ""));
         await this.app.workspace.getLeaf("tab").openFile(fileToOpen);
         new Notice("키워드 의미 노트를 만들었습니다.");
         this.close();

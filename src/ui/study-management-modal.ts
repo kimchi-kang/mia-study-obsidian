@@ -6,6 +6,8 @@ import { KeyboardAwareModal } from "./mobile-keyboard";
 import { renderStudyManagementSettings } from "./study-management-settings";
 
 export class StudyManagementModal extends KeyboardAwareModal {
+  private stopOptimization: (() => void) | undefined;
+
   constructor(app: App, private readonly plugin: MiaStudyPlugin, private readonly onSaved: () => void, private readonly onClosed?: () => void) {
     super(app, "long");
   }
@@ -22,7 +24,7 @@ export class StudyManagementModal extends KeyboardAwareModal {
     this.contentEl.empty();
     this.contentEl.addClass("mia-keyboard-settings");
     const panel = this.contentEl.createDiv({ cls: "mia-study-management-settings" });
-    renderStudyManagementSettings(panel, this.plugin, async action => {
+    this.stopOptimization = renderStudyManagementSettings(panel, this.plugin, async action => {
       try {
         await action();
         this.onSaved();
@@ -33,7 +35,11 @@ export class StudyManagementModal extends KeyboardAwareModal {
     }, () => this.close(), parent => renderDeviceSyncSettings(parent, this.plugin));
   }
 
-  onClose(): void { this.contentEl.empty(); }
+  onClose(): void {
+    this.stopOptimization?.();
+    this.stopOptimization = undefined;
+    this.contentEl.empty();
+  }
 
   close(): void {
     super.close();

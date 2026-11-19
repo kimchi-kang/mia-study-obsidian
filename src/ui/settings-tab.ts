@@ -3,7 +3,7 @@ import { renderStudyManagementSettings } from "./study-management-settings";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import type { MiaSettings } from "../core/models";
 import type MiaStudyPlugin from "../main";
-import { parseSettings } from "../services/data-store";
+import { configuredPath, parseSettings } from "../services/data-store";
 import { errorMessage } from "./error-message";
 import { bindKeyboardViewport, KeyboardViewportBinding } from "./mobile-keyboard";
 
@@ -11,6 +11,7 @@ export class MiaSettingTab extends PluginSettingTab {
   private settingsWrites: Promise<void> = Promise.resolve();
   private keyboardViewport: KeyboardViewportBinding | null = null;
   private folderCommits: Array<() => void> = [];
+  private stopOptimization: (() => void) | undefined;
 
   constructor(app: App, private readonly miaPlugin: MiaStudyPlugin) {
     super(app, miaPlugin);
@@ -30,8 +31,16 @@ export class MiaSettingTab extends PluginSettingTab {
         return this.save(async () => {
           const store = this.miaPlugin.store;
           const before = displayValue(store.settings);
-          const patch = key === "sourceRoots" ? { sourceRoots: raw.split("\n").map(line => line.trim()) } : { keywordFolder: raw };
           try {
+            const roots = key === "sourceRoots" ? raw.split("\n").map(line => line.trim()) : [];
+            const invalid = key === "sourceRoots"
+              ? roots.find(line => line && configuredPath(line, true) === null)
+              : raw.trim() && configuredPath(raw) === null ? raw : undefined;
+            if (invalid) {
+              new Notice(`“${invalid}”은(는) 사용할 수 없는 폴더라 이전 값 “${before}”을 유지합니다.`);
+              return;
+            }
+            const patch = key === "sourceRoots" ? { sourceRoots: roots } : { keywordFolder: raw };
             if (displayValue(parseSettings({ ...settings, ...patch })) !== before) {
               try { await store.updateSettings(patch, settings); }
               finally { settings = structuredClone(store.settings); }
@@ -47,6 +56,7 @@ export class MiaSettingTab extends PluginSettingTab {
       input.addEventListener("change", commit);
       this.folderCommits.push(commit);
     };
+    this.stopOptimization?.();
     this.keyboardViewport?.destroy();
     this.keyboardViewport = null;
     containerEl.empty();
@@ -58,7 +68,7 @@ export class MiaSettingTab extends PluginSettingTab {
       text.setPlaceholder("지리학\n통계이론").setValue(settings.sourceRoots.join("\n"));
       bindFolder(text.inputEl, "sourceRoots", "문제 폴더");
     });
-    renderStudyManagementSettings(containerEl.createDiv({ cls: "mia-study-management-settings" }), this.miaPlugin, action => this.save(action, false));
+    this.stopOptimization = renderStudyManagementSettings(containerEl.createDiv({ cls: "mia-study-management-settings" }), this.miaPlugin, action => this.save(action, false));
     renderDeviceSyncSettings(containerEl, this.miaPlugin);
     new Setting(containerEl).setName("키워드 노트 폴더").setDesc("키워드 링크를 만들 때 기준으로 표시할 폴더입니다.").addText((text) => {
       text.setValue(settings.keywordFolder);
@@ -74,6 +84,8 @@ export class MiaSettingTab extends PluginSettingTab {
   }
 
   hide(): void {
+    this.stopOptimization?.();
+    this.stopOptimization = undefined;
     this.folderCommits.forEach(commit => commit());
     this.folderCommits = [];
     this.keyboardViewport?.destroy();
