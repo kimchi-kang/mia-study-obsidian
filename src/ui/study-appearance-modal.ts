@@ -29,12 +29,12 @@ export class StudyAppearanceModal extends Modal {
       dropdown.addOption("small", "작게").addOption("medium", "보통").addOption("large", "크게").setValue(this.draft.size);
       dropdown.onChange((value) => { if (value === "small" || value === "medium" || value === "large") this.change({ size: value }); });
     });
-    new Setting(screen).setName("정보량").setDesc("시험 모드에만 적용합니다. 암기 모드는 항상 간결하게 표시합니다. 간결하게: 질문·답안에 집중합니다. 자세하게: 키워드와 이어볼 문제도 함께 표시합니다.").addDropdown((dropdown) => {
+    new Setting(screen).setName("정보량").setDesc("시험(일반복습)모드에만 적용합니다. 암기 모드는 항상 간결하게 표시합니다. 간결하게: 질문·답안에 집중합니다. 자세하게: 키워드와 이어볼 문제도 함께 표시합니다.").addDropdown((dropdown) => {
       dropdown.addOption("compact", "간결하게").addOption("detailed", "자세하게").setValue(this.draft.density);
       dropdown.onChange((value) => { if (value === "compact" || value === "detailed") this.change({ density: value }); });
     });
     this.toggle(screen, "focus", "집중 모드", "학습 중 상단 메뉴를 접습니다. 기본값은 꺼짐입니다.");
-    this.toggle(screen, "answerTimer", "답변 타이머", "시험 모드에서 정답을 볼 때까지 걸린 시간을 보여줍니다. 꺼도 시간은 기록됩니다. 기본값은 켜짐입니다.");
+    this.toggle(screen, "answerTimer", "답변 타이머", "시험(일반복습)모드에서 정답을 볼 때까지 걸린 시간을 보여줍니다. 꺼도 시간은 기록됩니다. 기본값은 켜짐입니다.");
     new Setting(screen).setName("답안 배치").setDesc("나란히 보기는 넓은 창에서 적용됩니다. 좁아지면 자동으로 한 열로 돌아옵니다.").addDropdown((dropdown) => {
       dropdown.addOption("stacked", "위아래로").addOption("split", "나란히").setValue(this.draft.answerLayout);
       dropdown.onChange((value) => { if (value === "stacked" || value === "split") this.change({ answerLayout: value }); });
@@ -51,7 +51,7 @@ export class StudyAppearanceModal extends Modal {
     });
     const auto = this.group("자동 진행");
     for (const [key, name, description, values] of [
-      ["autoQuestionSeconds", "질문 시간", "시험 모드에서 이 시간이 지나면 정답을 자동으로 보여줍니다. 기본값은 끔입니다.", AUTO_QUESTION_SECONDS],
+      ["autoQuestionSeconds", "질문 시간", "시험(일반복습)모드에서 이 시간이 지나면 정답을 자동으로 보여줍니다. 기본값은 끔입니다.", AUTO_QUESTION_SECONDS],
       ["autoAnswerSeconds", "정답 시간", "정답을 본 뒤 이 시간이 지나면 아래 동작을 하고 다음 문제로 넘어갑니다. 기본값은 끔입니다.", AUTO_ANSWER_SECONDS],
     ] as const) {
       new Setting(auto).setName(name).setDesc(description).addDropdown(dropdown => {

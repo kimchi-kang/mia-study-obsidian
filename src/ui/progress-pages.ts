@@ -98,14 +98,14 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
     : `오늘 출제: 복습 ${availableDue}개 · 새 문제 ${availableNew}개 · 전체 대기: 복습 ${due}개 · 새 문제 ${fresh}개` });
   const deferredDue = Math.max(0, due - availableDue);
   if (deferredDue > 0) action.createEl("p", { text: `하루 상한으로 복습 ${deferredDue}개를 이번 출제에서 제외했습니다. 문제와 복습일은 유지되며 이후 학습에서 다시 확인할 수 있습니다.`, cls: "mia-muted mia-deferred-reviews" });
-  if (limited) action.createEl("p", { text: "대기 중인 문제는 있지만 하루 학습량 제한으로 시험 모드에 나오지 않습니다. 학습 설정에서 하루에 새로 배울 문제 수·하루 복습량을 확인하세요.", cls: "mia-muted" });
+  if (limited) action.createEl("p", { text: "대기 중인 문제는 있지만 하루 학습량 제한으로 시험(일반복습)모드에 나오지 않습니다. 학습 설정에서 하루에 새로 배울 문제 수·하루 복습량을 확인하세요.", cls: "mia-muted" });
   const actions = action.createDiv({ cls: "mia-inline-actions" });
   if (empty) {
     actions.createEl("button", { text: "첫 질문 추가", cls: "mod-cta" }).addEventListener("click", () =>
       openEditorWithNotice("질문 추가", () => ctx.plugin.openManagedQuestionEditor()));
     if (ctx.plugin.index.candidates.length) actions.createEl("button", { text: "등록할 질문 확인" }).addEventListener("click", () => ctx.navigate("questions"));
   } else {
-    const start = actions.createEl("button", { text: "시험 모드 시작", cls: "mod-cta" });
+    const start = actions.createEl("button", { text: "시험(일반복습)모드 시작", cls: "mod-cta" });
     start.disabled = available.length === 0;
     start.addEventListener("click", () => ctx.startReview());
     const browse = actions.createEl("button", { text: "전체 암기 모드" });

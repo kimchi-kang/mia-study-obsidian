@@ -806,7 +806,9 @@ export class MiaStudyView extends ItemView {
     this.studyShortcuts.set("ArrowLeft", previous);
     // Split so a narrow bar can drop the subject and shorten the mode, but never the position.
     const progress = navigation.createEl("div", { cls: "mia-progress" });
-    progress.createSpan({ text: this.sessionMode === "recall" ? "시험 모드" : "암기 모드", cls: "mia-progress-mode" });
+    const mode = progress.createSpan({ text: this.sessionMode === "recall" ? "시험(일반복습)" : "암기 모드", cls: "mia-progress-mode" });
+    // The phone bar hides this suffix so the longer recall name still fits uncut.
+    if (this.sessionMode === "recall") mode.createSpan({ text: "모드", cls: "mia-progress-mode-suffix" });
     progress.createSpan({ text: ` · ${this.queueIndex + 1} / ${this.queue.length}`, cls: "mia-progress-count" });
     progress.createSpan({ text: ` · ${question.subject} · ${question.questionType}`, cls: "mia-progress-subject" });
     const next = navigation.createEl("button", { text: "다음 문제 →" });

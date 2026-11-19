@@ -32,11 +32,11 @@ export async function renderLayoutCase({ long = false, related = true, revealed 
   const question = {
     id: "q", heading: "재료 보존이란?", questionMarkdown: "재료 보존이란?",
     answerMarkdown: Array.from({ length: long ? 40 : 3 }, (_, i) => `${i + 1}. 전체 재료량은 일정하다.`).join("\n"),
-    subject: "전자공학", questionType: "정의형", filePath: "bank.md",
+    subject: "생명과학", questionType: "정의형", filePath: "bank.md",
     coreKeywords: [{ target: "재료 보존", label: "재료 보존" }], subKeywords: [], followUpIds: related ? ["related"] : [],
   };
   let questions = related ? [question, { ...question, id: "related", heading: "재료 보존의 예는?" }] : [question];
-  const subjects = ["전자공학", "통계이론", "지리학", "디지털공학", "제어공학", "신호처리"];
+  const subjects = ["생명과학", "통계이론", "지리학", "현대미술사", "경제원론", "음악이론"];
   if (route !== "study") questions = Array.from({ length: 48 }, (_, i) => ({
     ...question, id: i === 0 ? "q" : `q-${i}`, subject: subjects[i % subjects.length],
     heading: `${subjects[i % subjects.length]} 개념 ${i + 1}의 원리와 적용은?`,

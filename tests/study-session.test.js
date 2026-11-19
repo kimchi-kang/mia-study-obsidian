@@ -498,7 +498,7 @@ describe("study view scheduling integration", () => {
     const ui = setup({ start: false });
     ui.plugin.store.settings.studyManagement.newCardsPerDay = 0;
     ui.view.showDashboard();
-    expect(ui.exactButton("시험 모드 시작").disabled).toBe(true);
+    expect(ui.exactButton("시험(일반복습)모드 시작").disabled).toBe(true);
     expect(ui.exactButton("시험").disabled).toBe(true);
     expect(ui.exactButton("전체 암기 모드").disabled).toBe(false);
     expect(ui.exactButton("암기").disabled).toBe(false);
@@ -508,7 +508,7 @@ describe("study view scheduling integration", () => {
   });
 
   it.each([
-    ["시험 모드 시작", "recall", false], ["전체 암기 모드", "browse", false],
+    ["시험(일반복습)모드 시작", "recall", false], ["전체 암기 모드", "browse", false],
     ["시험", "recall", true], ["암기", "browse", true],
   ])("uses mode-specific scope and ordering from %s", async (label, mode, subjectOnly) => {
     const ui = setup({ start: false }); const template = ui.plugin.index.registered[0];
@@ -538,9 +538,9 @@ describe("study view scheduling integration", () => {
     expect(ui.reviews).toEqual({ "due-a": mature, "due-b": mature, future: expect.any(Object) });
   });
 
-  it.each(["시험 모드 시작", "전체 암기 모드", "시험", "암기"])("only disables recall %s when every review is still in the future", label => {
+  it.each(["시험(일반복습)모드 시작", "전체 암기 모드", "시험", "암기"])("only disables recall %s when every review is still in the future", label => {
     const ui = setup({ start: false }); ui.reviews.q = ui.plugin.fsrs.rate(undefined, Rating.Easy);
-    ui.view.showDashboard(); expect(ui.exactButton(label).disabled).toBe(["시험 모드 시작", "시험"].includes(label));
+    ui.view.showDashboard(); expect(ui.exactButton(label).disabled).toBe(["시험(일반복습)모드 시작", "시험"].includes(label));
   });
 
   it("graduates Again → Good → Good and clears resume without pulling a future review into today", async () => {
@@ -1092,9 +1092,9 @@ describe("return and quick recovery", () => {
     const ui = setup({ start: route === "study" });
     if (route === "dashboard") await ui.view.setState({ route, queue: [], queueIndex: 0, answerVisible: false, sessionMode: "recall" }, {});
     ui.plugin.store.synchronize = vi.fn().mockResolvedValue(undefined);
-    const button = ui.exactButton(route === "study" ? "정답 보기" : "시험 모드 시작");
+    const button = ui.exactButton(route === "study" ? "정답 보기" : "시험(일반복습)모드 시작");
     await ui.view.refreshAfterReturn(false);
-    expect(ui.exactButton(route === "study" ? "정답 보기" : "시험 모드 시작")).toBe(button);
+    expect(ui.exactButton(route === "study" ? "정답 보기" : "시험(일반복습)모드 시작")).toBe(button);
     await button.click();
     expect(ui.view.getState().route).toBe("study");
     if (route === "study") expect(ui.view.getState().answerVisible).toBe(true);
@@ -1477,7 +1477,7 @@ describe("dashboard task guidance", () => {
     ui.view.showDashboard();
     expect(ui.content()).toContain("하루 학습량 제한");
     expect(ui.content()).not.toContain("오늘 학습을 마쳤습니다");
-    expect(ui.exactButton("시험 모드 시작").disabled).toBe(true);
+    expect(ui.exactButton("시험(일반복습)모드 시작").disabled).toBe(true);
     const before = modalBoundary.instances.length;
     await ui.exactButton("학습량 확인").click();
     expect(modalBoundary.instances.length).toBe(before + 1);
@@ -1698,7 +1698,7 @@ describe("simple settings real study flow", () => {
     ui.view.startReview();expect(ui.view.getState().queue).toEqual(["mia-q-introduced-0"]);
     await ui.exactButton("정답 보기").click();await ui.button("너무 쉬움").click();ui.view.showDashboard();
     expect(ui.content()).toContain("오늘 출제할 문제가 없습니다");expect(ui.content()).toContain("복습 120개");
-    expect(ui.exactButton("시험 모드 시작").disabled).toBe(true);
+    expect(ui.exactButton("시험(일반복습)모드 시작").disabled).toBe(true);
     expect(ui.exactButton("학습량 확인")).toBeDefined();
     ui.plugin.index.registered=[];ui.view.showDashboard();expect(ui.content()).toContain("첫 질문을 추가해 보세요");
     ui.plugin.index.registered=ui.fixture.questions.filter(q=>q.id==="mia-q-overdue-1"||q.id==="mia-q-fresh-0");
