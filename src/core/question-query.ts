@@ -41,6 +41,10 @@ function keywordText(question: QuestionRecord): string {
     .toLocaleLowerCase("ko");
 }
 
+export function hasWeakRating(review: QuestionReviewState | undefined): boolean {
+  return review?.lastRating === Rating.Again || review?.lastRating === Rating.Hard;
+}
+
 function matchesReview(
   filter: ReviewFilter,
   review: QuestionReviewState | undefined,
@@ -56,7 +60,7 @@ function matchesReview(
     return fsrsService.isInStudyDay(review?.history.at(-1)?.review, now);
   }
   const rating = review?.lastRating;
-  if (filter === "weak") return rating === Rating.Again || rating === Rating.Hard;
+  if (filter === "weak") return hasWeakRating(review);
   if (filter === "again") return rating === Rating.Again;
   if (filter === "hard") return rating === Rating.Hard;
   if (filter === "good") return rating === Rating.Good;
@@ -64,7 +68,7 @@ function matchesReview(
 }
 
 export function weaknessUrgency(review: QuestionReviewState | undefined, now = new Date()): number {
-  if (!review || (review.lastRating !== Rating.Again && review.lastRating !== Rating.Hard)) return 0;
+  if (!review || !hasWeakRating(review)) return 0;
   const base = review.lastRating === Rating.Again ? 100 : 60;
   const due = new Date(review.card.due).getTime();
   const overdue = Number.isFinite(due) && due < now.getTime()

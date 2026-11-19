@@ -3,6 +3,7 @@ import type { App, DataAdapter } from "obsidian";
 import { SwipeSensitivity } from "../core/study-swipe";
 import { MiaSessionMode, ReviewCheckpoint, parseReviewCheckpoint } from "../core/navigation";
 import type { StudyGrade } from "../core/fsrs-service";
+import { parseSubjectExportOptions, type SubjectExportOptions } from "../core/export-priority";
 
 export interface StudySessionSummary {
   startedAt: number;
@@ -119,6 +120,7 @@ export class StudyUiStore {
   private readonly resumeKey: string;
   private writes: Promise<void> = Promise.resolve();
   private readonly preferenceKey: string;
+  private readonly exportPreferenceKey: string;
   private readonly sharedWrites: ResumeWrites;
 
   private readonly adapter: Pick<DataAdapter, "exists" | "read" | "write">;
@@ -128,6 +130,7 @@ export class StudyUiStore {
     const localPath = options.localStatePath ?? path;
     this.adapter = options.adapter ?? app.vault.adapter;
     this.preferenceKey = `mia-study:appearance:${localPath}`;
+    this.exportPreferenceKey = `mia-study:subject-export:${localPath}`;
     this.resumeKey = `mia-study:resume-checkpoint:${localPath}`;
     this.currentAppearance = parseStudyAppearance(app.loadLocalStorage(this.preferenceKey));
   }
@@ -136,6 +139,9 @@ export class StudyUiStore {
     return { version: 1, resume: this.resume, updatedAt: this.committedUpdatedAt };
   }
   get appearance(): StudyAppearance { return { ...this.currentAppearance }; }
+  get exportOptions(): SubjectExportOptions {
+    return parseSubjectExportOptions(this.app.loadLocalStorage(this.exportPreferenceKey));
+  }
   get hasResumeFile(): boolean { return this.filePresent; }
   get resumeRevision(): number { return this.sharedWrites.checkpointRevision; }
 
@@ -221,5 +227,9 @@ export class StudyUiStore {
     const next = parseStudyAppearance({ ...this.currentAppearance, ...patch });
     this.app.saveLocalStorage(this.preferenceKey, next);
     this.currentAppearance = next;
+  }
+
+  saveExportOptions(options: SubjectExportOptions): void {
+    this.app.saveLocalStorage(this.exportPreferenceKey, options);
   }
 }

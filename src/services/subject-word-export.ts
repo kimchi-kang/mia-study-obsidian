@@ -1,19 +1,29 @@
 import { Platform, TFile } from "obsidian";
 import type { App } from "obsidian";
+import { parseSubjectExportOptions, prepareSubjectExport, type SubjectExportOptions } from "../core/export-priority";
+import type { FsrsService } from "../core/fsrs-service";
 import type { ExportImage } from "../core/subject-export";
 import { downloadsDirectory, openExportFile, revealExportFile, writeExportFile, type ExportReceipt } from "./export-file";
 import type { MiaHost } from "./mia-host";
 import { ensureFolder } from "./vault-files";
 
 /** Writes a subject's questions and answers to a .docx: Downloads on desktop, a vault folder on mobile. */
-export async function exportSubjectWord(host: MiaHost, subject: string): Promise<ExportReceipt> {
+export async function exportSubjectWord(
+  host: MiaHost & { fsrs: FsrsService },
+  subject: string,
+  options = parseSubjectExportOptions(undefined),
+): Promise<ExportReceipt> {
   const { app } = host;
   await host.index.rebuild();
+  const now = new Date();
+  const questions = host.index.registered;
+  const prepared = options.scope === "weak" || options.order === "weak"
+    ? prepareSubjectExport(questions.filter((question) => question.subject === subject), host.store.reviews, host.fsrs, options, now)
+    : undefined;
   const { exportSubjectDocx } = await import("../core/subject-export");
-  const result = await exportSubjectDocx(subject, host.index.registered, (target, source) => readExportImage(app, target, source));
-  const safeSubject = subject.replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/gu, "_");
-  const stamp = new Date().toISOString().replace(/[:.]/gu, "-");
-  const filename = `${safeSubject} 질문 답변 ${stamp}.docx`;
+  const result = await exportSubjectDocx(subject, prepared?.questions ?? questions,
+    (target, source) => readExportImage(app, target, source), prepared?.presentation);
+  const filename = subjectExportFilename(subject, options, prepared ? now : new Date());
   if (Platform.isDesktopApp) {
     const path = await writeExportFile(downloadsDirectory(), filename, result.data);
     return { path, count: result.count, warnings: result.warnings,
@@ -26,6 +36,14 @@ export async function exportSubjectWord(host: MiaHost, subject: string): Promise
   for (let suffix = 2; app.vault.getAbstractFileByPath(path); suffix++) path = `${stem} ${suffix}.docx`;
   await app.vault.createBinary(path, result.data);
   return { path, count: result.count, warnings: result.warnings };
+}
+
+export function subjectExportFilename(subject: string, options: SubjectExportOptions, now: Date): string {
+  const safeSubject = subject.replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/gu, "_");
+  const stamp = now.toISOString().replace(/[:.]/gu, "-");
+  const scope = options.scope === "weak" ? " 부족한 문제" : "";
+  const order = options.order === "weak" ? " 부족한 순" : "";
+  return `${safeSubject} 질문 답변${scope}${order} ${stamp}.docx`;
 }
 
 export async function readExportImage(app: App, target: string, source: string): Promise<ExportImage | null> {

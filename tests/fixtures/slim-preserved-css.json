@@ -1597,6 +1597,94 @@
   },
   {
     "context": [],
+    "selector": ".mia-export-options",
+    "declarations": [
+      [
+        "display",
+        "flex",
+        false
+      ],
+      [
+        "flex-wrap",
+        "wrap",
+        false
+      ],
+      [
+        "gap",
+        "10px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-export-options label",
+    "declarations": [
+      [
+        "flex",
+        "1 1 9rem",
+        false
+      ],
+      [
+        "min-width",
+        "0",
+        false
+      ],
+      [
+        "display",
+        "grid",
+        false
+      ],
+      [
+        "gap",
+        "4px",
+        false
+      ],
+      [
+        "font-weight",
+        "700",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-export-options select",
+    "declarations": [
+      [
+        "width",
+        "100%",
+        false
+      ],
+      [
+        "min-width",
+        "0",
+        false
+      ],
+      [
+        "min-height",
+        "44px",
+        false
+      ],
+      [
+        "border",
+        "2px solid var(--text-normal)",
+        false
+      ],
+      [
+        "border-radius",
+        "0",
+        false
+      ],
+      [
+        "box-shadow",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
     "selector": ".mia-export-subjects",
     "declarations": [
       [

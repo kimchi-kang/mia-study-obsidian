@@ -192,13 +192,13 @@ describe("subject export chooser", () => {
     const { SubjectExportModal } = await import("../src/ui/subject-export-modal");
     let finish;
     const save = vi.fn(() => new Promise(resolve => { finish = resolve; }));
-    const modal = new SubjectExportModal({}, [{ name: "수학", count: 2 }, { name: "역사", count: 1 }], save);
+    const modal = new SubjectExportModal({}, [{ name: "수학", count: 2, weakCount: 1 }, { name: "역사", count: 1, weakCount: 0 }], save, exportPreferences().store);
     modal.onOpen();
     const math = modal.contentEl.find("수학 · 2문제");
     const history = modal.contentEl.find("역사 · 1문제");
     const pending = math.handlers.get("click")();
     history.click();
-    expect(save).toHaveBeenCalledExactlyOnceWith("수학");
+    expect(save).toHaveBeenCalledExactlyOnceWith("수학", { scope: "all", order: "note" });
     expect(history.disabled).toBe(true);
     finish({ path: "MIA 출력/수학.docx", count: 2, warnings: [] });
     await pending;
@@ -209,7 +209,7 @@ describe("subject export chooser", () => {
   it("recovers from export failure and does not rebuild a dismissed dialog", async () => {
     const { SubjectExportModal } = await import("../src/ui/subject-export-modal");
     const save = vi.fn().mockRejectedValueOnce(Error("disk full"));
-    const modal = new SubjectExportModal({}, [{ name: "수학", count: 2 }, { name: "빈 과목", count: 0 }], save);
+    const modal = new SubjectExportModal({}, [{ name: "수학", count: 2, weakCount: 1 }, { name: "빈 과목", count: 0, weakCount: 0 }], save, exportPreferences().store);
     modal.onOpen();
     const button = modal.contentEl.find("수학 · 2문제");
     await button.handlers.get("click")();
@@ -226,19 +226,87 @@ describe("subject export chooser", () => {
   });
   it("explains how to start when there are no registered questions", async () => {
     const { SubjectExportModal } = await import("../src/ui/subject-export-modal");
-    const modal = new SubjectExportModal({}, [], vi.fn());
+    const modal = new SubjectExportModal({}, [], vi.fn(), exportPreferences().store);
     modal.onOpen();
     expect(modal.contentEl.find("등록된 질문이 없습니다. 먼저 과목과 질문을 추가해 주세요.")).toBeDefined();
   });
+
+  it("updates the scope immediately, persists both choices locally, and restores them on reopen", async () => {
+    const { SubjectExportModal } = await import("../src/ui/subject-export-modal");
+    const { app, local, store, key } = exportPreferences();
+    const subjects = [{ name: "지리학", count: 12, weakCount: 3 }, { name: "통계이론", count: 4, weakCount: 0 }];
+    let finish;
+    const save = vi.fn(() => new Promise(resolve => { finish = resolve; }));
+    const modal = new SubjectExportModal(app, subjects, save, store);
+    modal.onOpen();
+    const [scope, order] = modal.contentEl.querySelectorAll("select");
+    expect([scope.value, order.value]).toEqual(["all", "note"]);
+    expect(modal.contentEl.find("통계이론 · 4문제").disabled).toBe(false);
+    scope.value = "weak";
+    scope.handlers.get("change")();
+    expect(modal.contentEl.find("지리학 · 3문제").disabled).toBe(false);
+    expect(modal.contentEl.find("통계이론 · 0문제").disabled).toBe(true);
+    expect(local.get(key)).toEqual({ scope: "weak", order: "note" });
+    order.value = "weak";
+    order.handlers.get("change")();
+    expect(modal.contentEl.find("지리학 · 3문제").disabled).toBe(false);
+    expect(local.get(key)).toEqual({ scope: "weak", order: "weak" });
+    expect(app.vault.adapter.write).not.toHaveBeenCalled();
+
+    const click = modal.contentEl.find("지리학 · 3문제").handlers.get("click");
+    const pending = click();
+    await click();
+    expect(save).toHaveBeenCalledExactlyOnceWith("지리학", { scope: "weak", order: "weak" });
+    expect([scope.disabled, order.disabled]).toEqual([true, true]);
+    finish({ count: 3, path: "MIA 출력/지리학.docx", warnings: [] });
+    await pending;
+    expect([scope.disabled, order.disabled]).toEqual([false, false]);
+    expect(modal.contentEl.find("통계이론 · 0문제").disabled).toBe(true);
+
+    modal.onClose();
+    const reopened = new SubjectExportModal(app, subjects, save, new StudyUiStore(app, "shared/ui-state.json", { localStatePath: "vault/ui-state.json" }));
+    reopened.onOpen();
+    expect(reopened.contentEl.querySelectorAll("select").map(select => select.value)).toEqual(["weak", "weak"]);
+    expect(reopened.contentEl.find("지리학 · 3문제")).toBeDefined();
+  });
+
+  it("normalizes unsupported choices and shows the empty scope hint only when needed", async () => {
+    const { SubjectExportModal } = await import("../src/ui/subject-export-modal");
+    const { app, local, store, key } = exportPreferences();
+    local.set(key, { scope: "unknown", order: 1 });
+    const modal = new SubjectExportModal(app, [{ name: "지리학", count: 2, weakCount: 0 }], vi.fn(), store);
+    modal.onOpen();
+    const [scope, order] = modal.contentEl.querySelectorAll("select");
+    const hint = "부족한 문제가 없습니다. 전체 질문으로 출력해 보세요.";
+    expect([scope.value, order.value]).toEqual(["all", "note"]);
+    expect(modal.contentEl.find(hint)).toBeUndefined();
+    scope.value = "weak";
+    scope.handlers.get("change")();
+    expect(modal.contentEl.find(hint)).toBeDefined();
+    expect(modal.contentEl.find("지리학 · 0문제").disabled).toBe(true);
+    scope.value = "all";
+    scope.handlers.get("change")();
+    expect(modal.contentEl.find(hint)).toBeUndefined();
+    expect(modal.contentEl.find("지리학 · 2문제").disabled).toBe(false);
+  });
 });
 
+function exportPreferences() {
+  const local = new Map();
+  const app = {
+    loadLocalStorage: key => local.get(key), saveLocalStorage: (key, value) => local.set(key, value),
+    vault: { adapter: { write: vi.fn() } },
+  };
+  const store = new StudyUiStore(app, "vault/ui-state.json");
+  return { app, local, store, key: "mia-study:subject-export:vault/ui-state.json" };
+}
 
 it("opens desktop exports through the system and offers the saved folder", async () => {
   const { SubjectExportModal } = await import("../src/ui/subject-export-modal");
   const openFile = vi.fn().mockResolvedValue(undefined), revealFile = vi.fn();
   const openLinkText = vi.fn();
   const save = vi.fn().mockResolvedValue({ path: "/example/Downloads/수학.docx", count: 2, warnings: [], openFile, revealFile });
-  const modal = new SubjectExportModal({ workspace: { openLinkText } }, [{ name: "수학", count: 2 }], save, "다운로드 폴더");
+  const modal = new SubjectExportModal({ workspace: { openLinkText } }, [{ name: "수학", count: 2, weakCount: 1 }], save, exportPreferences().store, "다운로드 폴더");
   modal.onOpen();
   expect(modal.contentEl.children.some(child => child.text.includes("저장 위치: 다운로드 폴더"))).toBe(true);
   await modal.contentEl.find("수학 · 2문제").handlers.get("click")();

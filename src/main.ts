@@ -3,6 +3,7 @@ import type { ExportImage } from "./core/subject-export";
 import { StartupDiagnostics } from "./services/startup-diagnostics";
 import type { ExportReceipt } from "./services/export-file";
 import { SubjectExportModal } from "./ui/subject-export-modal";
+import { isWeakForExport, type SubjectExportOptions } from "./core/export-priority";
 import { FsrsService, StudyGrade } from "./core/fsrs-service";
 import { StudyUiStore } from "./services/study-ui-store";
 import { QuestionPreviewModal } from "./ui/question-preview-modal";
@@ -276,13 +277,19 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
   }
 
   openSubjectExport(): void {
-    const counts = new Map<string, number>();
-    for (const subject of this.listSubjects()) counts.set(subject, 0);
-    for (const question of this.index.registered) counts.set(question.subject, (counts.get(question.subject) ?? 0) + 1);
-    const subjects = [...counts].sort(([a], [b]) => a.localeCompare(b, "ko"))
-      .map(([name, count]) => ({ name, count }));
-    this.modalOpenGuard.open(dialogKey("subject-export"), () => new SubjectExportModal(this.app, subjects, (subject) => this.exportSubject(subject),
-      Platform.isDesktopApp ? "다운로드 폴더" : "보관함의 MIA 출력 폴더"));
+    this.modalOpenGuard.open(dialogKey("subject-export"), () => {
+      const counts = new Map(this.listSubjects().map((name) => [name, { name, count: 0, weakCount: 0 }]));
+      const now = new Date();
+      for (const question of this.index.registered) {
+        const subject = counts.get(question.subject) ?? { name: question.subject, count: 0, weakCount: 0 };
+        subject.count++;
+        if (isWeakForExport(this.store.reviews[question.id], this.fsrs, now)) subject.weakCount++;
+        counts.set(subject.name, subject);
+      }
+      const subjects = [...counts.values()].sort((a, b) => a.name.localeCompare(b.name, "ko"));
+      return new SubjectExportModal(this.app, subjects, (subject, options) => this.exportSubject(subject, options), this.studyUi,
+        Platform.isDesktopApp ? "다운로드 폴더" : "보관함의 MIA 출력 폴더");
+    });
   }
 
   openSubjectEditor(current: string | null = null): void {
@@ -503,7 +510,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
 
   // Routes to the vault services. Kept as plugin methods so modal callbacks
   // and the file-safety regression tests address one stable surface.
-  private exportSubject(subject: string): Promise<ExportReceipt> { return exportSubjectWord(this, subject); }
+  private exportSubject(subject: string, options?: SubjectExportOptions): Promise<ExportReceipt> { return exportSubjectWord(this, subject, options); }
   private readExportImage(target: string, source: string): Promise<ExportImage | null> { return readExportImage(this.app, target, source); }
   private writeMetadata(question: QuestionRecord, metadata: QuestionMetadataInput): Promise<void> { return this.questions.writeMetadata(question, metadata); }
   private createSubject(value: string): Promise<void> { return this.subjects.create(value); }

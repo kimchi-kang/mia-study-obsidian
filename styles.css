@@ -301,6 +301,9 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button:first-child { background: var(--mia-blue); color: var(--mia-on-color); border: 3px solid var(--mia-ink); padding-inline: 22px; font-weight: 900; }
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button.mod-warning { margin-inline-start: auto; padding-inline: 8px; background: transparent; border: 0; box-shadow: none; color: var(--mia-danger-text); font-size: .86em; font-weight: 700; }
 .mia-keyboard-dismiss { position: sticky; bottom: 0; z-index: 6; display: block; min-height: 44px; height: auto; width: max-content; max-width: 100%; margin: 8px auto 0; padding: 8px 16px; box-shadow: var(--shadow-s); background: var(--background-primary); color: var(--interactive-accent); }
+.mia-export-options { display: flex; flex-wrap: wrap; gap: 10px; }
+.mia-export-options label { flex: 1 1 9rem; min-width: 0; display: grid; gap: 4px; font-weight: 700; }
+.mia-export-options select { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--text-normal); border-radius: 0; box-shadow: none; }
 .mia-export-subjects { display: flex; flex-direction: column; gap: 10px; margin-block: 16px; }
 .mia-export-subjects button { min-height: 44px; height: auto; padding: 12px 16px; text-align: start; white-space: normal; overflow-wrap: anywhere; }
 .mia-stat:not(button) { align-items: center; text-align: center; }

@@ -4,6 +4,7 @@ import {
   type ParagraphChild,
 } from "docx";
 import type { QuestionRecord } from "./models";
+import { compareExportNoteOrder } from "./export-priority";
 import { fencedCodeLines } from "./markdown-structure";
 import { isSourceAttributionLine } from "./source-attribution";
 
@@ -15,6 +16,11 @@ export interface ExportImage {
 }
 export type ExportImageReader = (target: string, sourcePath: string) => Promise<ExportImage | null>;
 export interface SubjectExportResult { data: ArrayBuffer; count: number; warnings: string[] }
+interface SubjectExportPresentation {
+  titleSuffix: string;
+  summary: string;
+  statusLines: readonly string[];
+}
 
 // Strip only standalone management lines, never occurrences inside prose or code.
 export function cleanExportMarkdown(markdown: string): string {
@@ -169,13 +175,14 @@ const EXPORT_SLICE_MS = 16;
 
 export async function exportSubjectDocx(
   subject: string, questions: readonly QuestionRecord[], readImage?: ExportImageReader,
+  presentation?: SubjectExportPresentation,
 ): Promise<SubjectExportResult> {
-  const comparePaths = new Intl.Collator("ko", { numeric: true }).compare;
-  const selected = questions.filter((question) => question.subject === subject).sort((a, b) =>
-    comparePaths(a.filePath, b.filePath) || a.location.headingLine - b.location.headingLine);
+  const selected = presentation ? questions : questions.filter((question) => question.subject === subject).sort(compareExportNoteOrder);
   if (!selected.length) throw new Error("출력할 질문이 없습니다.");
+  const title = `${subject} 질문 답변 정리${presentation?.titleSuffix ?? ""}`;
   const warnings = new Set<string>();
-  const children: Array<Paragraph | Table> = [new Paragraph({ text: `${subject} 질문 답변 정리`, heading: HeadingLevel.TITLE })];
+  const children: Array<Paragraph | Table> = [new Paragraph({ text: title, heading: HeadingLevel.TITLE })];
+  if (presentation) children.push(exportNote(presentation.summary));
   let sliceStartedAt = performance.now();
   const pauseIfNeeded = (): Promise<void> | undefined => {
     if (performance.now() - sliceStartedAt < EXPORT_SLICE_MS) return;
@@ -192,13 +199,15 @@ export async function exportSubjectDocx(
     }
     const context: RenderContext = { sourcePath: question.filePath, warnings, pauseIfNeeded, ...(readImage ? { readImage } : {}) };
     children.push(new Paragraph({ text: `질문 ${index + 1}`, heading: HeadingLevel.HEADING_2, keepNext: true, spacing: { before: 300, after: 100 } }));
+    const status = presentation?.statusLines[index];
+    if (status) children.push(exportNote(status));
     children.push(...await blocks(question.questionMarkdown, context));
     children.push(new Paragraph({ children: [new TextRun({ text: "답변", bold: true })], keepNext: true, spacing: { before: 80, after: 100 } }));
     children.push(...await blocks(question.answerMarkdown, context));
   }
   await new Promise<void>((resolve) => setTimeout(resolve, 0));
   const doc = new Document({
-    creator: "MIA Study", title: `${subject} 질문 답변 정리`,
+    creator: "MIA Study", title,
     styles: { default: {
       document: { run: { font: "맑은 고딕", size: 22, color: "000000" }, paragraph: { spacing: { line: 300, after: 120 } } },
       title: { run: { font: "맑은 고딕", size: 36, bold: true, color: "000000" }, paragraph: { spacing: { after: 300 } } },
@@ -208,4 +217,8 @@ export async function exportSubjectDocx(
     sections: [{ properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1134, bottom: 1134, left: 1134, right: 1134 } } }, children }],
   });
   return { data: await Packer.toArrayBuffer(doc), count: selected.length, warnings: [...warnings] };
+}
+
+function exportNote(text: string): Paragraph {
+  return new Paragraph({ children: [new TextRun({ text, size: 18, color: "595959" })], keepNext: true });
 }

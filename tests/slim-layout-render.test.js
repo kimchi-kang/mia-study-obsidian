@@ -86,7 +86,7 @@ it("renders additional real screens and states for computed-style equivalence", 
     "keyword-editor": () => new KeywordEditorModal(app, { name: "재료 보존", meaning: "전체 재료량은 일정하다." }, async () => {}),
     metadata: () => new QuestionMetadataModal(app, question, "", async () => {}, id => plugin.index.questionById(id)),
     "follow-up": () => new FollowUpModal(app, question, plugin.index.registered, async () => {}),
-    export: () => new SubjectExportModal(app, [{ name: "생명과학", count: 2 }, { name: "통계이론", count: 0 }], async () => {}),
+    export: () => new SubjectExportModal(app, [{ name: "지리학", count: 2, weakCount: 0 }, { name: "통계이론", count: 0, weakCount: 0 }], async () => {}, plugin.studyUi),
     appearance: () => new StudyAppearanceModal(app, plugin.studyUi, noop),
     controls: () => new StudyControlsModal(app),
     management: () => new StudyManagementModal(app, plugin, noop),
@@ -103,6 +103,12 @@ it("renders additional real screens and states for computed-style equivalence", 
     if (["management", "subject-editor", "question-editor", "question-create", "keyword-editor", "metadata", "follow-up"].includes(name)) { modal.containerEl.addClass("mia-keyboard-modal-container"); modal.modalEl.addClass("mia-keyboard-modal", "mia-setting-controls"); }
     await Promise.resolve();
     capture(name, modal.containerEl);
+    if (name === "export") {
+      const scope = modal.contentEl.querySelector("select");
+      scope.value = "weak";
+      scope.dispatchEvent(new window.Event("change"));
+      capture("export-empty", modal.containerEl);
+    }
     if (name === "question-editor") {
       const binding = bindKeyboardViewport(modal.containerEl, modal.contentEl);
       capture("question-editor-keyboard", modal.containerEl);
@@ -121,7 +127,9 @@ it("renders additional real screens and states for computed-style equivalence", 
   settings.containerEl.querySelectorAll("details").forEach(el => { el.open = true; });
   capture("settings-advanced", settings.containerEl);
   settings.hide();
-  expect(Object.keys(cases)).toHaveLength(42);
+  expect(Object.keys(cases)).toHaveLength(43);
+  expect(cases.export).toContain("노트 순서");
+  expect(cases["export-empty"]).toContain("부족한 문제가 없습니다.");
   expect(cases.hidden).toContain("mia-reveal"); expect(cases.browse).not.toContain("mia-ratings");
   expect(cases["follow-up"]).toContain('type="checkbox"');
   expect(cases.settings).toContain('value="20"');
