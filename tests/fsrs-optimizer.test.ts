@@ -59,6 +59,12 @@ describe("pure TypeScript FSRS-6 optimizer", () => {
     const result = await optimizeFsrs(synthetic().slice(0, 7));
     expect(result.status).toBe("insufficient"); expect(result.count).toBe(7); expect(result.parameters).toEqual(default_w);
   });
+  it("counts only eligible targets after removing rare rating and interval buckets", async () => {
+    const common = { reviews: [{ rating: 3, deltaT: 0 }, { rating: 3, deltaT: 2 }] };
+    const rare = { reviews: [{ rating: 3, deltaT: 0 }, { rating: 3, deltaT: 120 }] };
+    const result = await optimizeFsrs([...Array<OptimizerItem>(24).fill(common), rare, { reviews: [] }]);
+    expect(result).toMatchObject({ count: 26, usableCount: 24 });
+  });
   it("yields progress and aborts without returning partial weights", async () => {
     const controller = new AbortController(); const progress: number[] = [];
     await expect(optimizeFsrs(synthetic(4, 300), default_w, { signal: controller.signal, onProgress: p => { progress.push(p); if (p > 0) controller.abort(); } })).rejects.toMatchObject({ name: "AbortError" });

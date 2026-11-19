@@ -12,6 +12,7 @@ export interface OptimizerResult {
   previous: OptimizerMetrics;
   optimized: OptimizerMetrics;
   count: number;
+  usableCount: number;
   status: "improved" | "unchanged" | "insufficient";
 }
 
@@ -231,7 +232,7 @@ export async function optimizeFsrs(items: readonly OptimizerItem[], previous: re
   checkCancelled(options.signal);
   const usable = trainingItems(items.filter(item => item.reviews.length > 1 && item.reviews.length <= 256 && item.reviews.at(-1)!.deltaT > 0));
   const baseline = evaluateOptimizer(usable, previous.length ? previous : default_w);
-  const result = (parameters: number[], status: OptimizerResult["status"]): OptimizerResult => ({ parameters, status, previous: baseline, optimized: evaluateOptimizer(usable, parameters), count: items.length });
+  const result = (parameters: number[], status: OptimizerResult["status"]): OptimizerResult => ({ parameters, status, previous: baseline, optimized: evaluateOptimizer(usable, parameters), count: items.length, usableCount: usable.length });
   // fsrs-rs initialize_fsrs6_training returns defaults below eight long-term targets.
   if (usable.length < 8) { options.onProgress?.(100); return result([...default_w], "insufficient"); }
   let w = clipParameters(pretrain(usable), options.numRelearningSteps ?? 1);

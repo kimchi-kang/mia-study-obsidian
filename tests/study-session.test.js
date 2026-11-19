@@ -2456,10 +2456,11 @@ describe("auto advance and leech", () => {
     const ui=setup({start:false,linked:true,...options});
     ui.plugin.studyUi.updateAppearance(patch);ui.view.startReview(["q","related"]);return ui;
   };
-  it("leaves default DOM and interval behavior unchanged, including missing keys", () => {
+  it("keeps one shared interval even with the timer display hidden", () => {
     const ui=auto();expect(findClass(ui,"mia-auto-advance")).toBeUndefined();
     expect(vi.getTimerCount()).toBe(1);vi.advanceTimersByTime(10000);expect(ui.view.answerVisible).toBe(false);
-    ui.plugin.studyUi.updateAppearance({answerTimer:false});ui.view.render();expect(vi.getTimerCount()).toBe(0);
+    ui.plugin.studyUi.updateAppearance({answerTimer:false});ui.view.render();expect(vi.getTimerCount()).toBe(1);
+    expect(findClass(ui,"mia-answer-timer")).toBeUndefined();
   });
   it.each([true,false])("reveals at ten seconds and records recall time with answerTimer=%s", async answerTimer => {
     const ui=auto({autoQuestionSeconds:10,answerTimer});const el=findClass(ui,"mia-auto-advance");

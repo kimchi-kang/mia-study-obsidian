@@ -766,6 +766,9 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-controls-modal { width: min(520px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); }
 .mia-controls-modal p { font-size: var(--font-ui-small); color: var(--text-muted); }
 .mia-recovery-modal details > summary { min-height: 44px; align-content: center; cursor: pointer; overflow-wrap: anywhere; }
+.mia-recovery-modal .modal-content { overflow-wrap: anywhere; }
+.mia-recovery-modal .mia-inline-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 8px; }
+.mia-recovery-modal .mia-inline-actions button { max-width: 100%; white-space: normal; }
 .mia-preview-modal h4 { color: var(--interactive-accent); font-size: 12px; margin: 20px 0 10px; }
 .mia-preview-modal .mia-markdown img { max-width: 100%; height: auto; }
 .mia-preview-actions { position: sticky; bottom: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: var(--modal-background, var(--background-primary)); padding-top: 14px; margin-top: 18px; }

@@ -18,7 +18,7 @@ export async function exportSubjectWord(
   const now = new Date();
   const questions = host.index.registered;
   const prepared = options.scope === "weak" || options.order === "weak"
-    ? prepareSubjectExport(questions.filter((question) => question.subject === subject), host.store.reviews, host.fsrs, options, now)
+    ? prepareSubjectExport(questions.filter((question) => question.subject === subject), host.store.reviews, host.fsrs, options, now, host.fsrs.targetRetention)
     : undefined;
   const { exportSubjectDocx } = await import("../core/subject-export");
   const result = await exportSubjectDocx(subject, prepared?.questions ?? questions,

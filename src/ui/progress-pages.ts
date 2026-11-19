@@ -17,25 +17,112 @@ import { dialogKey } from "./modal-open-guard";
 
 const MAX_LISTED_DUPLICATE_FILES = 8;
 
+type RegisteredQuestion = QuestionRecord & { id: string };
+type OverviewRoute = "dashboard" | "progress";
+
+function reviewQueue(ctx: StudyPageContext, questions: RegisteredQuestion[], now = new Date()) {
+  return buildReviewQueue(questions, ctx.plugin.store.reviews, ctx.plugin.fsrs, { management: ctx.plugin.store.settings.studyManagement, now });
+}
+
+function subjectQuestions(ctx: StudyPageContext, subject: string): RegisteredQuestion[] {
+  return ctx.plugin.index.registered.filter(question => question.subject === subject);
+}
+
+function readOverview(ctx: StudyPageContext, route: "dashboard"): DashboardOverview;
+function readOverview(ctx: StudyPageContext, route: "progress"): ProgressOverview;
+function readOverview(ctx: StudyPageContext, route: OverviewRoute): DashboardOverview | ProgressOverview;
+function readOverview(ctx: StudyPageContext, route: OverviewRoute): DashboardOverview | ProgressOverview {
+  const { store, index, fsrs, studyUi } = ctx.plugin;
+  const now = new Date();
+  const dayStartsAt = store.settings.studyManagement.dayStartsAt;
+  const day = studyDayStart(now, dayStartsAt).getTime();
+  const { bySubject, ...counts } = calculateProgress(index.registered, store.reviews, fsrs, now);
+  const subjects = new Map(ctx.plugin.listSubjects().map(subject => [subject, [] as RegisteredQuestion[]]));
+  for (const question of index.registered) {
+    const items = subjects.get(question.subject) ?? [];
+    items.push(question);
+    subjects.set(question.subject, items);
+  }
+  const byName = new Map(bySubject.map(({ subject, counts }) => [subject, counts]));
+  const cards = [...subjects].sort(([a], [b]) => a.localeCompare(b, "ko")).map(([subject, items]) => {
+    const stats = byName.get(subject);
+    return { subject, total: stats?.total ?? 0, studied: stats?.studied ?? 0, fresh: stats?.new ?? 0,
+      due: stats?.due ?? 0, again: stats?.again ?? 0, hard: stats?.hard ?? 0, good: stats?.good ?? 0, easy: stats?.easy ?? 0,
+      canStart: reviewQueue(ctx, items, now).length > 0 };
+  });
+  const common = { dayStartsAt, day, reviewConflictCount: Object.keys(store.conflicts ?? {}).length };
+  if (route === "progress") return { ...common, counts, cards };
+  const available = reviewQueue(ctx, index.registered, now);
+  const availableNew = available.filter(question => fsrs.isNew(store.getReview(question.id))).length;
+  const saved = studyUi.resume;
+  const current = saved ? index.questionById(saved.queue[saved.queueIndex] ?? saved.seed[0] ?? "") : undefined;
+  return {
+    ...common, total: counts.total, due: counts.due, fresh: counts.new, easy: counts.easy, today: counts.today,
+    stableRatio: counts.total ? Math.round(counts.stable / counts.total * 100) : 0,
+    weak: counts.again + counts.hard, availableNew, availableDue: available.length - availableNew,
+    cards: cards.map(({ again, hard, good, easy, ...card }) => ({ ...card, weak: again + hard })),
+    resume: saved ? { current: current ? { heading: current.heading, filePath: current.filePath, subject: current.subject } : undefined,
+      mode: saved.sessionMode, position: Math.min(saved.queueIndex + 1, saved.queue.length), length: saved.queue.length,
+      waiting: saved.queueIndex >= saved.queue.length && saved.sessionMode === "recall", updatedAt: saved.updatedAt } : null,
+    pending: store.hasPendingRecovery, settingsConflicts: store.settingsConflicts?.length ?? 0,
+    duplicateFiles: index.crossFileDuplicates?.files.length ? {
+      hiddenQuestions: index.crossFileDuplicates.hiddenQuestions, count: index.crossFileDuplicates.files.length,
+      paths: index.crossFileDuplicates.files.slice(0, MAX_LISTED_DUPLICATE_FILES).map(file => file.filePath),
+    } : null,
+    hasCandidates: !counts.total && index.candidates.length > 0, diagnostics: index.diagnostics.length,
+  };
+}
+
+type OverviewCommon = { dayStartsAt: number; day: number; reviewConflictCount: number };
+type SubjectCard = { subject: string; total: number; studied: number; fresh: number; due: number; canStart: boolean };
+type ProgressOverview = OverviewCommon & {
+  counts: ProgressCounts;
+  cards: Array<SubjectCard & { again: number; hard: number; good: number; easy: number }>;
+};
+type DashboardOverview = OverviewCommon & {
+  total: number; due: number; fresh: number; easy: number; today: number; stableRatio: number; weak: number;
+  availableNew: number; availableDue: number;
+  cards: Array<SubjectCard & { weak: number }>;
+  resume: { current: Pick<QuestionRecord, "heading" | "filePath" | "subject"> | undefined; mode: string;
+    position: number; length: number; waiting: boolean; updatedAt: string } | null;
+  pending: boolean; settingsConflicts: number;
+  duplicateFiles: { hiddenQuestions: number; count: number; paths: string[] } | null;
+  hasCandidates: boolean; diagnostics: number;
+};
+
+export function overviewSignature(ctx: StudyPageContext, route: OverviewRoute, overview?: DashboardOverview | ProgressOverview): string {
+  return JSON.stringify([route, ctx.plugin.index.isReady ? overview ?? readOverview(ctx, route) : null]);
+}
+
 /** Explains why questions vanished when a sync app left a copy of a question file. */
-function renderDuplicateFileWarning(ctx: StudyPageContext, root: HTMLElement): void {
-  const duplicates = ctx.plugin.index.crossFileDuplicates;
-  if (!duplicates?.files.length) return;
+function renderDuplicateFileWarning(root: HTMLElement, duplicates: DashboardOverview["duplicateFiles"]): void {
+  if (!duplicates) return;
   const card = root.createDiv({ cls: "mia-primary-card" });
   card.createEl("p", { text: `같은 문제가 둘 이상의 파일에 들어 있어 문제 ${duplicates.hiddenQuestions}개가 목록과 학습에서 숨겨져 있습니다.`, cls: "mia-warning" });
   card.createEl("p", { text: "동기화 앱이 파일의 사본을 만들었을 때 흔히 생깁니다. 학습 기록은 그대로 보관되어 있으며, 불필요한 사본 파일을 삭제하거나 문제 폴더 밖으로 옮기면 문제가 다시 나타납니다.", cls: "mia-muted" });
   const list = card.createEl("ul");
-  for (const file of duplicates.files.slice(0, MAX_LISTED_DUPLICATE_FILES)) list.createEl("li", { text: file.filePath });
-  const more = duplicates.files.length - MAX_LISTED_DUPLICATE_FILES;
+  for (const path of duplicates.paths) list.createEl("li", { text: path });
+  const more = duplicates.count - duplicates.paths.length;
   if (more > 0) card.createEl("p", { text: `외 ${more}개 파일`, cls: "mia-muted" });
 }
 
-export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void {
-  const pendingRecovery = ctx.plugin.store.pendingRecovery;
-  if (pendingRecovery) {
+function renderReviewConflictWarning(ctx: StudyPageContext, root: HTMLElement, count: number): void {
+  if (count) {
+    const warning = root.createDiv({ cls: "mia-sync-warning" });
+    warning.createEl("p", { text: `기기 간 평가가 달랐던 문제 ${count}개 · 이전 이력도 보관했습니다.` });
+    warning.createEl("button", { text: "보관된 평가 확인" }).addEventListener("click", () => ctx.plugin.modalOpenGuard.open(dialogKey("review-conflicts"), () => new ReviewConflictModal(ctx.app, ctx.plugin.store.conflicts, id => ctx.plugin.index.questionById(id)?.heading ?? id,
+      (expected, all) => ctx.plugin.store.dismissReviewConflicts(expected, all))));
+  }
+}
+
+export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): string {
+  const overview = readOverview(ctx, "dashboard");
+  if (overview.pending) {
     const warning = root.createDiv({ cls: "mia-storage-warning" });
     warning.createEl("p", { text: "완료를 확인하지 못한 저장 사본이 있습니다. 새 평가 전에 확인하세요." });
     warning.createEl("button", { text: "미완료 저장 확인" }).addEventListener("click", () => {
+      const pendingRecovery = ctx.plugin.store.pendingRecovery;
+      if (!pendingRecovery) return;
       ctx.plugin.modalOpenGuard.open(dialogKey("pending-recovery"), () => {
         const modal = new Modal(ctx.app);
         modal.setTitle("미완료 저장 확인");
@@ -55,32 +142,21 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
       });
     });
   }
-  const settingsConflicts = ctx.plugin.store.settingsConflicts;
-  if (settingsConflicts?.length) {
+  if (overview.settingsConflicts) {
     const warning = root.createDiv({ cls: "mia-storage-warning" });
-    warning.createEl("p", { text: `기기 간 설정 차이 ${settingsConflicts.length}개를 보관했습니다. 현재 설정은 학습 설정에서 확인하세요.` });
-    warning.createEl("button", { text: "보관된 설정 확인" }).addEventListener("click", () => ctx.plugin.modalOpenGuard.open(dialogKey("settings-conflicts"), () => new SettingsConflictModal(ctx.app, ctx.plugin.store.settings, settingsConflicts, async id => {
+    warning.createEl("p", { text: `기기 간 설정 차이 ${overview.settingsConflicts}개를 보관했습니다. 현재 설정은 학습 설정에서 확인하세요.` });
+    warning.createEl("button", { text: "보관된 설정 확인" }).addEventListener("click", () => ctx.plugin.modalOpenGuard.open(dialogKey("settings-conflicts"), () => new SettingsConflictModal(ctx.app, ctx.plugin.store.settings, ctx.plugin.store.settingsConflicts, async id => {
       await ctx.plugin.store.restoreSettingsConflict(id);
       await ctx.plugin.index.rebuild();
       ctx.showDashboard();
-    })));
+    }, item => ctx.plugin.store.dismissSettingsConflict(item))));
   }
-  const conflicts = ctx.plugin.store.conflicts;
-  if (conflicts && Object.keys(conflicts).length) {
-    const warning = root.createDiv({ cls: "mia-sync-warning" });
-    warning.createEl("p", { text: `기기 간 평가가 달랐던 문제 ${Object.keys(conflicts).length}개 · 이전 이력도 보관했습니다.` });
-    warning.createEl("button", { text: "보관된 평가 확인" }).addEventListener("click", () => ctx.plugin.modalOpenGuard.open(dialogKey("review-conflicts"), () => new ReviewConflictModal(ctx.app, conflicts, id => ctx.plugin.index.questionById(id)?.heading ?? id)));
-  }
-  renderDuplicateFileWarning(ctx, root);
-  const questions = ctx.plugin.index.registered;
-  const progress = calculateProgress(questions, ctx.plugin.store.reviews, ctx.plugin.fsrs);
-  const due = progress.due;
-  const fresh = progress.new;
-  const available = buildReviewQueue(questions, ctx.plugin.store.reviews, ctx.plugin.fsrs, { management: ctx.plugin.store.settings.studyManagement });
-  const availableNew = available.filter(question => ctx.plugin.fsrs.isNew(ctx.plugin.store.getReview(question.id))).length;
-  const availableDue = available.length - availableNew;
-  const empty = questions.length === 0;
-  const limited = !empty && available.length === 0 && due + fresh > 0;
+  renderReviewConflictWarning(ctx, root, overview.reviewConflictCount);
+  renderDuplicateFileWarning(root, overview.duplicateFiles);
+  const { due, fresh, availableNew, availableDue, total } = overview;
+  const hasAvailable = availableNew + availableDue > 0;
+  const empty = total === 0;
+  const limited = !empty && !hasAvailable && due + fresh > 0;
   const hero = root.createDiv({ cls: "mia-primary-card mia-hero" });
   // Today's two numbers lead as large colour blocks; the start panel follows.
   if (!empty) {
@@ -90,9 +166,9 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
   }
   const action = hero.createDiv({ cls: "mia-hero-main" });
   // The study day starts at the configured hour, so 02:00 still belongs to yesterday.
-  const studyDay = studyDayStart(new Date(), ctx.plugin.store.settings.studyManagement.dayStartsAt);
+  const studyDay = new Date(overview.day);
   action.createEl("span", { text: studyDay.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "long" }), cls: "mia-hero-date" });
-  action.createEl("h3", { text: empty ? "첫 질문을 추가해 보세요" : available.length > 0 ? "오늘 학습을 시작할까요?" : limited ? "오늘 출제할 문제가 없습니다" : "지금 복습할 문제가 없습니다" });
+  action.createEl("h3", { text: empty ? "첫 질문을 추가해 보세요" : hasAvailable ? "오늘 학습을 시작할까요?" : limited ? "오늘 출제할 문제가 없습니다" : "지금 복습할 문제가 없습니다" });
   action.createEl("p", { text: empty
     ? "과목 이름, 질문, 정답, 핵심 키워드를 입력하면 바로 학습할 수 있습니다. 과목과 키워드는 함께 만들어집니다."
     : `오늘 출제: 복습 ${availableDue}개 · 새 문제 ${availableNew}개 · 전체 대기: 복습 ${due}개 · 새 문제 ${fresh}개` });
@@ -103,26 +179,26 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
   if (empty) {
     actions.createEl("button", { text: "첫 질문 추가", cls: "mod-cta" }).addEventListener("click", () =>
       openEditorWithNotice("질문 추가", () => ctx.plugin.openManagedQuestionEditor()));
-    if (ctx.plugin.index.candidates.length) actions.createEl("button", { text: "등록할 질문 확인" }).addEventListener("click", () => ctx.navigate("questions"));
+    if (overview.hasCandidates) actions.createEl("button", { text: "등록할 질문 확인" }).addEventListener("click", () => ctx.navigate("questions"));
   } else {
     const start = actions.createEl("button", { text: "시험(일반복습)모드 시작", cls: "mod-cta" });
-    start.disabled = available.length === 0;
+    start.disabled = !hasAvailable;
     start.addEventListener("click", () => ctx.startReview());
     const browse = actions.createEl("button", { text: "전체 암기 모드" });
-    browse.disabled = questions.length === 0;
-    browse.addEventListener("click", () => ctx.startReview(questions.map((question) => question.id), "browse"));
+    browse.disabled = empty;
+    browse.addEventListener("click", () => ctx.startReview(ctx.plugin.index.registered.map(question => question.id), "browse"));
   }
   action.createEl("p", { text: "암기 모드는 평가 없이 질문과 정답을 넘겨 보는 모드입니다. 복습일은 바뀌지 않습니다.", cls: "mia-muted" });
-  const saved = ctx.plugin.studyUi.resume;
+  const saved = overview.resume;
   if (saved) {
     // 이어하기 sits with the start actions, not in a card of its own.
-    const current = ctx.plugin.index.questionById(saved.queue[saved.queueIndex] ?? saved.seed[0] ?? "");
+    const current = saved.current;
     const resume = action.createDiv({ cls: "mia-resume-card" });
     resume.createEl("span", { text: "마지막 학습", cls: "mia-card-label" });
     const heading = resume.createEl("h3");
     if (current) renderQuestionHeading(ctx, heading, current);
     else heading.setText("저장된 학습");
-    resume.createEl("p", { text: `${current?.subject ?? ""} · ${saved.sessionMode === "recall" ? "시험" : "암기"} · ${Math.min(saved.queueIndex + 1, saved.queue.length)} / ${saved.queue.length}${saved.queueIndex >= saved.queue.length && saved.sessionMode === "recall" ? " · 다음 복습 대기" : ""}` });
+    resume.createEl("p", { text: `${current?.subject ?? ""} · ${saved.mode === "recall" ? "시험" : "암기"} · ${saved.position} / ${saved.length}${saved.waiting ? " · 다음 복습 대기" : ""}` });
     resume.createEl("small", { text: `${new Date(saved.updatedAt).toLocaleString("ko-KR")} 저장`, cls: "mia-muted" });
     resume.createEl("button", { text: "이어하기", cls: "mod-cta" }).addEventListener("click", () => ctx.resumeStudy());
   }
@@ -136,65 +212,53 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
   });
   action.createEl("p", { text: "같은 보관함을 동기화하면 내 기기 사이에서 복습 기록·학습 설정·이어하기를 함께 씁니다.", cls: "mia-muted mia-device-sync-hint" });
   const grid = root.createDiv({ cls: "mia-stats" });
-  progressStat(ctx, grid, "등록 문제", questions.length, "all", "total");
-  const stableRatio = progress.total ? Math.round((progress.stable / progress.total) * 100) : 0;
+  progressStat(ctx, grid, "등록 문제", total, "all", "total");
+  const { stableRatio } = overview;
   const stable = grid.createEl("button", { cls: "mia-stat mia-progress-stat mia-stability-stat" });
   stable.style.setProperty("--mia-stable-ratio", `${stableRatio * 3.6}deg`);
   stable.createEl("strong", { text: `${stableRatio}%` });
   stable.createEl("span", { text: "기억 안정 비율" });
   stable.addEventListener("click", () => ctx.showQuestions("stable"));
-  progressStat(ctx, grid, "최근 너무 쉬움", progress.easy, "easy", "easy");
-  progressStat(ctx, grid, "오늘 평가", progress.today, "today", "good");
+  progressStat(ctx, grid, "최근 너무 쉬움", overview.easy, "easy", "easy");
+  progressStat(ctx, grid, "오늘 평가", overview.today, "today", "good");
   progressStat(ctx, grid, "오늘 복습", due, "due", "review");
-  progressStat(ctx, grid, "개선 필요", progress.again + progress.hard, "weak", "again");
-  renderProgressGuidance(ctx, root);
-  if (!empty) renderWeaknessStrip(ctx, root, questions);
+  progressStat(ctx, grid, "개선 필요", overview.weak, "weak", "again");
+  renderProgressGuidance(root, overview.dayStartsAt);
+  if (!empty) renderWeaknessStrip(ctx, root, overview.weak);
   const manage = root.createDiv({ cls: "mia-manage-actions" });
   manage.createEl("button", { text: "과목 추가" }).addEventListener("click", () => ctx.plugin.openSubjectEditor());
   manage.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () =>
     openEditorWithNotice("질문 추가", () => ctx.plugin.openManagedQuestionEditor()));
   manage.createEl("button", { text: "키워드 추가" }).addEventListener("click", () => ctx.plugin.openKeywordEditor());
   manage.createEl("button", { text: "출력" }).addEventListener("click", () => ctx.plugin.openSubjectExport());
-  if (ctx.plugin.index.diagnostics.length) {
-    root.createEl("p", { text: `검사 필요 ${ctx.plugin.index.diagnostics.length}건 — 문제 목록에서 확인하세요.`, cls: "mia-warning" });
+  if (overview.diagnostics) {
+    root.createEl("p", { text: `검사 필요 ${overview.diagnostics}건 — 문제 목록에서 확인하세요.`, cls: "mia-warning" });
   }
 
-  const subjects = new Map<string, Array<QuestionRecord & { id: string }>>();
-  for (const subject of ctx.plugin.listSubjects()) subjects.set(subject, []);
-  for (const question of questions) {
-    const items = subjects.get(question.subject) ?? [];
-    items.push(question);
-    subjects.set(question.subject, items);
-  }
-  const subjectCounts = new Map(progress.bySubject.map((item) => [item.subject, item.counts]));
-  if (subjects.size) {
+  if (overview.cards.length) {
     root.createEl("h3", { text: "과목별 학습", cls: "mia-section-title" });
     const subjectGrid = root.createDiv({ cls: "mia-subject-grid" });
-    for (const [subject, items] of [...subjects].sort(([left], [right]) => left.localeCompare(right, "ko"))) {
-      const subjectDue = items.filter((question) => ctx.plugin.fsrs.isDue(ctx.plugin.store.getReview(question.id))).length;
-      const subjectNew = items.filter((question) => ctx.plugin.fsrs.isNew(ctx.plugin.store.getReview(question.id))).length;
+    for (const { subject, due: subjectDue, fresh: subjectNew, weak: subjectWeak, studied, total, canStart } of overview.cards) {
       const card = subjectGrid.createDiv({ cls: "mia-subject-card" });
       const heading = card.createDiv({ cls: "mia-subject-heading" });
       heading.createEl("strong", { text: subject });
-      heading.createEl("span", { text: `${items.length}문제`, cls: "mia-subject-total" });
-      renderMeter(card, subjectCounts.get(subject)?.studied ?? 0, items.length, "학습");
+      heading.createEl("span", { text: `${total}문제`, cls: "mia-subject-total" });
+      renderMeter(card, studied, total, "학습");
       const chips = card.createDiv({ cls: "mia-subject-chips" });
       const dueChip = chips.createEl("span", { text: `복습 ${subjectDue}`, cls: "mia-count-chip" });
       dueChip.dataset.tone = subjectDue > 0 ? "review" : "idle";
       const newChip = chips.createEl("span", { text: `새 문제 ${subjectNew}`, cls: "mia-count-chip" });
       newChip.dataset.tone = subjectNew > 0 ? "new" : "idle";
-      const subjectWeak = weakQuestions(ctx, items).length;
       const weakChip = chips.createEl("span", { text: `취약 ${subjectWeak}`, cls: "mia-count-chip" });
       weakChip.dataset.tone = subjectWeak > 0 ? "again" : "idle";
       const subjectActions = card.createDiv({ cls: "mia-inline-actions" });
-      const reviewIds = buildReviewQueue(items, ctx.plugin.store.reviews, ctx.plugin.fsrs, { management: ctx.plugin.store.settings.studyManagement }).map((question) => question.id);
       const review = subjectActions.createEl("button", { text: "시험" });
-      review.disabled = reviewIds.length === 0;
-      review.addEventListener("click", () => ctx.startReview(reviewIds));
+      review.disabled = !canStart;
+      review.addEventListener("click", () => ctx.startReview(reviewQueue(ctx, subjectQuestions(ctx, subject)).map(question => question.id)));
       const memorize = subjectActions.createEl("button", { text: "암기" });
-      memorize.disabled = items.length === 0;
+      memorize.disabled = total === 0;
       memorize.addEventListener("click", () => {
-        ctx.startReview(items.map((question) => question.id), "browse");
+        ctx.startReview(subjectQuestions(ctx, subject).map(question => question.id), "browse");
       });
       subjectActions.createEl("button", { text: "이름 수정" }).addEventListener("click", () => {
         ctx.plugin.openSubjectEditor(subject);
@@ -204,6 +268,7 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): void 
       });
     }
   }
+  return overviewSignature(ctx, "dashboard", overview);
 }
 
 /** Again/Hard questions, most urgent first (the order the weak-question study uses). */
@@ -217,23 +282,23 @@ function weakQuestions(ctx: StudyPageContext, questions: Array<QuestionRecord & 
  * The weak-question strip. It carries what the former 취약 문제 tab offered:
  * the study action for every weak question and the way into the ordered list.
  */
-function renderWeaknessStrip(ctx: StudyPageContext, root: HTMLElement, questions: Array<QuestionRecord & { id: string }>): void {
-  const weak = weakQuestions(ctx, questions);
+function renderWeaknessStrip(ctx: StudyPageContext, root: HTMLElement, count: number): void {
   const strip = root.createDiv({ cls: "mia-weak-strip" });
   strip.createSpan({ cls: "mia-weak-mark" }).setAttr("aria-hidden", "true");
-  strip.createEl("strong", { text: `취약 문제 ${weak.length}개` });
+  strip.createEl("strong", { text: `취약 문제 ${count}개` });
   strip.createEl("span", { text: "못 암기와 애매 문제를 복습 지연 시간까지 반영한 긴급도 순으로 시험합니다.", cls: "mia-muted mia-weak-hint" });
   const actions = strip.createDiv({ cls: "mia-inline-actions" });
   const start = actions.createEl("button", { text: "취약 문제 시험", cls: "mod-cta" });
-  start.disabled = weak.length === 0;
-  start.addEventListener("click", () => ctx.startReview(weak.map((question) => question.id)));
+  start.disabled = count === 0;
+  start.addEventListener("click", () => ctx.startReview(weakQuestions(ctx, ctx.plugin.index.registered).map(question => question.id)));
   actions.createEl("button", { text: "목록 보기" }).addEventListener("click", () => ctx.showQuestions("weak"));
 }
 
-export function renderProgress(ctx: StudyPageContext, root: HTMLElement): void {
-  const questions = ctx.plugin.index.registered;
-  const progress = calculateProgress(questions, ctx.plugin.store.reviews, ctx.plugin.fsrs);
+export function renderProgress(ctx: StudyPageContext, root: HTMLElement): string {
+  const overview = readOverview(ctx, "progress");
+  const progress = overview.counts;
   root.createEl("h3", { text: "전체 학습현황", cls: "mia-page-title" });
+  renderReviewConflictWarning(ctx, root, overview.reviewConflictCount);
   const totals = root.createDiv({ cls: "mia-stats" });
   progressStat(ctx, totals, "전체 문제", progress.total, "all", "total");
   progressStat(ctx, totals, "학습 전", progress.new, "new", "new");
@@ -241,7 +306,7 @@ export function renderProgress(ctx: StudyPageContext, root: HTMLElement): void {
   progressStat(ctx, totals, "1회 이상 학습", progress.studied, null, "total");
   progressStat(ctx, totals, "기억 안정", progress.stable, "stable", "good");
   progressStat(ctx, totals, "오늘 평가", progress.today, "today", "good");
-  renderProgressGuidance(ctx, root);
+  renderProgressGuidance(root, overview.dayStartsAt);
 
   root.createEl("h3", { text: "최근 평가", cls: "mia-section-title" });
   renderRatingBar(root, progress);
@@ -252,42 +317,35 @@ export function renderProgress(ctx: StudyPageContext, root: HTMLElement): void {
   progressStat(ctx, ratings, "너무 쉬움", progress.easy, "easy");
 
   root.createEl("h3", { text: "과목별 현황", cls: "mia-section-title" });
-  const subjectProgress = new Map(progress.bySubject.map((item) => [item.subject, item.counts]));
-  for (const subject of ctx.plugin.listSubjects()) {
-    if (!subjectProgress.has(subject)) {
-      subjectProgress.set(subject, { total: 0, new: 0, studied: 0, due: 0, again: 0, hard: 0, good: 0, easy: 0, stable: 0, today: 0 });
-    }
-  }
   const subjectGrid = root.createDiv({ cls: "mia-progress-subjects" });
-  for (const [subject, counts] of [...subjectProgress].sort(([left], [right]) => left.localeCompare(right, "ko"))) {
+  for (const counts of overview.cards) {
+    const { subject, canStart } = counts;
     const card = subjectGrid.createDiv({ cls: "mia-progress-subject" });
     const heading = card.createDiv({ cls: "mia-progress-subject-heading" });
     heading.createEl("strong", { text: subject });
     heading.createEl("span", { text: `${counts.studied}/${counts.total} 학습` });
     renderMeter(card, counts.studied, counts.total, "학습");
     const values = card.createDiv({ cls: "mia-progress-subject-values" });
-    progressLink(ctx, values, `학습 전 ${counts.new}`, "new", subject);
+    progressLink(ctx, values, `학습 전 ${counts.fresh}`, "new", subject);
     progressLink(ctx, values, `오늘 복습 ${counts.due}`, "due", subject);
     progressLink(ctx, values, `못 암기 ${counts.again}`, "again", subject);
     progressLink(ctx, values, `애매 ${counts.hard}`, "hard", subject);
     progressLink(ctx, values, `암기 ${counts.good}`, "good", subject);
     progressLink(ctx, values, `너무 쉬움 ${counts.easy}`, "easy", subject);
     const actions = card.createDiv({ cls: "mia-inline-actions" });
-    const subjectQuestions = questions.filter((question) => question.subject === subject);
-    const reviewIds = buildReviewQueue(subjectQuestions, ctx.plugin.store.reviews, ctx.plugin.fsrs, { management: ctx.plugin.store.settings.studyManagement })
-      .map((question) => question.id);
     const start = actions.createEl("button", { text: "복습 시작", cls: "mod-cta" });
-    start.disabled = reviewIds.length === 0;
-    start.addEventListener("click", () => ctx.startReview(reviewIds));
+    start.disabled = !canStart;
+    start.addEventListener("click", () => ctx.startReview(reviewQueue(ctx, subjectQuestions(ctx, subject)).map(question => question.id)));
     actions.createEl("button", { text: "전체 문제" }).addEventListener("click", () => ctx.showQuestions("all", subject));
   }
-  if (subjectProgress.size === 0) root.createEl("p", { text: "과목과 질문을 추가하면 학습현황이 표시됩니다.", cls: "mia-empty" });
+  if (overview.cards.length === 0) root.createEl("p", { text: "과목과 질문을 추가하면 학습현황이 표시됩니다.", cls: "mia-empty" });
+  return overviewSignature(ctx, "progress", overview);
 }
 
-function renderProgressGuidance(ctx: StudyPageContext, root: HTMLElement): void {
+function renderProgressGuidance(root: HTMLElement, dayStartsAt: number): void {
   const help = root.createEl("details", { cls: "mia-stat-guidance" });
   help.createEl("summary", { text: "통계와 출제량 안내" });
-  help.createEl("p", { text: progressGuidance(ctx.plugin.store.settings.studyManagement.dayStartsAt), cls: "mia-muted" });
+  help.createEl("p", { text: progressGuidance(dayStartsAt), cls: "mia-muted" });
 }
 
 function progressStat(

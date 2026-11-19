@@ -1,6 +1,10 @@
 import { AnswerClock } from "../core/answer-time";
 import { autoRemaining } from "../core/study-automation";
 
+export function studyTimerBlocked(document: Document | null): boolean {
+  return !!document?.hidden || !!document?.body?.querySelector(".modal-container");
+}
+
 /** One current phase; the view owns the shared interval and validates every action. */
 export class StudyAutoAdvance {
   private key = "";
@@ -36,7 +40,7 @@ export class StudyAutoAdvance {
     this.update();
   }
   private get blocked(): boolean {
-    return this.suspended || this.paused || !!this.document?.hidden || !!this.document?.body?.querySelector(".modal-container");
+    return this.suspended || this.paused || studyTimerBlocked(this.document);
   }
   sync(): void {
     if (this.blocked) this.clock?.pause();

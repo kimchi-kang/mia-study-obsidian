@@ -1,5 +1,5 @@
 import { isLeech, LEECH_LAPSES } from "../core/study-automation";
-import { StudyAutoAdvance } from "./study-auto-advance";
+import { StudyAutoAdvance, studyTimerBlocked } from "./study-auto-advance";
 import { formatInterval, summarizeStudySession } from "./study-session-calculations";
 import { AnswerClock, MAX_ANSWER_SECONDS } from "../core/answer-time";
 import { withoutSourceAttribution } from "../core/source-attribution";
@@ -25,7 +25,7 @@ import { dialogKey } from "./modal-open-guard";
 import { StudyAppearanceModal } from "./study-appearance-modal";
 import type { StudySessionSummary } from "../services/study-ui-store";
 import { renderKeywords } from "./keywords-page";
-import { renderDashboard, renderProgress } from "./progress-pages";
+import { overviewSignature, renderDashboard, renderProgress } from "./progress-pages";
 import { QuestionListState, renderQuestionsPage } from "./question-list-page";
 import { renderQuestionHeading } from "./question-row";
 import type { StudyPageContext } from "./study-page-context";
@@ -72,6 +72,7 @@ export class MiaStudyView extends ItemView {
   private answerTickGeneration = 0;
   private answerClock: AnswerClock | null = null;
   private answerClockKey = "";
+  private answerTimerSuspended = false;
   private answerTimer: ReturnType<typeof setInterval> | null = null;
   private answerTimerEl: HTMLElement | null = null;
   private resultShown = false;
@@ -94,6 +95,9 @@ export class MiaStudyView extends ItemView {
   private undoFeedback = "";
   private reviewSaveMessage = "";
   private refreshingAfterReturn = false;
+  private pollingOverview = false;
+  private forceOverviewRefresh = false;
+  private renderedOverview = "";
   private adaptiveLayout: ReturnType<typeof bindAdaptiveLayout> | null = null;
   private ratingTapGuard: ReturnType<typeof bindRatingTapGuard> | null = null;
 
@@ -121,7 +125,7 @@ export class MiaStudyView extends ItemView {
     this.ratingTapGuard = bindRatingTapGuard(this.contentEl);
     this.keyboardViewport = bindKeyboardViewport(this.contentEl);
     this.unsubscribers = [
-      this.plugin.index.subscribe(() => this.render()),
+      this.plugin.index.subscribe(() => this.renderAfterDataChange()),
       this.plugin.store.subscribe(() => {
         if (!this.isMutatingReview) {
           for (const [id, saved] of this.sessionSavedStates) {
@@ -130,7 +134,7 @@ export class MiaStudyView extends ItemView {
             this.sessionSavedStates.delete(id); this.sessionGrades.delete(id);
           }
           if (this.lastRated && JSON.stringify(this.plugin.store.getReview(this.lastRated.id)) !== JSON.stringify(this.lastRated.savedState)) this.lastRated = null;
-          this.render();
+          this.renderAfterDataChange();
         }
       }),
     ];
@@ -138,12 +142,13 @@ export class MiaStudyView extends ItemView {
     this.adaptiveLayout = bindAdaptiveLayout(this.contentEl);
     this.registerDomEvent(this.contentEl.ownerDocument, "visibilitychange", () => {
       if (this.contentEl.ownerDocument.hidden) { this.answerClock?.pause(); this.autoAdvance?.pause(); this.flushReadingPosition(); }
+      else if (this.pollingOverview && this.isOverview) this.forceOverviewRefresh = true;
       else void this.refreshAfterReturn();
     });
     this.registerDomEvent(window, "focus", () => void this.refreshAfterReturn(false));
-    this.registerDomEvent(window, "pagehide", () => { this.answerClock?.pause(); this.autoAdvance?.pause(); this.flushReadingPosition(); });
+    this.registerDomEvent(window, "pagehide", () => { this.answerTimerSuspended = true; this.answerClock?.pause(); this.autoAdvance?.pause(); this.flushReadingPosition(); });
     this.registerInterval(window.setInterval(() => {
-      if (!this.contentEl.ownerDocument.hidden && (this.route === "dashboard" || this.route === "progress")) void this.refreshAfterReturn();
+      if (!this.contentEl.ownerDocument.hidden && this.isOverview) void this.refreshAfterReturn(true, false, true);
     }, 30_000));
   }
 
@@ -366,17 +371,27 @@ export class MiaStudyView extends ItemView {
     this.readingTimer = window.setTimeout(() => this.flushReadingPosition(), 400);
   }
 
-  private async refreshAfterReturn(refreshTime = true, notify = false): Promise<void> {
+  private get isOverview(): boolean { return this.route === "dashboard" || this.route === "progress"; }
+
+  private renderAfterDataChange(): void {
+    // The interval compares the final visible values after both records and
+    // resume state load. Store/index notifications are otherwise immediate.
+    if (!this.pollingOverview || !this.isOverview) this.render();
+  }
+
+  private async refreshAfterReturn(refreshTime = true, notify = false, interval = false): Promise<void> {
     if (this.closed || this.refreshingAfterReturn || this.isMutatingReview) return;
-    this.answerClock?.resume(this.contentEl.ownerDocument.hidden);
+    this.answerTimerSuspended = false;
+    this.syncAnswerClock();
     this.autoAdvance?.resume();
     this.refreshingAfterReturn = true;
+    this.pollingOverview = interval;
     const previousResume = JSON.stringify(this.plugin.studyUi.resume);
     try {
       await this.plugin.synchronizeStudyData();
       if (this.closed) return;
       await this.plugin.studyUi.load();
-      if (this.closed || this.isMutatingReview) return;
+      if (this.closed || this.isMutatingReview || (interval && this.isOverview)) return;
       // A focus event can occur between pointerdown and click. Replacing unchanged
       // controls here drops that first tap; visibility changes still refresh timers.
       const pruned = this.route === "study" && !this.isMutatingReview && this.pruneExternallyRated(false);
@@ -386,7 +401,16 @@ export class MiaStudyView extends ItemView {
         || (resumeChanged && this.route === "dashboard"))) this.render();
       if (!this.closed && notify) new Notice("보관함에 도착한 학습 기록과 이어하기 위치를 확인했습니다.");
     } catch (error) { new Notice(`학습 기록 확인 실패: ${errorMessage(error)}`); }
-    finally { this.refreshingAfterReturn = false; }
+    finally {
+      this.refreshingAfterReturn = false;
+      this.pollingOverview = false;
+      const force = this.forceOverviewRefresh;
+      this.forceOverviewRefresh = false;
+      try {
+        if (interval && !this.closed && (this.route === "dashboard" || this.route === "progress")
+          && (force || overviewSignature(this.pages, this.route) !== this.renderedOverview)) this.render();
+      } catch (error) { new Notice(`학습 화면 표시 실패: ${errorMessage(error)}`); }
+    }
   }
 
   private restoreReadingPosition(key: string, component: Component): void {
@@ -579,11 +603,12 @@ export class MiaStudyView extends ItemView {
     root.addClass(`mia-route-${this.route}`);
     this.renderHeader(root);
     if (!this.plugin.index.isReady) {
+      if (this.route === "dashboard" || this.route === "progress") this.renderedOverview = overviewSignature(this.pages, this.route);
       root.createEl("p", { text: "문제를 불러오는 중입니다…", cls: "mia-muted" });
       return;
     }
-    if (this.route === "dashboard") renderDashboard(this.pages, root);
-    if (this.route === "progress") renderProgress(this.pages, root);
+    if (this.route === "dashboard") this.renderedOverview = renderDashboard(this.pages, root);
+    if (this.route === "progress") this.renderedOverview = renderProgress(this.pages, root);
     if (this.route === "questions") this.renderQuestionsRoute(root);
     if (this.route === "keywords") renderKeywords(this.pages, root);
     if (this.route === "study") {
@@ -1228,7 +1253,7 @@ export class MiaStudyView extends ItemView {
       this.resetAnswerClock();
       // Answer already shown (restore/undo): the recall time is unknown, so show and record nothing.
       this.answerClockKey = key;
-      if (!this.answerVisible) this.answerClock = new AnswerClock(this.contentEl.ownerDocument?.hidden ?? false);
+      if (!this.answerVisible) this.answerClock = new AnswerClock(this.answerTimerSuspended || studyTimerBlocked(this.contentEl.ownerDocument));
     }
     const appearance = this.plugin.studyUi.appearance;
     if (appearance.answerTimer && this.answerClock) {
@@ -1245,11 +1270,12 @@ export class MiaStudyView extends ItemView {
     }
     const generation = this.answerTickGeneration;
     const answerVisible = this.answerVisible;
-    if (this.autoAdvance || (appearance.answerTimer && this.answerClock?.running)) {
+    if (this.autoAdvance || this.answerClock?.running) {
       this.answerTimer = setInterval(() => {
         if (generation !== this.answerTickGeneration || this.closed || this.isMutatingReview
           || this.route !== "study" || `${this.queueIndex}:${this.queue[this.queueIndex]}` !== key
           || this.answerVisible !== answerVisible) return;
+        this.syncAnswerClock();
         const advance = this.autoAdvance?.tick();
         this.updateAnswerTimer();
         if (!advance) return;
@@ -1259,6 +1285,11 @@ export class MiaStudyView extends ItemView {
         else this.skipQuestion();
       }, 1000);
     }
+  }
+
+  private syncAnswerClock(): void {
+    if (this.answerTimerSuspended || studyTimerBlocked(this.contentEl.ownerDocument)) this.answerClock?.pause();
+    else this.answerClock?.resume(false);
   }
 
   private updateAnswerTimer(): void {

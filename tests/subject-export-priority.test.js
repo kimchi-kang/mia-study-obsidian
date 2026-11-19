@@ -9,9 +9,12 @@ import { FsrsService } from "../src/core/fsrs-service";
 import { isWeakForExport, prepareSubjectExport } from "../src/core/export-priority";
 import { exportSubjectWord, subjectExportFilename } from "../src/services/subject-word-export";
 
-vi.mock("obsidian", () => ({
-  Platform: { isDesktopApp: false }, TFile: class {}, TFolder: class {}, normalizePath: (path) => path,
+vi.mock("obsidian", async () => ({
+  ...(await import("./fixtures/slim-layout-obsidian")).slimLayoutBoundary(),
+  Plugin: class {}, Platform: { isDesktopApp: false }, TFile: class {}, TFolder: class {}, normalizePath: (path) => path,
 }));
+import MiaStudyPlugin from "../src/main";
+import { createLayoutDom } from "./fixtures/study-layout-render";
 import { renderManagedQuestion } from "../src/core/managed-question";
 import { parseQuestionFile } from "../src/core/question-parser";
 import { exportSubjectDocx } from "../src/core/subject-export";
@@ -100,7 +103,7 @@ it("sorts by the strongest group, then lapses, recall and numeric note order wit
     ["again-mid", Rating.Again, future, 0, .5, "노트 2", 5],
     ["again-early", Rating.Again, future, 0, .5, "노트 2", 2],
     ["again-low", Rating.Again, future, 0, .3, "노트 10", 3],
-    ["leech-many", Rating.Good, future, 9, .9, "노트 10", 1],
+    ["leech-many", Rating.Good, future, 9, .89, "노트 10", 1],
     ["leech-high", Rating.Hard, future, 8, .8, "노트 1", 1],
     ["new-early", null, null, 0, null, "노트 1", 7],
     ["known-high", Rating.Good, future, 0, .95, "노트 1", 0],
@@ -192,4 +195,53 @@ it.each([
 ])("uses safe filenames for %s / %s", (scope, order, suffix) => {
   expect(subjectExportFilename('지리학/통계:이론?', { scope, order }, new Date("2026-11-19T05:30:00.000Z")))
     .toBe(`지리학_통계_이론_ 질문 답변${suffix} 2026-11-19T05-30-00-000Z.docx`);
+});
+
+it("only prioritizes leeches that are due, low-rated, or strictly below the configured target", () => {
+  const cases = [
+    ["known-leech", review(Rating.Good, future, 12), .95, false],
+    ["below-target", review(Rating.Good, future, 8), .949, true],
+    ["due-leech", review(Rating.Easy, now, 9), .99, true],
+    ["weak-leech", review(Rating.Hard, future, 8), .99, true],
+    ["unknown-probability", review(Rating.Easy, future, 8), null, false],
+  ];
+  const questions = cases.map(([key]) => question(key, key, "예시 답변"));
+  const reviews = Object.fromEntries(cases.map(([key, state]) => [`mia-q-${key}`, state]));
+  const recalls = new Map(cases.map(([, state, recall]) => [state, recall]));
+  const checks = { isNew: fsrs.isNew.bind(fsrs), isDue: fsrs.isDue.bind(fsrs), retrievability: state => recalls.get(state) };
+  for (const [, state, , expected] of cases) expect(isWeakForExport(state, checks, now, .95)).toBe(expected);
+  expect(isWeakForExport(cases[1][1], checks, now, .9)).toBe(false);
+  const weak = prepareSubjectExport(questions, reviews, checks, { scope: "weak", order: "weak" }, now, .95);
+  expect(weak.questions.map(item => item.questionMarkdown)).toEqual(["due-leech", "below-target", "weak-leech"]);
+  const all = prepareSubjectExport(questions, reviews, checks, { scope: "all", order: "weak" }, now, .95);
+  const knownIndex = all.questions.indexOf(questions[0]);
+  expect(knownIndex).toBe(3);
+  expect(all.presentation.statusLines[knownIndex]).toContain("자주 틀림 · 마지막 평가 암기 · 잊은 횟수 12회");
+});
+
+it("uses the configured weak count in the Word dialog and the generated document", async () => {
+  vi.setSystemTime(now);
+  const dom = createLayoutDom();
+  vi.stubGlobal("document", dom.window.document);
+  const questions = [
+    question("known-leech", "해안이란?", "육지와 바다가 만나는 곳이다."),
+    question("uncertain-leech", "삼각주란?", "하천 퇴적물이 쌓여 형성된 지형이다."),
+  ];
+  const reviews = Object.fromEntries(questions.map(item => [item.id, review(Rating.Good, future, 8)]));
+  const host = exportHost(questions, reviews);
+  const plugin = new MiaStudyPlugin();
+  Object.assign(plugin, host, { fsrs: new FsrsService({ ...DEFAULT_SETTINGS, targetRetention: .95 }),
+    listSubjects: () => [subject], studyUi: { exportOptions: { scope: "weak", order: "weak" } } });
+  const recall = vi.spyOn(plugin.fsrs, "retrievability").mockImplementation(state => state === reviews[questions[0].id] ? .96 : .93);
+  try {
+    plugin.openSubjectExport();
+    const button = document.querySelector(".mia-export-subjects button");
+    expect(button.textContent).toBe("지리학 · 1문제");
+    button.click();
+    await vi.waitFor(() => expect(host.app.vault.createBinary).toHaveBeenCalledOnce());
+    const [, buffer] = host.app.vault.createBinary.mock.calls[0];
+    const xml = await documentXml(buffer);
+    expect(xml).toContain("삼각주란?");
+    expect(xml).not.toContain("해안이란?");
+  } finally { recall.mockRestore(); vi.unstubAllGlobals(); dom.window.close(); }
 });

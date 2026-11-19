@@ -10,7 +10,7 @@ import { openEditorWithNotice } from "./editor-notice";
 import { renderQuestionTitle } from "./question-title";
 import type { StudyPageContext } from "./study-page-context";
 
-export function renderQuestionHeading(ctx: StudyPageContext, element: HTMLElement, question: QuestionRecord, component = ctx.component): void {
+export function renderQuestionHeading(ctx: StudyPageContext, element: HTMLElement, question: Pick<QuestionRecord, "heading" | "filePath">, component = ctx.component): void {
   ctx.renders.push(renderQuestionTitle(ctx.app, question.heading, element, question.filePath, component));
 }
 

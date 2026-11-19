@@ -159,6 +159,8 @@ export interface MiaPluginData {
   quarantinedReviews: Record<string, unknown>;
   reviewVersions: Record<string, string>;
   reviewConflicts: Record<string, QuestionReviewState[]>;
+  /** Archived conflict fingerprint to its dismissal revision. */
+  conflictDismissals?: Record<string, string>;
 }
 
 export const DEFAULT_SETTINGS: MiaSettings = {

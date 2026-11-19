@@ -593,6 +593,20 @@ it("optimizer UI cancels, reports insufficient data, and leaves the disk untouch
     expect(ui.find("FSRS-6 매개변수").disabled).toBe(false); expect(ui.disk()).toEqual(before);
   } finally { spy.mockRestore(); }
   ui.click("내 기록으로 최적화");
-  await vi.waitFor(() => expect(ui.root.textContent).toContain("복습 기록이 부족해 기본 매개변수를 유지합니다(현재 0건)"));
+  await vi.waitFor(() => expect(ui.root.textContent).toContain("복습 기록이 부족해 기본 매개변수를 유지합니다(전체 0건 중 최적화에 쓸 수 있는 기록 0건, 최소 8건 필요). 기존 입력값을 유지합니다."));
   expect(ui.disk()).toEqual(before);
+});
+
+it("shows distinct total and usable optimizer counts and preserves the typed parameters", async () => {
+  const fsrs = new FsrsService(DEFAULT_SETTINGS);
+  let state = fsrs.rate(undefined, Rating.Good, new Date(2026, 9, 15, 12));
+  state = fsrs.rate(state, Rating.Good, new Date(2026, 9, 18, 12));
+  const ui = await setup(DEFAULT_SETTINGS, { q: state });
+  const { default_w } = await import("ts-fsrs");
+  const typed = [default_w[0] + .01, ...default_w.slice(1)].join(", ");
+  ui.edit("FSRS-6 매개변수", typed);
+  ui.click("내 기록으로 최적화");
+  await vi.waitFor(() => expect(ui.root.textContent).toContain("전체 1건 중 최적화에 쓸 수 있는 기록 0건, 최소 8건 필요"));
+  expect(ui.find("FSRS-6 매개변수").value).toBe(typed);
+  expect(ui.plugin.updateSettings).not.toHaveBeenCalled();
 });

@@ -1,3 +1,4 @@
+import { reviewConflictKey, settingsConflictKey } from "../core/conflict-dismissals";
 import { normalizeAnswerMs } from "../core/answer-time";
 import { rebaseSettings, reviseSettings, settingsKey, settingsSnapshot } from "../core/settings-sync";
 import { parseStudyManagement } from "../core/study-management";
@@ -12,6 +13,7 @@ import {
   MiaPluginData,
   MiaSettings,
   QuestionReviewState,
+  SettingsSnapshot,
   SerializedFsrsCard,
   SerializedReviewLog,
 } from "../core/models";
@@ -178,6 +180,18 @@ function assertReviewKey(id: string): void {
 }
 class UnsupportedReviewDataVersionError extends InvalidReviewDataError {}
 
+function isRevision(value: unknown): value is string {
+  return typeof value === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z:.+$/.test(value) && Number.isFinite(Date.parse(value.slice(0, 24)));
+}
+
+function recordDismissals(data: MiaPluginData, keys: readonly string[]): void {
+  if (!keys.length) return;
+  const dismissals = data.conflictDismissals ?? {};
+  const revision = nextReviewVersion(dismissals);
+  for (const key of keys) dismissals[key] = revision;
+  data.conflictDismissals = Object.fromEntries(Object.keys(dismissals).sort().map(key => [key, dismissals[key]!]));
+}
+
 export function parsePluginData(raw: unknown): MiaPluginData {
   if (raw === null || raw === undefined) return structuredClone(DEFAULT_PLUGIN_DATA);
   if (!isRecord(raw)) throw new InvalidReviewDataError("복습 기록의 저장 형식이 손상되었습니다. 원본을 덮어쓰지 않았습니다.");
@@ -197,7 +211,7 @@ export function parsePluginData(raw: unknown): MiaPluginData {
   const parsed = parseReviews(record.reviews, record.quarantinedReviews);
   const reviewVersions: Record<string, string> = {};
   if (isRecord(record.reviewVersions)) for (const [id, value] of Object.entries(record.reviewVersions)) {
-    if (typeof value !== "string" || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z:.+$/.test(value) || !Number.isFinite(Date.parse(value.slice(0, 24)))) {
+    if (!isRevision(value)) {
       throw new InvalidReviewDataError("복습 기록의 수정 번호가 손상되어 저장을 중단했습니다.");
     }
     reviewVersions[id] = value;
@@ -235,6 +249,23 @@ export function parsePluginData(raw: unknown): MiaPluginData {
       return { id: item.id, ancestors: [...item.ancestors], settings };
     });
     result.settingsSync = { id: meta.id, ancestors: [...meta.ancestors], conflicts };
+  }
+  if (record.conflictDismissals !== undefined) {
+    if (!isRecord(record.conflictDismissals)) throw new InvalidReviewDataError("보관 기록 삭제 정보가 손상되어 저장을 중단했습니다.");
+    const dismissals: Record<string, string> = {};
+    for (const [key, revision] of Object.entries(record.conflictDismissals)) {
+      if (!/^(review|settings):[0-9a-f]{32}$/.test(key) || !isRevision(revision)) throw new InvalidReviewDataError("보관 기록 삭제 정보가 손상되어 저장을 중단했습니다.");
+      dismissals[key] = revision;
+    }
+    if (Object.keys(dismissals).length) {
+      result.conflictDismissals = dismissals;
+      for (const [id, reviews] of Object.entries(reviewConflicts)) {
+        const kept = reviews.filter(review => !Object.hasOwn(dismissals, reviewConflictKey(id, review)));
+        if (kept.length) reviewConflicts[id] = kept;
+        else delete reviewConflicts[id];
+      }
+      if (result.settingsSync) result.settingsSync.conflicts = result.settingsSync.conflicts.filter(item => !Object.hasOwn(dismissals, settingsConflictKey(item.id)));
+    }
   }
   return result;
 }
@@ -307,6 +338,8 @@ export class MiaDataStore {
     const quarantinedCount = Object.keys(this.data.quarantinedReviews).length;
     if (quarantinedCount) this.loadWarnings.push(`손상되었거나 호환되지 않는 복습 기록 ${quarantinedCount}개를 격리했습니다.`);
   }
+
+  get hasPendingRecovery(): boolean { return this.pending !== null; }
 
   get pendingRecovery(): MiaPluginData | null { return this.pending ? structuredClone(this.pending) : null; }
 
@@ -394,6 +427,36 @@ export class MiaDataStore {
     if (conflicts.length) throw new Error(`다른 기기와 같은 설정을 다르게 수정했습니다 (${conflicts.join(", ")}). 현재 설정은 유지하고 입력한 설정도 보관했습니다. 시작 화면의 보관된 설정 확인에서 비교·적용하세요.`);
   }
 
+  async dismissReviewConflicts(expected: Readonly<Record<string, QuestionReviewState[]>>, all = false): Promise<void> {
+    await this.commit(next => {
+      const ids = Object.keys(expected);
+      if (all && ids.length !== Object.keys(next.reviewConflicts).length) {
+        throw new ReviewChangedError("보관된 평가 이력이 달라졌습니다. 다시 확인하세요.");
+      }
+      const dismissed: string[] = [];
+      for (const id of ids) {
+        const keys = (reviews: QuestionReviewState[] = []) => [...new Set(reviews.map(review => reviewConflictKey(id, review)))].sort();
+        const confirmed = keys(expected[id]);
+        if (JSON.stringify(confirmed) !== JSON.stringify(keys(next.reviewConflicts[id]))) {
+          throw new ReviewChangedError("보관된 평가 이력이 달라졌습니다. 다시 확인하세요.");
+        }
+        for (const key of confirmed) dismissed.push(key);
+      }
+      recordDismissals(next, dismissed);
+      for (const id of ids) delete next.reviewConflicts[id];
+    });
+  }
+
+  async dismissSettingsConflict(expected: SettingsSnapshot): Promise<void> {
+    await this.commit(next => {
+      const meta = next.settingsSync;
+      const item = meta?.conflicts.find(conflict => conflict.id === expected.id);
+      if (!meta || !item || settingsKey(item) !== settingsKey(expected)) throw new ReviewChangedError("보관된 설정이 달라졌습니다. 다시 확인하세요.");
+      meta.conflicts = meta.conflicts.filter(conflict => conflict.id !== expected.id);
+      recordDismissals(next, [settingsConflictKey(expected.id)]);
+    });
+  }
+
   async restoreSettingsConflict(id: string): Promise<void> {
     await this.commit(next => {
       const chosen = next.settingsSync?.conflicts.find(item => item.id === id);
@@ -402,7 +465,14 @@ export class MiaDataStore {
       const alternatives = next.settingsSync!.conflicts.filter(item => item.id !== id);
       reviseSettings(next);
       next.settingsSync!.ancestors = [...new Set([...next.settingsSync!.ancestors, chosen.id, ...chosen.ancestors])].sort();
+      // If the previously active version was dismissed elsewhere, archive it
+      // under a new ID here so this explicit restore still has its safety copy.
+      if (next.conflictDismissals && Object.hasOwn(next.conflictDismissals, settingsConflictKey(previous.id))) {
+        previous.ancestors.push(previous.id);
+        previous.id = crypto.randomUUID();
+      }
       next.settingsSync!.conflicts = [...alternatives, previous];
+      recordDismissals(next, [settingsConflictKey(id)]);
       next.settings = structuredClone(chosen.settings);
     });
   }
@@ -417,11 +487,16 @@ export class MiaDataStore {
     });
   }
 
-  async removeReview(questionId: string, expected?: { state: QuestionReviewState | undefined }): Promise<void> {
-    await this.removeReviews([questionId], expected);
+  async removeReview(questionId: string, expected?: { state: QuestionReviewState | undefined; removeArchives?: true }): Promise<void> {
+    if (expected?.removeArchives) await this.removeReviews([questionId], expected);
+    else await this.removeReviewStates([questionId], expected, false);
   }
 
   async removeReviews(questionIds: readonly string[], expected?: { state: QuestionReviewState | undefined }): Promise<void> {
+    await this.removeReviewStates(questionIds, expected, true);
+  }
+
+  private async removeReviewStates(questionIds: readonly string[], expected: { state: QuestionReviewState | undefined } | undefined, removeArchives: boolean): Promise<void> {
     const ids = [...new Set(questionIds)];
     if (!ids.length) return;
     for (const id of ids) assertReviewKey(id);
@@ -432,11 +507,19 @@ export class MiaDataStore {
         }
       }
       const revision = nextReviewVersion(next.reviewVersions);
+      const dismissed: string[] = [];
       for (const id of ids) {
+        if (removeArchives) {
+          const active = next.reviews[id];
+          const archives = next.reviewConflicts[id] ?? [];
+          for (const review of active ? [...archives, active] : archives) dismissed.push(reviewConflictKey(id, review));
+          delete next.reviewConflicts[id];
+        }
         next.reviewVersions[id] = revision;
         delete next.reviews[id];
         delete next.quarantinedReviews[id];
       }
+      recordDismissals(next, dismissed);
     });
   }
 

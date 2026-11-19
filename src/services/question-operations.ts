@@ -305,7 +305,7 @@ export class QuestionOperations {
       updatedContent = deleteCurrentManagedQuestion(content, question, latest => parseQuestionFile(question.filePath, latest).questions);
       return updatedContent;
     } }, ...this.followUps.fileChanges(links)];
-    await applyFileChanges(app.vault, writes, () => this.host.store.removeReview(question.id, { state: review }));
+    await applyFileChanges(app.vault, writes, () => this.host.store.removeReview(question.id, { state: review, removeArchives: true }));
     await this.host.index.rebuild();
     try {
       if (managed) await this.notes.sync(question.subject, await this.notes.questions(question.subject, new Map([[question.filePath, updatedContent]])));

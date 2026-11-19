@@ -1,6 +1,6 @@
 import { Rating } from "ts-fsrs";
 import type { FsrsService } from "./fsrs-service";
-import type { QuestionRecord, QuestionReviewState } from "./models";
+import { DEFAULT_SETTINGS, type QuestionRecord, type QuestionReviewState } from "./models";
 import { hasWeakRating } from "./question-query";
 import { isLeech } from "./study-automation";
 
@@ -17,19 +17,21 @@ export function parseSubjectExportOptions(value: unknown): SubjectExportOptions 
 type ReviewChecks = Pick<FsrsService, "isDue" | "isNew">;
 type ExportFsrs = ReviewChecks & Pick<FsrsService, "retrievability">;
 
-function classify(review: QuestionReviewState | undefined, fsrs: ReviewChecks, now: Date) {
+function classify(review: QuestionReviewState | undefined, fsrs: ReviewChecks, now: Date, recall: number | null, targetRetention: number) {
   const leech = isLeech(review);
   const due = fsrs.isDue(review, now);
   let group = 5;
-  if (leech) group = 0;
-  else if (hasWeakRating(review)) group = review?.lastRating === Rating.Again ? 1 : 2;
+  const weakRating = hasWeakRating(review);
+  if (leech && (due || weakRating || (recall !== null && recall < targetRetention))) group = 0;
+  else if (weakRating) group = review?.lastRating === Rating.Again ? 1 : 2;
   else if (due) group = 3;
   else if (fsrs.isNew(review)) group = 4;
   return { group, leech, due };
 }
 
-export function isWeakForExport(review: QuestionReviewState | undefined, fsrs: ReviewChecks, now: Date): boolean {
-  return classify(review, fsrs, now).group < 5;
+export function isWeakForExport(review: QuestionReviewState | undefined, fsrs: ExportFsrs, now: Date, targetRetention = DEFAULT_SETTINGS.targetRetention): boolean {
+  const recall = isLeech(review) ? fsrs.retrievability(review, now) : null;
+  return classify(review, fsrs, now, recall, targetRetention).group < 5;
 }
 
 const comparePaths = new Intl.Collator("ko", { numeric: true }).compare;
@@ -67,15 +69,16 @@ export function prepareSubjectExport(
   fsrs: ExportFsrs,
   options: SubjectExportOptions,
   now: Date,
+  targetRetention = DEFAULT_SETTINGS.targetRetention,
 ) {
   const { scope, order } = options;
   const selected = questions.flatMap((question) => {
     const review = reviews[question.id];
-    const classification = classify(review, fsrs, now);
-    const { group, leech } = classification;
-    if (scope === "weak" && group === 5) return [];
     const recall = fsrs.retrievability(review, now);
-    return [{ question, group, lapses: leech ? review?.card.lapses ?? 0 : 0, recall,
+    const classification = classify(review, fsrs, now, recall, targetRetention);
+    const { group } = classification;
+    if (scope === "weak" && group === 5) return [];
+    return [{ question, group, lapses: group === 0 ? review?.card.lapses ?? 0 : 0, recall,
       status: statusLine(review, classification, recall) }];
   });
   selected.sort((left, right) => {

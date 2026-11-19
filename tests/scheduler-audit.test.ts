@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Rating, State, fsrs, createEmptyCard, type Card, type Grade } from "ts-fsrs";
@@ -8,6 +8,11 @@ import { MiaDataStore, DataStoreInternals } from "../src/services/data-store";
 
 const settings = {...structuredClone(DEFAULT_SETTINGS), studyManagement:{...structuredClone(DEFAULT_SETTINGS.studyManagement),enableFuzz:false}};
 const start = new Date("2026-10-27T03:00:00Z");
+
+// These oracles compare an unshifted 5.4.1 clock with the configured study day.
+// Keep the simulated reviews at their original local hours on every runner.
+beforeAll(() => vi.stubEnv("TZ", "Asia/Seoul"));
+afterAll(() => vi.unstubAllEnvs());
 // FSRS-6 5.4.1 published default weights, deliberately not imported from the SUT.
 const weights=[.212,1.2931,2.3065,8.2956,6.4133,.8334,3.0194,.001,1.8722,.1666,.796,1.4835,.0614,.2629,1.6483,.6014,1.8729,.5425,.0912,.0658,.1542];
 const clamp=(n:number,min:number,max:number)=>Math.min(max,Math.max(min,n));

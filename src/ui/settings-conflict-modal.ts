@@ -1,8 +1,19 @@
 import { App, Modal, Notice } from "obsidian";
 import type { MiaSettings, SettingsSnapshot } from "../core/models";
+import { confirmConflictDeletion } from "./conflict-delete-confirmation";
 
 export class SettingsConflictModal extends Modal {
-  constructor(app: App, private readonly active: MiaSettings, private readonly alternatives: readonly SettingsSnapshot[], private readonly apply: (id: string) => Promise<void>) { super(app); }
+  private busy = false;
+
+  constructor(
+    app: App, private readonly active: MiaSettings, private readonly alternatives: readonly SettingsSnapshot[],
+    private readonly apply: (id: string) => Promise<void>, private readonly dismiss: (expected: SettingsSnapshot) => Promise<void>,
+  ) { super(app); }
+
+  private setBusy(busy: boolean): void {
+    this.busy = busy;
+    for (const button of this.contentEl.querySelectorAll("button")) button.disabled = busy;
+  }
   onOpen(): void {
     this.setTitle("보관된 설정 확인");
     this.modalEl.classList.add("mia-preview-modal", "mia-recovery-modal");
@@ -12,11 +23,20 @@ export class SettingsConflictModal extends Modal {
       const detail = this.contentEl.createEl("details");
       detail.createEl("summary", { text: `보관 사본 ${this.alternatives.indexOf(item) + 1}` });
       this.showSettings("보관된 값", item.settings, detail);
-      const button = detail.createEl("button", { text: "이 설정 전체 적용" });
-      button.addEventListener("click", async () => {
-        button.disabled = true;
+      const actions = detail.createEl("div", { cls: "mia-inline-actions" });
+      actions.createEl("button", { text: "이 설정 전체 적용" }).addEventListener("click", async () => {
+        if (this.busy) return;
+        this.setBusy(true);
         try { await this.apply(item.id); new Notice("선택한 설정을 적용하고 이전 설정도 보관했습니다."); this.close(); }
-        catch (error) { new Notice(`설정 적용 실패: ${error instanceof Error ? error.message : String(error)}`); button.disabled = false; }
+        catch (error) { new Notice(`설정 적용 실패: ${error instanceof Error ? error.message : String(error)}`); this.setBusy(false); }
+      });
+      const label = "이 보관 사본 지우기";
+      actions.createEl("button", { text: label, cls: "mod-warning" }).addEventListener("click", () => {
+        if (this.busy) return;
+        confirmConflictDeletion(this.app, label, "현재 설정은 그대로 두고, 선택한 보관 사본만 지웁니다. 되돌릴 수 없습니다.", async () => {
+          await this.dismiss(item);
+          this.close();
+        }, busy => this.setBusy(busy));
       });
     }
     this.contentEl.createEl("button", { text: "닫기" }).addEventListener("click", () => this.close());

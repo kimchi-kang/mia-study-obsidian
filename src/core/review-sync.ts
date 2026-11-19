@@ -1,3 +1,4 @@
+import { mergeConflictDismissals, reviewConflictKey } from "./conflict-dismissals";
 import { mergeSettings } from "./settings-sync";
 import { MiaPluginData, QuestionReviewState } from "./models";
 
@@ -67,6 +68,7 @@ function merge(local: MiaPluginData, incoming: MiaPluginData, consume: boolean):
   }
   const quarantine = { ...local.quarantinedReviews, ...incoming.quarantinedReviews };
   const next = consume ? incoming : structuredClone(incoming);
+  const dismissals = mergeConflictDismissals(local, incoming);
   const ids = new Set([...Object.keys(local.reviews), ...Object.keys(incoming.reviews), ...Object.keys(local.reviewVersions), ...Object.keys(incoming.reviewVersions), ...Object.keys(local.reviewConflicts), ...Object.keys(incoming.reviewConflicts)]);
   for (const id of ids) {
     const left = local.reviews[id], right = incoming.reviews[id];
@@ -95,10 +97,15 @@ function merge(local: MiaPluginData, incoming: MiaPluginData, consume: boolean):
       if (delivered) alternatives.push(delivered);
     }
     const unique = new Map(alternatives.map(review => [JSON.stringify(review), review]));
-    if (unique.size) next.reviewConflicts[id] = [...unique.keys()].sort().map(key => structuredClone(unique.get(key)!));
+    const kept = [...unique.keys()].sort().map(key => unique.get(key)!).filter(review =>
+      !dismissals || !Object.hasOwn(dismissals, reviewConflictKey(id, review)));
+    if (kept.length) next.reviewConflicts[id] = structuredClone(kept);
+    else delete next.reviewConflicts[id];
   }
-  mergeSettings(local, incoming, next);
+  mergeSettings(local, incoming, next, dismissals);
   next.quarantinedReviews = quarantine;
+  delete next.conflictDismissals;
+  if (dismissals) next.conflictDismissals = dismissals;
   return next;
 }
 

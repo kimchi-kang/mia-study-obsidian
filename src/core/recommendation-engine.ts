@@ -51,7 +51,10 @@ export function recommendQuestions(
       const reasons: string[] = direct ? ["직접 연결"] : [];
 
       const coreMatches = [...candidateCore].filter((keyword) => baseCore.has(keyword));
-      const subMatches = [...candidateSub].filter((keyword) => baseSub.has(keyword) || baseCore.has(keyword));
+      const subMatches = [...new Set([
+        ...[...candidateSub].filter(keyword => baseSub.has(keyword) || baseCore.has(keyword)),
+        ...[...candidateCore].filter(keyword => baseSub.has(keyword)),
+      ])].filter(keyword => !(baseCore.has(keyword) && candidateCore.has(keyword)));
       if (coreMatches.length) {
         score += coreMatches.length * 5;
         reasons.push(`핵심 키워드 ${coreMatches.length}개 일치`);

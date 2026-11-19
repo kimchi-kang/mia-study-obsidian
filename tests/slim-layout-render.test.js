@@ -35,6 +35,7 @@ afterEach(() => { dom.window.close(); vi.unstubAllGlobals(); vi.useRealTimers();
 
 it("renders additional real screens and states for computed-style equivalence", async () => {
   const cases = {};
+  const confirmationCases = {};
   const capture = (name, root) => { cases[name] = snapshotLayout(root); };
   const render = async (name, options, change) => {
     const state = await renderLayoutCase(options);
@@ -94,15 +95,23 @@ it("renders additional real screens and states for computed-style equivalence", 
     detail: () => new QuestionDetailModal(app, question, review, [], new Map(), {}),
     preview: () => new QuestionPreviewModal(app, question, noop, noop, plugin.studyUi.appearance),
     meaning: () => new KeywordMeaningModal(app, "재료 보존", "재료 보존", "bank.md", ""),
-    "settings-conflict": () => new SettingsConflictModal(app, DEFAULT_SETTINGS, [{ id: "alternative", settings: DEFAULT_SETTINGS }], async () => {}),
-    "review-conflict": () => new ReviewConflictModal(app, { q: [review] }, () => question.heading),
+    "settings-conflict": () => new SettingsConflictModal(app, DEFAULT_SETTINGS, [{ id: "alternative", ancestors: [], settings: DEFAULT_SETTINGS }], async () => {}, async () => {}),
+    "review-conflict": () => new ReviewConflictModal(app, { q: [review] }, () => question.heading, async () => {}),
   };
   for (const [name, factory] of Object.entries(modals)) {
     const modal = factory();
     await modal.onOpen();
     if (["management", "subject-editor", "question-editor", "question-create", "keyword-editor", "metadata", "follow-up"].includes(name)) { modal.containerEl.addClass("mia-keyboard-modal-container"); modal.modalEl.addClass("mia-keyboard-modal", "mia-setting-controls"); }
     await Promise.resolve();
+    if (name.endsWith("-conflict")) modal.contentEl.querySelectorAll("details").forEach(detail => { detail.open = true; });
     capture(name, modal.containerEl);
+    if (name.endsWith("-conflict")) {
+      const removeLabel = name === "review-conflict" ? "보관 기록 모두 지우기" : "이 보관 사본 지우기";
+      [...modal.contentEl.querySelectorAll("button")].find(el => el.textContent === removeLabel).click();
+      const confirmation = document.querySelector(".mia-confirm-modal");
+      confirmationCases[`${name}-confirm`] = snapshotLayout(confirmation.closest(".modal-container"));
+      [...confirmation.querySelectorAll("button")].find(el => el.textContent === "취소").click();
+    }
     if (name === "export") {
       const scope = modal.contentEl.querySelector("select");
       scope.value = "weak";
@@ -128,6 +137,9 @@ it("renders additional real screens and states for computed-style equivalence", 
   capture("settings-advanced", settings.containerEl);
   settings.hide();
   expect(Object.keys(cases)).toHaveLength(43);
+  Object.assign(cases, confirmationCases);
+  expect(cases["review-conflict-confirm"]).toContain("보관된 다른 기기 이력만 지웁니다");
+  expect(cases["settings-conflict-confirm"]).toContain("선택한 보관 사본만 지웁니다");
   expect(cases.export).toContain("노트 순서");
   expect(cases["export-empty"]).toContain("부족한 문제가 없습니다.");
   expect(cases.hidden).toContain("mia-reveal"); expect(cases.browse).not.toContain("mia-ratings");
@@ -162,7 +174,17 @@ Object.assign(pane.style, {left:'0',top:'0',width:innerWidth+'px',height:innerHe
 for (const [key,value] of Object.entries({width:innerWidth,height:innerHeight,left:0,top:0,'right-gap':0,'bottom-gap':0})) root.style.setProperty('--mia-pane-'+key,value+'px');
 for (const edge of ['Left','Right','Top','Bottom']) root.style.setProperty('--safe-area-inset-'+edge.toLowerCase(),(Number(params.get('safe'+edge))||0)+'px');
 root.dataset.viewportHeight = innerHeight < 440 ? 'short' : innerHeight < 600 ? 'compact' : 'regular';
-window.miaLayoutReport = () => ({route,device,paneWidth:innerWidth,innerWidth,contentWidth:root.getBoundingClientRect().width,contentSafePaneRatio:1,grids:{},elements:document.querySelectorAll('.view-content *').length});
+window.miaLayoutReport = () => {
+  const surface = root.querySelector('.mia-recovery-modal, .mia-confirm-modal');
+  const content = surface?.querySelector('.modal-content');
+  return {
+    route, device, paneWidth: innerWidth, innerWidth, contentWidth: root.getBoundingClientRect().width,
+    contentSafePaneRatio: 1, grids: {}, elements: document.querySelectorAll('.view-content *').length,
+    horizontalOverflow: surface && [surface, content].some(el => el.scrollWidth > el.clientWidth + 1),
+    paneHorizontalOverflow: surface && (Math.min(surface.getBoundingClientRect().left, content.getBoundingClientRect().left) < -1
+      || Math.max(surface.getBoundingClientRect().right, content.getBoundingClientRect().right) > innerWidth + 1),
+  };
+};
 </script></body></html>`;
     await writeFile(".claude/slim/layout-extra.html", html);
     await writeFile(".claude/slim/layout-extra-cases.json", JSON.stringify(Object.keys(cases)));

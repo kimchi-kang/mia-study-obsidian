@@ -383,7 +383,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
           onProgress: percent => optimizationStatus.setText(`최적화 중 ${percent}%`) });
         if (controller.signal.aborted) return;
         if (result.status === "insufficient") {
-          optimizationStatus.setText(`복습 기록이 부족해 기본 매개변수를 유지합니다(현재 ${result.count}건). 기존 입력값을 유지합니다.`);
+          optimizationStatus.setText(`복습 기록이 부족해 기본 매개변수를 유지합니다(전체 ${result.count}건 중 최적화에 쓸 수 있는 기록 ${result.usableCount}건, 최소 8건 필요). 기존 입력값을 유지합니다.`);
           return;
         }
         const metric = (m: typeof result.previous) => `log loss ${m.logLoss.toFixed(6)} · RMSE(bins) ${m.rmseBins.toFixed(6)}`;

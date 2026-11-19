@@ -283,7 +283,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
       for (const question of this.index.registered) {
         const subject = counts.get(question.subject) ?? { name: question.subject, count: 0, weakCount: 0 };
         subject.count++;
-        if (isWeakForExport(this.store.reviews[question.id], this.fsrs, now)) subject.weakCount++;
+        if (isWeakForExport(this.store.reviews[question.id], this.fsrs, now, this.fsrs.targetRetention)) subject.weakCount++;
         counts.set(subject.name, subject);
       }
       const subjects = [...counts.values()].sort((a, b) => a.name.localeCompare(b.name, "ko"));

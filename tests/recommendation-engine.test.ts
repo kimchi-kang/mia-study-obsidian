@@ -146,3 +146,22 @@ describe("planSelectedReview", () => {
     expect(result.exclusions).toEqual([{ id: "fresh", reason: "review-limit" }]);
   });
 });
+
+it("counts core-to-sub matches symmetrically and only scores each keyword at its highest match", () => {
+  const shared = { target: "지형 분류", label: "지형 분류", raw: "[[지형 분류]]" };
+  const common = { target: "개념", label: "개념", raw: "[[개념]]" };
+  const base = question("base", { coreKeywords: [shared, common], subKeywords: [shared, recipe, common] });
+  const candidate = question("related", { subject: "통계이론", coreKeywords: [shared, recipe, common], subKeywords: [shared, recipe, common] });
+  for (const [left, right] of [[base, candidate], [candidate, base]] as const) {
+    expect(recommendQuestions(left, [left, right], {}, fsrs)[0]).toMatchObject({
+      score: 7, reasons: ["핵심 키워드 1개 일치", "보조 키워드 1개 일치"],
+    });
+  }
+  const onlyCore = question("core-only", { coreKeywords: [recipe, shared] });
+  const onlySub = question("sub-only", { subKeywords: [recipe, shared] });
+  for (const [left, right] of [[onlySub, onlyCore], [onlyCore, onlySub]] as const) {
+    expect(recommendQuestions(left, [left, right], {}, fsrs)[0]).toMatchObject({
+      score: 6, reasons: ["보조 키워드 2개 일치", "같은 과목"],
+    });
+  }
+});

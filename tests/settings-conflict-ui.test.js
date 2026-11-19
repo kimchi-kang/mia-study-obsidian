@@ -15,7 +15,7 @@ function setup(apply){
  const dom=new JSDOM('<body/>');vi.stubGlobal('document',dom.window.document);
  dom.window.HTMLElement.prototype.createEl=function(tag,options={}){const el=document.createElement(tag);if(options.text)el.textContent=options.text;for(const[k,v]of Object.entries(options.attr??{}))el.setAttribute(k,v);this.appendChild(el);return el;};
  const active=structuredClone(DEFAULT_SETTINGS),other=structuredClone(active);other.targetRetention=.8;
- const modal=new SettingsConflictModal({},active,[{id:'other',ancestors:[],settings:other}],apply);modal.onOpen();return modal;
+ const modal=new SettingsConflictModal({},active,[{id:'other',ancestors:[],settings:other}],apply,async()=>{});modal.onOpen();return modal;
 }
 describe('settings recovery UI',()=>{
  it('shows full read-only originals and prevents double apply while saving',async()=>{

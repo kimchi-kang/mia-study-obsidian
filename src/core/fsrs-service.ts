@@ -93,7 +93,7 @@ function fromStudyTimeline(date: Date, dayStartsAt: number): Date {
 
 export class FsrsService {
   private readonly scheduler;
-  private readonly targetRetention: number;
+  readonly targetRetention: number;
   private readonly maximumIntervalDays: number;
   private readonly gradeIntervalsMinutes: MiaSettings["gradeIntervalsMinutes"];
   private readonly dayStartsAt: number;
