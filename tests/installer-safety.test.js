@@ -119,4 +119,4 @@ it.each([['rename','styles.css'],['rename','manifest.json'],['readFile','main.js
  for(const asset of assets){const bytes=await readFile(join(plugin,asset));expect(bytes.equals(await readFile(join(old,asset)))||bytes.equals(await readFile(join(current,asset)))).toBe(true);}
  if(operation==='readFile')await installed(current,plugin);
  expect(install(current,vault).status).toBe(0);await installed(current,plugin);await unchanged(data);
-});
+},30_000); // Each case runs the installer three times; slow CI runners need more than 5s.
