@@ -140,11 +140,12 @@ export class KeywordOperations {
     }
   }
 
-  async saveMeaning(name: string, meaning: string, notify = true): Promise<void> {
+  /** `target` is the link a question already uses; a folder in it decides where the new note goes. */
+  async saveMeaning(name: string, meaning: string, notify = true, target = name): Promise<void> {
     const { app } = this.host;
     const safeName = validateKeywordName(name);
     validateKeywordMeaning(meaning);
-    const path = keywordNotePath(safeName, safeName, this.host.store.settings.keywordFolder);
+    const path = keywordNotePath(target === name ? safeName : target, safeName, this.host.store.settings.keywordFolder);
     assertPortablePath(app, path);
     const folder = path.split("/").slice(0, -1).join("/");
     if (folder) await ensureFolder(app, folder);
@@ -163,7 +164,7 @@ export class KeywordOperations {
     const { app } = this.host;
     const name = validateKeywordName(value);
     if (!current || (!current.filePath && current.name === name)) {
-      await this.saveMeaning(name, meaning);
+      await this.saveMeaning(name, meaning, true, current?.target ?? name);
       return;
     }
     const sourcePath = current.filePath;

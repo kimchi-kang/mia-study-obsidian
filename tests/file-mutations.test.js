@@ -187,14 +187,27 @@ describe("keyword cards without a note", () => {
     return env;
   }
 
-  it("creates a note through the configured keyword folder without changing question files", async () => {
+  it("creates a short-link note through the configured keyword folder without changing question files", async () => {
     const env = await referenceEnvironment();
     const before = new Map(env.contents);
-    expect(env.plugin.keywords.withExistingNote(entry)).toEqual(entry);
-    await env.plugin.saveKeyword(entry, name, "표본에서 계산한 통계량의 분포");
+    const short = { name, target: name };
+    expect(env.plugin.keywords.withExistingNote(short)).toEqual(short);
+    await env.plugin.saveKeyword(short, name, "표본에서 계산한 통계량의 분포");
     expect(readKeywordMeaning(env.contents.get(sameNamePath))).toBe("표본에서 계산한 통계량의 분포");
     expect(env.vault.createFolder.mock.calls).toEqual([["MIA/개념"], ["MIA/개념/통계이론"]]);
     expect(env.vault.process).not.toHaveBeenCalled();
+    expect(env.contents.get(oldPath)).toBe(before.get(oldPath));
+    expect(env.contents.get(nextPath)).toBe(before.get(nextPath));
+  });
+
+  it("creates the note where an explicit-folder link points, so the question link resolves to it", async () => {
+    const env = await referenceEnvironment();
+    const before = new Map(env.contents);
+    await env.plugin.saveKeyword(entry, name, "표본에서 계산한 통계량의 분포");
+    // `[[자료/표본 분포.md#정의|표본 분포]]` resolves to 자료/표본 분포.md; the heading is not part of the filename.
+    expect(readKeywordMeaning(env.contents.get("자료/표본 분포.md"))).toBe("표본에서 계산한 통계량의 분포");
+    expect(env.contents.has(sameNamePath)).toBe(false);
+    expect(env.vault.createFolder.mock.calls).toEqual([["자료"]]);
     expect(env.contents.get(oldPath)).toBe(before.get(oldPath));
     expect(env.contents.get(nextPath)).toBe(before.get(nextPath));
   });
@@ -204,7 +217,7 @@ describe("keyword cards without a note", () => {
     env.add("MIA/개념", new TFolder());
     env.add("MIA/개념/Statistics", new TFolder());
     env.plugin.store.settings.keywordFolder = "MIA/개념/statistics";
-    await expect(env.plugin.saveKeyword(entry, name, "의미")).rejects.toThrow(/대소문자/);
+    await expect(env.plugin.saveKeyword({ name, target: name }, name, "의미")).rejects.toThrow(/대소문자/);
     expect(env.vault.create).not.toHaveBeenCalled();
   });
 
