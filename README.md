@@ -12,7 +12,7 @@
 
 [**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.6.0 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.6.0/mia-study-1.6.0.zip) · [변경 내역](docs/releases/1.6.0.md) · [현재 상태](STATUS.md)
 
-<img src="docs/assets/screens/desktop-dashboard.jpg" alt="MIA Study 오늘 화면. 바우하우스 디자인의 복습·새 문제 블록, 시작 패널, 취약 문제 띠와 과목별 학습 카드" width="860">
+<img src="docs/assets/screens/desktop-dashboard.jpg" alt="MIA Study 1.6.0 오늘 화면. 복습 7·새 문제 4, 시험(일반복습)모드 시작, 시차 문제 이어하기, 취약 문제 5개와 과목별 학습 카드" width="860">
 
 </div>
 
@@ -22,9 +22,9 @@ Obsidian 안에서 과목·질문·키워드를 폼으로 관리하면서 FSRS-6
 
 | 학습 화면 | 문제 목록 | 모바일 |
 |---|---|---|
-| <img src="docs/assets/screens/desktop-study.jpg" alt="시험(일반복습)모드 학습 화면, 렌더링된 수식이 있는 모범 답안" width="320"> | <img src="docs/assets/screens/desktop-questions.jpg" alt="문제 목록, 수학 기초·요리 과학 예시 질문" width="320"> | <img src="docs/assets/screens/mobile-study.jpg" alt="모바일 학습 화면, 평가 버튼 4색" width="140"> |
+| <img src="docs/assets/screens/desktop-study.jpg" alt="시험(일반복습)모드의 시차 계산 질문과 모범 답안, 이어볼 문제, 네 가지 평가 버튼" width="320"> | <img src="docs/assets/screens/desktop-questions.jpg" alt="등록 문제 14개의 목록과 검색·필터, 시차 질문의 키워드와 복습 기록을 보여 주는 상세 패널" width="320"> | <img src="docs/assets/screens/mobile-study.jpg" alt="390px 폭 학습 화면. 시차 질문의 모범 답안, 이어볼 문제, 한 줄의 평가 버튼 네 개와 하단 탭" width="140"> |
 
-아래·위 화면은 1.6.0 이전의 바우하우스 디자인(빨강·노랑·파랑, 두꺼운 테두리, 각진 모서리)으로 찍은 것이라 현재 모양과 다릅니다. 화면은 직접 만든 일반 상식 데모 보관함(수학 기초·세계 지리·요리 과학)으로 찍었습니다. 수식·이미지·표·코드 렌더링을 보여 주는 예시 질문이며 실제 학습 내용이 아닙니다. 모바일 화면은 데스크톱 Obsidian에서 휴대폰 폭을 흉내 낸 것입니다. 이 화면들은 1.4.17 즈음에 찍어 1.4.23 이후의 넓어진 여백과 답변 타이머는 보이지 않습니다.
+화면 사진은 1.6.0 어두운 소프트 뉴모피즘으로, 실제 플러그인 화면 코드에 수학 기초·세계 지리·요리 과학의 가상 문제 14개를 표시해 찍었습니다. 실제 학습 내용은 포함하지 않았으며 Obsidian 창 테두리는 생략했습니다. 모바일 화면은 390px 폭으로 렌더링했습니다.
 
 [1.6.0 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.6.0) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.6.0 변경 내역](docs/releases/1.6.0.md) · [이전 버전 이력](docs/releases/HISTORY.md)
 
@@ -88,7 +88,7 @@ MIA Study를 설치하거나 사용하면 아래 내용에 동의한 것으로 �
 ### 8. 개인정보
 
 - 플러그인은 외부 서버로 아무 데이터도 보내지 않는다. 분석·광고·추적 코드가 없다. 모든 기록은 사용자의 보관함 안 파일에 저장되고, 기기 간 전송은 사용자가 고른 동기화 도구가 한다.
-- [소개 페이지](https://kimchi-kang.github.io/mia-study-obsidian/)는 GitHub Pages로 제공되며 글꼴을 Google Fonts에서 불러온다. 이 과정에서 방문자의 IP 주소 등 접속 정보가 GitHub와 Google에 전달될 수 있다. 소개 페이지는 밝게·어둡게 선택만 브라우저 저장소(localStorage)에 저장하고 쿠키나 분석 도구를 쓰지 않는다.
+- [소개 페이지](https://kimchi-kang.github.io/mia-study-obsidian/)는 GitHub Pages로 제공되며, 이 과정에서 방문자의 IP 주소 등 접속 정보가 GitHub에 전달될 수 있다. 소개 페이지는 외부 글꼴이나 다른 외부 자원을 불러오지 않고, 브라우저 저장소·쿠키·분석 도구를 쓰지 않는다.
 
 ### 9. 상표와 관계
 

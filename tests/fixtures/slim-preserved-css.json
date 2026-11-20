@@ -1517,6 +1517,11 @@
         "box-shadow",
         "var(--mia-shadow-inset)",
         false
+      ],
+      [
+        "padding-inline-start",
+        "14px",
+        false
       ]
     ]
   },

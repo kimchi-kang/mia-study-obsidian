@@ -418,6 +418,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
   background-color: var(--mia-surface);
   color: var(--mia-ink);
   box-shadow: var(--mia-shadow-inset);
+  padding-inline-start: 14px;
 }
 
 :is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(input, textarea)::placeholder { color: var(--mia-muted); opacity: 1; }
@@ -1201,6 +1202,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-related { margin-top: 14px; gap: 5px; }
 .mia-related button { padding: 8px 10px; }
 .mia-session-rating { font-size: var(--font-ui-small); }
+.mia-pagination:empty { display: none; }
 .mia-pagination { position: sticky; bottom: 6px; z-index: 2; width: fit-content; margin: 12px auto 0; padding: 5px; border: 0; border-radius: var(--mia-radius-pill); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); }
 .mia-pagination button { min-height: 44px; }
 .mia-empty { padding: 20px 10px; }
