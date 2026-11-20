@@ -458,7 +458,7 @@
   },
   {
     "context": [],
-    "selector": "body.mia-night-global :is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)),\n.mia-view[data-night=\"true\"]",
+    "selector": ":is(body.mia-night-global, body.mia-night-local) :is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)),\n.mia-view[data-night=\"true\"]",
     "declarations": [
       [
         "--mia-bg",
@@ -538,6 +538,79 @@
       [
         "--mia-surface-hover",
         "var(--mia-surface)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": "body.mia-night-local .modal-container:has(.modal[class*=\"mia-\"], .mia-keyboard-settings)::before, body.mia-night-local .modal-container:has(.modal[class*=\"mia-\"], .mia-keyboard-settings)::after",
+    "declarations": [
+      [
+        "content",
+        "\"\"",
+        false
+      ],
+      [
+        "position",
+        "fixed",
+        false
+      ],
+      [
+        "inset",
+        "0",
+        false
+      ],
+      [
+        "pointer-events",
+        "none",
+        false
+      ],
+      [
+        "transition",
+        "none",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": "body.mia-night-local .modal-container:has(.modal[class*=\"mia-\"], .mia-keyboard-settings)::before",
+    "declarations": [
+      [
+        "z-index",
+        "1000",
+        false
+      ],
+      [
+        "-webkit-backdrop-filter",
+        "grayscale(1)",
+        false
+      ],
+      [
+        "backdrop-filter",
+        "grayscale(1)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": "body.mia-night-local .modal-container:has(.modal[class*=\"mia-\"], .mia-keyboard-settings)::after",
+    "declarations": [
+      [
+        "z-index",
+        "1001",
+        false
+      ],
+      [
+        "background",
+        "#ff0000",
+        false
+      ],
+      [
+        "mix-blend-mode",
+        "multiply",
         false
       ]
     ]

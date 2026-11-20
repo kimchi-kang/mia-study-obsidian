@@ -148,7 +148,7 @@ button.mia-progress-stat { cursor: pointer; }
 .mia-view .mia-header .mia-brand { align-items: center; gap: 8px; }
 .mia-view .mia-stat[data-tone] span { display: flex; align-items: center; gap: 7px; }
 /* 적색 야간 모드: 빨강 한 가지로 바뀌면 밝기 차이만 남으므로, 흐린 글자도 4.5:1 이상이 되게 밝힌다. */
-body.mia-night-global :is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)),
+:is(body.mia-night-global, body.mia-night-local) :is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)),
 .mia-view[data-night="true"] {
   --mia-bg: #000000;
   --mia-panel: #0C0E12;
@@ -178,6 +178,10 @@ body.mia-night-global::after { position: fixed; z-index: 2147483647; background:
 body:not(.mia-night-global) .workspace-leaf-content:has(.mia-view[data-night="true"]) { position: relative; }
 body:not(.mia-night-global) .workspace-leaf-content:has(.mia-view[data-night="true"])::before { position: absolute; z-index: 99; -webkit-backdrop-filter: grayscale(1); backdrop-filter: grayscale(1); }
 body:not(.mia-night-global) .workspace-leaf-content:has(.mia-view[data-night="true"])::after { position: absolute; z-index: 100; background: #ff0000; mix-blend-mode: multiply; }
+/* MIA 화면만 적용해도 MIA 창(모달·MIA 설정 탭)은 화면 맨 위층에 따로 뜨므로 같은 덮개를 그 창 위에 씌운다. */
+body.mia-night-local .modal-container:has(.modal[class*="mia-"], .mia-keyboard-settings)::before, body.mia-night-local .modal-container:has(.modal[class*="mia-"], .mia-keyboard-settings)::after { content: ""; position: fixed; inset: 0; pointer-events: none; transition: none; }
+body.mia-night-local .modal-container:has(.modal[class*="mia-"], .mia-keyboard-settings)::before { z-index: 1000; -webkit-backdrop-filter: grayscale(1); backdrop-filter: grayscale(1); }
+body.mia-night-local .modal-container:has(.modal[class*="mia-"], .mia-keyboard-settings)::after { z-index: 1001; background: #ff0000; mix-blend-mode: multiply; }
 .mia-view [data-tone="again"] { --mia-tone: var(--mia-red); }
 .mia-view .mia-header h2 { font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
 .mia-view .mia-header .mia-home-button::before { display: inline-grid; place-items: center; flex: 0 0 auto; font-weight: 800; letter-spacing: 0; content: ""; order: -2; width: 18px; height: 18px; border-radius: 50%; background: var(--mia-accent-text); box-shadow: none; font-size: 0; }
@@ -444,6 +448,8 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 }
 
 .mia-view .mia-status-chips button[aria-pressed="true"] { color: var(--mia-accent-text); }
+/* 야간 버튼은 검정 바탕에서 눌린 그림자만으로 구분이 어려워, 켜짐일 때 파란 면으로 확실히 표시한다. */
+.mia-view .mia-settings-buttons > .mia-night-button[aria-pressed="true"] { background-color: var(--mia-blue); color: var(--mia-on-color); }
 
 .mia-view .mia-status-chips button.mia-chip-weak[aria-pressed="true"] { background: var(--mia-red); color: var(--mia-on-color); }
 

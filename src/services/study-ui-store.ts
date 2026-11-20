@@ -154,7 +154,9 @@ export class StudyUiStore {
     return parseSubjectExportOptions(this.app.loadLocalStorage(this.exportPreferenceKey));
   }
   get night(): NightPreference {
-    return parseNightPreference(this.app.loadLocalStorage(this.nightPreferenceKey));
+    // 기기 저장소를 읽지 못해도 플러그인 시작을 막지 않고 기본값(야간 꺼짐)을 쓴다.
+    try { return parseNightPreference(this.app.loadLocalStorage(this.nightPreferenceKey)); }
+    catch { return parseNightPreference(undefined); }
   }
   get hasResumeFile(): boolean { return this.filePresent; }
   get resumeRevision(): number { return this.sharedWrites.checkpointRevision; }

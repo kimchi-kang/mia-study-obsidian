@@ -124,6 +124,12 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     // 저장된 야간 모드는 학습 화면을 열지 않아도 시작할 때 바로 적용한다.
     this.nightMode = new NightModeController(typeof document === "undefined" ? null : document.body, () => this.studyUi.night);
     this.nightMode.apply();
+    // 데스크톱에서 떼어 낸 별도 창에도 같은 야간 상태를 붙인다.
+    const workspace = this.app.workspace;
+    if (typeof workspace.on === "function") {
+      this.registerEvent(workspace.on("window-open", win => { this.nightMode?.attach(win.doc.body); }));
+      this.registerEvent(workspace.on("window-close", win => { this.nightMode?.detach(win.doc.body); }));
+    }
     try { await this.studyUi.load(); }
     catch (error) { new Notice(`이어하기 정보 불러오기 실패: ${errorMessage(error)}`); }
     if (this.unloadRequested) return;
@@ -201,7 +207,13 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
 
   /** 야간 모드 저장 → body 클래스 → 열린 MIA 화면 순서로 같은 상태를 맞춘다. */
   updateNightMode(patch: Partial<NightPreference>): NightPreference {
-    const next = this.studyUi.updateNight(patch);
+    let next: NightPreference;
+    try { next = this.studyUi.updateNight(patch); }
+    catch (error) {
+      // 기기 저장소가 가득 찼거나 막힌 경우: 바꾸지 않고 알린다.
+      new Notice(`야간 모드 설정 저장 실패: ${errorMessage(error)}`);
+      return this.studyUi.night;
+    }
     this.nightMode?.apply();
     for (const leaf of this.app.workspace.getLeavesOfType(MIA_VIEW_TYPE)) {
       if (leaf.view instanceof MiaStudyView) leaf.view.refreshNight();
