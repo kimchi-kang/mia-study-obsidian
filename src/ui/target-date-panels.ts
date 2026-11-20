@@ -107,19 +107,21 @@ export function renderReviewForecast(root: HTMLElement, days: ReturnType<typeof 
     if (!visibleDates.has(target.date)) continue;
     markers.set(target.date, [...markers.get(target.date) ?? [], target.label]);
   }
-  const highest = Math.max(1, ...days.map(day => day.count));
+  const highest = Math.max(0, ...days.map(day => day.count));
+  const total = days.reduce((sum, day) => sum + day.count, 0);
   const bars = section.createDiv({ cls: "mia-forecast-bars", attr: { "aria-hidden": "true" } });
   const labels = days.map(({ date, count }) => {
     const names = markers.get(date);
     const label = `${date} · ${count}문제${names ? ` · ${names.join(", ")}` : ""}`;
     const column = bars.createDiv({ cls: "mia-forecast-column", attr: { title: label } });
     if (names) column.createSpan({ cls: "mia-forecast-marker" });
-    const bar = column.createSpan({ cls: "mia-forecast-bar" });
-    bar.style.setProperty("--mia-forecast-height", `${count / highest * 100}%`);
+    const bar = column.createSpan({ cls: count > 0 ? "mia-forecast-bar mia-forecast-bar-positive" : "mia-forecast-bar" });
+    bar.style.setProperty("--mia-forecast-height", `${count / Math.max(1, highest) * 100}%`);
     return label;
   });
   const axis = section.createDiv({ cls: "mia-forecast-axis mia-muted" });
   axis.createSpan({ text: `오늘 ${days[0]?.date.slice(5)}` });
+  axis.createSpan({ cls: "mia-forecast-summary", text: `최대 ${highest}문제 · 30일 합계 ${total}문제` });
   axis.createSpan({ text: days.at(-1)?.date.slice(5) ?? "" });
   for (const [date, names] of markers) {
     section.createEl("p", { cls: "mia-forecast-key", text: `● ${date.slice(5)} ${names.join(", ")}` });

@@ -68,6 +68,10 @@
 }
 .mia-view { box-sizing: border-box; container-name: mia-view; container-type: inline-size; width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior-x: contain; }
 .mia-view > * { max-width: 100%; min-width: 0; }
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where([class*="mia-"])) :where(h1, h2, h3, h4, p, button, label, summary, .modal-title, .setting-item-name, .setting-item-description, .mia-stat span, .mia-card-label, .mia-hero-count span, .mia-subject-heading strong, .mia-progress-subject-heading strong, .mia-progress-subject-heading span):not(:where(.mia-markdown *, .mia-question-heading *)) {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
 .mia-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .mia-header > div:first-child { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .mia-header h2 { margin: 0; overflow-wrap: anywhere; }
@@ -104,7 +108,9 @@ button.mia-progress-stat { cursor: pointer; }
 .mia-row-prompt { overflow: hidden; }
 .mia-load-more { display: block; margin: 14px auto 0; }
 .mia-keyword:hover { border-color: var(--mia-accent-text); }
-.mia-markdown { font-size: 1.05em; }
+.mia-markdown { font-size: 1.05em; word-break: normal; overflow-wrap: anywhere; }
+:is(.mia-markdown, .mia-question-heading) :is(pre, .math-block, .katex-display, mjx-container[display="true"]) { max-inline-size: 100%; overflow-x: auto; }
+:is(.mia-markdown, .mia-question-heading) :is(.math-inline, .katex, mjx-container:not([display="true"])) { display: inline-block; max-inline-size: 100%; overflow-x: auto; vertical-align: middle; }
 .mia-answer { padding-top: 8px; }
 .mia-ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 24px; }
 .mia-ratings button { display: flex; flex-direction: column; gap: 3px; align-items: center; padding: 10px 5px; }
@@ -306,7 +312,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
   color: var(--mia-ink);
 }
 .mia-view .mia-card-label { font-weight: 800; letter-spacing: .06em; }
-.mia-view :is(a, .internal-link, .external-link) { color: var(--mia-blue); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.mia-view :is(a, .internal-link, .external-link) { text-decoration: underline; text-decoration-thickness: 2px; }
 .mia-view .mia-warning, .mia-view .mia-sync-warning, .mia-view .mia-storage-warning { color: var(--mia-ink); }
 .mia-view :is(.mia-section-title, .mia-page-title) { display: flex; align-items: center; padding-top: 14px; font-family: var(--mia-head); font-weight: 800; font-size: 22px; letter-spacing: -.01em; gap: 12px; }
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px 20px 16px; scroll-padding-block: 16px; }
@@ -492,15 +498,15 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-count-chip { font-size: 12px; font-variant-numeric: tabular-nums; }
 .mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(3) { margin-inline-start: auto; }
 .mia-view.mia-route-dashboard .mia-manage-actions { gap: 8px; }
-.mia-view.mia-route-dashboard .mia-manage-actions button.mod-cta { font-weight: 650; }
+.mia-view button:is(.mia-secondary-action, .mia-target-review) { color: var(--mia-accent-text); }
 .mia-view.mia-route-dashboard .mia-hero h3 { font-weight: 800; line-height: 1.15; }
-.mia-view .mia-stability-stat::after { background: conic-gradient(var(--mia-red) var(--mia-stable-ratio, 0deg), var(--mia-muted) 0); }
+.mia-view .mia-stability-stat::after { background: conic-gradient(var(--mia-good) var(--mia-stable-ratio, 0deg), var(--mia-muted) 0); }
 .mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(n+3) { margin-top: 4px; }
 .mia-view .mia-hero-count span { font-weight: 800; order: 0; font-size: 16px; }
 .mia-view .mia-hero-count small { font-weight: 600; color: inherit; order: 1; }
 .mia-view.mia-route-dashboard .mia-hero-main h3 { margin: 6px 0 0; font-size: clamp(20px, 2.2cqi, 28px); }
 .mia-view .mia-hero-main > p { margin: 0; }
-.mia-view .mia-weak-strip .mia-inline-actions > button { min-height: 44px; padding-inline: 18px; white-space: nowrap; }
+.mia-view :is(.mia-weak-strip, .mia-target-strip) button { min-height: 44px; min-width: 44px; }
 .mia-view .mia-subject-card > .mia-inline-actions { padding-top: 12px; border-top: 1px solid var(--mia-line); }
 .mia-resume-card > button { grid-column: 2; grid-row: 1 / 5; align-self: center; padding: 10px 22px; }
 .mia-route-dashboard > :not(.mia-header), .mia-route-progress > :not(.mia-header) { max-width: var(--mia-study-width); margin-left: auto; margin-right: auto; }
@@ -512,11 +518,11 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-hero-count strong { font-variant-numeric: tabular-nums; }
 .mia-view .mia-subject-heading strong { min-width: 0; letter-spacing: -.01em; overflow-wrap: anywhere; font-family: var(--mia-head); font-weight: 800; font-size: 1.25em; }
 .mia-view .mia-hero-count strong { color: var(--mia-accent-text); font-family: var(--mia-head); font-weight: 800; letter-spacing: 0; order: 2; margin-top: auto; font-size: 88px; line-height: 1; }
-.mia-view .mia-weak-strip > strong { font-size: 16px; font-weight: 900; }
+.mia-view :is(.mia-weak-strip, .mia-target-strip) > strong { position: relative; min-width: 0; font-size: 16px; font-weight: 900; overflow-wrap: anywhere; }
 .mia-view.mia-route-dashboard .mia-manage-actions button { min-height: 44px; font-weight: 800; }
 .mia-view .mia-count-chip[data-tone="idle"] { font-weight: 600; }
-.mia-view.mia-route-dashboard .mia-primary-card.mia-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: stretch; padding: 0; border: 0; background: transparent; box-shadow: none; }
-.mia-view .mia-hero:not(:has(> .mia-hero-counts)) { grid-template-columns: minmax(0, 1fr); }
+.mia-view.mia-route-dashboard .mia-primary-card.mia-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: start; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.mia-view.mia-route-dashboard .mia-primary-card.mia-hero:not(:has(> .mia-hero-counts)) { grid-template-columns: minmax(0, 1fr); }
 .mia-view .mia-subject-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
 .mia-view .mia-subject-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .mia-view .mia-hero-main > :first-child { margin-top: 0; }
@@ -524,7 +530,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-primary-card.mia-hero { margin-bottom: 28px; }
 .mia-view .mia-hero-main > .mia-inline-actions { margin-top: 8px; gap: 8px; align-items: stretch; }
 .mia-view .mia-hero .mia-device-sync-hint { margin: 4px 0 0; }
-.mia-view .mia-weak-strip .mia-inline-actions { flex-wrap: nowrap; margin-inline-start: auto; }
+.mia-view .mia-weak-strip .mia-inline-actions, .mia-view .mia-target-strip > button { margin-inline-start: auto; }
 .mia-view .mia-hero-date { align-self: flex-start; margin-bottom: 6px; display: inline-block; padding: 3px 12px; font-size: 12px; font-weight: 800; letter-spacing: .06em; }
 .mia-view .mia-count-chip { font-weight: 800; padding: 1px 10px; }
 .mia-view .mia-hero .mia-resume-card { display: grid; margin: var(--mia-card-gap) 0 0; padding: 12px 16px; }
@@ -533,11 +539,10 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-hero-counts { display: grid; grid-template-columns: repeat(2, 200px); gap: 20px; }
 .mia-view .mia-hero-main > .mia-inline-actions > button.mod-cta { flex: 2 1 240px; min-height: 52px; font-size: 18px; font-weight: 900; }
 .mia-view .mia-hero-main > .mia-inline-actions > button:not(.mod-cta) { flex: 1 1 130px; }
-.mia-view .mia-hero .mia-resume-card > button.mod-cta { min-height: 44px; }
+.mia-view .mia-hero .mia-resume-card > button.mia-secondary-action { min-height: 44px; }
 .mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(-n+2) { min-height: 44px; }
 .mia-view .mia-hero-count { box-sizing: border-box; min-height: 200px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; max-height: 320px; }
 .mia-view .mia-hero-main { min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; justify-content: center; padding: 20px 24px; background: var(--mia-panel); }
-.mia-view .mia-weak-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 18px; padding: 14px 20px; background: var(--mia-panel); }
 
 .mia-view.mia-route-dashboard .mia-hero,
 .mia-view .mia-hero-counts,
@@ -547,18 +552,18 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 
 .mia-view .mia-hero-count[data-tone="new"] strong { color: var(--mia-warning-text); }
 
-.mia-view .mia-weak-mark { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--mia-danger-text); }
-
-.mia-view :is(.mia-hero-main, .mia-hero-count, .mia-weak-strip) {
+.mia-view :is(.mia-hero-main, .mia-hero-count) {
   background: var(--mia-panel);
   border-radius: var(--mia-radius);
   box-shadow: var(--mia-shadow);
 }
 .mia-view .mia-hero-count strong { font-variant-numeric: tabular-nums; }
 
-.mia-target-strip { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 18px; padding: 10px 16px; border-radius: var(--mia-radius); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); overflow-wrap: anywhere; }
-.mia-target-strip > strong { min-width: 0; }
-.mia-view .mia-target-strip > button.mia-target-review { min-height: 44px; min-width: 44px; color: var(--mia-accent-text); }
+.mia-view :is(.mia-weak-strip, .mia-target-strip) { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 18px; padding: 10px 16px 10px 32px; border-radius: var(--mia-radius); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); }
+.mia-view :is(.mia-weak-strip, .mia-target-strip) > strong::before { content: ""; position: absolute; inset-inline-start: -16px; inset-block-start: calc(.5lh - 4px); width: 8px; height: 8px; border-radius: var(--mia-radius-pill); background: var(--mia-strip-mark); }
+.mia-view .mia-weak-strip { --mia-strip-mark: var(--mia-danger-text); }
+.mia-view .mia-target-strip { --mia-strip-mark: var(--mia-accent-text); }
+.mia-view .mia-target-strip > strong { flex: 1 1 10rem; }
 
 /* 3. Learning progress */
 .mia-page-title { margin-top: 0; }
@@ -568,14 +573,13 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-progress-subject-values { display: grid; }
 .mia-view [data-tone="hard"] { --mia-tone: var(--mia-yellow); }
 .mia-view .mia-stat[data-tone="hard"] span::before, .mia-view .mia-stat[data-tone="new"] span::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-.mia-view.mia-view .mia-progress-subject-values > button:nth-child(3n+1) { padding-left: 2px; }
 .mia-view .mia-progress-subject-values > button::before { content: ""; flex: none; width: 10px; height: 10px; background: var(--mia-muted); }
 .mia-view .mia-progress-subject-values > button:nth-child(1)::before { background: transparent; border: 2px solid var(--mia-muted); box-sizing: border-box; }
 .mia-view .mia-progress-subject-values > button:nth-child(2)::before { background: var(--mia-blue); border-radius: 50%; }
-.mia-view .mia-progress-subject-values > button:nth-child(3)::before { background: var(--mia-red); border-radius: 50%; }
-.mia-view .mia-progress-subject-values > button:nth-child(4)::before { background: var(--mia-yellow); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-.mia-view .mia-progress-subject-values > button:nth-child(5)::before { background: var(--mia-ink); }
-.mia-view .mia-progress-subject-values > button:nth-child(6)::before { background: var(--mia-blue); }
+.mia-view .mia-progress-subject-values > button:nth-child(3)::before { background: var(--mia-again); border-radius: 50%; }
+.mia-view .mia-progress-subject-values > button:nth-child(4)::before { background: var(--mia-hard); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.mia-view .mia-progress-subject-values > button:nth-child(5)::before { background: var(--mia-good); }
+.mia-view .mia-progress-subject-values > button:nth-child(6)::before { background: var(--mia-easy); }
 .mia-view.mia-view .mia-progress-subject > .mia-inline-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .mia-view.mia-view .mia-progress-subject > .mia-inline-actions > button { width: 100%; margin: 0; min-height: 44px; white-space: nowrap; }
 .mia-view .mia-progress-subject-heading strong { font-weight: 700; }
@@ -595,14 +599,16 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-target-card, .mia-review-forecast { padding: 14px; border-radius: var(--mia-radius); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); }
 .mia-target-card > :is(h4, p) { margin: 0 0 8px; }
 .mia-target-past > .mia-target-card { margin-block: 12px; }
-.mia-view .mia-target-card button.mia-target-review { color: var(--mia-accent-text); }
 .mia-view :is(.mia-target-dates, .mia-review-forecast) :is(button, summary) { min-height: 44px; min-width: 44px; }
 .mia-view :is(.mia-target-past, .mia-forecast-details) > summary { box-sizing: border-box; padding-block: 10px; cursor: pointer; }
 .mia-forecast-bars { display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 2px; height: 100px; padding: 8px; border-radius: var(--mia-radius-s); box-shadow: var(--mia-shadow-inset); }
 .mia-forecast-column { position: relative; display: flex; align-items: end; min-width: 0; padding-top: 9px; }
-.mia-forecast-bar { width: 100%; height: var(--mia-forecast-height); border-radius: var(--mia-radius-pill) var(--mia-radius-pill) 0 0; background: var(--mia-muted); }
+.mia-forecast-bar { width: 100%; height: var(--mia-forecast-height); border-radius: var(--mia-radius-pill) var(--mia-radius-pill) 0 0; background: color-mix(in srgb, var(--mia-muted) 78%, var(--mia-panel)); }
+.mia-forecast-bar-positive { min-height: 3px; }
+.mia-forecast-marker + .mia-forecast-bar { background: var(--mia-accent-text); }
 .mia-forecast-marker { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: min(7px, 100%); aspect-ratio: 1; border-radius: var(--mia-radius-pill); background: var(--mia-accent-text); }
-.mia-forecast-axis { display: flex; justify-content: space-between; gap: 12px; }
+.mia-forecast-axis { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 4px 8px; }
+.mia-forecast-summary { text-align: center; font-size: max(13px, var(--font-ui-smaller)); font-weight: 700; word-break: keep-all; }
 .mia-forecast-key { color: var(--mia-accent-text); }
 
 /* 4. Questions and detail panels */
@@ -629,6 +635,8 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-leech { display: inline; margin-left: 6px; padding: 0 4px; color: var(--mia-danger-text); font-size: 10px; font-weight: 800; white-space: nowrap; }
 
 .mia-view .mia-row-state { border-radius: 50%; background: var(--mia-tone, var(--mia-muted)); }
+.mia-view .mia-row-selected { position: relative; }
+.mia-view .mia-row-selected::before { content: ""; position: absolute; inset: 8px auto 8px 3px; width: 3px; border-radius: var(--mia-radius-pill); background: var(--mia-accent-text); pointer-events: none; }
 
 .mia-view .mia-detail-panel { border-radius: var(--mia-radius); box-shadow: var(--mia-shadow); }
 
@@ -739,7 +747,6 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-study-card .mia-markdown { line-height: 1.8; overflow-wrap: anywhere; }
 .mia-study-card .mia-markdown > :first-child { margin-top: 0; }
 .mia-study-card .mia-markdown > :last-child { margin-bottom: 0; }
-.mia-study-card .mia-markdown pre, .mia-study-card .mia-markdown .math-block { max-width: 100%; overflow-x: auto; }
 .mia-answer-section .mia-answer { padding: 0; }
 .mia-study-concepts .mia-keyword-section { margin-top: 12px; }
 .mia-study-layout .mia-related { width: 100%; max-width: none; margin: 0; gap: 10px; box-sizing: border-box; }
@@ -778,7 +785,6 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-session-edit-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .mia-session-edit-actions button, .mia-session-edit-target > button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; min-height: 44px; }
 .mia-view .mia-session-meter { height: 10px; background: var(--mia-panel); }
-.mia-view .mia-session-meter-fill { background: var(--mia-red); }
 .mia-view .mia-study-card { background: var(--mia-panel); }
 .mia-view .mia-study-dock { background: var(--mia-bg); }
 .mia-view .mia-card-header .mia-card-context, .mia-view .mia-card-header .mia-session-edit-actions { margin: 0; }
@@ -823,7 +829,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 }
 
 .mia-view button.mia-auto-advance { color: var(--mia-warning-text); }
-.mia-view .mia-answer-timer { display: inline-block; margin-left: 8px; white-space: nowrap; font-size: 12px; line-height: 1; font-variant-numeric: tabular-nums; }
+.mia-view .mia-answer-timer { display: inline-block; margin-left: 8px; padding: 3px 8px; white-space: nowrap; font-size: 12px; line-height: 1; font-variant-numeric: tabular-nums; }
 
 .mia-view .mia-study-card .mia-answer-section,
 .mia-view .mia-undo-feedback {
@@ -1525,7 +1531,6 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-hero-main > .mia-inline-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .mia-view .mia-hero-main > .mia-inline-actions > button { white-space: nowrap; }
 .mia-view .mia-hero-main > .mia-inline-actions > button.mod-cta { grid-column: 1 / -1; }
-.mia-view .mia-weak-strip { border-color: var(--mia-red); padding: 8px 8px 8px 12px; }
 .mia-view .mia-weak-strip .mia-inline-actions { flex: 1 1 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -1540,11 +1545,13 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view { --mia-bleed-left: var(--mia-pane-gutter); --mia-bleed-right: var(--mia-pane-gutter); }
 .mia-view[data-device="phone"] { --mia-bleed-left: calc(var(--mia-pane-gutter) + var(--mia-edge-left)); --mia-bleed-right: calc(var(--mia-pane-gutter) + var(--mia-edge-right)); }
 .mia-view[data-device="phone"] { --mia-card-gap: 16px; }
-.mia-view[data-device="phone"]:not(.mia-route-study) { display: flex; flex-direction: column; max-height: 100%; padding-bottom: 0; padding-inline: var(--mia-bleed-left) var(--mia-bleed-right); }
+.mia-view[data-device="phone"]:not(.mia-route-study) { display: flex; flex-direction: column; max-height: 100%; padding-bottom: 0; padding-inline: var(--mia-bleed-left) var(--mia-bleed-right); scroll-padding-bottom: calc(84px + var(--mia-edge-bottom)); }
 .mia-view[data-device="phone"]:not(.mia-route-study) > * { flex: 0 0 auto; width: 100%; box-sizing: border-box; }
-.mia-view[data-device="phone"]:not(.mia-route-study)::after { content: ""; order: 98; flex: 1 0 12px; }
+.mia-view[data-device="phone"]:not(.mia-route-study)::after { content: ""; order: 98; flex: 1 0 24px; }
 .mia-view[data-device="phone"]:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-header { display: contents; }
 .mia-view[data-device="phone"]:not(.mia-route-study) .mia-header > div:first-child { order: -1; margin-bottom: 12px; padding-bottom: 8px; }
+.mia-view[data-device="phone"]:not(.mia-route-study) .mia-settings-buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; margin-inline-start: 0; }
+.mia-view[data-device="phone"]:not(.mia-route-study) .mia-settings-buttons > button { min-width: 44px; min-height: 44px; padding-inline: 4px; white-space: nowrap; }
 .mia-view[data-device="phone"]:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-nav {
   order: 99;
   position: sticky;

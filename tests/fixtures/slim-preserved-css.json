@@ -267,6 +267,22 @@
   },
   {
     "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where([class*=\"mia-\"])) :where(h1, h2, h3, h4, p, button, label, summary, .modal-title, .setting-item-name, .setting-item-description, .mia-stat span, .mia-card-label, .mia-hero-count span, .mia-subject-heading strong, .mia-progress-subject-heading strong, .mia-progress-subject-heading span):not(:where(.mia-markdown *, .mia-question-heading *))",
+    "declarations": [
+      [
+        "word-break",
+        "keep-all",
+        false
+      ],
+      [
+        "overflow-wrap",
+        "anywhere",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
     "selector": ".mia-load-more",
     "declarations": [
       [

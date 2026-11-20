@@ -134,7 +134,6 @@ function renderReviewConflictWarning(ctx: StudyPageContext, root: HTMLElement, c
 }
 
 export function renderDashboard(ctx: StudyPageContext, root: HTMLElement, overview: DashboardOverview): void {
-  if (overview.target) renderUpcomingTarget(ctx, root, overview.target);
   if (overview.pending) {
     const warning = root.createDiv({ cls: "mia-storage-warning" });
     warning.createEl("p", { text: "완료를 확인하지 못한 저장 사본이 있습니다. 새 평가 전에 확인하세요." });
@@ -218,7 +217,7 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement, overvi
     else heading.setText("저장된 학습");
     resume.createEl("p", { text: `${current?.subject ?? ""} · ${saved.mode === "recall" ? "시험" : "암기"} · ${saved.position} / ${saved.length}${saved.waiting ? " · 다음 복습 대기" : ""}` });
     resume.createEl("small", { text: `${new Date(saved.updatedAt).toLocaleString("ko-KR")} 저장`, cls: "mia-muted" });
-    resume.createEl("button", { text: "이어하기", cls: "mod-cta" }).addEventListener("click", () => ctx.resumeStudy());
+    resume.createEl("button", { text: "이어하기", cls: "mia-secondary-action" }).addEventListener("click", () => ctx.resumeStudy());
   }
   if (limited) actions.createEl("button", { text: "학습량 확인" }).addEventListener("click", () => ctx.openStudySettings());
   const refresh = actions.createEl("button", { text: "기록 새로고침" });
@@ -242,10 +241,11 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement, overvi
   progressStat(ctx, grid, "오늘 복습", due, "due", "review");
   progressStat(ctx, grid, "개선 필요", overview.weak, "weak", "again");
   renderProgressGuidance(root, overview.dayStartsAt);
+  if (overview.target) renderUpcomingTarget(ctx, root, overview.target);
   if (!empty) renderWeaknessStrip(ctx, root, overview.weak);
   const manage = root.createDiv({ cls: "mia-manage-actions" });
   manage.createEl("button", { text: "과목 추가" }).addEventListener("click", () => ctx.plugin.openSubjectEditor());
-  manage.createEl("button", { text: "질문 추가", cls: "mod-cta" }).addEventListener("click", () =>
+  manage.createEl("button", { text: "질문 추가", cls: "mia-secondary-action" }).addEventListener("click", () =>
     openEditorWithNotice("질문 추가", () => ctx.plugin.openManagedQuestionEditor()));
   manage.createEl("button", { text: "키워드 추가" }).addEventListener("click", () => ctx.plugin.openKeywordEditor());
   manage.createEl("button", { text: "출력" }).addEventListener("click", () => ctx.plugin.openSubjectExport());
@@ -270,7 +270,7 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement, overvi
       const weakChip = chips.createEl("span", { text: `취약 ${subjectWeak}`, cls: "mia-count-chip" });
       weakChip.dataset.tone = subjectWeak > 0 ? "again" : "idle";
       const subjectActions = card.createDiv({ cls: "mia-inline-actions" });
-      const review = subjectActions.createEl("button", { text: "시험" });
+      const review = subjectActions.createEl("button", { text: "시험", cls: "mia-secondary-action" });
       review.disabled = !canStart;
       review.addEventListener("click", () => ctx.startReview(reviewQueue(ctx, subjectQuestions(ctx, subject)).map(question => question.id)));
       const memorize = subjectActions.createEl("button", { text: "암기" });
@@ -301,14 +301,13 @@ function weakQuestions(ctx: StudyPageContext, questions: Array<QuestionRecord & 
  */
 function renderWeaknessStrip(ctx: StudyPageContext, root: HTMLElement, count: number): void {
   const strip = root.createDiv({ cls: "mia-weak-strip" });
-  strip.createSpan({ cls: "mia-weak-mark" }).setAttr("aria-hidden", "true");
   strip.createEl("strong", { text: `취약 문제 ${count}개` });
   strip.createEl("span", { text: "못 암기와 애매 문제만 모아 시험합니다. 출제 순서는 학습 설정을 따릅니다.", cls: "mia-muted mia-weak-hint" });
   const actions = strip.createDiv({ cls: "mia-inline-actions" });
-  const start = actions.createEl("button", { text: "취약 문제 시험", cls: "mod-cta" });
+  const start = actions.createEl("button", { text: "취약 문제 시험", cls: "mia-secondary-action" });
   start.disabled = count === 0;
   start.addEventListener("click", () => ctx.startReview(weakQuestions(ctx, ctx.plugin.index.registered).map(question => question.id)));
-  actions.createEl("button", { text: "목록 보기" }).addEventListener("click", () => ctx.showQuestions("weak"));
+  actions.createEl("button", { text: "목록 보기", cls: "mia-secondary-action" }).addEventListener("click", () => ctx.showQuestions("weak"));
 }
 
 export function renderProgress(ctx: StudyPageContext, root: HTMLElement, overview: ProgressOverview): void {
@@ -351,7 +350,7 @@ export function renderProgress(ctx: StudyPageContext, root: HTMLElement, overvie
     progressLink(ctx, values, `암기 ${counts.good}`, "good", subject);
     progressLink(ctx, values, `너무 쉬움 ${counts.easy}`, "easy", subject);
     const actions = card.createDiv({ cls: "mia-inline-actions" });
-    const start = actions.createEl("button", { text: "복습 시작", cls: "mod-cta" });
+    const start = actions.createEl("button", { text: "복습 시작", cls: "mia-secondary-action" });
     start.disabled = !canStart;
     start.addEventListener("click", () => ctx.startReview(reviewQueue(ctx, subjectQuestions(ctx, subject)).map(question => question.id)));
     actions.createEl("button", { text: "전체 문제" }).addEventListener("click", () => ctx.showQuestions("all", subject));
