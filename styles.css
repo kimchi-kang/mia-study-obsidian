@@ -12,11 +12,11 @@
 /* 1. Shared tokens, shell and controls */
 
 :is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) {
-  --mia-bg: #2B2F38;
-  --mia-panel: var(--mia-bg);
-  --mia-surface: #262A32;
-  --mia-shadow-light: #383D48;
-  --mia-shadow-dark: #1C1F25;
+  --mia-bg: #000000;
+  --mia-panel: #111216;
+  --mia-surface: #0A0B0E;
+  --mia-shadow-light: #22252C;
+  --mia-shadow-dark: #000000;
   --mia-shadow: 8px 8px 16px var(--mia-shadow-dark), -8px -8px 16px var(--mia-shadow-light);
   --mia-shadow-small: 5px 5px 10px var(--mia-shadow-dark), -5px -5px 10px var(--mia-shadow-light);
   --mia-shadow-inset: inset 6px 6px 12px var(--mia-shadow-dark), inset -6px -6px 12px var(--mia-shadow-light);
@@ -150,11 +150,12 @@ button.mia-progress-stat { cursor: pointer; }
 /* 적색 야간 모드: 빨강 한 가지로 바뀌면 밝기 차이만 남으므로, 흐린 글자도 4.5:1 이상이 되게 밝힌다. */
 body.mia-night-global :is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)),
 .mia-view[data-night="true"] {
-  --mia-bg: #171B22;
+  --mia-bg: #000000;
+  --mia-panel: #0C0E12;
   --mia-focus: #F3F1FF;
-  --mia-surface: #14181E;
-  --mia-shadow-light: #242933;
-  --mia-shadow-dark: #101218;
+  --mia-surface: #07080B;
+  --mia-shadow-light: #1A1D24;
+  --mia-shadow-dark: #000000;
   --mia-ink: #FFFFFF;
   --mia-muted: #F6F4F4;
   --mia-accent-text: #F3F1FF;

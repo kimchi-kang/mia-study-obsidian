@@ -5,27 +5,27 @@
     "declarations": [
       [
         "--mia-bg",
-        "#2B2F38",
+        "#000000",
         false
       ],
       [
         "--mia-panel",
-        "var(--mia-bg)",
+        "#111216",
         false
       ],
       [
         "--mia-surface",
-        "#262A32",
+        "#0A0B0E",
         false
       ],
       [
         "--mia-shadow-light",
-        "#383D48",
+        "#22252C",
         false
       ],
       [
         "--mia-shadow-dark",
-        "#1C1F25",
+        "#000000",
         false
       ],
       [
@@ -462,7 +462,12 @@
     "declarations": [
       [
         "--mia-bg",
-        "#171B22",
+        "#000000",
+        false
+      ],
+      [
+        "--mia-panel",
+        "#0C0E12",
         false
       ],
       [
@@ -472,17 +477,17 @@
       ],
       [
         "--mia-surface",
-        "#14181E",
+        "#07080B",
         false
       ],
       [
         "--mia-shadow-light",
-        "#242933",
+        "#1A1D24",
         false
       ],
       [
         "--mia-shadow-dark",
-        "#101218",
+        "#000000",
         false
       ],
       [

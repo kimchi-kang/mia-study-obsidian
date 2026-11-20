@@ -51,7 +51,8 @@ describe("MIA design consistency", () => {
       expect(scope).toContain(`.mia-${dialog.includes("editor") ? dialog : `${dialog}-modal`}`);
     }
     expect(scope).toContain(".modal:where(");
-    expect(tokens).toMatchObject({ "--mia-bg": "#2B2F38", "--mia-panel": "var(--mia-bg)", "color-scheme": "dark" });
+    // 1.6.2: 바탕은 완전 검정, 카드·버튼은 그보다 한 단계 밝은 면이라 검정 그림자와 위쪽 빛으로 떠 보인다.
+    expect(tokens).toMatchObject({ "--mia-bg": "#000000", "--mia-panel": "#111216", "--mia-shadow-dark": "#000000", "color-scheme": "dark" });
     root.walkRules(rule => {
       if (/\.theme-(?:light|dark)\b/.test(rule.selector)) {
         expect(rule.selector).toBe("body.mia-night-global.theme-light");
