@@ -18,6 +18,7 @@ export class SubjectExportModal extends Modal {
     this.setTitle("어떤 과목을 출력할까요?");
   }
   onOpen(): void {
+    this.modalEl.addClass("mia-export-modal");
     this.closed = false;
     let options = this.studyUi.exportOptions;
     this.contentEl.createEl("p", { text: `과목을 누르면 질문과 답변을 Word(.docx) 정리본으로 만듭니다. 저장 위치: ${this.destination}` });

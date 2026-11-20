@@ -9,8 +9,63 @@
  * 8. Responsive panes, phones and tablets
  */
 
-
 /* 1. Shared tokens, shell and controls */
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) {
+  --mia-bg: #2B2F38;
+  --mia-panel: var(--mia-bg);
+  --mia-surface: #262A32;
+  --mia-shadow-light: #383D48;
+  --mia-shadow-dark: #1C1F25;
+  --mia-shadow: 8px 8px 16px var(--mia-shadow-dark), -8px -8px 16px var(--mia-shadow-light);
+  --mia-shadow-small: 5px 5px 10px var(--mia-shadow-dark), -5px -5px 10px var(--mia-shadow-light);
+  --mia-shadow-inset: inset 6px 6px 12px var(--mia-shadow-dark), inset -6px -6px 12px var(--mia-shadow-light);
+  --mia-ink: #E6EAF2;
+  --mia-muted: #AEB6C4;
+  --mia-blue: #3B5BDB;
+  --mia-accent-text: #9DB1FF;
+  --mia-focus: #B4C3FF;
+  --mia-red: #884455;
+  --mia-yellow: #72582D;
+  --mia-danger-text: #F1AAB3;
+  --mia-warning-text: #E8C58C;
+  --mia-on-color: #FFFFFF;
+  --mia-again: var(--mia-red);
+  --mia-hard: var(--mia-yellow);
+  --mia-good: #356659;
+  --mia-easy: var(--mia-blue);
+  --mia-head: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", var(--font-interface, system-ui), sans-serif;
+  --mia-radius: 22px;
+  --mia-radius-s: 14px;
+  --mia-radius-pill: 999px;
+  --mia-line: color-mix(in srgb, var(--mia-ink) 12%, transparent);
+  --mia-surface-hover: color-mix(in srgb, var(--mia-ink) 6%, var(--mia-panel));
+  --mia-ease: cubic-bezier(.2, .7, .2, 1);
+  --mia-card-gap: 22px;
+
+  color-scheme: dark;
+  background-color: var(--mia-bg);
+  color: var(--mia-ink);
+  --background-primary: var(--mia-bg);
+  --background-primary-alt: var(--mia-panel);
+  --background-secondary: var(--mia-panel);
+  --background-secondary-alt: var(--mia-surface);
+  --background-modifier-border: var(--mia-line);
+  --background-modifier-hover: var(--mia-surface-hover);
+  --modal-background: var(--mia-panel);
+  --interactive-normal: var(--mia-panel);
+  --interactive-hover: var(--mia-surface-hover);
+  --interactive-accent: var(--mia-blue);
+  --interactive-accent-hover: var(--mia-blue);
+  --text-normal: var(--mia-ink);
+  --text-muted: var(--mia-muted);
+  --text-faint: var(--mia-muted);
+  --text-accent: var(--mia-accent-text);
+  --text-accent-hover: var(--mia-accent-text);
+  --text-error: var(--mia-danger-text);
+  --text-warning: var(--mia-warning-text);
+  --text-on-accent: var(--mia-on-color);
+}
 .mia-view { box-sizing: border-box; container-name: mia-view; container-type: inline-size; width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior-x: contain; }
 .mia-view > * { max-width: 100%; min-width: 0; }
 .mia-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
@@ -19,7 +74,6 @@
 .mia-nav { max-width: 100%; min-width: 0; flex-wrap: wrap; justify-content: flex-end; }
 .mia-nav button { overflow-wrap: anywhere; }
 .mia-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr)); gap: 12px; margin-bottom: 20px; }
-.mia-stat { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-l); background: var(--background-primary-alt); }
 /* Override host button heights for content-sized statistic tiles. */
 .mia-view .mia-stat { font-size: max(13px, var(--font-ui-small)); box-sizing: border-box; width: 100%; min-width: 0; min-height: 88px; height: auto !important; padding: 16px; display: flex; flex-direction: column; justify-content: center; gap: 4px; white-space: normal; }
 .mia-stat strong { display: block; max-width: 100%; font-size: 1.8em; line-height: 1.12; overflow-wrap: anywhere; }
@@ -31,7 +85,6 @@
 .mia-section-title { margin-top: 28px; }
 .mia-progress-stat { appearance: none; text-align: left; }
 button.mia-progress-stat { cursor: pointer; }
-button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
 .mia-toolbar input { width: min(520px, 100%); }
 .mia-filter-toolbar input, .mia-filter-toolbar select { flex: 1 1 150px; min-width: 130px; }
@@ -50,104 +103,69 @@ button.mia-progress-stat:hover { border-color: var(--interactive-accent); }
 .mia-row-body { display: flex; flex-direction: column; gap: 5px; min-width: 0; overflow-wrap: anywhere; }
 .mia-row-prompt { overflow: hidden; }
 .mia-load-more { display: block; margin: 14px auto 0; }
-.mia-keyword:hover { border-color: var(--interactive-accent); }
+.mia-keyword:hover { border-color: var(--mia-accent-text); }
 .mia-markdown { font-size: 1.05em; }
 .mia-answer { padding-top: 8px; }
 .mia-ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 24px; }
 .mia-ratings button { display: flex; flex-direction: column; gap: 3px; align-items: center; padding: 10px 5px; }
 .mia-related { max-width: 860px; margin: 20px auto 0; display: grid; gap: 6px; }
-.mia-followup-list { min-height: min(128px, 42dvh); grid-auto-rows: max-content; align-content: start; max-height: min(52vh, 520px); overflow-y: auto; display: grid; gap: 4px; padding: 6px 0; }
-.mia-followup-option { display: flex; align-items: flex-start; gap: 10px; padding: 9px; border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); cursor: pointer; }
+.mia-followup-list { min-height: min(128px, 42dvh); grid-auto-rows: max-content; align-content: start; max-height: min(52vh, 520px); overflow-y: auto; display: grid; gap: 8px; padding: 8px; }
+.mia-followup-option { display: flex; align-items: flex-start; gap: 10px; padding: 9px; cursor: pointer; }
 .mia-detail-meta { display: flex; flex-wrap: wrap; gap: 6px; }
 .mia-keyword-detail-list { display: grid; gap: 6px; }
 .mia-history { color: var(--text-muted); display: grid; gap: 5px; max-height: 240px; overflow-y: auto; }
 .mia-detail-actions, .mia-result-actions { margin-top: 20px; }
 .mia-empty { color: var(--text-muted); text-align: center; padding: 28px; }
-:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) :is(button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 3px; }
 .mia-header { max-width: var(--mia-study-width); margin: 0 auto 24px; }
-.mia-nav button:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
-.mia-study-navigation button:hover { background: var(--background-modifier-hover); }
-.mia-card-label { color: var(--text-faint); font-size: 11px; font-weight: 600; letter-spacing: .08em; margin-bottom: 10px; }
+.mia-card-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; margin-bottom: 10px; }
 .mia-related > p { font-size: 11px; line-height: 1.6; margin: 0 0 4px; }
-.mia-related-item > button:not(.mia-related-open) { padding: 5px 8px; box-shadow: none; }
-.mia-related-item .mia-related-open:hover strong { color: var(--interactive-accent); text-decoration: underline; text-underline-offset: 3px; }
-.mia-study-dock .mia-ratings button:hover:not(:disabled) { background: color-mix(in srgb, var(--mia-rating-color) 17%, var(--background-primary)); }
-.mia-view[data-swipe-label]::after { content: attr(data-swipe-label); position: absolute; right: 16px; top: 14px; padding: 5px 9px; background: var(--interactive-accent); color: var(--text-on-accent); font-size: 11px; border-radius: 20px; opacity: var(--mia-swipe-progress, 0); pointer-events: none; }
-.mia-thumb-navigation > button:hover:not(:disabled) { background: var(--background-modifier-hover); color: var(--text-normal); }
+.mia-related-item > button:not(.mia-related-open) { padding: 5px 8px; }
+.mia-related-item .mia-related-open:hover strong { color: var(--mia-accent-text); text-decoration: underline; text-underline-offset: 3px; }
+.mia-view[data-swipe-label]::after { content: attr(data-swipe-label); position: absolute; right: 16px; top: 14px; padding: 5px 9px; background: var(--mia-blue); color: var(--mia-on-color); font-size: 11px; border-radius: var(--mia-radius-pill); opacity: var(--mia-swipe-progress, 0); pointer-events: none; }
 .mia-appearance-button { padding: 5px 8px; }
 .mia-view[data-reading-size="small"] { --mia-reading-body: 14px; --mia-reading-title: 21px; }
 .mia-view[data-reading-size="medium"] { --mia-reading-body: 16px; --mia-reading-title: 25px; }
 .mia-view[data-reading-size="large"] { --mia-reading-body: 20px; --mia-reading-title: 30px; }
-.mia-header h2 .mia-home-button:hover { color: var(--interactive-accent); background: transparent; }
-.mia-header h2 .mia-home-button:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 3px; }
-:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) { --mia-control-height: 32px; }
-.is-mobile :is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) { --mia-control-height: 44px; }
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) { --mia-control-height: 32px; }
+.is-mobile :is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) { --mia-control-height: 44px; }
 .mia-header > div:first-child { flex-wrap: wrap; }
-:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) button:not(.modal-close-button, .mia-home-button, .mia-nav button) {
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) button:not(.modal-close-button, .mia-home-button, .mia-nav button) {
   font-size: max(13px, var(--font-ui-small));
 }
-.is-mobile :is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) button:not(.modal-close-button, .mia-home-button, .mia-nav button) {
+.is-mobile :is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) button:not(.modal-close-button, .mia-home-button, .mia-nav button) {
   font-size: max(14px, var(--font-ui-small));
 }
 .mia-appearance-modal:focus { outline: none; }
 .mia-study-management-modal:focus { outline: none; }
 .mia-stat-guidance p { overflow-wrap: anywhere; line-height: 1.6; }
-.mia-settings-help > summary:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
-:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) {
-  --mia-radius: 14px;
-  --mia-radius-s: 10px;
-  --mia-line: color-mix(in srgb, var(--background-modifier-border) 80%, transparent);
-  --mia-surface: color-mix(in srgb, var(--background-primary-alt) 70%, var(--background-primary));
-  --mia-surface-hover: color-mix(in srgb, var(--text-normal) 5%, var(--mia-surface));
-  --mia-accent-soft: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
-  --mia-accent-line: color-mix(in srgb, var(--interactive-accent) 38%, var(--background-modifier-border));
-  --mia-danger: var(--text-error, #e5484d);
-  --mia-ease: cubic-bezier(.2, .7, .2, 1);
-}
 .mia-view button { transition: background-color 140ms var(--mia-ease), border-color 140ms var(--mia-ease), color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease); }
-.mia-view .mia-settings-buttons > button { box-shadow: none; border: 1px solid var(--mia-line); }
-.mia-view .mia-settings-buttons > button:hover { background: var(--mia-surface-hover); color: var(--text-normal); }
-.mia-view .mia-nav button.mod-cta,
-.mia-view .mia-nav button.mod-cta:hover { background: var(--background-primary); color: var(--interactive-accent); font-weight: 700; box-shadow: 0 1px 2px rgb(0 0 0 / 12%), 0 0 0 1px var(--mia-accent-line); }
-.mia-view :is(.mia-row, .mia-keyword, .mia-subject-card, button.mia-stat):hover { border-color: var(--mia-accent-line); }
 .mia-view .mia-stat strong { font-variant-numeric: tabular-nums; }
-.mia-view :is(.mia-subject-card .mia-inline-actions, .mia-keyword) > button:not(.mod-cta), :is(.mia-detail-modal) .mia-detail-actions button:not(.mod-cta) { background: transparent; box-shadow: none; border: 1px solid var(--mia-line); }
-.mia-view :is(.mia-subject-card .mia-inline-actions) > button:not(.mod-cta, .mod-warning):hover { background: var(--mia-surface-hover); }
-:is(.mia-view, .mia-detail-modal) button.mod-warning { box-shadow: none; border: 1px solid color-mix(in srgb, var(--mia-danger) 40%, var(--mia-line)); }
-:is(.mia-view, .mia-detail-modal) button.mod-warning:hover { background: color-mix(in srgb, var(--mia-danger) 12%, transparent); color: var(--mia-danger); }
 .mia-view .mia-row-body > strong { font-weight: 650; letter-spacing: -.01em; }
-.mia-view .mia-study-dock .mia-ratings button:hover:not(:disabled) { background: color-mix(in srgb, var(--mia-rating-color) 16%, var(--background-primary)); border-color: color-mix(in srgb, var(--mia-rating-color) 55%, var(--mia-line)); }
-.mia-detail-meta span { color: var(--text-muted); border: 1px solid var(--background-modifier-border); border-radius: 999px; padding: 3px 8px; border-color: var(--mia-line); background: var(--mia-surface); }
-.mia-view.mia-route-dashboard .mia-primary-card .mia-inline-actions > button:not(.mod-cta):hover { border-color: var(--mia-accent-line); }
+.mia-detail-meta span { color: var(--text-muted); padding: 3px 8px; }
 .mia-view .mia-stat strong { font-size: 1.95em; }
-.mia-view button.mia-stat:hover { background: var(--mia-surface-hover); }
-.mia-view.mia-route-dashboard .mia-manage-actions button:hover { border-color: var(--interactive-accent); color: var(--interactive-accent); background: var(--mia-accent-soft); }
-.mia-view .mia-row:hover { box-shadow: inset 3px 0 0 var(--interactive-accent), 0 6px 18px -12px rgb(0 0 0 / 45%); }
-.mia-view .mia-keyword:hover { transform: translateY(-1px); }
 .mia-view [data-tone="review"] { --mia-tone: var(--mia-tone-review); }
 .mia-view [data-tone="new"] { --mia-tone: var(--mia-tone-new); }
 .mia-view .mia-header .mia-brand { align-items: center; gap: 8px; }
 .mia-view .mia-stat[data-tone] span { display: flex; align-items: center; gap: 7px; }
-.mia-view .mia-stat[data-tone]:not([data-tone="total"]) strong { color: color-mix(in srgb, var(--mia-tone) 80%, var(--text-normal)); }
-.mia-view button.mia-stat:hover { box-shadow: var(--mia-shadow); transform: translateY(-1px); }
-.mia-view .mia-session-edit-actions button:hover { color: var(--text-normal); background: var(--mia-surface-hover); }
-.mia-study-management-settings .mia-settings-modes button:hover { color: var(--text-normal); }
-.mia-study-management-settings .setting-item-control > button:hover,
-.mia-study-management-settings .mia-step-row > button:hover { color: var(--text-normal); background: var(--mia-surface-hover); }
-:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary:hover { color: var(--interactive-accent); }
-:is(.mia-learning-settings-actions, .mia-appearance-actions) > button:not(.mod-cta):hover { color: var(--text-normal); background: var(--mia-surface-hover); }
-:is(.mia-learning-settings-actions, .mia-appearance-actions) > button.mod-cta:disabled { box-shadow: none; }
-body.theme-dark :is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) {
-  --mia-bg: #121212;
-  --mia-ink: #f3efe4;
-  --mia-muted: #c9c5b8;
-  --mia-panel: #1c1c1c;
-  --mia-blue: #3d63e8;
-  --mia-focus: #f4c20d;
-}
 /* 적색 야간 모드: 빨강 한 가지로 바뀌면 밝기 차이만 남으므로, 흐린 글자도 4.5:1 이상이 되게 밝힌다. */
-body.mia-night-global :is(.mia-view, .modal, .vertical-tab-content), body .mia-view[data-night="true"] { --mia-bg: #121212; --mia-ink: #ffffff; --mia-muted: #f2eee2; --mia-panel: #1c1c1c; --mia-blue: #3d63e8; --mia-focus: #f4c20d; --mia-danger-text: #ff7a70; }
-.mia-view[data-night="true"] { color-scheme: dark; --background-primary: var(--mia-bg); --background-primary-alt: var(--mia-panel); --text-normal: var(--mia-ink); --text-muted: var(--mia-muted); }
+body.mia-night-global :is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)),
+.mia-view[data-night="true"] {
+  --mia-bg: #171B22;
+  --mia-focus: #F3F1FF;
+  --mia-surface: #14181E;
+  --mia-shadow-light: #242933;
+  --mia-shadow-dark: #101218;
+  --mia-ink: #FFFFFF;
+  --mia-muted: #F6F4F4;
+  --mia-accent-text: #F3F1FF;
+  --mia-danger-text: #FFF3F5;
+  --mia-warning-text: #FFF1D8;
+  --mia-blue: #243262;
+  --mia-red: #522A37;
+  --mia-yellow: #41321D;
+  --mia-good: #223A34;
+  --mia-surface-hover: var(--mia-surface);
+}
 /* 밝은 테마에서도 흰 바탕이 강한 빨강으로 남지 않게, 야간 동안만 Obsidian 기본 어두운 테마 색을 쓴다. */
 body.mia-night-global.theme-light { color-scheme: dark; --color-base-00: #1e1e1e; --color-base-05: #212121; --color-base-10: #242424; --color-base-20: #262626; --color-base-25: #2a2a2a; --color-base-30: #363636; --color-base-35: #3f3f3f; --color-base-40: #555555; --color-base-50: #666666; --color-base-60: #999999; --color-base-70: #b3b3b3; --color-base-100: #dadada; --background-primary: #1e1e1e; --background-primary-alt: #242424; --background-secondary: #262626; --background-secondary-alt: #2a2a2a; --background-modifier-border: #363636; --background-modifier-hover: rgba(255, 255, 255, .075); --interactive-normal: #2a2a2a; --interactive-hover: #303030; --text-faint: #666666; --text-on-accent: #ffffff; }
 body.mia-night-global { --text-normal: #ffffff; --text-muted: #f2f2f2; background-color: var(--background-primary); }
@@ -160,69 +178,28 @@ body:not(.mia-night-global) .workspace-leaf-content:has(.mia-view[data-night="tr
 body:not(.mia-night-global) .workspace-leaf-content:has(.mia-view[data-night="true"])::before { position: absolute; z-index: 99; -webkit-backdrop-filter: grayscale(1); backdrop-filter: grayscale(1); }
 body:not(.mia-night-global) .workspace-leaf-content:has(.mia-view[data-night="true"])::after { position: absolute; z-index: 100; background: #ff0000; mix-blend-mode: multiply; }
 .mia-view [data-tone="again"] { --mia-tone: var(--mia-red); }
-/* Override host rounded corners; marker exceptions opt back in. */
-:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact):not(.checkbox-container),
-:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) *:not(.checkbox-container):not(.checkbox-container *) {
-  border-radius: 0 !important;
-}
-.mia-view pre { border: 3px solid var(--mia-ink); background: var(--mia-panel); }
-:is(.mia-view, .mia-keyboard-settings, .modal:is(.mia-keyboard-modal, .mia-study-management-modal, .mia-appearance-modal, .mia-controls-modal)) .checkbox-container:focus-visible {
-  box-shadow: 0 0 0 3px var(--mia-ink);
-  outline: 4px solid var(--mia-focus);
-  outline-offset: 5px;
-}
 .mia-view .mia-header h2 { font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
-/* Keep circular markers above the shared square-corner override. */
-.mia-view .mia-header .mia-home-button::before { display: inline-grid; place-items: center; flex: 0 0 auto; color: var(--text-on-accent); font-weight: 800; letter-spacing: 0; content: ""; order: -2; width: 18px; height: 18px; border-radius: 50% !important; background: var(--mia-red); box-shadow: none; font-size: 0; }
+.mia-view .mia-header .mia-home-button::before { display: inline-grid; place-items: center; flex: 0 0 auto; font-weight: 800; letter-spacing: 0; content: ""; order: -2; width: 18px; height: 18px; border-radius: 50%; background: var(--mia-accent-text); box-shadow: none; font-size: 0; }
 .mia-view .mia-header .mia-home-button::after { content: ""; order: -1; width: 16px; height: 16px; background: var(--mia-blue); margin-inline-start: -2px; }
 .mia-view .mia-header .mia-version { color: var(--mia-muted); font-weight: 700; }
-body.theme-dark .mia-view button.mod-warning, body.theme-dark :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button.mod-warning { color: #ff7a70; border-color: #ff7a70; }
-.mia-view button:disabled, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button:disabled { opacity: .45; }
-:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(input, select, textarea)::placeholder { color: var(--mia-muted); opacity: .8; }
-.mia-view button.mia-stat:hover :is(strong, span), .mia-view button.mia-progress-stat:hover :is(strong, span) { color: var(--mia-on-yellow); }
 .mia-view .mia-stat span { letter-spacing: .01em; font-size: max(12px, var(--font-ui-smaller)); font-weight: 800; }
-.mia-view .mia-stat[data-tone] span::before { content: ""; flex: 0 0 auto; width: 12px; height: 12px; border-radius: 0; background: var(--mia-tone); }
+.mia-view .mia-stat[data-tone] span::before { content: ""; flex: 0 0 auto; width: 12px; height: 12px; background: var(--mia-tone); }
 .mia-view .mia-stat[data-tone="review"] span::before, .mia-view .mia-stat[data-tone="again"] span::before { border-radius: 50%; }
 .mia-view .mia-stat[data-tone="total"] span::before, .mia-view .mia-stat[data-tone="idle"] span::before { background: var(--mia-ink); }
-.mia-view :is(.mia-section-title, .mia-page-title)::after { content: ""; flex: 1 1 auto; height: 1px; background: var(--mia-line); display: none; }
-.mia-view :is(.mia-section-title, .mia-page-title)::before { content: ""; flex: none; width: 20px; height: 20px; background: var(--mia-red); border-radius: 50%; }
-.mia-view .mia-study-dock .mia-ratings button:hover:not(:disabled) { box-shadow: 5px 5px 0 var(--mia-ink); transform: translate(-2px, -2px); }
-.mia-view .mia-study-dock .mia-ratings button:active:not(:disabled) { box-shadow: none; transform: none; }
-/* Suppress host CTA shadows on flat action buttons. */
-.mia-view button.mod-cta, .modal button.mod-cta { box-shadow: none !important; }
-.mia-view { --mia-tone-review: var(--mia-blue); --mia-tone-new: var(--mia-yellow); touch-action: auto; --mia-hair: color-mix(in srgb, var(--mia-ink) 30%, transparent); --mia-danger-text: var(--mia-red); }
-body.theme-dark .mia-view { --mia-danger-text: #ff7a70; }
-.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:first-child:not(:disabled):hover,
-.mia-view.mia-view .mia-keyword > button:nth-of-type(2):not(:disabled):hover { background: var(--mia-ink); color: var(--mia-bg); }
-.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(n+3):not(:disabled):hover,
-.mia-view.mia-view .mia-keyword > button:nth-of-type(1):not(:disabled):hover,
-.mia-view.mia-view .mia-keyword > button.mod-warning:not(:disabled):hover { background: var(--mia-yellow); color: var(--mia-on-yellow); border-color: var(--mia-hair); }
-.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button.mod-warning:not(:disabled):hover,
-.mia-view.mia-view .mia-keyword > button.mod-warning:not(:disabled):hover { background: var(--mia-red); color: var(--mia-on-color); }
-.mia-view.mia-view .mia-progress-subject-values > button:not(:disabled):hover { background: var(--mia-yellow); color: var(--mia-on-yellow); }
-.mia-view.mia-view button.mia-row-delete:not(:disabled):hover,
-:is(.modal.mia-detail-modal, .mia-detail-panel) button.mia-detail-reset:not(:disabled):hover { background: var(--mia-red); color: var(--mia-on-color); }
-.mia-view .mia-hero .mia-resume-card > button.mod-cta:not(:disabled):hover { background: var(--mia-yellow); color: var(--mia-on-yellow); }
-.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(2):not(:disabled):hover { background: var(--mia-yellow); color: var(--mia-on-yellow); }
+.mia-view { --mia-tone-review: var(--mia-blue); --mia-tone-new: var(--mia-yellow); touch-action: auto; }
 .mia-view.mia-route-questions { --mia-study-width: 1360px; }
-.mia-view .mia-list { gap: 6px; }
-.mia-view .mia-row.mia-row-selected .mia-row-actions > button:first-child { background: var(--mia-blue); color: var(--mia-on-color); }
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-scroll > h3 { font-size: 12px; margin: 16px 0 6px; }
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button:nth-child(1) { --mia-grade: var(--mia-again); }
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button:nth-child(2) { --mia-grade: var(--mia-hard); }
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button:nth-child(3) { --mia-grade: var(--mia-good); }
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button:nth-child(4) { --mia-grade: var(--mia-easy); }
-:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button:not(:disabled):hover { background: color-mix(in srgb, var(--mia-grade) 22%, var(--mia-panel)); color: var(--mia-ink); }
-:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button { min-height: 44px; padding-inline: 16px; white-space: nowrap; }
-:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button:first-child:not(:disabled):hover { background: var(--mia-ink); color: var(--mia-bg); }
-:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button.mod-warning:not(:disabled):hover { background: var(--mia-red); color: var(--mia-on-color); }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button { min-width: 44px; min-height: 44px; padding-inline: 16px; white-space: nowrap; }
 .mia-followup-option > span { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
-.mia-view [data-tone="good"] { --mia-tone: var(--mia-ink); }
+.mia-view [data-tone="good"] { --mia-tone: var(--mia-good); }
 .mia-view [data-tone="easy"] { --mia-tone: var(--mia-blue); }
 .mia-view [data-tone="total"], .mia-view [data-tone="idle"] { --mia-tone: var(--mia-muted); }
 .mia-inline-actions > button { min-width: 0; height: auto; white-space: normal; overflow-wrap: anywhere; }
 .mia-keyword-detail-list button { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; }
-.mia-view .mia-progress-subject-values button:hover { color: var(--text-normal); border-color: var(--mia-accent-line); }
 :is(.mia-learning-settings-actions, .mia-appearance-actions) > button { font-weight: 600; }
 .mia-followup-option small { color: var(--text-muted); }
 .mia-keyword-detail-list small { color: var(--text-muted); }
@@ -230,10 +207,8 @@ body.theme-dark .mia-view { --mia-danger-text: #ff7a70; }
 .is-phone .mia-followup-option { min-height: 48px; padding: 10px; }
 .is-phone.is-floating-nav .mia-view, .is-phone.auto-full-screen .mia-view { --mia-navbar-clearance: max(0px, var(--view-bottom-spacing, calc(var(--navbar-height, 80px) + var(--safe-area-inset-bottom, 0px)))); box-sizing: border-box; height: calc(100% - var(--mia-navbar-clearance)); max-height: calc(100% - var(--mia-navbar-clearance)); margin-bottom: var(--mia-navbar-clearance); min-height: 0; scroll-padding-bottom: 28px; }
 .mia-view :is(.mia-muted, .mia-stat span, .mia-row small, .mia-keyword span, .mia-progress, .mia-subject-total, .mia-card-context, .mia-recall-prompt, .mia-hero-main > p:not(.mia-device-sync-hint), .mia-progress-subject-heading span, .mia-subject-card > span, .mia-related > p, .mia-related-open small, .mia-study-concepts summary, .mia-study-navigation button, .mia-shortcut-hint, .mia-hero .mia-device-sync-hint, .mia-settings-status, .mia-device-sync-hint, .mia-touch-hint) { color: var(--mia-muted); }
-body.theme-dark .mia-view :is(a, .internal-link, .external-link), body.mia-night-global .mia-view :is(a, .internal-link, .external-link), body .mia-view[data-night="true"] :is(a, .internal-link, .external-link) { color: #8fa9ff; }
-.mia-view .mia-header h2 .mia-home-button { display: inline-flex; align-items: center; gap: 10px; color: var(--mia-ink); font-family: var(--mia-head); font-weight: 800; }
-.mia-view .mia-stat:not([data-tone="total"]) strong { color: var(--mia-ink); }
-:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-meta span { border-width: 2px; border-color: var(--mia-ink); background: transparent; color: var(--mia-ink); font-weight: 700; font-size: 12px; padding: 2px 8px; }
+.mia-view .mia-header h2 .mia-home-button { display: inline-flex; align-items: center; gap: 10px; font-family: var(--mia-head); font-weight: 800; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-meta span { font-weight: 700; font-size: 12px; padding: 2px 8px; }
 .mia-view { --mia-study-width: 1080px; padding: 24px 28px 36px; }
 .mia-sync-warning p { margin-top: 0; }
 .mia-export-status { overflow-wrap: anywhere; }
@@ -244,7 +219,7 @@ body.theme-dark .mia-view :is(a, .internal-link, .external-link), body.mia-night
 .mia-header .mia-version { font-size: 11px; white-space: nowrap; flex-shrink: 0; }
 .mia-view .mia-header .mia-settings-buttons .mia-appearance-button { margin-inline-start: 0; }
 .mia-view .mia-related { padding: 16px; }
-.mia-view .mia-header { border-bottom: 4px solid var(--mia-ink); padding-bottom: 14px; }
+.mia-view .mia-header { padding-bottom: 14px; }
 .mia-view .mia-weak-note:empty { display: none; }
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-status { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; }
 .mia-header h2 .mia-home-button { min-width: 44px; padding: 0; border: 0; box-shadow: none; background: transparent; font: inherit; letter-spacing: inherit; text-align: start; cursor: pointer; }
@@ -253,29 +228,10 @@ body.theme-dark .mia-view :is(a, .internal-link, .external-link), body.mia-night
   min-height: var(--mia-control-height);
 }
 body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view { background: var(--mia-bg); color: var(--mia-ink); }
-.mia-view .mia-header h2 .mia-home-button:hover { color: var(--mia-red); background: transparent; }
-.mia-view button:where(:not(.mia-home-button, .mia-stat, .mia-nav button, .mia-progress-stat, .mia-keyword, .mia-grade-key)):not(:disabled):hover,
-.mia-keyboard-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-detail-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-result-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-preview-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-appearance-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-study-management-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-confirm-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-recovery-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover, .mia-controls-modal button:where(:not(.modal-close-button, .checkbox-container)):not(:disabled):hover,
-.mia-keyboard-settings button:not(.checkbox-container):not(:disabled):hover { background: var(--mia-yellow); color: var(--mia-on-yellow); border-color: var(--mia-ink); }
-.mia-view .mia-nav button:hover { background: transparent; color: var(--mia-ink); border-bottom-color: var(--mia-red); }
-.mia-view .mia-nav button.mod-cta { background: var(--mia-ink); color: var(--mia-bg); border-bottom-color: var(--mia-ink); }
-:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) {
-  border: 3px solid var(--mia-ink);
-  background: var(--mia-panel);
-  color: var(--mia-ink);
-  box-shadow: none;
-}
 .mia-view .mia-stat strong { color: var(--mia-ink); font-family: var(--mia-head); font-weight: 800; letter-spacing: 0; }
-.mia-view .mia-header .mia-badge { background: var(--mia-ink); color: var(--mia-bg); font-weight: 800; letter-spacing: .04em; }
-.mia-view .mia-study-navigation button:hover, .mia-view .mia-dock-utility .mia-skip:hover { background: var(--mia-yellow); color: var(--mia-on-yellow); border-color: var(--mia-ink); }
-.mia-view .mia-primary-card:not(.mia-hero) { border-color: var(--mia-ink); background: var(--mia-panel); }
-.mia-view button.mia-stat:hover, .mia-view button.mia-progress-stat:hover, .mia-view button.mia-keyword:hover { background: var(--mia-yellow); color: var(--mia-on-yellow); border-color: var(--mia-ink); box-shadow: 6px 6px 0 var(--mia-ink); transform: translate(-2px, -2px); }
-.mia-view .mia-row:hover { border-color: var(--mia-ink); background: var(--mia-panel); box-shadow: inset 8px 0 0 var(--mia-yellow); }
-.mia-view .mia-row-state[data-tone="total"] { background: var(--mia-panel); }
-.mia-view.mia-view button.mia-row-delete, :is(.modal.mia-detail-modal, .mia-detail-panel) button.mia-detail-reset { background: transparent; border: 0; box-shadow: none; padding: 0 6px; white-space: nowrap; color: var(--mia-danger-text); font-size: .86em; font-weight: 700; }
-.mia-view .mia-status-chips button[aria-pressed="true"] { background: var(--mia-ink); color: var(--mia-bg); }
-.mia-view .mia-status-chips button.mia-chip-weak { border-color: var(--mia-red); color: var(--mia-danger-text); }
-:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) button:not(.modal-close-button, .checkbox-container) {
+.mia-view .mia-header .mia-badge { font-weight: 800; letter-spacing: .04em; }
+.mia-view.mia-view button.mia-row-delete, :is(.modal.mia-detail-modal, .mia-detail-panel) button.mia-detail-reset { border: 0; padding: 0 6px; white-space: nowrap; font-size: .86em; font-weight: 700; }
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) button:not(.modal-close-button, .checkbox-container) {
   box-sizing: border-box;
   min-height: var(--mia-control-height);
   height: auto;
@@ -286,39 +242,20 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-nav button { padding-inline: clamp(4px, 1.5cqi, 10px); }
 .mia-view .mia-ratings button { padding-inline: 24px; }
 .mia-view { --mia-edge-top: max(0px, calc(max(var(--safe-area-inset-top, 0px), env(safe-area-inset-top, 0px)) - var(--mia-pane-top, 0px))); --mia-edge-left: max(0px, calc(max(var(--safe-area-inset-left, 0px), env(safe-area-inset-left, 0px)) - var(--mia-pane-left, 0px))); --mia-edge-right: max(0px, calc(max(var(--safe-area-inset-right, 0px), env(safe-area-inset-right, 0px)) - var(--mia-pane-right-gap, 0px))); --mia-edge-bottom: max(0px, calc(max(var(--safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px)) - var(--mia-pane-bottom-gap, 0px))); --mia-pane-gutter: clamp(10px, calc(var(--mia-pane-width, 400px) * .025), 28px); padding-inline: var(--mia-pane-gutter); }
-.mia-sync-warning { padding: 14px; margin-bottom: 16px; border: 1px solid var(--text-warning); border-radius: 12px; }
-:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(button, input, select, textarea, summary, a):focus-visible { outline: 4px solid var(--mia-focus); outline-offset: 2px; box-shadow: none; }
+.mia-sync-warning { padding: 14px; margin-bottom: 16px; }
 .mia-view button:where(:not(.mia-home-button, .mia-stat, .mia-nav button, .mia-progress-stat, .mia-keyword, .mia-grade-key)),
 .modal.mia-controls-modal button:where(:not(.checkbox-container)), :where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button:where(:not(.modal-close-button, .checkbox-container)),
 .mia-keyboard-settings button:where(:not(.checkbox-container)) {
-  border: 3px solid var(--mia-ink);
-  background: var(--mia-panel);
-  color: var(--mia-ink);
-  box-shadow: none;
   font-weight: 800;
 }
-.mia-view button.mod-cta, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-controls-modal) button.mod-cta, .mia-keyboard-settings button.mod-cta,
-.mia-view.mia-route-dashboard .mia-manage-actions button.mod-cta { background: var(--mia-red); color: var(--mia-on-color); border: 3px solid var(--mia-ink); box-shadow: none; }
-.mia-view button.mod-cta:not(:disabled):hover, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-controls-modal) button.mod-cta:not(:disabled):hover, .mia-keyboard-settings button.mod-cta:not(:disabled):hover,
-.mia-view.mia-route-dashboard .mia-manage-actions button.mod-cta:not(:disabled):hover { background: var(--mia-ink); color: var(--mia-bg); }
-.mia-view button.mod-warning, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button.mod-warning { background: var(--mia-panel); color: var(--mia-red); border-color: var(--mia-red); }
-.mia-view button.mod-warning:not(:disabled):hover { background: var(--mia-red); color: var(--mia-on-color); border-color: var(--mia-ink); }
-.mia-view .mia-settings-buttons > button { border-width: 3px; border-color: var(--mia-ink); background: var(--mia-panel); color: var(--mia-ink); }
-.mia-view .mia-settings-buttons > .mia-night-button[aria-pressed="true"] { background: var(--mia-ink); color: var(--mia-bg); }
-.mia-view .mia-nav button { background: transparent; border: 0; border-bottom: 4px solid transparent; color: var(--mia-ink); font-weight: 800; box-shadow: none; padding: 8px 12px; }
-.mia-view .mia-nav button.mod-cta:hover { background: var(--mia-ink); color: var(--mia-bg); border-bottom-color: var(--mia-red); }
-.mia-view .mia-undo-feedback button:hover:not(:disabled) { background: var(--mia-ink); color: var(--mia-bg); }
 :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(input, select, textarea):focus-visible { outline-offset: -3px; }
-.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:first-child, .mia-view.mia-view .mia-keyword > button:nth-of-type(2) { background: var(--mia-blue); color: var(--mia-on-color); border: 3px solid var(--mia-ink); }
-.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(n+3), .mia-view.mia-view .mia-keyword > button:nth-of-type(1) { background: transparent; border: 0; border-top: 2px solid var(--mia-hair); color: var(--mia-muted); font-weight: 700; font-size: .86em; min-height: 40px; padding: 6px 8px; white-space: nowrap; box-shadow: none; }
-:is(.modal.mia-detail-modal, .mia-detail-panel) button.mia-detail-reset:disabled { color: var(--mia-muted); }
-.mia-view .mia-status-chips button.mia-chip-weak[aria-pressed="true"] { background: var(--mia-red); color: var(--mia-on-color); }
-:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button:first-child { background: var(--mia-blue); color: var(--mia-on-color); border: 3px solid var(--mia-ink); padding-inline: 22px; font-weight: 900; }
-:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button.mod-warning { margin-inline-start: auto; padding-inline: 8px; background: transparent; border: 0; box-shadow: none; color: var(--mia-danger-text); font-size: .86em; font-weight: 700; }
-.mia-keyboard-dismiss { position: sticky; bottom: 0; z-index: 6; display: block; min-height: 44px; height: auto; width: max-content; max-width: 100%; margin: 8px auto 0; padding: 8px 16px; box-shadow: var(--shadow-s); background: var(--background-primary); color: var(--interactive-accent); }
+.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(n+3), .mia-view.mia-view .mia-keyword > button:nth-of-type(1) { font-weight: 700; font-size: .86em; min-height: 40px; padding: 6px 8px; white-space: nowrap; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button:first-child { padding-inline: 22px; font-weight: 900; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button.mod-warning { margin-inline-start: auto; padding-inline: 8px; font-size: .86em; font-weight: 700; }
+.mia-keyboard-dismiss { position: sticky; bottom: 0; z-index: 6; display: block; min-height: 44px; height: auto; width: max-content; max-width: 100%; margin: 8px auto 0; padding: 8px 16px; }
 .mia-export-options { display: flex; flex-wrap: wrap; gap: 10px; }
 .mia-export-options label { flex: 1 1 9rem; min-width: 0; display: grid; gap: 4px; font-weight: 700; }
-.mia-export-options select { width: 100%; min-width: 0; min-height: 44px; border: 2px solid var(--text-normal); border-radius: 0; box-shadow: none; }
+.mia-export-options select { width: 100%; min-width: 0; min-height: 44px; }
 .mia-export-subjects { display: flex; flex-direction: column; gap: 10px; margin-block: 16px; }
 .mia-export-subjects button { min-height: 44px; height: auto; padding: 12px 16px; text-align: start; white-space: normal; overflow-wrap: anywhere; }
 .mia-stat:not(button) { align-items: center; text-align: center; }
@@ -332,7 +269,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
   margin: 2px 0 0;
 }
 
-.mia-follow-up-picker, .mia-follow-up-selected { display: flex; flex-direction: column; flex-shrink: 0; gap: 6px; max-height: 260px; overflow-y: auto; }
+.mia-follow-up-picker, .mia-follow-up-selected { display: flex; flex-direction: column; flex-shrink: 0; gap: 6px; max-height: 260px; overflow-y: auto; padding: 8px; }
 :is(.mia-follow-up-picker, .mia-follow-up-selected) button { flex-shrink: 0; width: 100%; white-space: normal; overflow-wrap: anywhere; height: auto; text-align: left; }
 .mia-settings-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin-inline-start: auto; }
 .mia-settings-buttons > button { flex-shrink: 0; }
@@ -342,42 +279,14 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-stat:not(button) { align-items: flex-start; text-align: left; flex-direction: column-reverse; justify-content: flex-end; gap: 6px; }
 .mia-view button.mia-stat { align-items: flex-start; text-align: left; flex-direction: column-reverse; justify-content: flex-end; gap: 6px; transition: border-color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease), transform 140ms var(--mia-ease), background-color 140ms var(--mia-ease); }
 .mia-view .mia-nav button { min-width: 0; }
-.mia-view .mia-status-chips button { min-height: 44px; padding-inline: 14px; border-width: 2px; font-weight: 700; white-space: nowrap; }
-.mia-keyboard-actions > .mia-keyboard-dismiss { position: static; width: auto; min-width: 0; margin: 0; box-shadow: none; background: var(--interactive-normal); }
+.mia-view .mia-status-chips button { min-height: 44px; padding-inline: 14px; font-weight: 700; white-space: nowrap; }
+.mia-keyboard-actions > .mia-keyboard-dismiss { position: static; width: auto; min-width: 0; margin: 0; }
 .mia-header .mia-brand { display: flex; flex-shrink: 0; }
-.mia-view :is(.mia-sync-warning, .mia-storage-warning) { border: 1px solid var(--mia-line); border-left: 3px solid var(--text-warning); border-radius: var(--mia-radius-s); background: color-mix(in srgb, var(--text-warning) 7%, var(--background-primary)); }
-.mia-view .mia-card-label { display: inline-block; padding: 3px 9px; background: var(--mia-surface); border: 1px solid var(--mia-line); font-size: 11px; }
+.mia-view :is(.mia-sync-warning, .mia-storage-warning) { padding: 14px; }
+.mia-view .mia-card-label { display: inline-block; padding: 3px 9px; font-size: 11px; }
 .mia-view .mia-progress-subject { display: flex; flex-direction: column; gap: 12px; padding: 18px; }
-:is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) {
-  --mia-bg: #f3efe4;
-  --mia-ink: #121212;
-  --mia-muted: #46433b;
-  --mia-panel: #fffdf6;
-  --mia-red: #d42a1f;
-  --mia-yellow: #f4c20d;
-  --mia-blue: #1f4fd8;
-  --mia-on-color: #ffffff;
-  --mia-on-yellow: #121212;
-  --mia-focus: #1f4fd8;
-  --mia-head: "Black Han Sans", "Do Hyeon", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", var(--font-interface), sans-serif;
-  --mia-radius: 0;
-  --mia-radius-s: 0;
-  --mia-line: var(--mia-ink);
-  --mia-surface: var(--mia-panel);
-  --mia-surface-hover: var(--mia-yellow);
-  --mia-accent-soft: var(--mia-panel);
-  --mia-accent-line: var(--mia-ink);
-  --mia-danger: var(--mia-red);
-  --mia-again: var(--mia-red);
-  --mia-hard: var(--mia-yellow);
-  --mia-good: var(--mia-ink);
-  --mia-easy: var(--mia-blue);
-  --mia-shadow: none;
-  color: var(--mia-ink);
-}
-.mia-view .mia-nav { background: transparent; border: 0; padding: 0; gap: 4px; }
-.mia-view .mia-meter { overflow: hidden; height: 14px; border: 3px solid var(--mia-ink); background: var(--mia-panel); }
-.mia-view .mia-meter-fill { height: 100%; min-width: 0; background: var(--mia-red); }
+.mia-view .mia-meter { overflow: hidden; height: 14px; }
+.mia-view .mia-meter-fill { height: 100%; min-width: 0; }
 .mia-view .mia-questions-main { min-width: 0; }
 .mia-view .mia-detail-panel { display: none; }
 .mia-view .mia-status-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
@@ -391,29 +300,167 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
   letter-spacing: -.01em;
   color: var(--mia-ink);
 }
-.mia-view .mia-card-label { color: var(--mia-ink); font-weight: 800; letter-spacing: .06em; }
+.mia-view .mia-card-label { font-weight: 800; letter-spacing: .06em; }
 .mia-view :is(a, .internal-link, .external-link) { color: var(--mia-blue); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 .mia-view .mia-warning, .mia-view .mia-sync-warning, .mia-view .mia-storage-warning { color: var(--mia-ink); }
-.mia-view :is(.mia-section-title, .mia-page-title) { display: flex; align-items: center; border-top: 4px solid var(--mia-ink); padding-top: 14px; font-family: var(--mia-head); font-weight: 800; font-size: 22px; letter-spacing: -.01em; gap: 12px; }
-.is-mobile .mia-view .mia-filter-panel { border: 3px solid var(--mia-ink); background: var(--mia-panel); }
-.mia-view .mia-progress-stat[data-tone] { border-top: 12px solid var(--mia-tone); }
-.mia-view .mia-row.mia-row-selected { border-color: var(--mia-ink); background: color-mix(in srgb, var(--mia-yellow) 24%, var(--mia-panel)); box-shadow: inset 8px 0 0 var(--mia-blue); }
+.mia-view :is(.mia-section-title, .mia-page-title) { display: flex; align-items: center; padding-top: 14px; font-family: var(--mia-head); font-weight: 800; font-size: 22px; letter-spacing: -.01em; gap: 12px; }
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px 20px 16px; scroll-padding-block: 16px; }
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-related { padding: 0; border: 0; background: transparent; margin: 0; max-width: none; }
-:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-related-row { padding: 6px 0 6px 10px; border-left: 4px solid var(--mia-ink); line-height: 1.5; }
-:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions { flex: none; display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; margin: 0; padding: 12px 20px; border-top: 3px solid var(--mia-ink); background: var(--mia-panel); }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-related-row { padding: 6px 0 6px 10px; line-height: 1.5; }
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions { flex: none; display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; margin: 0; padding: 12px 20px; background: var(--mia-panel); }
 :is(.mia-view, .modal.mia-detail-modal) .mia-history { padding: 10px 12px; }
-.mia-view :is(.mia-stat, .mia-primary-card, .mia-row, .mia-keyword, .mia-subject-card, .mia-progress-subject, .mia-resume-card, .mia-related, .mia-empty, .mia-candidate, .mia-history, .mia-settings-group, .mia-settings-summary, .mia-settings-changes, .mia-device-sync-settings, .mia-anki-settings-section, .mia-profile-row) { border: 3px solid var(--mia-ink); background: var(--mia-panel); box-shadow: none; color: var(--mia-ink); }
 .mia-view .mia-nav { display: grid; grid-template-columns: repeat(4, auto); }
 .mia-view .mia-questions-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
 .mia-view .mia-row-body { grid-area: body; }
 .mia-view .mia-row-actions { grid-area: actions; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
 .mia-view .mia-row-delete { grid-area: delete; justify-self: end; }
 .is-mobile .mia-view.mia-view :is(.mia-subject-card > .mia-inline-actions, .mia-progress-subject > .mia-inline-actions, .mia-keyword) > button, .is-mobile .mia-view.mia-view .mia-progress-subject-values > button { min-height: 44px; }
-.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(3), .mia-view.mia-view .mia-keyword > button:nth-of-type(1) { width: calc(100% + 4px); margin-right: -4px; }
-.mia-view .mia-row { transition: border-color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease); display: grid; grid-template-columns: 14px minmax(0, 1fr) 272px 52px; grid-template-areas: "dot body actions delete"; align-items: center; gap: 8px 12px; padding: 8px 10px; border-width: 2px; cursor: pointer; }
-.mia-view .mia-row-state { grid-area: dot; width: 12px; height: 12px; border: 2px solid var(--mia-ink); background: var(--mia-tone, var(--mia-ink)); }
-.mia-view .mia-detail-title { flex: none; margin: 0; padding: 18px 20px; border-bottom: 3px solid var(--mia-ink); font-size: 20px; line-height: 1.35; overflow-wrap: anywhere; }
+.mia-view .mia-row { transition: border-color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease); display: grid; grid-template-columns: 14px minmax(0, 1fr) 272px 52px; grid-template-areas: "dot body actions delete"; align-items: center; gap: 8px 12px; padding: 8px 10px; cursor: pointer; }
+.mia-view .mia-row-state { grid-area: dot; width: 12px; height: 12px; }
+.mia-view .mia-detail-title { flex: none; margin: 0; padding: 18px 20px; font-size: 20px; line-height: 1.35; overflow-wrap: anywhere; }
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(h1, h2, h3, h4, h5, h6, .modal-title) {
+  font-family: var(--mia-head);
+  font-weight: 750;
+  color: var(--mia-ink);
+}
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(button:not(.checkbox-container), .modal-close-button, .mia-filter-panel > summary) {
+  border: 0;
+  border-radius: var(--mia-radius-s);
+  background: var(--mia-panel);
+  color: var(--mia-ink);
+  box-shadow: var(--mia-shadow-small);
+  font-weight: 650;
+}
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) button.mod-cta {
+  background-color: var(--mia-blue);
+  color: var(--mia-on-color);
+}
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) button.mod-cta:where(:hover:not(:disabled)) {
+  background-color: color-mix(in srgb, var(--mia-shadow-dark) 12%, var(--mia-blue));
+}
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(button:not(.checkbox-container), .modal-close-button, .mia-filter-panel > summary):active:not(:disabled),
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) button:is([aria-pressed="true"], .is-active):not(.checkbox-container) {
+  box-shadow: var(--mia-shadow-inset);
+}
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(button, input, select, textarea, summary, a, .modal-close-button, .checkbox-container, [tabindex]):focus-visible {
+  outline: 2px solid var(--mia-focus);
+  outline-offset: 2px;
+}
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(button, input, select, textarea):disabled { opacity: .55; }
+
+.mia-view .mia-header h2 .mia-home-button { min-height: var(--mia-control-height); background: transparent; color: var(--mia-ink); box-shadow: none; }
+
+.mia-view .mia-header .mia-home-button::after { border-radius: 50%; }
+
+.mia-view .mia-nav button { background: transparent; color: var(--mia-muted); box-shadow: none; border-radius: var(--mia-radius-pill); padding: 8px 12px; }
+
+.mia-view .mia-nav button:active:not(:disabled) { box-shadow: var(--mia-shadow-inset); }
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(.mia-stat, .mia-primary-card:not(.mia-hero), .mia-row, .mia-keyword, .mia-subject-card:not(span), .mia-progress-subject, .mia-resume-card, .mia-related, .mia-empty, .mia-candidate, .mia-filter-panel, .mia-settings-group, .mia-device-sync-settings, .mia-anki-settings-section, .mia-profile-row),
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) button:is(.mia-stat, .mia-progress-stat) {
+  border: 0;
+  border-radius: var(--mia-radius);
+  background: var(--mia-panel);
+  color: var(--mia-ink);
+  box-shadow: var(--mia-shadow);
+}
+
+.mia-view .mia-row:hover .mia-row-body > strong { color: var(--mia-accent-text); }
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(.mia-filter-chips, .mia-keyword-chips, .mia-status-chips) button {
+  border-radius: var(--mia-radius-pill);
+  box-shadow: var(--mia-shadow-inset);
+}
+
+.mia-view .mia-status-chips button.mia-chip-weak { color: var(--mia-danger-text); }
+
+.mia-view .mia-count-chip[data-tone="new"] { color: var(--mia-warning-text); }
+
+.mia-view .mia-count-chip[data-tone="idle"] { color: var(--mia-muted); }
+
+.mia-view :is(.mia-meter-fill, .mia-session-meter-fill) { background: var(--mia-blue); border-radius: var(--mia-radius-pill); }
+
+.mia-view :is(.mia-storage-warning, .mia-sync-warning) {
+  background: var(--mia-panel);
+  color: var(--mia-warning-text);
+  border-radius: var(--mia-radius);
+  box-shadow: var(--mia-shadow-inset);
+}
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(a, .internal-link, .external-link) {
+  color: var(--mia-accent-text);
+  text-underline-offset: 3px;
+}
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(button:not(.checkbox-container), .modal-close-button, .mia-filter-panel > summary):where(:hover:not(:disabled)) {
+  background-color: var(--mia-surface-hover);
+}
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) button.mod-warning {
+  background-color: var(--mia-red);
+  color: var(--mia-on-color);
+}
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) button.mod-warning:where(:hover:not(:disabled)) {
+  background-color: color-mix(in srgb, var(--mia-shadow-dark) 12%, var(--mia-red));
+}
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(input:not([type="checkbox"], [type="radio"], [type="range"]), select, textarea) {
+  border: 0;
+  border-radius: var(--mia-radius-s);
+  background-color: var(--mia-surface);
+  color: var(--mia-ink);
+  box-shadow: var(--mia-shadow-inset);
+}
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(input, textarea)::placeholder { color: var(--mia-muted); opacity: 1; }
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(input[type="checkbox"], input[type="radio"], input[type="range"]) { accent-color: var(--mia-blue); }
+
+.mia-view .mia-header h2 .mia-home-button:hover { color: var(--mia-accent-text); background: transparent; }
+.mia-view .mia-nav button.mod-cta { background: var(--mia-panel); color: var(--mia-accent-text); box-shadow: var(--mia-shadow-small); font-weight: 700; }
+.mia-view .mia-nav button.mod-cta:active:not(:disabled) { box-shadow: var(--mia-shadow-inset); }
+.mia-view .mia-nav button:hover:not(.mod-cta) { color: var(--mia-accent-text); }
+.mia-view .mia-nav button:focus-visible { outline-offset: -2px; }
+.mia-view .mia-nav { background: var(--mia-panel); border: 0; border-radius: var(--mia-radius-pill); box-shadow: var(--mia-shadow-inset); padding: 4px; gap: 4px; }
+
+.mia-view .mia-row:is(.mia-row-selected, :active), .mia-view button:is(.mia-stat, .mia-progress-stat):active:not(:disabled) { box-shadow: var(--mia-shadow-inset); }
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(.mia-badge, .mia-card-label, .mia-count-chip, .mia-hero-date, .mia-leech, .mia-settings-status, .mia-detail-meta span, .mia-auto-advance, .mia-answer-timer) {
+  border: 0;
+  border-radius: var(--mia-radius-pill);
+  background: var(--mia-panel);
+  color: var(--mia-accent-text);
+  box-shadow: var(--mia-shadow-inset);
+}
+
+.mia-view .mia-status-chips button[aria-pressed="true"] { color: var(--mia-accent-text); }
+
+.mia-view .mia-status-chips button.mia-chip-weak[aria-pressed="true"] { background: var(--mia-red); color: var(--mia-on-color); }
+
+.mia-view :is(.mia-count-chip[data-tone="again"], .mia-leech) { color: var(--mia-danger-text); }
+
+.mia-view :is(.mia-meter, .mia-session-meter, .mia-rating-bar) {
+  overflow: hidden;
+  border-radius: var(--mia-radius-pill);
+  background: var(--mia-surface);
+  box-shadow: var(--mia-shadow-inset);
+}
+
+.mia-view .mia-stats, .mia-view .mia-list { gap: var(--mia-card-gap); }
+
+/* 목록·카드 안 삭제는 평소에는 빨간 글자, 누르거나 가리킬 때만 빨간 면으로 바꿔 시선을 덜 끈다. 확인 창의 삭제는 빨간 면 유지. */
+.mia-view button.mod-warning, .modal.mia-detail-modal button.mod-warning { background-color: var(--mia-panel); color: var(--mia-danger-text); }
+.mia-view button.mod-warning:hover:not(:disabled), .modal.mia-detail-modal button.mod-warning:hover:not(:disabled) { background-color: var(--mia-red); color: var(--mia-on-color); }
+/* 입력칸 안내 문구는 흐린 글자 색으로 통일한다. */
+.mia-view :is(input, textarea)::placeholder, .modal[class*="mia-"] :is(input, textarea)::placeholder { color: var(--mia-muted); opacity: .75; }
 
 /* 2. Today / dashboard */
 .mia-stability-stat { position: relative; overflow: hidden; }
@@ -423,14 +470,13 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-subject-grid { display: grid; gap: 10px; }
 .mia-subject-card { min-width: 0; display: flex; flex-direction: column; }
 .mia-subject-card > strong, .mia-subject-card > span { max-width: 100%; overflow-wrap: anywhere; }
-.mia-route-dashboard .mia-manage-actions button { flex: 0 1 auto; box-shadow: none; }
+.mia-route-dashboard .mia-manage-actions button { flex: 0 1 auto; }
 .mia-resume-card { box-sizing: border-box; grid-template-columns: minmax(0, 1fr) auto; column-gap: 18px; }
 .mia-resume-card h3 { grid-column: 1; overflow-wrap: anywhere; }
 .mia-resume-card small { grid-column: 1; margin-top: 5px; font-size: 10px; }
 .mia-view.mia-route-dashboard .mia-primary-card h3 { letter-spacing: -.02em; }
 .mia-view.mia-route-dashboard .mia-primary-card > p { color: var(--text-muted); }
 .mia-view.mia-route-dashboard .mia-primary-card .mia-inline-actions > button { padding-inline: 18px; min-height: 44px; font-weight: 600; }
-.mia-view.mia-route-dashboard .mia-primary-card .mia-inline-actions > button:not(.mod-cta) { background: color-mix(in srgb, var(--background-primary) 70%, transparent); box-shadow: none; border: 1px solid var(--mia-line); }
 .mia-view .mia-subject-card > .mia-inline-actions > button:first-child { font-weight: 650; }
 .mia-view .mia-hero-main > p:not(.mia-device-sync-hint) { margin: 0 0 4px; font-size: 13px; }
 .mia-view .mia-hero .mia-device-sync-hint { font-size: 11px; }
@@ -442,7 +488,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view.mia-route-dashboard .mia-hero h3 { font-weight: 800; line-height: 1.15; }
 .mia-view .mia-stability-stat::after { background: conic-gradient(var(--mia-red) var(--mia-stable-ratio, 0deg), var(--mia-muted) 0); }
 .mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(n+3) { margin-top: 4px; }
-.mia-view .mia-hero-count span { color: inherit; font-weight: 800; order: 0; font-size: 16px; }
+.mia-view .mia-hero-count span { font-weight: 800; order: 0; font-size: 16px; }
 .mia-view .mia-hero-count small { font-weight: 600; color: inherit; order: 1; }
 .mia-view.mia-route-dashboard .mia-hero-main h3 { margin: 6px 0 0; font-size: clamp(20px, 2.2cqi, 28px); }
 .mia-view .mia-hero-main > p { margin: 0; }
@@ -457,84 +503,87 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-subject-card > strong { font-size: 1.12em; font-weight: 700; letter-spacing: -.01em; }
 .mia-view .mia-hero-count strong { font-variant-numeric: tabular-nums; }
 .mia-view .mia-subject-heading strong { min-width: 0; letter-spacing: -.01em; overflow-wrap: anywhere; font-family: var(--mia-head); font-weight: 800; font-size: 1.25em; }
-.mia-view .mia-hero-count strong { color: inherit; font-family: var(--mia-head); font-weight: 800; letter-spacing: 0; order: 2; margin-top: auto; font-size: 88px; line-height: 1; }
+.mia-view .mia-hero-count strong { color: var(--mia-accent-text); font-family: var(--mia-head); font-weight: 800; letter-spacing: 0; order: 2; margin-top: auto; font-size: 88px; line-height: 1; }
 .mia-view .mia-weak-strip > strong { font-size: 16px; font-weight: 900; }
-.mia-view .mia-hero-count[data-tone="new"] { background: var(--mia-yellow); color: var(--mia-on-yellow); }
-.mia-view.mia-route-dashboard .mia-manage-actions button { min-height: 44px; border: 3px solid var(--mia-ink); background: var(--mia-panel); color: var(--mia-ink); font-weight: 800; }
-.mia-view .mia-count-chip[data-tone="review"] { background: var(--mia-blue); color: var(--mia-on-color); }
-.mia-view .mia-count-chip[data-tone="new"] { background: var(--mia-yellow); color: var(--mia-on-yellow); }
-.mia-view .mia-count-chip[data-tone="idle"] { background: transparent; color: var(--mia-muted); border-color: var(--mia-muted); font-weight: 600; }
+.mia-view.mia-route-dashboard .mia-manage-actions button { min-height: 44px; font-weight: 800; }
+.mia-view .mia-count-chip[data-tone="idle"] { font-weight: 600; }
 .mia-view.mia-route-dashboard .mia-primary-card.mia-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: stretch; padding: 0; border: 0; background: transparent; box-shadow: none; }
 .mia-view .mia-hero:not(:has(> .mia-hero-counts)) { grid-template-columns: minmax(0, 1fr); }
-.mia-view .mia-hero-main > .mia-inline-actions > button { border-width: 3px; }
-.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button.mod-warning { color: var(--mia-danger-text); border-left: 2px solid var(--mia-hair); }
-.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(2) { background: var(--mia-panel); color: var(--mia-ink); border: 3px solid var(--mia-ink); }
 .mia-view .mia-subject-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
 .mia-view .mia-subject-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .mia-view .mia-hero-main > :first-child { margin-top: 0; }
-.mia-view .mia-resume-card .mia-card-label { width: fit-content; justify-self: start; align-self: flex-start; flex: 0 0 auto; background: var(--mia-ink); color: var(--mia-bg); border: 0; padding: 2px 10px; display: inline-block; }
+.mia-view .mia-resume-card .mia-card-label { width: fit-content; justify-self: start; align-self: flex-start; flex: 0 0 auto; padding: 2px 10px; display: inline-block; }
 .mia-view .mia-primary-card.mia-hero { margin-bottom: 28px; }
 .mia-view .mia-hero-main > .mia-inline-actions { margin-top: 8px; gap: 8px; align-items: stretch; }
 .mia-view .mia-hero .mia-device-sync-hint { margin: 4px 0 0; }
 .mia-view .mia-weak-strip .mia-inline-actions { flex-wrap: nowrap; margin-inline-start: auto; }
-.mia-view .mia-hero-date { margin-bottom: 6px; display: inline-block; background: var(--mia-ink); color: var(--mia-bg); padding: 3px 12px; font-size: 12px; font-weight: 800; letter-spacing: .06em; }
-.mia-view .mia-hero-count { border: 3px solid var(--mia-ink); background: var(--mia-blue); color: var(--mia-on-color); }
-.mia-view .mia-count-chip { border: 3px solid var(--mia-ink); background: var(--mia-panel); color: var(--mia-ink); font-weight: 800; padding: 1px 10px; }
-.mia-view .mia-hero .mia-resume-card { display: grid; margin: 4px 0 0; padding: 12px 16px; border-width: 3px; border-left-width: 12px; }
+.mia-view .mia-hero-date { align-self: flex-start; margin-bottom: 6px; display: inline-block; padding: 3px 12px; font-size: 12px; font-weight: 800; letter-spacing: .06em; }
+.mia-view .mia-count-chip { font-weight: 800; padding: 1px 10px; }
+.mia-view .mia-hero .mia-resume-card { display: grid; margin: var(--mia-card-gap) 0 0; padding: 12px 16px; }
 .mia-view .mia-weak-hint { flex: 1 1 240px; font-size: 14px; }
-.mia-view .mia-count-chip[data-tone="again"] { background: var(--mia-red); color: var(--mia-on-color); }
-.mia-view .mia-resume-card { border-left-color: var(--mia-yellow); }
 .mia-view.mia-view .mia-subject-card > .mia-inline-actions > button { width: 100%; margin: 0; min-height: 40px; white-space: nowrap; }
 .mia-view .mia-hero-counts { display: grid; grid-template-columns: repeat(2, 200px); gap: 20px; }
-.mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(4) { width: calc(100% + 4px); margin-left: -4px; }
 .mia-view .mia-hero-main > .mia-inline-actions > button.mod-cta { flex: 2 1 240px; min-height: 52px; font-size: 18px; font-weight: 900; }
 .mia-view .mia-hero-main > .mia-inline-actions > button:not(.mod-cta) { flex: 1 1 130px; }
-.mia-view .mia-hero .mia-resume-card > button.mod-cta { background: var(--mia-panel); color: var(--mia-ink); min-height: 44px; }
+.mia-view .mia-hero .mia-resume-card > button.mod-cta { min-height: 44px; }
 .mia-view.mia-view .mia-subject-card > .mia-inline-actions > button:nth-child(-n+2) { min-height: 44px; }
-.mia-view .mia-hero-count { box-sizing: border-box; min-height: 200px; padding: 20px; border-width: 4px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; max-height: 320px; }
-.mia-view .mia-hero-main { min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; justify-content: center; padding: 20px 24px; border: 4px solid var(--mia-ink); background: var(--mia-panel); }
-.mia-view .mia-weak-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 18px; padding: 14px 20px; border: 3px solid var(--mia-ink); background: var(--mia-panel); }
-.mia-view .mia-weak-mark { flex: none; width: 0; height: 0; border-inline: 10px solid transparent; border-bottom: 16px solid var(--mia-red); }
+.mia-view .mia-hero-count { box-sizing: border-box; min-height: 200px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; max-height: 320px; }
+.mia-view .mia-hero-main { min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; justify-content: center; padding: 20px 24px; background: var(--mia-panel); }
+.mia-view .mia-weak-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 18px; padding: 14px 20px; background: var(--mia-panel); }
+
+.mia-view.mia-route-dashboard .mia-hero,
+.mia-view .mia-hero-counts,
+.mia-view .mia-subject-grid { gap: var(--mia-card-gap); }
+
+.mia-view .mia-hero-count span, .mia-view .mia-hero-count small { color: var(--mia-muted); }
+
+.mia-view .mia-hero-count[data-tone="new"] strong { color: var(--mia-warning-text); }
+
+.mia-view .mia-weak-mark { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--mia-danger-text); }
+
+.mia-view :is(.mia-hero-main, .mia-hero-count, .mia-weak-strip) {
+  background: var(--mia-panel);
+  border-radius: var(--mia-radius);
+  box-shadow: var(--mia-shadow);
+}
+.mia-view .mia-hero-count strong { font-variant-numeric: tabular-nums; }
 
 /* 3. Learning progress */
 .mia-page-title { margin-top: 0; }
-.mia-progress-ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.mia-progress-ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--mia-card-gap); }
 .mia-progress-subjects { display: grid; gap: 10px; }
 .mia-progress-subject-heading { display: flex; justify-content: space-between; gap: 12px; }
 .mia-progress-subject-values { display: grid; }
-.mia-view .mia-progress-ratings > .mia-stat { --mia-rating-color: var(--text-muted); border-top: 3px solid color-mix(in srgb, var(--mia-rating-color) 70%, transparent); }
-.mia-view .mia-progress-ratings > .mia-stat:nth-child(1) { --mia-rating-color: var(--mia-again); }
-.mia-view .mia-progress-ratings > .mia-stat:nth-child(2) { --mia-rating-color: var(--mia-hard); }
-.mia-view .mia-progress-ratings > .mia-stat:nth-child(3) { --mia-rating-color: var(--mia-good); }
-.mia-view .mia-progress-ratings > .mia-stat:nth-child(4) { --mia-rating-color: var(--mia-easy); }
 .mia-view [data-tone="hard"] { --mia-tone: var(--mia-yellow); }
 .mia-view .mia-stat[data-tone="hard"] span::before, .mia-view .mia-stat[data-tone="new"] span::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-.mia-view .mia-section-title ~ .mia-section-title::before { background: var(--mia-blue); border-radius: 0; }
-.mia-view .mia-page-title::before { background: var(--mia-yellow); border-radius: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-.mia-view .mia-rating-bar-part + .mia-rating-bar-part { border-left: 3px solid var(--mia-ink); }
-.mia-view.mia-view .mia-progress-subject-values > button:nth-child(3n+1) { border-left: 0; padding-left: 2px; }
-.mia-view.mia-view .mia-progress-subject-values > button:nth-child(n+4) { border-top: 2px solid var(--mia-hair); }
+.mia-view.mia-view .mia-progress-subject-values > button:nth-child(3n+1) { padding-left: 2px; }
 .mia-view .mia-progress-subject-values > button::before { content: ""; flex: none; width: 10px; height: 10px; background: var(--mia-muted); }
 .mia-view .mia-progress-subject-values > button:nth-child(1)::before { background: transparent; border: 2px solid var(--mia-muted); box-sizing: border-box; }
-/* Keep circular markers above the shared square-corner override. */
-.mia-view .mia-progress-subject-values > button:nth-child(2)::before { background: var(--mia-blue); border-radius: 50% !important; }
-/* Keep circular markers above the shared square-corner override. */
-.mia-view .mia-progress-subject-values > button:nth-child(3)::before { background: var(--mia-red); border-radius: 50% !important; }
+.mia-view .mia-progress-subject-values > button:nth-child(2)::before { background: var(--mia-blue); border-radius: 50%; }
+.mia-view .mia-progress-subject-values > button:nth-child(3)::before { background: var(--mia-red); border-radius: 50%; }
 .mia-view .mia-progress-subject-values > button:nth-child(4)::before { background: var(--mia-yellow); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 .mia-view .mia-progress-subject-values > button:nth-child(5)::before { background: var(--mia-ink); }
 .mia-view .mia-progress-subject-values > button:nth-child(6)::before { background: var(--mia-blue); }
 .mia-view.mia-view .mia-progress-subject > .mia-inline-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.mia-view.mia-view .mia-progress-subject > .mia-inline-actions > button { width: 100%; margin: 0; min-height: 40px; white-space: nowrap; }
+.mia-view.mia-view .mia-progress-subject > .mia-inline-actions > button { width: 100%; margin: 0; min-height: 44px; white-space: nowrap; }
 .mia-view .mia-progress-subject-heading strong { font-weight: 700; }
-.mia-view.mia-view .mia-progress-subject-values > button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 42px; margin: 0; padding: 6px 10px; background: transparent; border: 0; border-left: 2px solid var(--mia-hair); box-shadow: none; color: var(--mia-ink); font-weight: 700; text-align: left; white-space: nowrap; overflow-wrap: normal; justify-content: flex-start; }
+.mia-view.mia-view .mia-progress-subject-values > button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; margin: 0; padding: 6px 10px; font-weight: 700; text-align: left; white-space: nowrap; overflow-wrap: normal; justify-content: flex-start; }
 .mia-view .mia-progress-subject > * { margin: 0; }
 .mia-view .mia-page-title { margin-bottom: 18px; }
-.mia-view .mia-rating-bar { display: flex; margin-block: 0 14px; height: 16px; gap: 0; border: 3px solid var(--mia-ink); }
+.mia-view .mia-rating-bar { display: flex; margin-block: 0 14px; height: 16px; gap: 0; }
 .mia-view .mia-rating-bar-part { flex: 1 1 0; min-width: 6px; background: var(--mia-tone); }
-.mia-view.mia-view .mia-progress-subject-values { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 4px 0 14px; border-top: 2px solid var(--mia-hair); border-bottom: 2px solid var(--mia-hair); }
+.mia-view.mia-view .mia-progress-subject-values { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 4px 0 14px; }
+
+.mia-view .mia-progress-subjects { gap: var(--mia-card-gap); }
+
 
 /* 4. Questions and detail panels */
-.mia-filter-chips button { min-width: 0; max-width: 100%; height: auto; border-radius: 999px; font-size: var(--font-ui-smaller); text-align: start; white-space: normal; overflow-wrap: anywhere; }
+/* 검색·필터 칸이 패널 가장자리에 붙지 않고, 그림자끼리 부딪히지 않게 띄운다. */
+.mia-view .mia-filter-panel { padding: 16px; }
+.is-mobile .mia-view .mia-filter-panel { padding-top: 0; }
+.mia-view .mia-filter-panel > summary { padding-inline: 0; }
+.mia-view .mia-filter-toolbar { gap: 12px; padding: 0; }
+.mia-filter-chips button { min-width: 0; max-width: 100%; height: auto; font-size: var(--font-ui-smaller); text-align: start; white-space: normal; overflow-wrap: anywhere; }
 .mia-row-prompt > :first-child { margin-top: 0; }
 .mia-row-prompt > :last-child { margin-bottom: 0; }
 .mia-candidates { margin-top: 22px; }
@@ -543,14 +592,17 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-candidate-label small { color: var(--text-muted); overflow-wrap: anywhere; }
 .mia-candidate-search { width: min(520px, 100%); margin: 12px 0; }
 .mia-question-section > h2 > p, .mia-preview-modal h3 > p { margin: 0; }
-.mia-view .mia-filter-chips button.mod-warning { border-color: color-mix(in srgb, var(--mia-danger) 40%, var(--mia-line)); }
 .mia-question-heading > p { display: inline; margin: 0; }
-.mia-view .mia-filter-chips button { border-width: 3px; font-weight: 800; }
+.mia-view .mia-filter-chips button { font-weight: 800; }
 .mia-view:is(.mia-route-questions, .mia-route-keywords) > :not(.mia-header) { max-width: var(--mia-study-width); margin-left: auto; margin-right: auto; }
 .mia-view .mia-detail-placeholder { margin: 0; padding: 24px 20px; }
 .mia-view .mia-row-urgency { font-weight: 700; }
 
-.mia-leech { display: inline; margin-left: 6px; padding: 0 4px; border: 2px solid var(--mia-red); color: var(--mia-danger-text); font-size: 10px; font-weight: 800; white-space: nowrap; }
+.mia-leech { display: inline; margin-left: 6px; padding: 0 4px; color: var(--mia-danger-text); font-size: 10px; font-weight: 800; white-space: nowrap; }
+
+.mia-view .mia-row-state { border-radius: 50%; background: var(--mia-tone, var(--mia-muted)); }
+
+.mia-view .mia-detail-panel { border-radius: var(--mia-radius); box-shadow: var(--mia-shadow); }
 
 /* 5. Keywords */
 .mia-keyword-grid { display: grid; gap: 10px; }
@@ -571,9 +623,10 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-keyword-questions summary { margin: 0; padding: 4px 0; font-size: .9em; color: var(--mia-muted); }
 .mia-view.mia-view .mia-keyword { display: grid; grid-template-columns: 1fr 1fr; column-gap: 8px; row-gap: 8px; align-content: start; }
 .mia-view .mia-keyword > strong { font-weight: 700; }
-.mia-view.mia-view .mia-keyword > button.mod-warning { background: transparent; border: 0; border-top: 2px solid var(--mia-hair); font-weight: 700; font-size: .86em; min-height: 40px; padding: 6px 8px; white-space: nowrap; box-shadow: none; }
+.mia-view.mia-view .mia-keyword > button.mod-warning { font-weight: 700; font-size: .86em; min-height: 40px; padding: 6px 8px; white-space: nowrap; }
 .mia-view .mia-keyword-grid { grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
-.mia-view.mia-view .mia-keyword > button.mod-warning { color: var(--mia-danger-text); border-left: 2px solid var(--mia-hair); width: calc(100% + 4px); margin-left: -4px; }
+
+.mia-view .mia-keyword-grid { gap: var(--mia-card-gap); }
 
 /* 6. Study cards and sessions */
 .mia-reveal { display: block; }
@@ -586,7 +639,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-related-item .mia-related-open { flex: 1 1 260px; }
 .mia-study-navigation { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
 .mia-study-navigation .mia-progress { text-align: center; margin: 0; }
-.mia-session-rating { color: var(--interactive-accent); font-weight: 600; }
+.mia-session-rating { color: var(--mia-accent-text); font-weight: 600; }
 .mia-study-navigation { max-width: var(--mia-study-width); margin: 0 auto 12px; }
 .mia-study-navigation .mia-progress { font-size: 12px; font-variant-numeric: tabular-nums; }
 .mia-session-meter { max-width: var(--mia-study-width); margin: 0 auto 24px; overflow: hidden; }
@@ -601,12 +654,12 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-related-open strong { font-size: 13px; font-weight: 550; line-height: 1.65; text-align: left; }
 .mia-related-open small { font-size: 10px; line-height: 1.5; text-align: left; }
 .mia-study-dock { box-sizing: border-box; bottom: 0; z-index: 3; max-width: var(--mia-study-width); margin: 24px auto 0; padding: 16px 0 10px; border: 0; box-shadow: none; }
-.mia-study-dock .mia-ratings button { --mia-rating-color: var(--text-muted); position: relative; padding: 11px 24px; }
+.mia-study-dock .mia-ratings button { position: relative; padding: 11px 24px; }
 .mia-study-dock button[data-grade="1"] { --mia-rating-color: var(--mia-again); }
 .mia-study-dock button[data-grade="2"] { --mia-rating-color: var(--mia-hard); }
 .mia-study-dock button[data-grade="3"] { --mia-rating-color: var(--mia-good); }
 .mia-study-dock button[data-grade="4"] { --mia-rating-color: var(--mia-easy); }
-.mia-grade-key { position: absolute; box-shadow: none; }
+.mia-grade-key { position: absolute; }
 .mia-shortcut-hint { font-size: 10px; text-align: center; margin: 10px 0 0; }
 .mia-dock-utility { justify-content: center; }
 .mia-study-card .mia-markdown hr { margin-block: 18px; }
@@ -625,23 +678,11 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .is-mobile .mia-view .mia-keyword-chips button { min-height: 44px; }
 .mia-view .mia-study-dock .mia-ratings small { font-variant-numeric: tabular-nums; }
 .mia-study-management-modal .mia-keyboard-actions-inline .mia-learning-settings-actions::before { display: none; }
-.mia-view :is(code, kbd) { border: 2px solid var(--mia-ink); border-radius: 0; background: var(--mia-panel); color: var(--mia-ink); }
+.mia-view :is(code, kbd) { background: var(--mia-panel); color: var(--mia-ink); }
 .mia-view .mia-study-card .mia-question-section > h2 { font-size: clamp(calc(var(--mia-reading-title) * .88), calc(var(--mia-reading-title) * .8 + 1cqi), var(--mia-reading-title)); font-family: var(--mia-head); font-weight: 800; letter-spacing: -.01em; line-height: 1.35; }
-.mia-view .mia-study-concepts { border-top: 3px solid var(--mia-ink); }
 .mia-view .mia-study-concepts summary { font-weight: 800; }
-.mia-view .mia-study-card .mia-markdown img { border: 3px solid var(--mia-ink); }
-/* Keep grade colors above host and hover button paint. */
-.mia-view .mia-study-dock .mia-ratings button[data-grade="1"] { background: var(--mia-red) !important; color: var(--mia-on-color) !important; }
-/* Keep grade colors above host and hover button paint. */
-.mia-view .mia-study-dock .mia-ratings button[data-grade="2"] { background: var(--mia-yellow) !important; color: var(--mia-on-yellow) !important; }
-/* Keep grade colors above host and hover button paint. */
-.mia-view .mia-study-dock .mia-ratings button[data-grade="3"] { background: var(--mia-ink) !important; color: var(--mia-bg) !important; }
-/* Keep grade colors above host and hover button paint. */
-.mia-view .mia-study-dock .mia-ratings button[data-grade="4"] { background: var(--mia-blue) !important; color: var(--mia-on-color) !important; }
-/* Keep text contrast on the yellow progress and undo surfaces. */
-.mia-view .mia-undo-feedback :not(button, button *) { color: var(--mia-on-yellow) !important; }
 .mia-view .mia-study-dock .mia-ratings { gap: 12px; }
-.mia-view button[aria-keyshortcuts]:not([data-grade])::before { content: attr(aria-keyshortcuts) / ""; margin-inline-end: 8px; padding: 0 5px; border: 2px solid currentColor; font-size: 11px; font-weight: 800; line-height: 1.4; }
+.mia-view button[aria-keyshortcuts]:not([data-grade])::before { content: attr(aria-keyshortcuts) / ""; margin-inline-end: 8px; padding: 0 5px; font-size: 11px; font-weight: 800; line-height: 1.4; }
 .mia-thumb-navigation .mia-thumb-previous { justify-self: start; }
 .mia-thumb-navigation .mia-thumb-next { justify-self: end; }
 .mia-view .mia-study-layout .mia-related { padding: 16px; background: var(--mia-surface); }
@@ -662,13 +703,13 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-answer-section .mia-answer { padding: 0; }
 .mia-study-concepts .mia-keyword-section { margin-top: 12px; }
 .mia-study-layout .mia-related { width: 100%; max-width: none; margin: 0; gap: 10px; box-sizing: border-box; }
-.mia-related-item .mia-related-open { display: flex; align-items: flex-start; gap: 6px; flex-basis: 100%; min-width: 0; background: transparent; box-shadow: none; }
+.mia-related-item .mia-related-open { display: flex; align-items: flex-start; gap: 6px; flex-basis: 100%; min-width: 0; background: transparent; }
 .mia-study-dock .mia-ratings { margin: 0; }
 .mia-dock-utility .mia-shortcut-hint { margin: 0; }
 .mia-study-dock .mia-reveal { min-width: min(300px, 70%); font-weight: 600; }
 .mia-route-study:has(.mia-study-layout) { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: hidden; }
 .mia-route-study .mia-header, .mia-route-study .mia-study-navigation, .mia-route-study .mia-session-meter { width: 100%; box-sizing: border-box; flex-shrink: 0; }
-.mia-route-study .mia-study-layout { width: 100%; flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; align-content: start; padding: 2px 2px 12px; box-sizing: border-box; scroll-padding-block: 16px; }
+.mia-route-study .mia-study-layout { width: 100%; flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; align-content: start; padding: 10px; box-sizing: border-box; scroll-padding-block: 16px; }
 .mia-route-study .mia-study-dock { position: relative; width: 100%; flex: 0 0 auto; margin-top: 16px; }
 .mia-route-study[data-focus="true"] .mia-header { margin-bottom: 8px; padding-bottom: 8px; }
 /* Override host modal dimensions for the visible keyboard viewport. */
@@ -682,52 +723,85 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 }
 .mia-view .mia-answer-section { padding: 20px 22px; }
 .mia-view .mia-study-card { box-sizing: border-box; padding: clamp(18px, 3cqi, 32px); }
-.mia-view .mia-filter-chips button, .mia-view .mia-keyword-chips button { background: var(--mia-surface); border: 1px solid var(--mia-line); box-shadow: none; }
-.mia-view .mia-session-edit-actions button { box-shadow: none; border: 1px solid var(--mia-line); }
 .mia-study-management-settings .mia-profile-row strong { font-size: 14px; }
-.mia-view .mia-study-card .mia-card-label { display: inline-block; background: var(--mia-ink); color: var(--mia-bg); border: 0; padding: 2px 10px; }
-.mia-view .mia-study-card .mia-answer-section { background: var(--mia-panel); border: 3px solid var(--mia-ink); border-left: 12px solid var(--mia-yellow); }
-.mia-view .mia-study-card .mia-answer-section .mia-card-label { background: var(--mia-yellow); color: var(--mia-on-yellow); border: 3px solid var(--mia-ink); }
-/* Keep text contrast on the yellow progress and undo surfaces. */
-.mia-view .mia-study-navigation .mia-progress { justify-self: center; color: var(--mia-on-yellow) !important; font-weight: 800; border: 3px solid var(--mia-ink); background: var(--mia-yellow); padding: 2px 14px; }
-.mia-view .mia-study-dock .mia-ratings button { border: 3px solid var(--mia-ink); background: var(--mia-ink); color: var(--mia-bg); font-weight: 800; box-shadow: none; }
-.mia-view .mia-card-header .mia-session-edit-actions button { min-height: 36px; border-width: 2px; }
-.mia-view .mia-related-item > button:not(.mia-related-open) { width: 100%; min-height: 36px; border-width: 2px; font-size: 13px; }
-.mia-view .mia-study-dock .mia-ratings button { min-height: 72px; border-width: 3px; }
-.mia-view .mia-study-dock .mia-ratings .mia-grade-key { top: 8px; right: auto; left: 10px; padding: 0 5px; border: 2px solid currentColor; font-size: 11px; line-height: 1.4; }
+.mia-view .mia-study-card .mia-card-label { display: inline-block; padding: 2px 10px; }
+.mia-view .mia-study-navigation .mia-progress { justify-self: center; font-weight: 800; padding: 2px 14px; }
+.mia-view .mia-study-dock .mia-ratings button { font-weight: 800; }
+.mia-view .mia-card-header .mia-session-edit-actions button { min-height: 36px; }
+.mia-view .mia-related-item > button:not(.mia-related-open) { width: 100%; min-height: 36px; font-size: 13px; }
+.mia-view .mia-study-dock .mia-ratings button { min-height: 72px; }
+.mia-view .mia-study-dock .mia-ratings .mia-grade-key { top: 8px; right: auto; left: 10px; padding: 0 5px; border: 1px solid currentColor; border-radius: var(--mia-radius-pill); font-size: 11px; line-height: 1.4; }
 .mia-study-card pre, .mia-study-card table, .mia-study-card .math-block { display: block; max-width: 100%; overflow-x: auto; touch-action: pan-x pan-y pinch-zoom; }
 .mia-study-dock .mia-study-actions { margin: 0; display: flex; justify-content: center; }
 .mia-study-dock .mia-reveal { width: min(440px, 100%); }
-.mia-view .mia-session-edit-actions button { border-color: var(--mia-ink); background: var(--mia-panel); color: var(--mia-ink); }
-.mia-view .mia-study-navigation button { border-width: 3px; border-color: transparent; background: transparent; }
-.mia-view .mia-undo-feedback button, .mia-view button.mia-dock-undo { background: var(--mia-panel); color: var(--mia-ink); }
-.mia-session-edit-target { border: 2px solid var(--interactive-accent); border-radius: var(--radius-m); padding: 12px; margin-bottom: 12px; scroll-margin-top: 12px; }
+.mia-session-edit-target { border-radius: var(--mia-radius); box-shadow: var(--mia-shadow-inset); padding: 12px; margin-bottom: 12px; scroll-margin-top: 12px; }
 .mia-session-edit-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .mia-session-edit-actions button, .mia-session-edit-target > button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; min-height: 44px; }
-.mia-view .mia-session-meter { height: 10px; border: 3px solid var(--mia-ink); background: var(--mia-panel); }
+.mia-view .mia-session-meter { height: 10px; background: var(--mia-panel); }
 .mia-view .mia-session-meter-fill { background: var(--mia-red); }
-.mia-view .mia-study-card { border: 4px solid var(--mia-ink); background: var(--mia-panel); box-shadow: 8px 8px 0 var(--mia-ink); }
+.mia-view .mia-study-card { background: var(--mia-panel); }
 .mia-view .mia-study-dock { background: var(--mia-bg); }
-.mia-view .mia-undo-feedback { border: 3px solid var(--mia-ink); background: var(--mia-yellow); border-left-width: 12px; }
 .mia-view .mia-card-header .mia-card-context, .mia-view .mia-card-header .mia-session-edit-actions { margin: 0; }
 .mia-view .mia-study-dock .mia-undo-feedback { margin-top: 12px; }
-.mia-study-management-settings .mia-profile-row { border-block-start-color: var(--mia-line); }
 .mia-view .mia-card-context { display: flex; flex-wrap: wrap; gap: 6px; font-weight: 800; }
-.mia-view .mia-grade-key { color: inherit; opacity: .85; background: transparent; font-weight: 800; }
-/* Keep text contrast on the yellow progress and undo surfaces. */
-.mia-view .mia-undo-feedback { color: var(--mia-on-yellow) !important; font-weight: 800; }
-.mia-view .mia-study-layout .mia-related { border: 3px solid var(--mia-ink); }
-.mia-view .mia-related-item:last-child { padding-bottom: 10px; border: 3px solid var(--mia-ink); }
+.mia-view .mia-ratings .mia-grade-key { color: inherit; background: transparent; font-weight: 800; }
+.mia-view .mia-undo-feedback { font-weight: 800; }
+.mia-view .mia-related-item:last-child { padding-bottom: 10px; }
 .mia-view .mia-related-item .mia-related-open { flex-direction: column-reverse; padding: 0; border: 0; }
-.mia-view .mia-dock-undo { border: 3px solid var(--mia-ink); }
-.mia-view .mia-card-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 3px solid var(--mia-ink); }
+.mia-view .mia-card-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; padding-bottom: 12px; }
 .mia-view .mia-related-item { flex-direction: column; flex-wrap: nowrap; gap: 8px; padding: 10px 12px; background: var(--mia-panel); }
 
-.mia-view .mia-auto-advance { display: inline-block; margin-left: 6px; padding: 0 3px; border: 2px solid var(--mia-ink); background: var(--mia-yellow); color: var(--mia-on-yellow); font-size: 10px; line-height: 1; white-space: nowrap; cursor: pointer; font-variant-numeric: tabular-nums; }
+.mia-view .mia-auto-advance { display: inline-block; margin-left: 6px; padding: 0 3px; font-size: 10px; line-height: 1; white-space: nowrap; cursor: pointer; font-variant-numeric: tabular-nums; }
 
 .mia-view .mia-card-context:has(.mia-auto-advance) { flex-wrap: nowrap; align-items: center; gap: 4px; min-width: 0; white-space: nowrap; }
 .mia-view .mia-auto-context { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mia-view .mia-card-context:has(.mia-auto-advance) :is(.mia-answer-timer, .mia-auto-advance) { flex-shrink: 0; margin-left: 0; }
+
+.mia-view .mia-study-card {
+  background: var(--mia-panel);
+  border-radius: var(--mia-radius);
+  box-shadow: var(--mia-shadow);
+}
+
+.mia-view .mia-study-navigation .mia-progress {
+  background: var(--mia-panel);
+  color: var(--mia-ink);
+  border-radius: var(--mia-radius-pill);
+  box-shadow: var(--mia-shadow-inset);
+}
+
+.mia-view .mia-study-dock .mia-ratings button[data-grade]:hover:not(:disabled),
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button:hover:not(:disabled) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(pre, code, kbd) {
+  border-radius: var(--mia-radius-s);
+  background: var(--mia-surface);
+  color: var(--mia-ink);
+}
+
+.mia-view button.mia-auto-advance { color: var(--mia-warning-text); }
+.mia-view .mia-answer-timer { display: inline-block; margin-left: 8px; white-space: nowrap; font-size: 12px; line-height: 1; font-variant-numeric: tabular-nums; }
+
+.mia-view .mia-study-card .mia-answer-section,
+.mia-view .mia-undo-feedback {
+  background: var(--mia-surface);
+  color: var(--mia-ink);
+  border-radius: var(--mia-radius);
+  box-shadow: var(--mia-shadow-inset);
+}
+
+.mia-view .mia-study-dock .mia-ratings button[data-grade],
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button {
+  background: var(--mia-rating-color, var(--mia-grade, var(--mia-panel)));
+  color: var(--mia-on-color);
+}
+
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings small { color: inherit; }
+
+.mia-view .mia-study-card .mia-markdown img { border-radius: var(--mia-radius-s); }
 
 /* 7. Settings and dialogs */
 .mia-warning { color: var(--text-warning); }
@@ -785,7 +859,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-recovery-modal .modal-content { overflow-wrap: anywhere; }
 .mia-recovery-modal .mia-inline-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 8px; }
 .mia-recovery-modal .mia-inline-actions button { max-width: 100%; white-space: normal; }
-.mia-preview-modal h4 { color: var(--interactive-accent); font-size: 12px; margin: 20px 0 10px; }
+.mia-preview-modal h4 { color: var(--mia-accent-text); font-size: 12px; margin: 20px 0 10px; }
 .mia-preview-modal .mia-markdown img { max-width: 100%; height: auto; }
 .mia-preview-actions { position: sticky; bottom: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: var(--modal-background, var(--background-primary)); padding-top: 14px; margin-top: 18px; }
 .mia-appearance-modal > .modal-content > p { font-size: 12px; color: var(--text-muted); }
@@ -820,20 +894,15 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-settings-number-control { flex-wrap: wrap; }
 .mia-anki-settings-section > h4 { margin-block: 4px 12px; }
 .mia-keyboard-modal .mia-keyboard-actions-inline .mia-keyboard-actions { position: static; }
-:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) { border-radius: calc(var(--mia-radius) + 4px); }
-.mia-study-management-settings .mia-settings-modes button[aria-pressed="true"] { background: var(--background-primary); color: var(--interactive-accent); font-weight: 700; box-shadow: 0 1px 2px rgb(0 0 0 / 12%), 0 0 0 1px var(--mia-accent-line); }
-.mia-study-management-settings .mia-settings-simple h4 { --mia-step-number: "1"; display: flex; align-items: center; gap: 10px; margin: 28px 0 10px; letter-spacing: -.01em; }
-.mia-study-management-settings .mia-settings-simple .mia-step-editor:nth-child(1) > h4 { --mia-step-number: "2"; }
-.mia-study-management-settings .mia-settings-simple .mia-step-editor:nth-child(2) > h4 { --mia-step-number: "3"; }
-.mia-study-management-settings .mia-settings-simple .mia-settings-retention > h4 { --mia-step-number: "4"; }
+.mia-study-management-settings .mia-settings-modes button[aria-pressed="true"] { font-weight: 700; }
+.mia-study-management-settings .mia-settings-simple h4 { display: flex; align-items: center; gap: 10px; margin: 28px 0 10px; letter-spacing: -.01em; }
 .mia-study-management-settings .mia-step-editor h4 { margin-bottom: 6px; }
 :is(.mia-study-management-settings, .mia-appearance-modal) .setting-item-name { font-weight: 600; }
-:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary { display: flex; align-items: center; gap: 10px; list-style: none; color: var(--text-muted); font-size: 13px; font-weight: 600; }
+:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary { display: flex; align-items: center; gap: 10px; list-style: none; font-size: 13px; font-weight: 600; }
 :is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary::-webkit-details-marker { display: none; }
 :is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary::before { content: ""; flex: 0 0 auto; width: 6px; height: 6px; margin-inline: 2px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform 140ms var(--mia-ease); }
 :is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help[open] > summary::before { transform: rotate(45deg); }
-:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help[open] { padding: 0 14px 12px; border-radius: var(--mia-radius-s); background: var(--mia-surface); }
-:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help[open] > summary { color: var(--text-normal); }
+:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help[open] { padding: 0 14px 12px; }
 .mia-study-management-settings .mia-anki-settings-section > h4 { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
 :is(.mia-learning-settings-actions, .mia-appearance-actions) > button.mod-cta { flex: 1.4; font-weight: 700; }
 .mia-keyboard-settings .mia-device-sync-settings > h3 { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
@@ -843,27 +912,12 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .modal.mia-appearance-modal .mia-settings-list > .setting-item.setting-item:not(.setting-item-heading):first-child { border-top: 0; }
 .mia-appearance-modal .mia-appearance-actions { border-top: 1px solid var(--mia-line); }
 .mia-keyboard-settings > h2:first-child { display: flex; align-items: center; gap: 10px; font-weight: 750; letter-spacing: -.02em; }
-.mia-keyboard-settings > h2:first-child::before { content: "M"; display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent) 70%, #fff), var(--interactive-accent)); color: var(--text-on-accent); font-size: 15px; font-weight: 800; }
 .mia-keyboard-settings > .mia-study-management-settings > h3 { font-size: 17px; font-weight: 750; }
 .mia-study-management-modal .mia-learning-settings-actions::before { content: ""; position: absolute; left: 0; right: 0; bottom: calc(100% + 1px); height: 24px; background: linear-gradient(to bottom, transparent, var(--modal-background, var(--background-primary))); pointer-events: none; }
-.mia-learning-settings-actions > button:first-of-type:not(.mod-cta) { margin-inline-end: auto; border-color: transparent; padding-inline: 8px; }
-:is(.mia-study-management-modal, .mia-appearance-modal, .mia-keyboard-settings) {
-  --button-radius: var(--mia-radius-s);
-  --input-radius: var(--mia-radius-s);
-}
-:is(.mia-study-management-settings, .mia-appearance-modal, .mia-keyboard-settings .mia-device-sync-settings) :is(button:not(.modal-close-button, .checkbox-container), input:not([type="checkbox"], [type="radio"]), select, textarea) { border-radius: var(--mia-radius-s); }
+.mia-learning-settings-actions > button:first-of-type:not(.mod-cta) { margin-inline-end: auto; padding-inline: 8px; }
 .mia-study-management-settings .mia-settings-basic > .setting-item.setting-item:not(.setting-item-heading):is(:first-child, :not(:first-child)) { padding: 14px 16px; }
-.mia-study-management-settings .mia-settings-status::before { content: ""; width: 7px; height: 7px; background: var(--mia-ink); border-radius: 0; }
+.mia-study-management-settings .mia-settings-status::before { content: ""; width: 7px; height: 7px; background: var(--mia-accent-text); }
 .mia-study-management-settings .mia-settings-simple h4 { font-family: var(--mia-head); font-weight: 800; font-size: 17px; }
-/* Keep circular markers above the shared square-corner override. */
-.mia-study-management-settings .mia-settings-simple h4::before { content: var(--mia-step-number); flex: 0 0 auto; display: inline-grid; place-items: center; font-weight: 800; width: 28px; height: 28px; border: 3px solid var(--mia-ink); background: var(--mia-red); color: var(--mia-on-color); font-family: var(--mia-head); font-size: 14px; border-radius: 50% !important; }
-/* Override host rounded corners; marker exceptions opt back in. */
-.mia-study-management-settings .mia-settings-simple .mia-step-editor:nth-child(1) > h4::before { background: var(--mia-yellow); color: var(--mia-on-yellow); border-radius: 0 !important; }
-/* Override host rounded corners; marker exceptions opt back in. */
-.mia-study-management-settings .mia-settings-simple .mia-step-editor:nth-child(2) > h4::before { background: var(--mia-blue); border-radius: 0 !important; }
-/* Override host rounded corners; marker exceptions opt back in. */
-.mia-study-management-settings .mia-settings-simple .mia-settings-retention > h4::before { background: var(--mia-ink); color: var(--mia-bg); border-radius: 0 !important; }
-body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 /* Override host modal dimensions for the visible keyboard viewport. */
 .is-phone .modal-container:not(.mia-keyboard-open) > .modal.mia-detail-modal {
   width: 100%; max-width: 100%;
@@ -918,27 +972,14 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 .mia-anki-settings-section .setting-item-control { flex-wrap: wrap; }
 .mia-keyboard-modal .modal-content.mia-keyboard-actions-inline { scroll-padding-bottom: 24px; }
 .mia-study-management-settings .mia-step-editor { padding: 0; border: 0; }
-.mia-study-management-settings .setting-item-control > button { box-shadow: none; }
-.mia-study-management-settings .mia-step-row > button { background: transparent; box-shadow: none; border: 1px solid var(--mia-line); color: var(--text-muted); }
-:is(.mia-study-management-modal, .mia-keyboard-settings) .mia-study-management-settings .mia-settings-basic > .setting-item { padding: 14px 16px; border: 1px solid var(--mia-line); border-radius: var(--mia-radius); background: var(--mia-surface); }
-.mia-study-management-settings .mia-anki-settings-section .mia-settings-help[open], .mia-study-management-settings .mia-anki-settings-section .mia-settings-basic > .setting-item { background: var(--background-primary); }
-:is(.mia-learning-settings-actions, .mia-appearance-actions) > button:not(.mod-cta) { background: transparent; box-shadow: none; border: 1px solid var(--mia-line); color: var(--text-muted); }
-.mia-keyboard-settings .mia-device-sync-settings > .mia-muted { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--mia-line); background: var(--background-primary); font-size: 12px; }
-.mia-keyboard-settings .mia-device-sync-settings > button { border-radius: var(--mia-radius-s); }
-:is(.mia-view, .mia-keyboard-settings, .modal:is(.mia-keyboard-modal, .mia-study-management-modal, .mia-appearance-modal, .mia-controls-modal)) .checkbox-container {
-  background-color: var(--mia-panel);
-  box-shadow: 0 0 0 3px var(--mia-ink);
-}
-:is(.mia-view, .mia-keyboard-settings, .modal:is(.mia-keyboard-modal, .mia-study-management-modal, .mia-appearance-modal, .mia-controls-modal)) .checkbox-container.is-enabled {
-  background-color: var(--mia-blue);
-}
+:is(.mia-study-management-modal, .mia-keyboard-settings) .mia-study-management-settings .mia-settings-basic > .setting-item { padding: 14px 16px; border: 0; border-radius: var(--mia-radius); background: var(--mia-surface); box-shadow: var(--mia-shadow-inset); }
+.mia-keyboard-settings .mia-device-sync-settings > .mia-muted { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px; border: 0; border-radius: var(--mia-radius-pill); background: var(--mia-surface); box-shadow: var(--mia-shadow-inset); font-size: 12px; }
 .is-phone .modal.mia-detail-modal .modal-content { padding-inline: 16px; }
-:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) .mia-settings-modes button[aria-pressed="true"], :is(.mia-keyboard-modal, .mia-study-management-modal) .mia-settings-modes button.is-active { background: var(--mia-ink); color: var(--mia-bg); }
 .mia-controls-modal .modal-content { overflow-y: auto; line-height: 1.75; }
 .is-mobile :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal) .modal-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .mia-step-editor .mia-step-mode .setting-item-control { margin: 6px 0 8px; width: 100%; }
 .mia-study-management-settings .mia-step-row button { min-height: 44px; }
-.mia-study-management-settings .mia-settings-modes button { min-height: max(38px, var(--mia-control-height, 38px)); border: 0; background: transparent; box-shadow: none; color: var(--text-muted); font-weight: 600; }
+.mia-study-management-settings .mia-settings-modes button { min-height: max(38px, var(--mia-control-height, 38px)); font-weight: 600; }
 .mia-learning-settings-actions > button.mod-cta { flex: 0 0 auto; min-width: 150px; }
 .mia-preview-modal .modal-content { min-height: 0; overflow-y: auto; line-height: 1.75; }
 :is(.mia-recovery-modal, .mia-confirm-modal) .modal-content { display: block; }
@@ -947,7 +988,6 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 .mia-question-heading { max-width: 100%; overflow-x: auto; flex-shrink: 0; }
 .mia-settings-basic { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .mia-settings-basic > .setting-item input { width: 100%; }
-.mia-settings-status { color: var(--text-muted); }
 .mia-settings-field-error { grid-column: 1 / -1; flex: 1 0 100%; min-width: 0; width: 100%; max-width: 100%; text-align: start; white-space: normal; margin: 4px 0; color: var(--text-error); font-size: var(--font-ui-small); line-height: 1.6; overflow-wrap: anywhere; }
 .mia-step-editor { container: mia-steps / inline-size; min-width: 0; }
 .mia-step-row { display: grid; gap: 6px; align-items: center; margin-bottom: 8px; }
@@ -965,56 +1005,45 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 }
 .mia-settings-modes { margin-block: 12px; flex-wrap: wrap; }
 .mia-settings-modes button { flex: 1 1 100px; }
-.mia-settings-changes { font-size: var(--font-ui-small); color: var(--text-muted); overflow-wrap: anywhere; }
+.mia-settings-changes { font-size: var(--font-ui-small); overflow-wrap: anywhere; }
 .mia-settings-help { margin-block: 8px 16px; }
 .mia-anki-settings-section { min-width: 0; padding-block-start: 8px; }
 .mia-study-management-settings .setting-item-description { line-height: 1.6; }
 .mia-learning-settings-actions > button { flex: 0 0 auto; }
-.modal.mia-detail-modal { --mia-hair: color-mix(in srgb, var(--mia-ink) 30%, transparent); --mia-danger-text: var(--mia-red); display: flex; flex-direction: column; }
+.modal.mia-detail-modal { display: flex; flex-direction: column; }
 :is(.mia-study-management-modal .mia-learning-settings-actions, .mia-appearance-modal .mia-appearance-actions) { position: sticky; bottom: 0; padding-block: 12px; background: var(--modal-background, var(--background-primary)); }
 .mia-settings-expert .mia-step-editor { margin-block: 12px; }
 .mia-study-profiles > button { max-width: 100%; }
 .mia-study-management-settings > .setting-item-description:first-of-type { margin-top: 0; }
-.mia-study-management-settings .mia-settings-status { display: inline-flex; align-items: center; gap: 7px; margin: 4px 0 14px; padding: 4px 11px; border: 1px solid var(--mia-line); background: var(--mia-surface); font-size: 12px; }
+.mia-study-management-settings .mia-settings-status { display: inline-flex; align-items: center; gap: 7px; margin: 4px 0 14px; padding: 4px 11px; font-size: 12px; }
 :is(.mia-study-management-settings, .mia-appearance-modal) .setting-item { border-top-color: var(--mia-line); }
 .mia-study-management-settings .mia-settings-basic { gap: 10px; margin-block: 10px; }
-.mia-study-management-settings .mia-anki-settings-section { margin-block: 12px; padding: 16px 18px; border: 1px solid var(--mia-line); background: var(--mia-surface); }
+.mia-study-management-settings .mia-anki-settings-section { margin-block: 12px; padding: 16px 18px; border: 0; border-radius: var(--mia-radius); background: var(--mia-surface); box-shadow: var(--mia-shadow-inset); }
 .mia-study-management-settings .mia-study-profiles { margin-top: 18px; }
-.mia-study-management-settings .mia-settings-changes { margin-top: 18px; padding: 10px 14px; border: 1px dashed var(--mia-line); }
+.mia-study-management-settings .mia-settings-changes { margin-top: 18px; padding: 10px 14px; }
 .mia-study-management-settings .mia-learning-settings-actions { margin-top: 18px; border-top: 1px solid var(--mia-line); }
-.mia-keyboard-settings .mia-device-sync-settings { margin-top: 24px; padding: 18px; border: 1px solid var(--mia-line); border-radius: var(--mia-radius); background: var(--mia-surface); }
+.mia-keyboard-settings .mia-device-sync-settings { margin-top: 24px; padding: 18px; border: 0; border-radius: var(--mia-radius); background: var(--mia-surface); box-shadow: var(--mia-shadow-inset); }
 .mia-appearance-modal .mia-settings-group { margin-top: 18px; }
-.mia-appearance-modal .mia-settings-list { border: 1px solid var(--mia-line); background: var(--mia-surface); overflow: hidden; }
+.mia-appearance-modal .mia-settings-list { border: 0; border-radius: var(--mia-radius); background: var(--mia-surface); box-shadow: var(--mia-shadow-inset); overflow: hidden; }
 .mia-appearance-modal .mia-appearance-status { margin: 16px 0 0; }
 .mia-study-management-modal .mia-learning-settings-actions { z-index: 2; align-items: center; margin-top: 24px; padding-bottom: max(14px, var(--safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px)); }
-.mia-study-management-settings .mia-device-sync-settings { margin-bottom: 4px; }
-.mia-study-management-settings .mia-settings-summary { margin: 0 0 6px; padding: 14px 16px; border: 1px solid var(--mia-accent-line); border-left: 3px solid var(--interactive-accent); background: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-primary)); font-size: 14px; line-height: 1.55; border-left-width: 1px; border-color: var(--mia-accent-line); }
-:is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help[open],
-.mia-study-management-settings .mia-settings-changes { border-radius: var(--mia-radius); }
-.mia-study-management-settings .mia-settings-status,
-.mia-keyboard-settings .mia-device-sync-settings > .mia-muted { border-radius: var(--mia-radius-s); }
-.mia-view .mia-settings-status, .mia-view .mia-settings-save-status { border-radius: 0; }
-.modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) .modal-title { border-bottom: 4px solid var(--mia-ink); padding-bottom: 10px; font-size: 22px; font-weight: 800; }
-.modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) .modal-close-button { color: var(--mia-ink); }
-.modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(.setting-item, .setting-item-description, .setting-item-name) { color: var(--mia-ink); border-color: var(--mia-ink); }
+.mia-study-management-settings .mia-settings-summary { margin: 0 0 6px; padding: 14px 16px; font-size: 14px; line-height: 1.55; }
+.modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) .modal-title { padding-bottom: 10px; font-size: 22px; font-weight: 800; }
+.modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) :is(.setting-item, .setting-item-description, .setting-item-name) { color: var(--mia-ink); border-color: var(--mia-line); }
 .modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) .setting-item-description { color: var(--mia-muted); }
 .modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) .setting-item-name { font-weight: 800; }
-.mia-keyboard-settings { color: var(--mia-ink); }
 .modal.mia-detail-modal .modal-content { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; padding-bottom: 0; }
 .modal-container > .modal.mia-appearance-modal { width: min(480px, calc(100vw - 28px)); }
-.modal.mia-detail-modal .mia-detail-scroll { padding-inline: 0; }
+.modal.mia-detail-modal .mia-detail-scroll { padding-inline: 8px; }
 .modal.mia-detail-modal .mia-detail-actions { padding-inline: 0; }
 .mia-study-management-settings .mia-step-row { grid-template-columns: minmax(60px, 1fr) minmax(80px, 1fr) repeat(3, max-content); }
-.mia-study-management-settings .mia-settings-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin: 0 0 14px; padding: 4px; border: 1px solid var(--mia-line); background: var(--mia-surface); }
+.mia-study-management-settings .mia-settings-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin: 0 0 14px; padding: 4px; }
 .modal:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact) {
   background: var(--mia-panel);
   color: var(--mia-ink);
-  border: 4px solid var(--mia-ink);
-  box-shadow: 10px 10px 0 var(--mia-ink);
 }
-:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) :is(.mia-settings-group, .mia-settings-summary, .mia-settings-changes, .mia-device-sync-settings, .mia-anki-settings-section, .mia-profile-row, .mia-step-row, .mia-step-editor, .mia-settings-modes, .mia-follow-up-picker, .mia-candidate, .mia-followup-option) { border: 3px solid var(--mia-ink); background: var(--mia-panel); box-shadow: none; }
 :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) :is(.mia-settings-group-title) { font-family: var(--mia-head); font-weight: 800; color: var(--mia-ink); }
-:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) .mia-settings-status { border: 3px solid var(--mia-ink); background: var(--mia-yellow); color: var(--mia-on-yellow); font-weight: 800; }
+:is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) .mia-settings-status { font-weight: 800; }
 :is(.mia-keyboard-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal) .mia-settings-group-title { padding: 10px 14px 8px; margin: 0; }
 .is-phone .modal-container:not(.mia-keyboard-open):has(> .modal.mia-detail-modal) {
   padding: var(--mia-modal-top, 0px) var(--mia-modal-right, 0px) var(--mia-modal-bottom, 0px) var(--mia-modal-left, 0px);
@@ -1026,6 +1055,56 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 .mia-setting-controls .setting-item.mod-toggle { display: flex; flex-direction: row; align-items: center; }
 .mia-setting-controls .setting-item.mod-toggle .setting-item-info { margin: 0; }
 .mia-setting-controls .setting-item.mod-toggle .setting-item-control { flex: 0 0 auto; width: auto; margin: 0; padding-top: 0; flex-wrap: nowrap; }
+
+.modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal) {
+  border: 0;
+  border-radius: var(--mia-radius);
+  background: var(--mia-panel);
+  box-shadow: var(--mia-shadow);
+}
+
+.modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal) .modal-close-button {
+  width: 44px;
+  height: 44px;
+}
+.modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal) .setting-item-description,
+:is(.mia-keyboard-settings, .mia-study-management-settings) .setting-item-description {
+  color: var(--mia-muted);
+}
+
+.mia-study-management-settings :is(.mia-settings-modes, .mia-settings-summary, .mia-settings-changes),
+.modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal) :is(.mia-followup-option, .mia-keyword-meaning) {
+  background: var(--mia-panel);
+  border: 0;
+  border-radius: var(--mia-radius);
+  box-shadow: var(--mia-shadow-inset);
+}
+.mia-study-management-settings .mia-settings-modes button { border-radius: var(--mia-radius-pill); }
+.mia-study-management-settings .mia-settings-modes { border-radius: var(--mia-radius-pill); }
+
+.mia-study-management-settings .mia-settings-modes button[aria-pressed="true"] { color: var(--mia-accent-text); }
+
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) .checkbox-container {
+  background-color: var(--mia-surface);
+  box-shadow: var(--mia-shadow-inset);
+}
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) .checkbox-container.is-enabled { background-color: var(--mia-blue); }
+
+.mia-keyboard-actions { background: var(--mia-panel); }
+.mia-keyboard-dismiss { background: var(--mia-panel); color: var(--mia-accent-text); box-shadow: var(--mia-shadow-small); }
+
+.mia-setting-controls .setting-item-control > :is(input:not([type="checkbox"], [type="radio"], [type="range"]), select, textarea) { box-sizing: border-box; min-height: 44px; }
+
+.mia-setting-controls .setting-item-control > button:not(.mod-cta, .mod-warning, .checkbox-container) { min-height: 44px; }
+.mia-study-management-settings .mia-anki-settings-section > .setting-item-description { color: var(--mia-muted); overflow-wrap: anywhere; }
+.mia-keyword-meaning-modal .mia-keyword-meaning { padding: 12px 16px; }
+.mia-keyword-meaning-modal .mia-keyword-meaning .mia-card-label { display: inline-block; margin: 0 0 8px; padding: 3px 9px; font-size: 11px; font-weight: 800; letter-spacing: .06em; }
+
+/* Keyword meaning popup: the keyword as the title and its meaning in the study answer box style. */
+.mia-keyword-meaning-modal .mia-keyword-meaning .mia-markdown { font-size: var(--mia-preview-body, 16px); line-height: 1.7; }
+.mia-keyword-meaning-modal .mia-keyword-meaning .mia-markdown > :first-child { margin-top: 0; }
+.mia-keyword-meaning-modal .mia-keyword-meaning .mia-markdown > :last-child { margin-bottom: 0; }
+.mia-keyword-meaning-modal .mia-keyword-meaning > p.mia-muted { margin: 0; }
 
 /* 8. Responsive panes, phones and tablets */
 @media (min-width: 641px) and (max-width: 1100px) {
@@ -1049,7 +1128,6 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
   min-height: 0 !important;
   height: auto !important;
   margin: 0;
-  border-radius: var(--radius-l) var(--radius-l) 0 0;
   overflow: hidden;
 }
 
@@ -1092,9 +1170,8 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 .mia-primary-card p { margin-block: 8px 12px; font-size: var(--font-ui-small); }
 .mia-primary-card > .mia-inline-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .mia-section-title { margin-top: 20px; margin-bottom: 10px; }
-.mia-subject-grid { gap: 8px; }
-.mia-progress-ratings { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.mia-filter-panel { border: 1px solid var(--background-modifier-border); background: var(--background-primary-alt); }
+.mia-subject-grid { gap: var(--mia-card-gap); }
+.mia-progress-ratings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .mia-filter-panel > summary { display: flex; }
 .mia-filter-toolbar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 0 9px 9px; margin: 0; }
 .mia-filter-toolbar select { width: 100%; min-width: 0; }
@@ -1112,7 +1189,7 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
   .mia-candidate { gap: 8px; }
 .mia-candidate > .mia-inline-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .mia-candidate-search { width: 100%; }
-.mia-keyword-grid { gap: 8px; }
+.mia-keyword-grid { gap: var(--mia-card-gap); }
 .mia-keyword { padding: 11px; }
 .mia-study-navigation { grid-template-columns: 1fr 1fr; gap: 6px; }
 .mia-study-navigation .mia-progress { grid-column: 1 / -1; grid-row: 1; }
@@ -1124,13 +1201,13 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 .mia-related { margin-top: 14px; gap: 5px; }
 .mia-related button { padding: 8px 10px; }
 .mia-session-rating { font-size: var(--font-ui-small); }
-.mia-pagination { position: sticky; bottom: 6px; z-index: 2; width: fit-content; margin: 12px auto 0; padding: 5px; border: 1px solid var(--background-modifier-border); background: var(--background-primary); box-shadow: var(--shadow-s); }
-.mia-pagination button { min-height: 40px; }
+.mia-pagination { position: sticky; bottom: 6px; z-index: 2; width: fit-content; margin: 12px auto 0; padding: 5px; border: 0; border-radius: var(--mia-radius-pill); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); }
+.mia-pagination button { min-height: 44px; }
 .mia-empty { padding: 20px 10px; }
 }
 @container mia-view (max-width: 1050px) {
 .mia-header { align-items: stretch; flex-direction: column; gap: 10px; }
-.mia-nav { width: 100%; overflow: visible; }
+.mia-view .mia-nav { width: 100%; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: visible; }
 .mia-nav button { width: 100%; }
 .mia-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
@@ -1164,15 +1241,13 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 .mia-route-study[data-focus="true"] .mia-badge { display: none; }
 }
 @media (max-width: 640px), (pointer: coarse) {
-  :is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal) { --mia-control-height: 44px; }
+  :is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) { --mia-control-height: 44px; }
 }
 .mia-view:is([data-device="phone"], [data-device="tablet"]) .mia-study-dock { padding-bottom: 10px; }
 .mia-view.mia-route-study[data-viewport-height="short"] .mia-header .mia-nav, .mia-view[data-viewport-height="short"] .mia-header .mia-badge { display: none; }
 /* Keep compact rating targets above host touch minimums. */
 .mia-view[data-viewport-height="short"] .mia-ratings button { min-height: 48px !important; padding-block: 5px; }
-:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button { --mia-grade: var(--mia-muted); min-height: 40px; padding: 4px 4px; white-space: nowrap; border: 3px solid var(--mia-ink); border-top: 8px solid var(--mia-grade); background: var(--mia-panel); color: var(--mia-ink); font-size: 12px; }
-@media (prefers-reduced-motion: reduce) {
-}
+:is(.modal.mia-detail-modal, .mia-detail-panel) .mia-ratings button { min-height: 44px; padding: 4px 4px; white-space: nowrap; font-size: 12px; }
 .mia-view.mia-route-study[data-viewport-height="short"] .mia-focus-exit { display: inline-flex; align-items: center; }
 :is(.mia-keyboard-settings, .mia-keyboard-modal, .mia-appearance-modal) select { font-size: max(13px, var(--font-ui-small)); }
 .mia-view.mia-route-study:is([data-viewport-height="compact"], [data-viewport-height="short"]) .mia-study-layout { flex: 1 0 160px; min-height: 160px; }
@@ -1189,9 +1264,6 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 @container mia-view (max-width: 280px) {
 .mia-view .mia-hero-main > .mia-inline-actions { grid-template-columns: 1fr; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .mia-view button.mia-stat:hover { transform: none; }
-}
 
 @media (prefers-reduced-motion: reduce) {
   :is(.mia-study-management-settings, .mia-keyboard-settings) .mia-settings-help > summary::before { transition: none; }
@@ -1200,8 +1272,6 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 @media (prefers-reduced-motion: reduce) {
 /* Honor reduced motion above theme and interaction rules. */
 .mia-view *, .mia-view *::before, .mia-view *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
-/* Honor reduced motion above theme and interaction rules. */
-  .mia-view button:hover { transform: none !important; }
 }
 @media (pointer: coarse) {
 .mia-view button[aria-keyshortcuts]:not([data-grade])::before { content: none; } }
@@ -1308,8 +1378,8 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 @container mia-view (min-width: 900px) {
 .mia-view[data-answer-layout="split"] .mia-study-layout { grid-template-columns: minmax(0, 1fr); }
 .mia-view[data-answer-layout="split"] .mia-study-card:has(.mia-answer-section) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px; }
-.mia-view[data-answer-layout="split"] .mia-study-card .mia-card-context { grid-column: 1 / -1; }
-.mia-view[data-answer-layout="split"] .mia-answer-section { min-width: 0; margin: 0; padding: 0; }
+.mia-view[data-answer-layout="split"] .mia-study-card > .mia-card-header { grid-column: 1 / -1; }
+.mia-view[data-answer-layout="split"] .mia-answer-section { min-width: 0; align-self: start; margin: 0; padding: 8px 10px; }
 .mia-view[data-answer-layout="split"] .mia-study-concepts { grid-column: 1 / -1; }
 }
 .mia-view[data-viewport-height="compact"] .mia-session-meter, .mia-view[data-viewport-height="short"] .mia-session-meter { margin-bottom: 8px; }
@@ -1336,11 +1406,13 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 .mia-view:is([data-device="phone"], [data-device="tablet"]) :is(button, input, select) { min-height: 44px; }
 .mia-view.mia-route-study:is([data-viewport-height="compact"], [data-viewport-height="short"]) { overflow-y: auto; }
 .mia-stat-guidance > summary { min-height: 32px; padding: 6px 0; cursor: pointer; }
+.mia-view:is([data-device="phone"], [data-device="tablet"]) .mia-stat-guidance > summary { min-height: 44px; }
 @media (max-width: 480px) {
 .mia-learning-settings-actions > button:first-of-type:not(.mod-cta) { margin-inline-end: 0; }
 .mia-learning-settings-actions > button.mod-cta { min-width: 0; }
 }
-.mia-view .mia-row-actions > button { min-width: 0; min-height: 34px; padding-inline: 4px; border-width: 2px; white-space: nowrap; }
+.mia-view .mia-row-actions > button { min-width: 0; min-height: 34px; padding-inline: 4px; white-space: nowrap; }
+.mia-view:is([data-device="phone"], [data-device="tablet"]) :is(.mia-row-actions > button, .mia-row-delete) { min-width: 44px; min-height: 44px; }
 
 @media (max-width: 480px) {
 .mia-learning-settings-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1369,7 +1441,7 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 .mia-study-management-settings .mia-step-row > button { grid-column: span 2; min-width: 0; padding-inline: 4px; }
 }
 @container mia-view (max-width: 600px) {
-.mia-view .mia-study-card { padding: 16px; box-shadow: 4px 4px 0 var(--mia-ink); }
+.mia-view .mia-study-card { padding: 16px; }
 }
 @container mia-view (max-width: 600px) {
 .mia-view.mia-view .mia-subject-card > .mia-inline-actions > button, .mia-view.mia-view .mia-progress-subject > .mia-inline-actions > button, .mia-view.mia-view .mia-keyword > button { min-height: 44px; }
@@ -1384,21 +1456,21 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 @container mia-view (min-width: 1000px) {
 .mia-view .mia-detail-panel {
 
-/* Sized to fit below the header when the page is at the top, and kept in view while scrolling. */ position: sticky; top: 12px; display: flex; flex-direction: column; min-width: 0; max-height: calc(100vh - var(--mia-pane-top, 0px) - var(--mia-pane-bottom-gap, 0px) - 130px); border: 4px solid var(--mia-ink); background: var(--mia-panel); }
+/* Sized to fit below the header when the page is at the top, and kept in view while scrolling. */ position: sticky; top: 12px; display: flex; flex-direction: column; min-width: 0; max-height: calc(100vh - var(--mia-pane-top, 0px) - var(--mia-pane-bottom-gap, 0px) - 130px); background: var(--mia-panel); }
 }
 @container mia-view (max-width: 900px) {
 .mia-view.mia-route-dashboard .mia-primary-card.mia-hero { grid-template-columns: minmax(0, 1fr); }
-.mia-view .mia-hero-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mia-view .mia-hero-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--mia-card-gap); }
 .mia-view .mia-hero-count { min-height: 120px; }
 .mia-view .mia-hero-count strong { font-size: 56px; }
 }
 @container mia-view (max-width: 600px) {
-.mia-view .mia-hero-counts { gap: 10px; }
-.mia-view .mia-hero-count { min-height: 0; flex-direction: row; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; padding: 10px 12px; border-width: 3px; }
+.mia-view .mia-hero-counts { gap: var(--mia-card-gap); }
+.mia-view .mia-hero-count { min-height: 0; flex-direction: row; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; padding: 10px 12px; }
 .mia-view .mia-hero-count strong { order: 1; margin-top: 0; font-size: 40px; }
 .mia-view .mia-hero-count span { font-size: 13px; }
 .mia-view .mia-hero-count small { order: 2; flex-basis: 100%; }
-.mia-view .mia-hero-main { padding: 14px; border-width: 3px; }
+.mia-view .mia-hero-main { padding: 14px; }
 .mia-view .mia-hero-main > .mia-inline-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .mia-view .mia-hero-main > .mia-inline-actions > button { white-space: nowrap; }
 .mia-view .mia-hero-main > .mia-inline-actions > button.mod-cta { grid-column: 1 / -1; }
@@ -1416,17 +1488,32 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 @media (max-width: 640px), (max-height: 500px) and (pointer: coarse) {
 .mia-view { --mia-bleed-left: var(--mia-pane-gutter); --mia-bleed-right: var(--mia-pane-gutter); }
 .mia-view[data-device="phone"] { --mia-bleed-left: calc(var(--mia-pane-gutter) + var(--mia-edge-left)); --mia-bleed-right: calc(var(--mia-pane-gutter) + var(--mia-edge-right)); }
-.mia-view[data-device="phone"]:not(.mia-route-study) { display: flex; flex-direction: column; padding-bottom: 0; padding-inline: var(--mia-bleed-left) var(--mia-bleed-right); }
+.mia-view[data-device="phone"] { --mia-card-gap: 16px; }
+.mia-view[data-device="phone"]:not(.mia-route-study) { display: flex; flex-direction: column; max-height: 100%; padding-bottom: 0; padding-inline: var(--mia-bleed-left) var(--mia-bleed-right); }
 .mia-view[data-device="phone"]:not(.mia-route-study) > * { flex: 0 0 auto; width: 100%; box-sizing: border-box; }
 .mia-view[data-device="phone"]:not(.mia-route-study)::after { content: ""; order: 98; flex: 1 0 12px; }
 .mia-view[data-device="phone"]:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-header { display: contents; }
-.mia-view[data-device="phone"]:not(.mia-route-study) .mia-header > div:first-child { order: -1; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 3px solid var(--mia-ink); }
+.mia-view[data-device="phone"]:not(.mia-route-study) .mia-header > div:first-child { order: -1; margin-bottom: 12px; padding-bottom: 8px; }
 .mia-view[data-device="phone"]:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-nav {
-
-/* `.mia-nav` carries `max-width: 100%` (content width); without lifting it the bleed margins only shift the bar. */ order: 99; position: sticky; bottom: 0; z-index: 5; width: auto; max-width: none; box-sizing: border-box; margin-inline: calc(-1 * var(--mia-bleed-left)) calc(-1 * var(--mia-bleed-right)); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; overflow: visible;
-
-/* Equal columns inside the notch/home-indicator insets; the bar's own background and rule stay full width. */ padding: 0 var(--mia-edge-right, 0px) max(0px, var(--mia-edge-bottom, 0px)) var(--mia-edge-left, 0px); border: 0; border-top: 3px solid var(--mia-ink); background: var(--mia-panel); }
-.mia-view[data-device="phone"]:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-nav button { min-height: 56px; padding-inline: 4px; border-bottom: 0; font-size: 13px; }
+  order: 99;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  width: auto;
+  max-width: none;
+  box-sizing: border-box;
+  margin-inline: calc(-1 * var(--mia-bleed-left)) calc(-1 * var(--mia-bleed-right));
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  overflow: visible;
+  padding: 0 var(--mia-edge-right, 0px) max(0px, var(--mia-edge-bottom, 0px)) var(--mia-edge-left, 0px);
+  border-radius: var(--mia-radius) var(--mia-radius) 0 0;
+}
+.mia-view[data-device="phone"]:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-nav button { width: auto; min-height: 52px; margin: 6px 4px 2px; padding-inline: 4px; font-size: 13px; }
+/* 둥근 막대 양 끝에서 선택 칸 그림자가 잘리지 않게 바깥 칸만 조금 더 띄운다. */
+.mia-view[data-device="phone"]:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-nav button:first-child { margin-inline-start: 10px; }
+.mia-view[data-device="phone"]:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-nav button:last-child { margin-inline-end: 10px; }
 .mia-view[data-device="phone"].mia-route-study[data-focus="false"] { padding-bottom: 0; }
 
 /* The show rule above uses :where(), so this plain rule outranks it. */
@@ -1447,9 +1534,7 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
    cells of the view; the big logo row is dropped here (the app name is in Obsidian's own header). Every
    function stays visible: settings, exit, edit, prev/next, 조작 안내, grades with intervals, undo. */
 @media (max-width: 640px), (max-height: 500px) and (pointer: coarse) {
-.mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-rows: auto auto minmax(0, 1fr) auto auto; align-content: start; column-gap: 6px; padding-inline: var(--mia-bleed-left) var(--mia-bleed-right); padding-top: calc(6px + var(--mia-edge-top, 0px)); padding-bottom: calc(6px + var(--mia-edge-bottom, 0px));
-
-/* the only place the bottom inset is applied */ }
+.mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-rows: auto auto minmax(0, 1fr) auto auto; align-content: start; column-gap: 6px; padding-inline: var(--mia-bleed-left) var(--mia-bleed-right); padding-top: calc(6px + var(--mia-edge-top, 0px)); padding-bottom: calc(6px + var(--mia-edge-bottom, 0px)); }
 .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) :is(.mia-header, .mia-header > div:first-child, .mia-settings-buttons, .mia-study-navigation) { display: contents; }
 .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) :is(.mia-brand, .mia-badge, .mia-study-navigation > button, .mia-shortcut-hint, .mia-progress-subject) { display: none; }
 .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-settings-buttons > button { grid-row: 1; min-height: 44px; margin: 0; padding-inline: 8px; font-size: 12px; white-space: nowrap; }
@@ -1462,18 +1547,16 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-progress-mode { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-progress-mode-suffix { display: none; }
 .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-progress-count { flex: none; margin-inline-start: .3em; white-space: nowrap; }
-.mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-session-meter { grid-area: 2 / 1 / 3 / -1; max-width: none; height: 4px; margin: 2px 0 6px; border: 0; background: var(--mia-hair); }
-.mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-study-layout { grid-area: 3 / 1 / 4 / -1; padding: 0 0 6px; }
+.mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-session-meter { grid-area: 2 / 1 / 3 / -1; max-width: none; height: 4px; margin: 2px 0 6px; border: 0; background: var(--mia-surface); }
+.mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-study-layout { grid-area: 3 / 1 / 4 / -1; padding: 8px 8px 12px; }
 .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-study-dock { grid-area: 4 / 1 / 5 / -1; margin-top: 4px; padding: 6px 0; }
 .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-nav { grid-area: 5 / 1 / 6 / -1; }
 .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) > .mia-save-status { grid-area: 6 / 1 / 7 / -1; }
 .mia-view[data-device="phone"].mia-route-study[data-focus="false"]:has(.mia-study-layout) { padding-bottom: 0; }
 
-/* Card: less padding and border, the header inline in small type. */
-
 /* The header row disappears: 편집 is pinned to the card corner (still 44px) and the subject / type floats as
      small, wrapping text on the 질문 label line, so nothing is hidden and the title starts higher. */
-.mia-view[data-device="phone"].mia-route-study .mia-study-card { padding: 10px 12px; border-width: 3px; box-shadow: none; position: relative; }
+.mia-view[data-device="phone"].mia-route-study .mia-study-card { padding: 10px 12px; position: relative; box-shadow: var(--mia-shadow-small); }
 .mia-view[data-device="phone"].mia-route-study .mia-card-header { display: contents; }
 .mia-view[data-device="phone"].mia-route-study .mia-card-header .mia-session-edit-actions { position: absolute; top: 8px; right: 8px; margin: 0; z-index: 1; }
 .mia-view[data-device="phone"].mia-route-study .mia-card-header .mia-card-context { float: right; box-sizing: border-box; max-width: calc(100% - 130px); margin: 2px 64px 0 8px; overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; text-align: right; font-size: 11px; line-height: 1.3; }
@@ -1481,8 +1564,8 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 .mia-view[data-device="phone"].mia-route-study .mia-study-card .mia-question-section > h2 { padding-right: 56px; clear: both; margin: 0 0 8px; font-size: clamp(19px, 5.4vw, 22px); line-height: 1.35; }
 .mia-view[data-device="phone"].mia-route-study .mia-recall-prompt { margin: 8px 0 4px; }
 
-/* The answer is one flat block: a yellow rule at the left, the label inline with the first paragraph. */
-.mia-view[data-device="phone"].mia-route-study .mia-study-card .mia-answer-section { margin-top: 8px; padding: 6px 0 6px 10px; border: 0; border-left: 4px solid var(--mia-yellow); }
+/* The answer label stays inline with the first paragraph on phones. */
+.mia-view[data-device="phone"].mia-route-study .mia-study-card .mia-answer-section { margin-top: 8px; padding: 6px 8px 6px 10px; }
 .mia-view[data-device="phone"].mia-route-study .mia-answer-section .mia-card-label { display: inline-block; margin: 0 6px 0 0; }
 .mia-view[data-device="phone"].mia-route-study .mia-answer-section .mia-answer > p:first-child { display: inline; }
 .mia-view[data-device="phone"].mia-route-study :is(.mia-answer, .mia-study-card .mia-markdown) { line-height: 1.6; }
@@ -1490,7 +1573,7 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 
 /* Grades: one row of four, intervals visible; navigation row and hint compact. */
 .mia-view[data-device="phone"].mia-route-study .mia-study-dock .mia-ratings { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.mia-view[data-device="phone"].mia-route-study .mia-study-dock .mia-ratings button { min-height: 56px; padding: 4px 2px; border-width: 3px; }
+.mia-view[data-device="phone"].mia-route-study .mia-study-dock .mia-ratings button { min-height: 56px; padding: 4px 2px; }
 .mia-view[data-device="phone"].mia-route-study .mia-study-dock .mia-ratings strong { font-size: 14px; word-break: keep-all; }
 .mia-view[data-device="phone"].mia-route-study .mia-study-dock .mia-ratings small { font-size: 11px; }
 .mia-view[data-device="phone"].mia-route-study .mia-thumb-navigation { margin-top: 6px; }
@@ -1524,15 +1607,6 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 .mia-view .mia-primary-card > .mia-inline-actions > button { min-height: 44px; }
 .mia-view .mia-hero-main > .mia-inline-actions + .mia-muted { margin: 8px 0 0; font-size: var(--font-ui-small); }
 
-/* Fallbacks keep these controls intact in plugin dialogs outside the Bauhaus palette (e.g. follow-up links). */
-.mia-setting-controls .setting-item-control > :is(input:not([type="checkbox"], [type="radio"], [type="range"]), select, textarea) { box-sizing: border-box; min-height: 44px; border: 3px solid var(--mia-ink, var(--background-modifier-border)); border-radius: var(--mia-radius, var(--radius-s)); background: var(--mia-panel, var(--background-primary)); color: var(--mia-ink, var(--text-normal)); }
-.mia-setting-controls .setting-item-control > button:not(.mod-cta, .mod-warning, .checkbox-container) { min-height: 44px; border: 3px solid var(--mia-ink, var(--background-modifier-border)); border-radius: var(--mia-radius, var(--radius-s)); background: var(--mia-panel, var(--background-primary)); color: var(--mia-ink, var(--text-normal)); }
-.mia-setting-controls .setting-item-control > button:not(.mod-cta, .mod-warning, .checkbox-container):not(:disabled):hover {
-  background: var(--mia-yellow, var(--background-modifier-hover));
-  color: var(--mia-on-yellow, var(--text-normal));
-}
-.mia-study-management-settings .mia-anki-settings-section > .setting-item-description { color: var(--mia-muted); overflow-wrap: anywhere; }
-
 /* Study uses the pane, rather than a desktop reading column, on touch devices.
    Keep the existing edge subtraction: a pane already inside a cutout needs no extra inset. */
 .mia-view.mia-route-study { --mia-study-width: 1360px; }
@@ -1554,13 +1628,13 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 .mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"]) .mia-study-navigation .mia-progress { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; padding: 2px 8px; line-height: 1.4; }
 
 /* This span shares a class with dashboard subject cards; do not inherit their padding. */
-.mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"]) .mia-study-navigation .mia-progress-subject { display: inline; margin: 0; padding: 0; border-width: 0; background: var(--mia-yellow); box-shadow: 0 0 0 0 var(--mia-ink); }
+.mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"]) .mia-study-navigation .mia-progress-subject { display: inline; margin: 0; padding: 0; border-width: 0; background: transparent; }
 .mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"]) .mia-session-meter { margin-bottom: 6px; }
-.mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"]) .mia-study-card { padding: 10px 14px; box-shadow: 4px 4px 0 var(--mia-ink); }
+.mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"]) .mia-study-card { padding: 10px 14px; }
 .mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"]) .mia-card-header { margin-bottom: 6px; padding-bottom: 4px; gap: 4px; }
 .mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"]) .mia-study-card .mia-card-label { margin-bottom: 4px; }
 .mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"]) .mia-study-card .mia-question-section > h2 { margin-bottom: 8px; }
-.mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"]) .mia-study-card .mia-answer-section { margin-top: 8px; padding: 8px 10px; border-left-width: 6px; }
+.mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"]) .mia-study-card .mia-answer-section { margin-top: 8px; padding: 8px 10px; }
 .mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"]) .mia-study-card .mia-markdown { line-height: 1.6; }
 .mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"]) .mia-study-concepts { margin-top: 8px; padding-top: 4px; }
 .mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"]) .mia-study-dock { margin-top: 4px; padding-top: 6px; }
@@ -1572,13 +1646,13 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 .mia-view.mia-route-study[data-device="phone"] .mia-header { margin-bottom: 6px; padding-bottom: 6px; gap: 8px; }
 .mia-view.mia-route-study[data-device="phone"] .mia-study-navigation { margin-bottom: 4px; gap: 6px; }
 .mia-view.mia-route-study[data-device="phone"] .mia-study-navigation .mia-progress { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; padding: 2px 8px; line-height: 1.4; }
-.mia-view.mia-route-study[data-device="phone"] .mia-study-navigation .mia-progress-subject { display: inline; margin: 0; padding: 0; border-width: 0; background: var(--mia-yellow); box-shadow: 0 0 0 0 var(--mia-ink); }
+.mia-view.mia-route-study[data-device="phone"] .mia-study-navigation .mia-progress-subject { display: inline; margin: 0; padding: 0; border-width: 0; background: transparent; }
 .mia-view.mia-route-study[data-device="phone"] .mia-session-meter { margin-bottom: 6px; }
-.mia-view.mia-route-study[data-device="phone"] .mia-study-card { padding: 10px 14px; box-shadow: 4px 4px 0 var(--mia-ink); }
+.mia-view.mia-route-study[data-device="phone"] .mia-study-card { padding: 10px 14px; }
 .mia-view.mia-route-study[data-device="phone"] .mia-card-header { margin-bottom: 6px; padding-bottom: 4px; gap: 4px; }
 .mia-view.mia-route-study[data-device="phone"] .mia-study-card .mia-card-label { margin-bottom: 4px; }
 .mia-view.mia-route-study[data-device="phone"] .mia-study-card .mia-question-section > h2 { margin-bottom: 8px; }
-.mia-view.mia-route-study[data-device="phone"] .mia-study-card .mia-answer-section { margin-top: 8px; padding: 8px 10px; border-left-width: 6px; }
+.mia-view.mia-route-study[data-device="phone"] .mia-study-card .mia-answer-section { margin-top: 8px; padding: 8px 10px; }
 .mia-view.mia-route-study[data-device="phone"] .mia-study-card .mia-markdown { line-height: 1.6; }
 .mia-view.mia-route-study[data-device="phone"] .mia-study-concepts { margin-top: 8px; padding-top: 4px; }
 .mia-view.mia-route-study[data-device="phone"] .mia-study-dock { margin-top: 4px; padding-top: 6px; }
@@ -1607,14 +1681,3 @@ body.theme-dark .modal.mia-detail-modal { --mia-danger-text: #ff7a70; }
 @container mia-view (max-width: 600px) {
 .mia-view.mia-route-dashboard .mia-subject-grid { grid-template-columns: minmax(0, 1fr); }
 }
-
-/* Keyword meaning popup: the keyword as the title and its meaning in the study answer box style. */
-.mia-keyword-meaning-modal .mia-keyword-meaning { padding: 12px 16px; background: var(--mia-panel); border: 3px solid var(--mia-ink); border-left: 12px solid var(--mia-yellow); }
-.mia-keyword-meaning-modal .mia-keyword-meaning .mia-card-label { display: inline-block; margin: 0 0 8px; padding: 3px 9px; background: var(--mia-yellow); color: var(--mia-on-yellow); border: 3px solid var(--mia-ink); font-size: 11px; font-weight: 800; letter-spacing: .06em; }
-.mia-keyword-meaning-modal .mia-keyword-meaning .mia-markdown { font-size: var(--mia-preview-body, 16px); line-height: 1.7; }
-.mia-keyword-meaning-modal .mia-keyword-meaning .mia-markdown > :first-child { margin-top: 0; }
-.mia-keyword-meaning-modal .mia-keyword-meaning .mia-markdown > :last-child { margin-bottom: 0; }
-.mia-keyword-meaning-modal .mia-keyword-meaning > p.mia-muted { margin: 0; }
-
-/* Inline recall metadata keeps the compact card header at its existing height. */
-.mia-view .mia-answer-timer { display: inline-block; margin-left: 8px; white-space: nowrap; font-size: 12px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--mia-on-yellow); background: var(--mia-yellow); }

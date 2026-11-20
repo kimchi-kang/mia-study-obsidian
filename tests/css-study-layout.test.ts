@@ -58,6 +58,13 @@ describe("study pane width and chrome CSS", () => {
       expect(declarations(rule!)).toMatchObject({ display: "inline", padding: "0", margin: "0", "border-width": "0" });
     }
   });
+  it("places the header across both columns so the question and answer share a row in split mode", () => {
+    const header = rules.find(rule => rule.selector === '.mia-view[data-answer-layout="split"] .mia-study-card > .mia-card-header')!;
+    expect(header.parent).toMatchObject({ name: "container", params: "mia-view (min-width: 900px)" });
+    expect(declarations(header)["grid-column"]).toBe("1 / -1");
+    const card = rules.find(rule => rule.selector === '.mia-view[data-answer-layout="split"] .mia-study-card:has(.mia-answer-section)')!;
+    expect(declarations(card)["grid-template-columns"]).toBe("minmax(0, 1fr) minmax(0, 1fr)");
+  });
   it("retains the phone 44px bar and four-column rating buttons", () => {
     expect(rules.some(rule => rule.selector.includes('[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-settings-buttons > button') && declarations(rule)["min-height"] === "44px")).toBe(true);
     expect(rules.some(rule => rule.selector.includes('[data-device="phone"].mia-route-study .mia-study-dock .mia-ratings') && declarations(rule)["grid-template-columns"] === "repeat(4, minmax(0, 1fr))")).toBe(true);

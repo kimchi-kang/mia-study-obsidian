@@ -10,13 +10,13 @@
 ![Platforms](https://img.shields.io/badge/desktop%20%C2%B7%20mobile-supported-2f9e5b)
 [![License](https://img.shields.io/github/license/kimchi-kang/mia-study-obsidian?color=555)](LICENSE)
 
-[**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.5.8 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.5.8/mia-study-1.5.8.zip) · [변경 내역](docs/releases/1.5.8.md) · [현재 상태](STATUS.md)
+[**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.6.0 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.6.0/mia-study-1.6.0.zip) · [변경 내역](docs/releases/1.6.0.md) · [현재 상태](STATUS.md)
 
 <img src="docs/assets/screens/desktop-dashboard.jpg" alt="MIA Study 오늘 화면. 바우하우스 디자인의 복습·새 문제 블록, 시작 패널, 취약 문제 띠와 과목별 학습 카드" width="860">
 
 </div>
 
-1.4.13부터 플러그인 화면이 소개 페이지와 같은 바우하우스 스타일(원색, 두꺼운 테두리, 각진 모서리, 4색 평가 버튼)로 바뀌었습니다. 동작과 저장 형식은 그대로입니다.
+1.6.0부터 플러그인 화면은 **어두운 소프트 뉴모피즘**입니다. 같은 색 바탕 위에 그림자로 솟거나 파인 둥근 카드·버튼을 쓰고, Obsidian 테마가 밝든 어둡든 MIA 화면은 항상 어둡게 보입니다. 동작과 저장 형식은 그대로입니다.
 
 Obsidian 안에서 과목·질문·키워드를 폼으로 관리하면서 FSRS-6 복습, 핵심·보조 키워드, 키워드 의미 노트, 연관 문제 추천을 제공한다. Markdown을 직접 작성할 필요가 없고 문제 하나마다 노트를 만들지도 않는다.
 
@@ -24,9 +24,9 @@ Obsidian 안에서 과목·질문·키워드를 폼으로 관리하면서 FSRS-6
 |---|---|---|
 | <img src="docs/assets/screens/desktop-study.jpg" alt="시험(일반복습)모드 학습 화면, 렌더링된 수식이 있는 모범 답안" width="320"> | <img src="docs/assets/screens/desktop-questions.jpg" alt="문제 목록, 수학 기초·요리 과학 예시 질문" width="320"> | <img src="docs/assets/screens/mobile-study.jpg" alt="모바일 학습 화면, 평가 버튼 4색" width="140"> |
 
-화면은 1.4.13 바우하우스 디자인(빨강·노랑·파랑, 두꺼운 테두리, 각진 모서리)과 직접 만든 일반 상식 데모 보관함(수학 기초·세계 지리·요리 과학)으로 찍었습니다. 수식·이미지·표·코드 렌더링을 보여 주는 예시 질문이며 실제 학습 내용이 아닙니다. 모바일 화면은 데스크톱 Obsidian에서 휴대폰 폭을 흉내 낸 것입니다. 이 화면들은 1.4.17 즈음에 찍어 1.4.23 이후의 넓어진 여백과 답변 타이머는 보이지 않습니다.
+아래·위 화면은 1.6.0 이전의 바우하우스 디자인(빨강·노랑·파랑, 두꺼운 테두리, 각진 모서리)으로 찍은 것이라 현재 모양과 다릅니다. 화면은 직접 만든 일반 상식 데모 보관함(수학 기초·세계 지리·요리 과학)으로 찍었습니다. 수식·이미지·표·코드 렌더링을 보여 주는 예시 질문이며 실제 학습 내용이 아닙니다. 모바일 화면은 데스크톱 Obsidian에서 휴대폰 폭을 흉내 낸 것입니다. 이 화면들은 1.4.17 즈음에 찍어 1.4.23 이후의 넓어진 여백과 답변 타이머는 보이지 않습니다.
 
-[1.5.8 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.5.8) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.5.8 변경 내역](docs/releases/1.5.8.md) · [이전 버전 이력](docs/releases/HISTORY.md)
+[1.6.0 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.6.0) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.6.0 변경 내역](docs/releases/1.6.0.md) · [이전 버전 이력](docs/releases/HISTORY.md)
 
 Major Study 제목 바로 옆에서 현재 실행 중인 버전을 확인할 수 있습니다. 업데이트한 파일을 로드하려면 Obsidian을 다시 시작하세요. 수식은 원문에 `$...$` 또는 `$$...$$` 구분자와 TeX 문법이 있어야 표시됩니다. 예를 들어 `y(t) = A(1 - e^(-t/k))` 같은 일반 문장은 자동으로 수식으로 바뀌지 않습니다.
 
@@ -54,7 +54,7 @@ MIA Study를 설치하거나 사용하면 아래 내용에 동의한 것으로 �
 
 ### 3. 테스트는 거쳤지만 오류가 없다는 뜻이 아니다
 
-- 버전마다 자동 검사(1.5.8 기준 약 2,000개), 타입 검사, 화면 크기 측정을 한다. 그러나 자동 검사는 미리 생각한 상황만 확인한다.
+- 버전마다 자동 검사(1.6.0 기준 약 2,000개), 타입 검사, 화면 크기 측정을 한다. 그러나 자동 검사는 미리 생각한 상황만 확인한다.
 - 실제 iPad·휴대폰, 모든 Obsidian 버전·테마·다른 플러그인과의 조합, 모든 동기화 서비스 조합은 확인하지 않았다.
 
 ### 4. 생길 수 있는 문제의 예

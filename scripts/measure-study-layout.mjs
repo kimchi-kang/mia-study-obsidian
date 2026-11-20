@@ -52,7 +52,7 @@ try {
   const results = [];
   const extras = extendedEnabled ? JSON.parse(await readFile(".claude/slim/layout-extra-cases.json", "utf8")) : [];
   if (process.env.MIA_LAYOUT_SCREENSHOTS) await mkdir(process.env.MIA_LAYOUT_SCREENSHOTS, { recursive: true });
-  const sizes = [[1366, 1024, "tablet"], [1194, 834, "tablet"], [834, 1194, "tablet"], [678, 1024, "tablet"], [390, 844, "phone"], [844, 390, "phone"], [1440, 900, "desktop"], [1920, 1080, "desktop"], [1920, 1080, "tablet"]];
+  const sizes = [[1366, 1024, "tablet"], [1194, 834, "tablet"], [834, 1194, "tablet"], [678, 1024, "tablet"], [360, 800, "phone"], [390, 844, "phone"], [844, 390, "phone"], [1440, 900, "desktop"], [1920, 1080, "desktop"], [1920, 1080, "tablet"]];
   for (const [width, height, device] of sizes.filter(size => !process.env.MIA_LAYOUT_SIZE || process.env.MIA_LAYOUT_SIZE.split(",").map(Number).includes(size[0]))) {
     await call("Emulation.setTouchEmulationEnabled", { enabled: device !== "desktop", maxTouchPoints: 1 });
     for (const theme of process.env.MIA_LAYOUT_STYLES ? ["theme-light", "theme-dark"] : [null]) {

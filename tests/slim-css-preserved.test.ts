@@ -4,7 +4,7 @@ import { expect, it } from "vitest";
 import unrendered from "./fixtures/slim-unrendered-classes.json";
 import preserved from "./fixtures/slim-preserved-css.json";
 
-it("preserves interactive states and editor/keyboard and unrendered declarations from 1.4.27", () => {
+it("preserves neumorphic interactive states and editor, keyboard and unrendered declarations", () => {
   const rules: typeof preserved = [];
   postcss.parse(readFileSync(new URL("../styles.css", import.meta.url), "utf8")).walkRules(rule => {
     const unmeasured = (rule.selector.match(/(?<=\.)mia-[\w-]+/g) ?? []).some(cls => unrendered.includes(cls));
