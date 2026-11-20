@@ -20,6 +20,9 @@ import { MiaSettingTab } from "../src/ui/settings-tab";
 import { ConfirmDeleteModal, SubjectEditorModal, ManagedQuestionModal, KeywordEditorModal } from "../src/ui/manage-modals";
 import { QuestionMetadataModal } from "../src/ui/metadata-modal";
 import { FollowUpModal } from "../src/ui/follow-up-modal";
+import { TargetDateModal } from "../src/ui/target-date-modal";
+import { ModalOpenGuard } from "../src/ui/modal-open-guard";
+import { MiaDataStore } from "../src/services/data-store";
 import { SubjectExportModal } from "../src/ui/subject-export-modal";
 import { bindKeyboardViewport } from "../src/ui/mobile-keyboard";
 import { DEFAULT_SETTINGS } from "../src/core/models";
@@ -200,12 +203,35 @@ it("renders additional real screens and states for computed-style equivalence", 
     capture(`question-editor-${count}`, modal.containerEl);
     modal.close();
   }
+  const targetEditor = () => new TargetDateModal(app, { id: "first", label: "첫 면접", date: "2026-11-28", subjects: ["통계이론"] },
+    ["통계이론", "지리학", "현대미술사"], async () => {});
+  const keyboardViewport = window.visualViewport;
+  Object.defineProperty(window, "visualViewport", { configurable: true, value: undefined });
+  const targetModal = targetEditor();
+  targetModal.open();
+  expect(targetModal.contentEl.querySelector("input[type=date]").value).toBe("2026-11-28");
+  capture("target-date-editor", targetModal.containerEl);
+  targetModal.close();
+  Object.defineProperty(window, "visualViewport", { configurable: true, value: keyboardViewport });
+  const targetWithKeyboard = targetEditor();
+  targetWithKeyboard.open();
+  capture("target-date-editor-keyboard", targetWithKeyboard.containerEl);
+  targetWithKeyboard.close();
+  const { view: targetView, root: targetRoot } = await renderLayoutCase({ route: "progress", targets: true });
+  targetView.plugin.modalOpenGuard = new ModalOpenGuard();
+  targetRoot.querySelector(".mia-target-card .mod-warning").click();
+  const targetConfirm = document.querySelector(".mia-target-delete-modal").closest(".modal-container");
+  capture("target-date-confirm", targetConfirm);
+  targetConfirm.querySelector(".modal-close-button").click();
+  await targetView.onClose();
+  targetRoot.remove();
   if (process.env.MIA_GENERATE_LAYOUT_HARNESS === "1") {
     await mkdir(".claude/slim", { recursive: true });
     // Reuse the exact host defaults; only replace the standalone boot script.
     const base = layoutHarness({ short: cases.hidden }).replace('<link rel="stylesheet"', `<style>
 :where(.mia-keyboard-modal-container, .modal-container:has(> :is(.mia-confirm-modal, .mia-recovery-modal))) { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
 :where(.mia-keyboard-modal, .mia-confirm-modal, .mia-recovery-modal) { position: relative; max-width: 100%; }
+.modal-container:has(.mia-target-date-form) > .modal-bg { position: absolute; inset: 0; background: rgba(0, 0, 0, .72); }
 :where(:is(.mia-keyboard-modal, .mia-confirm-modal, .mia-recovery-modal) .modal-header) { padding: 18px 20px 8px; }
 :where(:is(.mia-keyboard-modal, .mia-confirm-modal, .mia-recovery-modal) .modal-content) { padding: 8px 20px 20px; }
 :where(.mia-keyboard-modal .setting-item) { padding-block: 14px; }
@@ -227,12 +253,12 @@ for (const [key,value] of Object.entries({width:innerWidth,height:innerHeight,le
 for (const edge of ['Left','Right','Top','Bottom']) root.style.setProperty('--safe-area-inset-'+edge.toLowerCase(),(Number(params.get('safe'+edge))||0)+'px');
 root.dataset.viewportHeight = innerHeight < 440 ? 'short' : innerHeight < 600 ? 'compact' : 'regular';
 window.miaLayoutReport = () => {
-  const surface = root.matches('.vertical-tab-content') ? root : root.querySelector('.mia-recovery-modal, .mia-confirm-modal, .mia-editor-modal-long');
+  const surface = root.matches('.vertical-tab-content') ? root : root.querySelector('.mia-recovery-modal, .mia-confirm-modal, .mia-editor-modal-long, .modal:has(.mia-target-date-form)');
   const content = surface?.querySelector('.modal-content') ?? surface;
   return {
     route, device, paneWidth: innerWidth, innerWidth, contentWidth: root.getBoundingClientRect().width,
     contentSafePaneRatio: 1, grids: {}, elements: document.querySelectorAll('.view-content *').length,
-    horizontalOverflow: surface && [surface, content, ...surface.querySelectorAll(".mia-keyword-meanings, .setting-item-control, textarea")].some(el => el.scrollWidth > el.clientWidth + 1),
+    horizontalOverflow: surface && [surface, content, ...surface.querySelectorAll(".mia-keyword-meanings, .setting-item-control, textarea, .mia-target-date-form, .mia-target-date-form input")].some(el => el.scrollWidth > el.clientWidth + 1),
     paneHorizontalOverflow: surface && (Math.min(surface.getBoundingClientRect().left, content.getBoundingClientRect().left) < -1
       || Math.max(surface.getBoundingClientRect().right, content.getBoundingClientRect().right) > innerWidth + 1),
   };
@@ -386,3 +412,44 @@ it.each([["skip", "again"], ["again", "skip"]])(
     await view.onClose();
   },
 );
+
+it("adds, edits and removes a target through the guarded modal and persisted settings", async () => {
+  vi.mocked(crypto.randomUUID).mockRestore();
+  const { view, root } = await renderLayoutCase({ route: "progress" });
+  const { plugin } = view;
+  let disk = { version: 1, settings: plugin.store.settings };
+  const store = new MiaDataStore({ loadData: async () => structuredClone(disk), saveData: async data => { disk = structuredClone(data); } });
+  await store.load();
+  plugin.store = store;
+  plugin.modalOpenGuard = new ModalOpenGuard();
+  const button = (element, label) => [...element.querySelectorAll("button")].find(item => item.textContent === label);
+  const modal = () => document.querySelector(".modal-container");
+  button(root, "목표일 추가").click();
+  button(root, "목표일 추가").click();
+  expect(document.querySelectorAll(".modal-container")).toHaveLength(1);
+  const form = modal().querySelector("form");
+  form.querySelector("input[type=text]").value = " 첫 면접 ";
+  form.querySelector("input[type=date]").value = "2026-11-28";
+  form.querySelectorAll("input[type=checkbox]")[1].checked = true;
+  button(form, "저장").click();
+  await vi.waitFor(() => expect(modal()).toBeNull());
+  expect(disk.settings.targetDates).toEqual([{ id: expect.any(String), label: "첫 면접", date: "2026-11-28", subjects: ["통계이론"] }]);
+  view.render();
+  button(root, "편집").click();
+  const edit = modal().querySelector("form");
+  expect(edit.querySelectorAll("input[type=checkbox]")[1].checked).toBe(true);
+  edit.querySelectorAll("input[type=checkbox]")[1].checked = false;
+  edit.querySelector("input[type=text]").value = "연습 시험";
+  button(edit, "저장").click();
+  await vi.waitFor(() => expect(modal()).toBeNull());
+  expect(disk.settings.targetDates).toEqual([{ id: expect.any(String), label: "연습 시험", date: "2026-11-28" }]);
+  view.render();
+  button(root, "삭제").click();
+  expect(modal().textContent).toContain("‘연습 시험’ 목표일을 삭제할까요?");
+  button(modal(), "취소").click();
+  expect(disk.settings.targetDates).toHaveLength(1);
+  button(root, "삭제").click();
+  button(modal(), "삭제").click();
+  await vi.waitFor(() => expect(modal()).toBeNull());
+  expect(disk.settings).not.toHaveProperty("targetDates");
+});

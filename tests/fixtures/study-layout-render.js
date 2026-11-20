@@ -28,7 +28,7 @@ export function createLayoutDom() {
   return dom;
 }
 
-export async function renderLayoutCase({ long = false, related = true, revealed = true, route = "study" } = {}) {
+export async function renderLayoutCase({ long = false, related = true, revealed = true, route = "study", targets = false } = {}) {
   const question = {
     id: "q", heading: "재료 보존이란?", questionMarkdown: "재료 보존이란?",
     answerMarkdown: Array.from({ length: long ? 40 : 3 }, (_, i) => `${i + 1}. 전체 재료량은 일정하다.`).join("\n"),
@@ -53,6 +53,11 @@ export async function renderLayoutCase({ long = false, related = true, revealed 
     questionDetailSource: async question => ({ question, review: plugin.store.getReview(question.id), recommendations: [], meanings: new Map(), actions: {} }),
     store: { settings: structuredClone(DEFAULT_SETTINGS), reviews: {}, getReview: id => plugin.store.reviews[id], getReviewVersion: () => null },
   };
+  if (targets) plugin.store.settings.targetDates = [
+    { id: "second", label: "연습 시험", date: "2026-12-03", subjects: ["통계이론"] },
+    { id: "first", label: "첫 면접", date: "2026-11-28" },
+    { id: "past", label: "지난 시험", date: "2026-11-12" },
+  ];
   if (route !== "study") {
     for (const [i, item] of questions.entries()) {
       if (i % 3 === 0) continue;

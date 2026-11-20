@@ -121,12 +121,23 @@ export const DEFAULT_STUDY_MANAGEMENT: StudyManagementSettings = {
 
 export interface MiaSettings {
   savedStudyProfiles?: SavedStudyProfile[];
+  /** Omitted from storage when there are no target dates. */
+  targetDates?: TargetDate[];
   studyManagement: StudyManagementSettings;
   sourceRoots: string[];
   targetRetention: number;
   maximumIntervalDays: number;
   gradeIntervalsMinutes: GradeIntervalsMinutes;
   keywordFolder: string;
+}
+
+export interface TargetDate {
+  id: string;
+  label: string;
+  /** Local calendar date in YYYY-MM-DD format. */
+  date: string;
+  /** Omitted or empty means all subjects. */
+  subjects?: string[];
 }
 
 /** Only the everyday controls belong to a profile; expert scheduling stays local. */

@@ -2,6 +2,7 @@ import { reviewConflictKey, settingsConflictKey } from "../core/conflict-dismiss
 import { normalizeAnswerMs } from "../core/answer-time";
 import { rebaseSettings, reviseSettings, settingsKey, settingsSnapshot } from "../core/settings-sync";
 import { parseStudyManagement } from "../core/study-management";
+import { parseTargetDates } from "../core/target-dates";
 import { parseStudyProfiles } from "../core/simple-study-settings";
 import { mergeIntoOwnedIncoming, mergeReviewData, nextReviewVersion } from "../core/review-sync";
 import type { PluginDataStorage } from "./verified-plugin-storage";
@@ -60,7 +61,9 @@ export function parseSettings(value: unknown): MiaSettings {
         && Number.isInteger(minutes) && minutes >= 1 && minutes <= MAX_GRADE_INTERVAL_MINUTES) gradeIntervalsMinutes[grade] = minutes;
     }
   }
+  const targetDates = parseTargetDates(raw.targetDates);
   return {
+    ...(targetDates.length ? { targetDates } : {}),
     ...(raw.savedStudyProfiles !== undefined ? { savedStudyProfiles: parseStudyProfiles(raw.savedStudyProfiles) } : {}),
     studyManagement: parseStudyManagement(raw.studyManagement),
     sourceRoots: roots,
@@ -245,6 +248,10 @@ export function parsePluginData(raw: unknown): MiaPluginData {
         original.studyManagement.learnAheadMinutes = DEFAULT_SETTINGS.studyManagement.learnAheadMinutes;
       }
       const settings = parseSettings(original);
+      // This optional list recovers valid entries from partially malformed input,
+      // including archived settings, without relaxing validation of other fields.
+      delete original.targetDates;
+      if (settings.targetDates) original.targetDates = settings.targetDates;
       if (settingsKey(settings) !== settingsKey(original)) throw new InvalidReviewDataError("보관된 설정이 손상되어 저장을 중단했습니다.");
       return { id: item.id, ancestors: [...item.ancestors], settings };
     });

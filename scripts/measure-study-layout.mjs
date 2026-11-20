@@ -67,7 +67,20 @@ try {
             try {
               const theme = ${JSON.stringify(theme)};
               if (theme) { document.body.classList.remove("theme-light", "theme-dark"); document.body.classList.add(theme); }
+              if (${JSON.stringify(process.env.MIA_LAYOUT_NIGHT === "1")}) {
+                document.body.classList.add("mia-night-local");
+                const view = document.querySelector(".mia-view");
+                if (view) view.dataset.night = "true";
+              }
               const report = window.miaLayoutReport();
+              const controls = [...document.querySelectorAll(
+                ".mia-target-strip button, .mia-target-dates :is(button, summary), .mia-review-forecast summary, "
+                + ".mia-keyword-radar button, .mia-keyword-toolbar select, .mia-target-date-form :is(button, input:not([type=checkbox]), .mia-target-subject), "
+                + ".mia-target-delete-modal button, :is(.mia-target-date-modal, .mia-target-delete-modal) .modal-close-button"
+              )].filter(el => el.getClientRects().length);
+              report.targetAndRadarTouch = controls.map(el => ({ label: el.textContent?.trim(), width: el.offsetWidth, height: el.offsetHeight }));
+              const bars = document.querySelector(".mia-forecast-bars");
+              report.targetAndRadarOverflow = bars ? bars.scrollWidth > bars.clientWidth + 1 : false;
               if (theme) {
                 report.theme = theme;
                 const elements = ${extended ? '[...document.querySelectorAll(".view-content *")]' : '[document.querySelector(".mia-view"), ...document.querySelectorAll(".mia-view *")]'};
@@ -101,6 +114,13 @@ try {
     }
   }
   await writeFile(process.argv[2] ?? "/tmp/mia-wide-measurements.json", JSON.stringify(results, null, 2) + "\n");
+  const featureIssues = results.flatMap(r => {
+    if (!r.targetAndRadarTouch.length) return [];
+    const undersized = r.targetAndRadarTouch.filter(tap => tap.height < 44 || tap.width < 44);
+    const overflow = r.targetAndRadarOverflow || r.horizontalOverflow || r.paneHorizontalOverflow;
+    return overflow || undersized.length ? [{ route: r.route, width: r.width, theme: r.theme, overflow, undersized }] : [];
+  });
+  if (featureIssues.length) throw new Error(`Target date or radar layout: ${JSON.stringify(featureIssues)}`);
   if (results.some(r => !r.extended && r.device !== "desktop" && r.width < 1600 && r.contentSafePaneRatio < .94)) throw new Error("Touch content narrower than 94% of safe pane");
   if (results.some(r => !r.extended && r.device !== "desktop" && r.route !== "study" && r.contentWidth > 1600)) throw new Error("Library cap exceeded");
   if (results.some(r => !r.extended && r.route === "questions" && r.panelVisible !== (r.device !== "phone" && r.width >= 1000))) throw new Error("Detail panel visibility regressed");

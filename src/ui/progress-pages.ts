@@ -12,6 +12,8 @@ import { SettingsConflictModal } from "./settings-conflict-modal";
 import type { StudyPageContext } from "./study-page-context";
 import { progressGuidance } from "./study-policy";
 import { dialogKey } from "./modal-open-guard";
+import { forecastReviews, type TargetDateSummary } from "../core/target-dates";
+import { readTargetDates, renderReviewForecast, renderTargetDates, renderUpcomingTarget, targetRecallLabel } from "./target-date-panels";
 
 // The dashboard and progress pages: counts, start buttons and per-subject cards.
 
@@ -28,17 +30,15 @@ function subjectQuestions(ctx: StudyPageContext, subject: string): RegisteredQue
   return ctx.plugin.index.registered.filter(question => question.subject === subject);
 }
 
-function readOverview(ctx: StudyPageContext, route: "dashboard"): DashboardOverview;
-function readOverview(ctx: StudyPageContext, route: "progress"): ProgressOverview;
-function readOverview(ctx: StudyPageContext, route: OverviewRoute): DashboardOverview | ProgressOverview;
-function readOverview(ctx: StudyPageContext, route: OverviewRoute): DashboardOverview | ProgressOverview {
+export function readOverview(ctx: StudyPageContext, route: OverviewRoute): OverviewSnapshot {
   const { store, index, fsrs, studyUi } = ctx.plugin;
   const now = new Date();
+  const questions = index.registered;
   const dayStartsAt = store.settings.studyManagement.dayStartsAt;
   const day = studyDayStart(now, dayStartsAt).getTime();
-  const { bySubject, ...counts } = calculateProgress(index.registered, store.reviews, fsrs, now);
+  const { bySubject, ...counts } = calculateProgress(questions, store.reviews, fsrs, now);
   const subjects = new Map(ctx.plugin.listSubjects().map(subject => [subject, [] as RegisteredQuestion[]]));
-  for (const question of index.registered) {
+  for (const question of questions) {
     const items = subjects.get(question.subject) ?? [];
     items.push(question);
     subjects.set(question.subject, items);
@@ -51,13 +51,16 @@ function readOverview(ctx: StudyPageContext, route: OverviewRoute): DashboardOve
       canStart: reviewQueue(ctx, items, now).length > 0 };
   });
   const common = { dayStartsAt, day, reviewConflictCount: Object.keys(store.conflicts ?? {}).length };
-  if (route === "progress") return { ...common, counts, cards };
-  const available = reviewQueue(ctx, index.registered, now);
+  if (route === "progress") return {
+    ...common, counts, cards, targets: readTargetDates(ctx, now, false, questions),
+    forecast: forecastReviews(questions, store.reviews, fsrs, dayStartsAt, now), retention: store.settings.targetRetention,
+  };
+  const available = reviewQueue(ctx, questions, now);
   const availableNew = available.filter(question => fsrs.isNew(store.getReview(question.id))).length;
   const saved = studyUi.resume;
   const current = saved ? index.questionById(saved.queue[saved.queueIndex] ?? saved.seed[0] ?? "") : undefined;
   return {
-    ...common, total: counts.total, due: counts.due, fresh: counts.new, easy: counts.easy, today: counts.today,
+    ...common, target: readTargetDates(ctx, now, true, questions)[0] ?? null, total: counts.total, due: counts.due, fresh: counts.new, easy: counts.easy, today: counts.today,
     stableRatio: counts.total ? Math.round(counts.stable / counts.total * 100) : 0,
     weak: counts.again + counts.hard, availableNew, availableDue: available.length - availableNew,
     cards: cards.map(({ again, hard, good, easy, ...card }) => ({ ...card, weak: again + hard })),
@@ -76,10 +79,14 @@ function readOverview(ctx: StudyPageContext, route: OverviewRoute): DashboardOve
 type OverviewCommon = { dayStartsAt: number; day: number; reviewConflictCount: number };
 type SubjectCard = { subject: string; total: number; studied: number; fresh: number; due: number; canStart: boolean };
 type ProgressOverview = OverviewCommon & {
+  targets: TargetDateSummary[];
+  forecast: ReturnType<typeof forecastReviews>;
+  retention: number;
   counts: ProgressCounts;
   cards: Array<SubjectCard & { again: number; hard: number; good: number; easy: number }>;
 };
 type DashboardOverview = OverviewCommon & {
+  target: TargetDateSummary | null;
   total: number; due: number; fresh: number; easy: number; today: number; stableRatio: number; weak: number;
   availableNew: number; availableDue: number;
   cards: Array<SubjectCard & { weak: number }>;
@@ -90,8 +97,19 @@ type DashboardOverview = OverviewCommon & {
   hasCandidates: boolean; diagnostics: number;
 };
 
-export function overviewSignature(ctx: StudyPageContext, route: OverviewRoute, overview?: DashboardOverview | ProgressOverview): string {
-  return JSON.stringify([route, ctx.plugin.index.isReady ? overview ?? readOverview(ctx, route) : null]);
+export type OverviewSnapshot = DashboardOverview | ProgressOverview;
+
+export function overviewSignature(route: OverviewRoute, snapshot: OverviewSnapshot | null): string {
+  if (!snapshot) return JSON.stringify([route, null]);
+  if ("targets" in snapshot) {
+    const { targets, retention, ...rest } = snapshot;
+    return JSON.stringify([route, rest, targets.length ? Math.round(retention * 100) : null, targets.map(
+      ({ target, daysUntil, total, unstudied, averageRecall, risks }) =>
+        [target, Math.max(-1, daysUntil), total, unstudied, targetRecallLabel(averageRecall), risks.length],
+    )]);
+  }
+  const { target, ...rest } = snapshot;
+  return JSON.stringify([route, rest, target && [target.target.label, target.daysUntil, target.risks.length]]);
 }
 
 /** Explains why questions vanished when a sync app left a copy of a question file. */
@@ -115,8 +133,8 @@ function renderReviewConflictWarning(ctx: StudyPageContext, root: HTMLElement, c
   }
 }
 
-export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): string {
-  const overview = readOverview(ctx, "dashboard");
+export function renderDashboard(ctx: StudyPageContext, root: HTMLElement, overview: DashboardOverview): void {
+  if (overview.target) renderUpcomingTarget(ctx, root, overview.target);
   if (overview.pending) {
     const warning = root.createDiv({ cls: "mia-storage-warning" });
     warning.createEl("p", { text: "완료를 확인하지 못한 저장 사본이 있습니다. 새 평가 전에 확인하세요." });
@@ -268,7 +286,6 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement): strin
       });
     }
   }
-  return overviewSignature(ctx, "dashboard", overview);
 }
 
 /** Again/Hard questions, most urgent first (the order the weak-question study uses). */
@@ -294,9 +311,10 @@ function renderWeaknessStrip(ctx: StudyPageContext, root: HTMLElement, count: nu
   actions.createEl("button", { text: "목록 보기" }).addEventListener("click", () => ctx.showQuestions("weak"));
 }
 
-export function renderProgress(ctx: StudyPageContext, root: HTMLElement): string {
-  const overview = readOverview(ctx, "progress");
+export function renderProgress(ctx: StudyPageContext, root: HTMLElement, overview: ProgressOverview): void {
   const progress = overview.counts;
+  renderTargetDates(ctx, root, overview.targets, overview.retention);
+  renderReviewForecast(root, overview.forecast, overview.targets);
   root.createEl("h3", { text: "전체 학습현황", cls: "mia-page-title" });
   renderReviewConflictWarning(ctx, root, overview.reviewConflictCount);
   const totals = root.createDiv({ cls: "mia-stats" });
@@ -339,7 +357,6 @@ export function renderProgress(ctx: StudyPageContext, root: HTMLElement): string
     actions.createEl("button", { text: "전체 문제" }).addEventListener("click", () => ctx.showQuestions("all", subject));
   }
   if (overview.cards.length === 0) root.createEl("p", { text: "과목과 질문을 추가하면 학습현황이 표시됩니다.", cls: "mia-empty" });
-  return overviewSignature(ctx, "progress", overview);
 }
 
 function renderProgressGuidance(root: HTMLElement, dayStartsAt: number): void {

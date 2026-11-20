@@ -16,6 +16,7 @@ export interface StudyPageContext {
   /** Markdown renders the view waits for before restoring the reading position. */
   readonly renders: Promise<void>[];
   startReview(questionIds?: string[], mode?: MiaSessionMode): void;
+  startFocusedReview(questionIds: string[]): void;
   resumeStudy(): Promise<void>;
   navigate(route: MiaRoute): void;
   showDashboard(): void;

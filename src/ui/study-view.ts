@@ -25,7 +25,7 @@ import { dialogKey } from "./modal-open-guard";
 import { StudyAppearanceModal } from "./study-appearance-modal";
 import type { StudySessionSummary } from "../services/study-ui-store";
 import { renderKeywords } from "./keywords-page";
-import { overviewSignature, renderDashboard, renderProgress } from "./progress-pages";
+import { overviewSignature, readOverview, renderDashboard, renderProgress, type OverviewSnapshot } from "./progress-pages";
 import { QuestionListState, renderQuestionsPage } from "./question-list-page";
 import { renderQuestionHeading } from "./question-row";
 import type { StudyPageContext } from "./study-page-context";
@@ -53,6 +53,7 @@ export class MiaStudyView extends ItemView {
   private queueIndex = 0;
   private answerVisible = false;
   private sessionMode: MiaSessionMode = "recall";
+  private focusedReview = false;
   private blockedSelection: BlockedSelection | null = null;
   private get readOnlyBrowse(): boolean { return this.sessionMode === "browse"; }
   private lastRated: { id: string; queueIndex: number; queueBefore: string[]; savedState: QuestionReviewState } | null = null;
@@ -195,7 +196,7 @@ export class MiaStudyView extends ItemView {
     this.navigate("dashboard");
   }
 
-  startReview(questionIds?: string[], mode: MiaSessionMode = "recall"): void {
+  startReview(questionIds?: string[], mode: MiaSessionMode = "recall", focused = false): void {
     if (this.reviewSavePending()) return;
     this.clearResultPopup();
     if (this.readingTimer !== null) { window.clearTimeout(this.readingTimer); this.readingTimer = null; }
@@ -212,14 +213,15 @@ export class MiaStudyView extends ItemView {
     const fsrs = this.plugin.fsrs;
     const requestedIds = questionIds ? new Set(questionIds) : null;
     const scope = requestedIds ? questions.filter((question) => requestedIds.has(question.id)) : questions;
-    const sequential = mode === "browse" && this.plugin.studyUi.appearance.memorizationOrder === "sequential";
+    this.focusedReview = focused && mode === "recall" && requestedIds !== null;
+    const sequential = this.focusedReview || mode === "browse" && this.plugin.studyUi.appearance.memorizationOrder === "sequential";
     const options: ReviewQueueOptions = { now: new Date() };
-    if (mode === "recall") options.management = this.plugin.store.settings.studyManagement;
+    if (mode === "recall" && !this.focusedReview) options.management = this.plugin.store.settings.studyManagement;
     else {
       if (!sequential) options.random = Math.random;
       options.includeFuture = true;
     }
-    const selected = mode === "recall" && requestedIds?.size ? planSelectedReview(questions, requestedIds, reviews, fsrs, options) : null;
+    const selected = options.management && requestedIds?.size ? planSelectedReview(questions, requestedIds, reviews, fsrs, options) : null;
     const eligible = selected?.queue ?? buildReviewQueue(scope, reviews, fsrs, options);
     this.blockedSelection = selected && !eligible.length && requestedIds ? { ids: [...requestedIds], exclusions: selected.exclusions } : null;
     const eligibleIds = eligible.map((question) => question.id);
@@ -285,6 +287,7 @@ export class MiaStudyView extends ItemView {
     const sessionChanged = next.sessionMode !== this.sessionMode || next.queue.length !== this.queue.length
       || next.queue.some((id, index) => id !== this.queue[index]);
     if (sessionChanged) {
+      this.focusedReview = false;
       this.blockedSelection = null;
       // Workspace history can restore a different queue into the same view.
       // Position-based baselines and undo belong only to their original session.
@@ -414,8 +417,10 @@ export class MiaStudyView extends ItemView {
       const force = this.forceOverviewRefresh;
       this.forceOverviewRefresh = false;
       try {
-        if (interval && !this.closed && (this.route === "dashboard" || this.route === "progress")
-          && (force || overviewSignature(this.pages, this.route) !== this.renderedOverview)) this.render();
+        if (interval && !this.closed && (this.route === "dashboard" || this.route === "progress")) {
+          const overview = this.plugin.index.isReady ? readOverview(this.pages, this.route) : null;
+          if (force || overviewSignature(this.route, overview) !== this.renderedOverview) this.render(overview);
+        }
       } catch (error) { new Notice(`학습 화면 표시 실패: ${errorMessage(error)}`); }
     }
   }
@@ -492,6 +497,7 @@ export class MiaStudyView extends ItemView {
       const sameSession = this.queueIndex === index && this.sessionMode === saved.sessionMode && this.queue.length === queue.length && this.queue.every((id, position) => id === queue[position]);
       this.blockedSelection = null;
       if (!sameSession) {
+        this.focusedReview = false;
         this.lastRated = null; this.sessionBaselines.clear(); this.sessionAttempts.clear();
         this.sessionGrades.clear(); this.sessionSkipped.clear(); this.sessionStartedAt = Date.now();
         if (saved.sessionMode === "recall") this.restoreSessionSummary(saved.sessionSummary, queue);
@@ -577,7 +583,7 @@ export class MiaStudyView extends ItemView {
     this.renderAnswerTimer(context, id);
   }
 
-  private render(): void {
+  private render(overview?: OverviewSnapshot | null): void {
     if (this.closed) return;
     this.clearAnswerInterval();
     if (this.route !== "study") this.resetAnswerClock();
@@ -620,12 +626,16 @@ export class MiaStudyView extends ItemView {
     root.addClass(`mia-route-${this.route}`);
     this.renderHeader(root);
     if (!this.plugin.index.isReady) {
-      if (this.route === "dashboard" || this.route === "progress") this.renderedOverview = overviewSignature(this.pages, this.route);
+      if (this.route === "dashboard" || this.route === "progress") this.renderedOverview = overviewSignature(this.route, null);
       root.createEl("p", { text: "문제를 불러오는 중입니다…", cls: "mia-muted" });
       return;
     }
-    if (this.route === "dashboard") this.renderedOverview = renderDashboard(this.pages, root);
-    if (this.route === "progress") this.renderedOverview = renderProgress(this.pages, root);
+    if (this.route === "dashboard" || this.route === "progress") {
+      const snapshot = overview ?? readOverview(this.pages, this.route);
+      if ("targets" in snapshot) renderProgress(this.pages, root, snapshot);
+      else renderDashboard(this.pages, root, snapshot);
+      this.renderedOverview = overviewSignature(this.route, snapshot);
+    }
     if (this.route === "questions") this.renderQuestionsRoute(root);
     if (this.route === "keywords") renderKeywords(this.pages, root);
     if (this.route === "study") {
@@ -725,6 +735,9 @@ export class MiaStudyView extends ItemView {
       get component() { return view.renderComponent ?? view; },
       get renders() { return view.readingRenders; },
       startReview: (questionIds, mode) => view.startReview(questionIds, mode),
+      // The target and radar buttons explicitly request an ordered, early
+      // recall test. Its grades still follow the ordinary FSRS save path.
+      startFocusedReview: (questionIds) => view.startReview(questionIds, "recall", true),
       resumeStudy: () => view.resumeStudy(),
       navigate: (route) => view.navigate(route),
       showDashboard: () => view.showDashboard(),
@@ -1253,6 +1266,9 @@ export class MiaStudyView extends ItemView {
 
   private refreshLearningQueue(): Date | null {
     if (this.readOnlyBrowse) return null;
+    // Give every selected card its first turn in the requested order before
+    // reinserting learning steps from this session.
+    if (this.focusedReview && this.queueIndex < Math.min(this.sessionSeed.length, this.queue.length)) return null;
     const scope = [...new Set([...this.sessionSeed, ...this.queue])].filter((id) => this.plugin.index.questionById(id));
     const plan = planLearningQueue(this.queue, this.queueIndex, scope, this.plugin.store.reviews, this.sessionSkipped, new Date(), this.plugin.store.settings.studyManagement.learnAheadMinutes * 60_000);
     // Revisiting history must not shift the positions of recorded attempts.
@@ -1348,7 +1364,7 @@ export class MiaStudyView extends ItemView {
   private restartSession(): void {
     const seed = [...this.sessionSeed];
     const mode = this.sessionMode;
-    this.startReview(seed, mode);
+    this.startReview(seed, mode, this.focusedReview);
   }
 
   private returnToSessionOrigin(): void {

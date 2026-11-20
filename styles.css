@@ -556,6 +556,10 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 }
 .mia-view .mia-hero-count strong { font-variant-numeric: tabular-nums; }
 
+.mia-target-strip { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 18px; padding: 10px 16px; border-radius: var(--mia-radius); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); overflow-wrap: anywhere; }
+.mia-target-strip > strong { min-width: 0; }
+.mia-view .mia-target-strip > button.mia-target-review { min-height: 44px; min-width: 44px; color: var(--mia-accent-text); }
+
 /* 3. Learning progress */
 .mia-page-title { margin-top: 0; }
 .mia-progress-ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--mia-card-gap); }
@@ -584,6 +588,22 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 
 .mia-view .mia-progress-subjects { gap: var(--mia-card-gap); }
 
+
+.mia-target-dates, .mia-review-forecast { display: grid; gap: 12px; min-width: 0; margin-bottom: 24px; overflow-wrap: anywhere; }
+.mia-target-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.mia-target-heading > h3, .mia-target-dates > p, .mia-review-forecast > :is(h3, p) { margin: 0; }
+.mia-target-card, .mia-review-forecast { padding: 14px; border-radius: var(--mia-radius); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); }
+.mia-target-card > :is(h4, p) { margin: 0 0 8px; }
+.mia-target-past > .mia-target-card { margin-block: 12px; }
+.mia-view .mia-target-card button.mia-target-review { color: var(--mia-accent-text); }
+.mia-view :is(.mia-target-dates, .mia-review-forecast) :is(button, summary) { min-height: 44px; min-width: 44px; }
+.mia-view :is(.mia-target-past, .mia-forecast-details) > summary { box-sizing: border-box; padding-block: 10px; cursor: pointer; }
+.mia-forecast-bars { display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 2px; height: 100px; padding: 8px; border-radius: var(--mia-radius-s); box-shadow: var(--mia-shadow-inset); }
+.mia-forecast-column { position: relative; display: flex; align-items: end; min-width: 0; padding-top: 9px; }
+.mia-forecast-bar { width: 100%; height: var(--mia-forecast-height); border-radius: var(--mia-radius-pill) var(--mia-radius-pill) 0 0; background: var(--mia-muted); }
+.mia-forecast-marker { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: min(7px, 100%); aspect-ratio: 1; border-radius: var(--mia-radius-pill); background: var(--mia-accent-text); }
+.mia-forecast-axis { display: flex; justify-content: space-between; gap: 12px; }
+.mia-forecast-key { color: var(--mia-accent-text); }
 
 /* 4. Questions and detail panels */
 /* 검색·필터 칸이 패널 가장자리에 붙지 않고, 그림자끼리 부딪히지 않게 띄운다. */
@@ -635,6 +655,18 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-keyword-grid { grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
 
 .mia-view .mia-keyword-grid { gap: var(--mia-card-gap); }
+
+.mia-keyword-radar { margin-bottom: 20px; padding: 14px; border-radius: var(--mia-radius); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); overflow-wrap: anywhere; }
+.mia-keyword-radar > h3 { margin: 0; }
+.mia-keyword-radar > ol { display: grid; gap: 8px; margin-block: 8px 0; padding-inline-start: 24px; }
+/* 한 줄에 개념 이름과 학습 버튼, 아래 줄에 수치: 휴대폰에서도 Top 5가 화면을 다 차지하지 않게 한다. */
+.mia-keyword-radar li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
+.mia-keyword-radar li > button:first-child { grid-column: 1; grid-row: 1; justify-self: start; }
+.mia-keyword-radar li > .mia-radar-start { grid-column: 2; grid-row: 1; }
+.mia-keyword-radar li > span { grid-column: 1 / -1; grid-row: 2; margin-block: 2px 0; font-size: var(--font-ui-small); }
+.mia-view .mia-keyword-radar li > button { min-height: 44px; min-width: 44px; max-width: 100%; white-space: normal; }
+.mia-view .mia-keyword-radar button.mia-radar-start { color: var(--mia-accent-text); }
+.mia-view .mia-keyword-toolbar select { min-height: 44px; max-width: 100%; }
 
 /* 6. Study cards and sessions */
 .mia-reveal { display: block; }
@@ -1113,6 +1145,16 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-keyword-meaning-modal .mia-keyword-meaning .mia-markdown > :first-child { margin-top: 0; }
 .mia-keyword-meaning-modal .mia-keyword-meaning .mia-markdown > :last-child { margin-bottom: 0; }
 .mia-keyword-meaning-modal .mia-keyword-meaning > p.mia-muted { margin: 0; }
+
+.modal:is(.mia-target-date-modal, .mia-target-delete-modal) { --mia-control-height: 44px; }
+.mia-target-date-form { display: grid; gap: 12px; overflow-wrap: anywhere; }
+.mia-target-date-form > label { display: grid; gap: 4px; }
+.mia-target-date-form > label > input { min-height: 44px; width: 100%; min-width: 0; background: var(--mia-surface); color: var(--mia-ink); }
+.mia-target-date-form > fieldset { min-width: 0; margin: 0; padding: 10px 12px; border: 0; border-radius: var(--mia-radius-s); box-shadow: var(--mia-shadow-inset); }
+.mia-target-date-form .mia-target-subject { display: flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; }
+.mia-target-date-form > .mia-target-actions { position: sticky; bottom: 0; z-index: 2; padding-block: 8px; }
+.modal .mia-target-date-form button, .modal.mia-target-delete-modal button { min-width: 44px; }
+.modal .mia-target-date-form button[type="submit"] { color: var(--mia-accent-text); }
 
 /* 8. Responsive panes, phones and tablets */
 @media (min-width: 641px) and (max-width: 1100px) {

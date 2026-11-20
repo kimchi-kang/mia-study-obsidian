@@ -62,7 +62,7 @@ describe("study layout rendered DOM", () => {
       root.remove();
     }
     for (const route of ["dashboard", "progress", "questions", "keywords"]) {
-      const { root } = await renderLayoutCase({ route });
+      const { root } = await renderLayoutCase({ route, targets: true });
       cases[route] = root.outerHTML;
       root.remove();
     }
@@ -252,4 +252,115 @@ it.each([true, false])("excludes modal time from saved answer_ms with timer disp
     expect(save.mock.calls[0][1].history[0].answer_ms).toBe(6000);
   } finally { await session.close(); }
   expect(view.answerTimer).toBeNull();
+});
+
+describe("target and radar routes", () => {
+  const button = (root, label) => [...root.querySelectorAll("button")].find(item => item.textContent === label);
+  it("shows the closest goal, forecasts all 30 study days, and folds past goals", async () => {
+    const { view, root } = await renderLayoutCase({ route: "dashboard", targets: true });
+    expect(root.querySelector(".mia-target-strip").textContent).toMatch(/D-\d+ 첫 면접 · 위험 문제 \d+개/);
+    await view.setState({ route: "progress" }, {});
+    expect([...root.querySelectorAll(".mia-target-dates > article h4")].map(el => el.textContent)).toEqual(["첫 면접", "연습 시험"]);
+    expect(root.querySelector(".mia-target-past").open).toBe(false);
+    expect(root.querySelector(".mia-target-past").textContent).toContain("지남");
+    expect(root.querySelectorAll(".mia-forecast-bar")).toHaveLength(30);
+    expect(root.querySelectorAll(".mia-forecast-marker")).toHaveLength(2);
+    expect(root.querySelector(".mia-review-forecast").textContent).toContain("하루 복습 상한 적용 전");
+  });
+
+  it("hides the dashboard goal strip and the radar when no relevant records exist", async () => {
+    const { view, root } = await renderLayoutCase({ route: "dashboard" });
+    expect(root.querySelector(".mia-target-strip")).toBeNull();
+    view.plugin.store.reviews = {};
+    await view.setState({ route: "keywords" }, {});
+    expect(root.querySelector(".mia-keyword-radar")).toBeNull();
+    expect(root.querySelectorAll(".mia-keyword")).toHaveLength(12);
+    await view.setState({ route: "progress" }, {});
+    expect(root.querySelector(".mia-target-card")).toBeNull();
+    expect(button(root, "목표일 추가")).toBeDefined();
+  });
+
+  it.each(["dashboard", "progress"])("starts early recall from the %s goal, even with a zero daily limit", async route => {
+    const { view, root } = await renderLayoutCase({ route, targets: true });
+    const plugin = view.plugin;
+    const [first, second] = plugin.index.registered;
+    const future = (q, stability) => {
+      const state = plugin.fsrs.rate(undefined, 3, new Date(Date.now() - 3 * 86_400_000), q.id);
+      return { ...state, card: { ...state.card, stability, due: new Date(Date.now() + 3 * 86_400_000).toISOString() } };
+    };
+    plugin.store.reviews = { [first.id]: future(first, 2), [second.id]: future(second, 1) };
+    plugin.store.settings.studyManagement.reviewsPerDay = 0;
+    const baseline = structuredClone(plugin.store.reviews);
+    view.render();
+    expect(plugin.fsrs.isDue(baseline[second.id], new Date())).toBe(false);
+    button(root, "위험 문제 학습").click();
+    expect(view.getState()).toMatchObject({ queue: [second.id, first.id], sessionMode: "recall", answerVisible: false });
+    expect(root.querySelector(".mia-study-card").textContent).toContain(second.heading);
+    expect(plugin.store.reviews).toEqual(baseline);
+  });
+
+  it("renders and sorts the radar, opens the existing meaning popup, and grades an early concept question through FSRS", async () => {
+    const { view, root } = await renderLayoutCase({ route: "keywords" });
+    const plugin = view.plugin;
+    const [first, second, fresh] = plugin.index.registered;
+    second.coreKeywords = first.coreKeywords;
+    fresh.subKeywords = first.coreKeywords;
+    const reviewed = new Date(Date.now() - 3 * 86_400_000);
+    const state = plugin.fsrs.rate(undefined, 3, reviewed, second.id);
+    const withDue = stability => ({ ...state, card: { ...state.card, stability, due: new Date(Date.now() + 3 * 86_400_000).toISOString() } });
+    plugin.store.reviews = { [first.id]: withDue(2), [second.id]: withDue(1) };
+    plugin.store.settings.studyManagement.newCardsPerDay = 0;
+    plugin.store.settings.studyManagement.reviewsPerDay = 0;
+    plugin.showKeywordMeaning = vi.fn();
+    plugin.store.setReview = vi.fn(async (id, review) => { plugin.store.reviews[id] = review; });
+    view.render();
+    const radar = root.querySelector(".mia-keyword-radar");
+    expect(radar.querySelectorAll("li")).toHaveLength(1);
+    expect(radar.textContent).toContain("2/6 학습");
+    button(radar, first.coreKeywords[0].label).click();
+    expect(plugin.showKeywordMeaning).toHaveBeenCalledWith(first.coreKeywords[0].target, first.coreKeywords[0].label, first.filePath);
+    const sort = root.querySelector(".mia-keyword-toolbar select");
+    sort.value = "weak";
+    sort.dispatchEvent(new window.Event("change"));
+    expect(root.querySelector(".mia-keyword strong").textContent).toBe(first.coreKeywords[0].label);
+    expect(plugin.fsrs.isDue(plugin.store.reviews[second.id], new Date())).toBe(false);
+    // The existing connected-question test still uses the managed eligibility rules.
+    button(root, "연결 문제 시험").click();
+    expect(view.getState().queue).toEqual([]);
+    await view.setState({ route: "keywords" }, {});
+    button(root, "이 개념 학습").click();
+    expect(view.getState().queue.slice(0, 2)).toEqual([second.id, first.id]);
+    expect(view.getState().queue).toContain(fresh.id);
+    root.querySelector(".mia-reveal").click();
+    const expected = plugin.fsrs.rate(plugin.store.reviews[second.id], 3, new Date(), second.id);
+    root.querySelector(".mia-ratings [data-grade='3']").click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(plugin.store.setReview.mock.calls[0][1].card).toEqual(expected.card);
+    expect(view.getState().queue[view.getState().queueIndex]).toBe(first.id);
+  });
+});
+
+it.each(["dashboard", "progress"])("only redraws for visible target or forecast changes during %s polling", async route => {
+  const { view, root } = await renderLayoutCase({ route, targets: true });
+  const { store, fsrs } = view.plugin;
+  const session = await openWithTimers(view);
+  try {
+    const selector = route === "dashboard" ? ".mia-target-strip" : ".mia-review-forecast";
+    const before = root.querySelector(selector);
+    const forecastCount = element => Number(element.querySelectorAll(".mia-forecast-column")[6].title.match(/(\d+)문제/)[1]);
+    const count = route === "progress" ? forecastCount(before) : 0;
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(root.querySelector(selector)).toBe(before);
+    if (route === "dashboard") {
+      store.settings.targetDates[1].label = "모의 면접";
+    } else {
+      const rated = { ...store.reviews["q-1"], card: { ...store.reviews["q-1"].card } };
+      rated.card.due = new Date(Date.now() + 6 * 86_400_000).toISOString();
+      store.reviews = { ...store.reviews, "q-1": rated };
+    }
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(root.querySelector(selector)).not.toBe(before);
+    if (route === "dashboard") expect(root.querySelector(selector).textContent).toContain("모의 면접");
+    else expect(forecastCount(root.querySelector(selector))).toBe(count + 1);
+  } finally { await session.close(); }
 });

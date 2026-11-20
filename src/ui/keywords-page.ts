@@ -1,58 +1,71 @@
 import { reportUiFailure } from "./error-message";
-import type { KeywordReference, QuestionRecord } from "../core/models";
+import { groupKeywordQuestions, keywordKey, rankKeywordWeakness } from "../core/keyword-radar";
+import type { KeywordReference } from "../core/models";
 import type { KeywordNoteEntry } from "../services/keyword-operations";
 import { renderQuestionHeading } from "./question-row";
 import type { StudyPageContext } from "./study-page-context";
-
-/** Groups references to the same note, however the link was written. */
-function keywordKey(keyword: KeywordReference): string {
-  const path = keyword.target.split("#")[0]?.replace(/\.md$/i, "").replaceAll("\\", "/") ?? keyword.label;
-  return (path.split("/").at(-1) ?? path).trim().toLocaleLowerCase("ko");
-}
 
 export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
   const pageActions = root.createDiv({ cls: "mia-page-actions" });
   pageActions.createEl("button", { text: "키워드 추가", cls: "mod-cta" }).addEventListener("click", () => {
     ctx.plugin.openKeywordEditor();
   });
-  const toolbar = root.createDiv({ cls: "mia-toolbar" });
-  const search = toolbar.createEl("input", { type: "search", placeholder: "키워드 검색", attr: { "aria-label": "키워드 검색" } });
-  const keywords = new Map<string, {
-    keyword: KeywordReference;
-    questions: Map<string, QuestionRecord & { id: string }>;
-    entry?: KeywordNoteEntry;
-  }>();
+  const { index, store, fsrs } = ctx.plugin;
+  const groups = groupKeywordQuestions(index.registered);
+  type Links = NonNullable<ReturnType<typeof groups.get>>["questions"];
+  type KeywordItem = { keyword: KeywordReference; questions: Links; entry?: KeywordNoteEntry };
+  const keywords = new Map<string, KeywordItem>();
   for (const entry of ctx.plugin.listKeywordNotes()) {
     const keyword = { target: entry.target, label: entry.name, raw: `[[${entry.target}|${entry.name}]]` };
-    keywords.set(keywordKey(keyword), { keyword, questions: new Map(), entry });
+    const key = keywordKey(keyword);
+    keywords.set(key, { keyword, questions: groups.get(key)?.questions ?? new Map(), entry });
   }
-  for (const question of ctx.plugin.index.registered) {
-    for (const keyword of [...question.coreKeywords, ...question.subKeywords]) {
-      const key = keywordKey(keyword);
-      const item = keywords.get(key) ?? { keyword, questions: new Map() };
-      item.questions.set(question.id, question);
-      keywords.set(key, item);
+  for (const [key, group] of groups) if (!keywords.has(key)) keywords.set(key, group);
+  const noteNames = new Map([...keywords].map(([key, item]) => [key, item.keyword.label]));
+  const ranked = rankKeywordWeakness(groups, store.reviews, fsrs, noteNames);
+  const scores = new Map(ranked.map((item, i) => [item.key, i]));
+  const showMeaning = (item: KeywordItem) => {
+    const first = item.questions.values().next().value;
+    const path = first?.question.filePath ?? item.entry?.filePath;
+    if (path) ctx.plugin.showKeywordMeaning(item.keyword.target, item.keyword.label, path);
+  };
+  if (ranked.length) {
+    const radar = root.createEl("section", { cls: "mia-keyword-radar" });
+    radar.createEl("h3", { text: "흔들리는 개념 Top 5" });
+    const rows = radar.createEl("ol");
+    for (const item of ranked.slice(0, 5)) {
+      const row = rows.createEl("li");
+      const keyword = keywords.get(item.key)!;
+      row.createEl("button", { text: item.label, attr: { "aria-label": `${item.label} 의미 보기` } })
+        .addEventListener("click", () => showMeaning(keyword));
+      row.createEl("span", { cls: "mia-muted", text: `기억률 ${Math.round(item.averageRecall * 100)}% · 문제 ${item.studied}/${item.total} 학습 · 잊음 ${item.lapses}회 · 최근 못 암기 ${item.again} · 애매 ${item.hard}` });
+      row.createEl("button", { text: "이 개념 학습", cls: "mia-radar-start" })
+        .addEventListener("click", () => ctx.startFocusedReview(item.questionIds));
     }
   }
+  const toolbar = root.createDiv({ cls: "mia-toolbar mia-keyword-toolbar" });
+  const search = toolbar.createEl("input", { type: "search", placeholder: "키워드 검색", attr: { "aria-label": "키워드 검색" } });
+  const sort = toolbar.createEl("select", { attr: { "aria-label": "키워드 정렬" } });
+  sort.createEl("option", { text: "연결 문제 많은 순", attr: { value: "linked" } });
+  sort.createEl("option", { text: "취약 순", attr: { value: "weak" } });
   const grid = root.createDiv({ cls: "mia-keyword-grid" });
   const renderGrid = () => {
     grid.empty();
     const query = search.value.trim().toLocaleLowerCase("ko");
-    const items = [...keywords.values()]
-      .filter((item) => !query || `${item.keyword.label}\n${item.keyword.target}`.toLocaleLowerCase("ko").includes(query))
-      .sort((a, b) => b.questions.size - a.questions.size || a.keyword.label.localeCompare(b.keyword.label, "ko"));
-    for (const item of items) {
-      const questions = [...item.questions.values()];
-      const coreCount = questions.filter((question) => question.coreKeywords.some((keyword) => keywordKey(keyword) === keywordKey(item.keyword))).length;
-      const subCount = questions.filter((question) => question.subKeywords.some((keyword) => keywordKey(keyword) === keywordKey(item.keyword))).length;
+    const items = [...keywords]
+      .filter(([, item]) => !query || `${item.keyword.label}\n${item.keyword.target}`.toLocaleLowerCase("ko").includes(query))
+      .sort(([left, a], [right, b]) =>
+        (sort.value === "weak" ? (scores.get(left) ?? ranked.length) - (scores.get(right) ?? ranked.length) : 0)
+        || b.questions.size - a.questions.size || a.keyword.label.localeCompare(b.keyword.label, "ko"));
+    for (const [, item] of items) {
+      const links = [...item.questions.values()];
+      const questions = links.map(link => link.question);
+      const coreCount = links.filter(link => link.core).length;
+      const subCount = links.filter(link => link.sub).length;
       const card = grid.createDiv({ cls: "mia-keyword" });
       card.createEl("strong", { text: item.keyword.label });
       card.createEl("span", { text: `${questions.length}문제 · 핵심 ${coreCount} · 보조 ${subCount}` });
-      const reference = questions[0];
-      card.addEventListener("click", () => {
-        const sourcePath = reference?.filePath ?? item.entry?.filePath;
-        if (sourcePath) ctx.plugin.showKeywordMeaning(item.keyword.target, item.keyword.label, sourcePath);
-      });
+      card.addEventListener("click", () => showMeaning(item));
       const editEntry = item.entry ?? {
         name: item.keyword.label === item.keyword.target
           ? (item.keyword.target.replaceAll("\\", "/").split("/").at(-1) ?? item.keyword.label).replace(/\.md$/i, "")
@@ -101,5 +114,6 @@ export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
   search.addEventListener("compositionstart", () => { composing = true; });
   search.addEventListener("compositionend", () => { composing = false; renderGrid(); });
   search.addEventListener("input", () => { if (!composing) renderGrid(); });
+  sort.addEventListener("change", renderGrid);
   renderGrid();
 }
