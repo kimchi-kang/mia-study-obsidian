@@ -12,10 +12,11 @@
 <meta property="og:type" content="website">
 <style>
 :root {
-  --bg: #2B2F38;
-  --surface: #262A32;
-  --shadow-light: #383D48;
-  --shadow-dark: #1C1F25;
+  --bg: #000000;
+  --panel: #111216;
+  --surface: #0A0B0E;
+  --shadow-light: #22252C;
+  --shadow-dark: #000000;
   --raised: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
   --raised-small: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
   --inset: inset 6px 6px 12px var(--shadow-dark), inset -6px -6px 12px var(--shadow-light);
@@ -95,12 +96,12 @@ pre .m { color: var(--muted); }
 .frame, .phone, .step, .more > div, .paths, .faq, .box,
 .upd .r, .v, .caution, .cmp, .cmp-miss, .credits > div {
   border-radius: var(--radius);
-  background: var(--bg);
+  background: var(--panel);
   box-shadow: var(--raised);
 }
 
 /* 머리줄 */
-.top { box-shadow: var(--raised-small); }
+.top { background: var(--panel); box-shadow: var(--raised-small); }
 .top .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-block: 12px; }
 .brand {
   display: inline-flex;
@@ -153,7 +154,7 @@ h1 em { color: var(--link); font-style: normal; }
   text-decoration: none;
 }
 .btn-primary { background: var(--blue); color: var(--white); }
-.btn-secondary { background: var(--bg); color: var(--link); }
+.btn-secondary { background: var(--panel); color: var(--link); }
 .btn:hover { text-decoration: underline; }
 .btn:active { box-shadow: var(--inset); }
 .meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; color: var(--muted); font-size: .9rem; font-weight: 700; }
@@ -416,7 +417,7 @@ footer .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-cont
       <div>
         <span class="ver">정식 1.6.2</span>
         <h1>질문을 모으고,<br><em>잊기 전에</em><br>다시 꺼낸다.</h1>
-        <p class="lead">Obsidian 안에서 과목·질문·키워드를 폼으로 관리하고, FSRS-6로 복습 시점을 잡아 주는 공부 플러그인. Markdown을 직접 쓰지 않아도 되고, 문제마다 노트를 만들지도 않습니다. 1.6.0부터 플러그인 화면은 그림자로 솟고 파인 둥근 카드를 쓰는 어두운 소프트 뉴모피즘입니다.</p>
+        <p class="lead">Obsidian 안에서 과목·질문·키워드를 폼으로 관리하고, FSRS-6로 복습 시점을 잡아 주는 공부 플러그인. Markdown을 직접 쓰지 않아도 되고, 문제마다 노트를 만들지도 않습니다. 플러그인 화면은 완전 검정 바탕 위에 그림자로 솟고 파인 둥근 카드를 쓰는 어두운 소프트 뉴모피즘입니다.</p>
         <div class="cta">
           <a class="btn btn-primary" href="https://github.com/kimchi-kang/mia-study-obsidian" target="_blank" rel="noopener">GitHub에서 보기 ↗</a>
           <a class="btn btn-secondary" href="#install">BRAT 설치</a>
@@ -427,7 +428,7 @@ footer .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-cont
     </div>
     <figure class="frame hero-shot">
       <img src="assets/screens/desktop-dashboard.jpg" width="1600" height="1075" alt="MIA Study 오늘 화면. 복습 7·새 문제 4 카드와 파란 시험(일반복습)모드 시작 버튼, 세계 지리 시차 문제 이어하기, 등록 문제 14개와 기억 안정 비율 21%, 취약 문제 5개와 과목별 학습 카드.">
-      <figcaption>1.6.0의 실제 플러그인 화면 코드로 수학 기초·세계 지리·요리 과학의 가상 문제 14개를 표시해 찍었습니다. Obsidian 창 테두리는 생략했습니다.</figcaption>
+      <figcaption>1.6.2의 실제 플러그인 화면 코드로 수학 기초·세계 지리·요리 과학의 가상 문제 14개를 표시해 찍었습니다. Obsidian 창 테두리는 생략했습니다.</figcaption>
     </figure>
   </div>
 </div>
@@ -639,7 +640,7 @@ footer .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-cont
     <div class="sh"><span class="shape" aria-hidden="true"></span><h2>모바일</h2><span class="num">04</span></div>
     <div class="mob">
       <div>
-        <p>좁은 화면에서는 하단 탭과 평가 버튼이 각각 한 줄로 놓이고, 학습 화면 상단은 한 줄 막대로 줄어듭니다. 모바일에도 1.6.0의 어두운 소프트 뉴모피즘이 적용됩니다.</p>
+        <p>좁은 화면에서는 하단 탭과 평가 버튼이 각각 한 줄로 놓이고, 학습 화면 상단은 한 줄 막대로 줄어듭니다. 모바일에도 같은 검정 바탕 소프트 뉴모피즘이 적용됩니다.</p>
         <p>키보드가 열리면 편집창과 검색·설정 화면이 키보드 위 높이에 맞춰지고, 선택한 입력칸이 보이도록 스크롤됩니다. 버튼은 44px 이상의 터치 영역을 씁니다. 화면 왼쪽 가장자리에서 쓸면 학습을 시작한 화면으로 돌아갑니다.</p>
         <p>1.4.23부터 학습 화면은 iPad·휴대폰에서 좌우 폭을 거의 다 쓰고(작은 여백과 기기 안전 영역만 유지) 짧은 문답은 스크롤 없이 보입니다. 1.4.24부터 오늘·학습현황·문제·키워드 화면도 같은 방식으로 넓어진 폭에 맞춰 카드 열이 늘어납니다. 높이 390px인 iPhone 가로에서는 여전히 스크롤이 필요합니다.</p>
         <p class="honest">모바일 사진은 실제 플러그인 화면을 브라우저에서 휴대폰 폭(390px)으로 렌더링해 찍었습니다.</p>
@@ -793,7 +794,7 @@ footer .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-cont
       <div class="r">
         <h3>부족한 문제 출력 · 시험(일반복습)모드 · 자주 틀림</h3>
         <ul>
-          <li>1.6.2: 플러그인 화면 바탕을 완전 검정으로 바꾸고, 카드·버튼은 검정 위에 살짝 떠 보이는 아주 어두운 회색으로 맞췄습니다(화면 사진은 1.6.0의 회청색 바탕).</li>
+          <li>1.6.2: 플러그인 화면 바탕을 완전 검정으로 바꾸고, 카드·버튼은 검정 위에 살짝 떠 보이는 아주 어두운 회색으로 맞췄습니다. 이 페이지와 화면 사진도 같은 검정 바탕입니다.</li>
           <li>1.6.1: 검색·선택 입력칸 글자에 왼쪽 여백을 주고, 비어 있는 페이지 넘김 막대를 숨겼습니다.</li>
           <li>1.6.0: 플러그인 화면을 <strong>어두운 소프트 뉴모피즘</strong>으로 바꿨습니다. 굵은 테두리·원색 대신 같은 색 바탕 위 그림자로 솟거나 파인 둥근 카드·버튼을 씁니다.</li>
           <li>1.5.8: 첫 화면의 <code>야간</code> 버튼(또는 명령)으로 적색 야간 모드를 켭니다. 기본은 Obsidian 전체, 보기 설정에서 MIA 화면만으로 바꿀 수 있습니다.</li>
