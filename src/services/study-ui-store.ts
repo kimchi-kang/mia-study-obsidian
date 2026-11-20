@@ -90,6 +90,15 @@ export function parseStudyAppearance(value: unknown): StudyAppearance {
   };
 }
 
+/** 적색 야간 모드. 기기마다 따로 저장하며, 범위가 "app"이면 Obsidian 화면 전체에 적용한다. */
+export type NightScope = "plugin" | "app";
+export interface NightPreference { nightMode: boolean; nightScope: NightScope }
+
+export function parseNightPreference(value: unknown): NightPreference {
+  const raw = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  return { nightMode: raw.nightMode === true, nightScope: raw.nightScope === "plugin" ? "plugin" : "app" };
+}
+
 type StudyUiHost = Pick<App, "loadLocalStorage" | "saveLocalStorage"> & { vault: { adapter: Pick<DataAdapter, "exists" | "read" | "write"> } };
 
 // Keep in-flight ordering across plugin module reloads in the same Obsidian App.
@@ -121,6 +130,7 @@ export class StudyUiStore {
   private writes: Promise<void> = Promise.resolve();
   private readonly preferenceKey: string;
   private readonly exportPreferenceKey: string;
+  private readonly nightPreferenceKey: string;
   private readonly sharedWrites: ResumeWrites;
 
   private readonly adapter: Pick<DataAdapter, "exists" | "read" | "write">;
@@ -131,6 +141,7 @@ export class StudyUiStore {
     this.adapter = options.adapter ?? app.vault.adapter;
     this.preferenceKey = `mia-study:appearance:${localPath}`;
     this.exportPreferenceKey = `mia-study:subject-export:${localPath}`;
+    this.nightPreferenceKey = `mia-study:night:${localPath}`;
     this.resumeKey = `mia-study:resume-checkpoint:${localPath}`;
     this.currentAppearance = parseStudyAppearance(app.loadLocalStorage(this.preferenceKey));
   }
@@ -141,6 +152,9 @@ export class StudyUiStore {
   get appearance(): StudyAppearance { return { ...this.currentAppearance }; }
   get exportOptions(): SubjectExportOptions {
     return parseSubjectExportOptions(this.app.loadLocalStorage(this.exportPreferenceKey));
+  }
+  get night(): NightPreference {
+    return parseNightPreference(this.app.loadLocalStorage(this.nightPreferenceKey));
   }
   get hasResumeFile(): boolean { return this.filePresent; }
   get resumeRevision(): number { return this.sharedWrites.checkpointRevision; }
@@ -227,6 +241,12 @@ export class StudyUiStore {
     const next = parseStudyAppearance({ ...this.currentAppearance, ...patch });
     this.app.saveLocalStorage(this.preferenceKey, next);
     this.currentAppearance = next;
+  }
+
+  updateNight(patch: Partial<NightPreference>): NightPreference {
+    const next = parseNightPreference({ ...this.night, ...patch });
+    this.app.saveLocalStorage(this.nightPreferenceKey, next);
+    return next;
   }
 
   saveExportOptions(options: SubjectExportOptions): void {

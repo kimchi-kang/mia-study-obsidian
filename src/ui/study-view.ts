@@ -608,6 +608,7 @@ export class MiaStudyView extends ItemView {
     root.dataset.focus = String(this.plugin.studyUi.appearance.focus);
     root.dataset.answerLayout = this.plugin.studyUi.appearance.answerLayout;
     root.dataset.swipeEnabled = String(this.plugin.studyUi.appearance.swipeEnabled);
+    root.dataset.night = String(this.plugin.studyUi.night.nightMode);
     root.empty();
     root.setAttr("aria-busy", String(this.isMutatingReview));
     if (this.isMutatingReview) this.renderReviewSaveStatus();
@@ -656,6 +657,14 @@ export class MiaStudyView extends ItemView {
     }
   }
 
+  /** 명령 팔레트나 다른 화면에서 야간 모드를 바꾸면 다시 그리지 않고 표시만 맞춘다. */
+  refreshNight(): void {
+    if (this.closed) return;
+    const on = this.plugin.studyUi.night.nightMode;
+    this.contentEl.dataset.night = String(on);
+    this.contentEl.querySelector(".mia-night-button")?.setAttribute("aria-pressed", String(on));
+  }
+
   private restoreSettingsFocus(selector: string): void {
     if (!this.closed) this.contentEl.querySelector<HTMLButtonElement>(selector)?.focus({ preventScroll: true });
   }
@@ -676,7 +685,15 @@ export class MiaStudyView extends ItemView {
     const settingsButtons = title.createDiv({ cls: "mia-settings-buttons" });
     settingsButtons.createEl("button", { text: "학습 설정", cls: "mia-learning-button" }).addEventListener("click", () => this.openStudySettings());
     const appearance = settingsButtons.createEl("button", { text: "보기 설정", cls: "mia-appearance-button" });
-    appearance.addEventListener("click", () => this.plugin.modalOpenGuard.open(dialogKey("study-appearance-settings"), () => new StudyAppearanceModal(this.app, this.plugin.studyUi, () => this.refreshAppearance(), () => this.restoreSettingsFocus(".mia-appearance-button"))));
+    appearance.addEventListener("click", () => this.plugin.modalOpenGuard.open(dialogKey("study-appearance-settings"), () => new StudyAppearanceModal(this.app, this.plugin.studyUi, () => this.refreshAppearance(), () => this.restoreSettingsFocus(".mia-appearance-button"), patch => this.plugin.updateNightMode(patch))));
+    // 학습 중 휴대폰 상단 줄은 칸이 정해져 있어, 야간 버튼은 학습 밖 화면에만 둔다(학습 중에는 명령으로 전환).
+    if (this.route !== "study") {
+      const night = settingsButtons.createEl("button", { text: "야간", cls: "mia-night-button" });
+      night.setAttr("type", "button");
+      night.setAttr("aria-label", "적색 야간 모드");
+      night.setAttr("aria-pressed", String(this.plugin.studyUi.night.nightMode));
+      night.addEventListener("click", () => { this.plugin.updateNightMode({ nightMode: !this.plugin.studyUi.night.nightMode }); });
+    }
     const nav = header.createDiv({ cls: "mia-nav" });
     // Weak questions live on the dashboard strip and as the 취약 filter on 문제, so there is no tab of their own.
     this.navButton(nav, "오늘", "dashboard");

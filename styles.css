@@ -145,6 +145,20 @@ body.theme-dark :is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia
   --mia-blue: #3d63e8;
   --mia-focus: #f4c20d;
 }
+/* 적색 야간 모드: 빨강 한 가지로 바뀌면 밝기 차이만 남으므로, 흐린 글자도 4.5:1 이상이 되게 밝힌다. */
+body.mia-night-global :is(.mia-view, .modal, .vertical-tab-content), body .mia-view[data-night="true"] { --mia-bg: #121212; --mia-ink: #ffffff; --mia-muted: #f2eee2; --mia-panel: #1c1c1c; --mia-blue: #3d63e8; --mia-focus: #f4c20d; --mia-danger-text: #ff7a70; }
+.mia-view[data-night="true"] { color-scheme: dark; --background-primary: var(--mia-bg); --background-primary-alt: var(--mia-panel); --text-normal: var(--mia-ink); --text-muted: var(--mia-muted); }
+/* 밝은 테마에서도 흰 바탕이 강한 빨강으로 남지 않게, 야간 동안만 Obsidian 기본 어두운 테마 색을 쓴다. */
+body.mia-night-global.theme-light { color-scheme: dark; --color-base-00: #1e1e1e; --color-base-05: #212121; --color-base-10: #242424; --color-base-20: #262626; --color-base-25: #2a2a2a; --color-base-30: #363636; --color-base-35: #3f3f3f; --color-base-40: #555555; --color-base-50: #666666; --color-base-60: #999999; --color-base-70: #b3b3b3; --color-base-100: #dadada; --background-primary: #1e1e1e; --background-primary-alt: #242424; --background-secondary: #262626; --background-secondary-alt: #2a2a2a; --background-modifier-border: #363636; --background-modifier-hover: rgba(255, 255, 255, .075); --interactive-normal: #2a2a2a; --interactive-hover: #303030; --text-faint: #666666; --text-on-accent: #ffffff; }
+body.mia-night-global { --text-normal: #ffffff; --text-muted: #f2f2f2; background-color: var(--background-primary); }
+/* 덮개 두 장: 아래 장은 화면을 흑백으로, 위 장은 곱하기로 빨강만 남긴다. 터치·스크롤은 통과시키고 전환 애니메이션은 두지 않는다. */
+body.mia-night-global::before, body.mia-night-global::after, body:not(.mia-night-global) .workspace-leaf-content:has(.mia-view[data-night="true"])::before, body:not(.mia-night-global) .workspace-leaf-content:has(.mia-view[data-night="true"])::after { content: ""; inset: 0; pointer-events: none; transition: none; }
+body.mia-night-global::before { position: fixed; z-index: 2147483646; -webkit-backdrop-filter: grayscale(1); backdrop-filter: grayscale(1); }
+body.mia-night-global::after { position: fixed; z-index: 2147483647; background: #ff0000; mix-blend-mode: multiply; }
+/* 범위가 MIA 화면뿐이면 같은 덮개를 MIA 창 안에만 씌운다. */
+body:not(.mia-night-global) .workspace-leaf-content:has(.mia-view[data-night="true"]) { position: relative; }
+body:not(.mia-night-global) .workspace-leaf-content:has(.mia-view[data-night="true"])::before { position: absolute; z-index: 99; -webkit-backdrop-filter: grayscale(1); backdrop-filter: grayscale(1); }
+body:not(.mia-night-global) .workspace-leaf-content:has(.mia-view[data-night="true"])::after { position: absolute; z-index: 100; background: #ff0000; mix-blend-mode: multiply; }
 .mia-view [data-tone="again"] { --mia-tone: var(--mia-red); }
 /* Override host rounded corners; marker exceptions opt back in. */
 :is(.mia-view, .mia-keyboard-settings, .mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-compact):not(.checkbox-container),
@@ -216,7 +230,7 @@ body.theme-dark .mia-view { --mia-danger-text: #ff7a70; }
 .is-phone .mia-followup-option { min-height: 48px; padding: 10px; }
 .is-phone.is-floating-nav .mia-view, .is-phone.auto-full-screen .mia-view { --mia-navbar-clearance: max(0px, var(--view-bottom-spacing, calc(var(--navbar-height, 80px) + var(--safe-area-inset-bottom, 0px)))); box-sizing: border-box; height: calc(100% - var(--mia-navbar-clearance)); max-height: calc(100% - var(--mia-navbar-clearance)); margin-bottom: var(--mia-navbar-clearance); min-height: 0; scroll-padding-bottom: 28px; }
 .mia-view :is(.mia-muted, .mia-stat span, .mia-row small, .mia-keyword span, .mia-progress, .mia-subject-total, .mia-card-context, .mia-recall-prompt, .mia-hero-main > p:not(.mia-device-sync-hint), .mia-progress-subject-heading span, .mia-subject-card > span, .mia-related > p, .mia-related-open small, .mia-study-concepts summary, .mia-study-navigation button, .mia-shortcut-hint, .mia-hero .mia-device-sync-hint, .mia-settings-status, .mia-device-sync-hint, .mia-touch-hint) { color: var(--mia-muted); }
-body.theme-dark .mia-view :is(a, .internal-link, .external-link) { color: #8fa9ff; }
+body.theme-dark .mia-view :is(a, .internal-link, .external-link), body.mia-night-global .mia-view :is(a, .internal-link, .external-link), body .mia-view[data-night="true"] :is(a, .internal-link, .external-link) { color: #8fa9ff; }
 .mia-view .mia-header h2 .mia-home-button { display: inline-flex; align-items: center; gap: 10px; color: var(--mia-ink); font-family: var(--mia-head); font-weight: 800; }
 .mia-view .mia-stat:not([data-tone="total"]) strong { color: var(--mia-ink); }
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-meta span { border-width: 2px; border-color: var(--mia-ink); background: transparent; color: var(--mia-ink); font-weight: 700; font-size: 12px; padding: 2px 8px; }
@@ -290,6 +304,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view button.mod-warning, :is(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal) button.mod-warning { background: var(--mia-panel); color: var(--mia-red); border-color: var(--mia-red); }
 .mia-view button.mod-warning:not(:disabled):hover { background: var(--mia-red); color: var(--mia-on-color); border-color: var(--mia-ink); }
 .mia-view .mia-settings-buttons > button { border-width: 3px; border-color: var(--mia-ink); background: var(--mia-panel); color: var(--mia-ink); }
+.mia-view .mia-settings-buttons > .mia-night-button[aria-pressed="true"] { background: var(--mia-ink); color: var(--mia-bg); }
 .mia-view .mia-nav button { background: transparent; border: 0; border-bottom: 4px solid transparent; color: var(--mia-ink); font-weight: 800; box-shadow: none; padding: 8px 12px; }
 .mia-view .mia-nav button.mod-cta:hover { background: var(--mia-ink); color: var(--mia-bg); border-bottom-color: var(--mia-red); }
 .mia-view .mia-undo-feedback button:hover:not(:disabled) { background: var(--mia-ink); color: var(--mia-bg); }

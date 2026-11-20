@@ -1,0 +1,159 @@
+import { readFileSync } from "node:fs";
+import vm from "node:vm";
+import { webcrypto } from "node:crypto";
+import postcss from "postcss";
+import { afterEach, describe, expect, it, vi } from "vitest";
+vi.mock("obsidian", async () => {
+  const { obsidianLayoutBoundary } = await import("./fixtures/study-layout-obsidian");
+  return obsidianLayoutBoundary();
+});
+import { createLayoutDom } from "./fixtures/study-layout-render";
+import { obsidianLayoutBoundary } from "./fixtures/study-layout-obsidian";
+import { parseNightPreference, StudyUiStore } from "../src/services/study-ui-store";
+import { NIGHT_GLOBAL_CLASS, NightModeController } from "../src/ui/night-mode";
+
+let dom;
+afterEach(() => { dom?.window.close(); dom = undefined; vi.unstubAllGlobals(); });
+
+describe("야간 모드 저장값", () => {
+  it.each([
+    [undefined, { nightMode: false, nightScope: "app" }],
+    [null, { nightMode: false, nightScope: "app" }],
+    [{ nightMode: true }, { nightMode: true, nightScope: "app" }],
+    [{ nightMode: true, nightScope: "plugin" }, { nightMode: true, nightScope: "plugin" }],
+    [{ nightMode: "yes", nightScope: "screen" }, { nightMode: false, nightScope: "app" }],
+    ["망가진 값", { nightMode: false, nightScope: "app" }],
+  ])("%j → %j", (raw, expected) => expect(parseNightPreference(raw)).toEqual(expected));
+
+  it("기기별 키에 추가로 저장하고 보기 설정 저장값은 건드리지 않는다", () => {
+    const local = new Map();
+    const app = { loadLocalStorage: key => local.get(key), saveLocalStorage: (key, value) => local.set(key, structuredClone(value)), vault: { adapter: {} } };
+    const store = new StudyUiStore(app, "ui.json");
+    expect(store.night).toEqual({ nightMode: false, nightScope: "app" });
+    expect(store.updateNight({ nightMode: true })).toEqual({ nightMode: true, nightScope: "app" });
+    store.updateNight({ nightScope: "plugin" });
+    expect(local.get("mia-study:night:ui.json")).toEqual({ nightMode: true, nightScope: "plugin" });
+    expect([...local.keys()]).toEqual(["mia-study:night:ui.json"]);
+  });
+});
+
+describe("body 클래스", () => {
+  it.each([
+    [{ nightMode: true, nightScope: "app" }, true],
+    [{ nightMode: true, nightScope: "plugin" }, false],
+    [{ nightMode: false, nightScope: "app" }, false],
+  ])("%j이면 전체 적용 %s", (preference, expected) => {
+    dom = createLayoutDom();
+    const body = dom.window.document.body;
+    const controller = new NightModeController(body, () => preference);
+    controller.apply();
+    expect(body.classList.contains(NIGHT_GLOBAL_CLASS)).toBe(expected);
+    controller.destroy();
+    expect(body.classList.contains(NIGHT_GLOBAL_CLASS)).toBe(false);
+  });
+
+  it("Obsidian 테마 클래스는 바꾸지 않는다", () => {
+    dom = createLayoutDom();
+    const body = dom.window.document.body;
+    body.classList.add("theme-light");
+    const controller = new NightModeController(body, () => ({ nightMode: true, nightScope: "app" }));
+    controller.apply(); controller.destroy();
+    expect([...body.classList]).toEqual(["theme-light"]);
+  });
+});
+
+async function loadBundle(initialNight) {
+  dom = createLayoutDom(); vi.stubGlobal("document", dom.window.document); vi.stubGlobal("window", dom.window);
+  const local = new Map(), files = new Map(), views = new Map(), commands = new Map();
+  let disk = null;
+  class Plugin {
+    constructor(app, manifest) { this.app = app; this.manifest = manifest; }
+    loadData = async () => disk === null ? null : JSON.parse(disk);
+    saveData = async data => { disk = JSON.stringify(data, null, 2); };
+    register() {} registerView(type, create) { views.set(type, create); }
+    addRibbonIcon() {} addCommand(command) { commands.set(command.id, command); } addSettingTab() {}
+  }
+  const boundary = { ...obsidianLayoutBoundary(), Plugin, PluginSettingTab: class {}, TFile: class {}, TFolder: class {}, MarkdownView: class {},
+    Notice: class {}, normalizePath: path => path, Platform: { isMobile: true, isDesktopApp: false } };
+  const module = { exports: {} };
+  const context = { module, exports: module.exports, require: () => boundary,
+    console, Date, Math, performance, crypto: webcrypto, TextEncoder, TextDecoder, Uint8Array, ArrayBuffer, Blob, URL, structuredClone,
+    document, setTimeout, clearTimeout, setInterval, clearInterval, navigator: { userAgent: "iPhone" } };
+  context.window = context; context.self = context;
+  vm.runInNewContext(readFileSync(new URL("../main.js", import.meta.url), "utf8"), context, { timeout: 5000 });
+  const leaves = [];
+  const adapter = { exists: async path => files.has(path), read: async path => path.endsWith("/data.json") ? disk : files.get(path), write: async (path, text) => { files.set(path, text); } };
+  const app = { loadLocalStorage: key => local.get(key), saveLocalStorage: (key, value) => local.set(key, structuredClone(value)),
+    vault: { getName: () => "Synthetic", configDir: ".obsidian", adapter },
+    workspace: { onLayoutReady() {}, requestSaveLayout() {}, getLeavesOfType: () => leaves } };
+  if (initialNight) local.set("mia-study:night:.obsidian/plugins/mia-study/ui-state.json", initialNight);
+  const plugin = new module.exports.default(app, { version: "1.5.7", id: "mia-study" });
+  await plugin.onload();
+  return { plugin, app, views, commands, leaves, local, body: dom.window.document.body };
+}
+
+describe("플러그인 수명과 명령", () => {
+  it("저장된 전체 야간 모드는 화면을 열지 않아도 로드 때 붙고 언로드 때 떨어진다", async () => {
+    const { plugin, body } = await loadBundle({ nightMode: true, nightScope: "app" });
+    expect(body.classList.contains("mia-night-global")).toBe(true);
+    plugin.onunload();
+    expect(body.classList.contains("mia-night-global")).toBe(false);
+  });
+
+  it("범위가 MIA 화면뿐이면 body에 붙지 않는다", async () => {
+    const { plugin, body } = await loadBundle({ nightMode: true, nightScope: "plugin" });
+    expect(body.classList.contains("mia-night-global")).toBe(false);
+    plugin.onunload();
+  });
+
+  it("명령과 첫 화면 버튼이 같은 상태를 쓰고, 열린 화면의 표시를 바로 바꾼다", async () => {
+    const { plugin, views, commands, leaves, local, body } = await loadBundle();
+    plugin.index = { registered: [], diagnostics: [], candidates: [], isReady: true, stop() {}, questionById: () => undefined };
+    const leaf = { app: plugin.app, setViewState: async ({ state }) => view.setState(state, {}) };
+    const view = views.get("mia-study-view")(leaf); leaf.view = view; leaves.push(leaf);
+    body.append(view.contentEl);
+    view.navigate("dashboard");
+    const button = () => view.contentEl.querySelector(".mia-night-button");
+    expect(button()?.textContent).toBe("야간");
+    expect(button()?.getAttribute("aria-pressed")).toBe("false");
+    expect(view.contentEl.dataset.night).toBe("false");
+
+    commands.get("toggle-night-mode").callback();
+    expect(body.classList.contains("mia-night-global")).toBe(true);
+    expect(button()?.getAttribute("aria-pressed")).toBe("true");
+    expect(view.contentEl.dataset.night).toBe("true");
+    expect(local.get("mia-study:night:.obsidian/plugins/mia-study/ui-state.json")).toEqual({ nightMode: true, nightScope: "app" });
+
+    button().click();
+    expect(body.classList.contains("mia-night-global")).toBe(false);
+    expect(button()?.getAttribute("aria-pressed")).toBe("false");
+    expect(view.contentEl.dataset.night).toBe("false");
+    expect(commands.get("toggle-night-mode").name).toBe("적색 야간 모드 전환");
+    plugin.onunload();
+  });
+});
+
+describe("CSS 계약", () => {
+  const root = postcss.parse(readFileSync(new URL("../styles.css", import.meta.url), "utf8"));
+  const decls = selector => {
+    const values = {};
+    root.walkRules(rule => { if (rule.selectors.includes(selector)) rule.walkDecls(d => { values[d.prop] = d.value; }); });
+    return values;
+  };
+  it.each(["body.mia-night-global::before", "body.mia-night-global::after"])("%s 덮개는 화면에 고정되고 터치를 막지 않는다", selector => {
+    const values = decls(selector);
+    expect(values.position).toBe("fixed");
+    expect(values["pointer-events"]).toBe("none");
+    expect(values.inset).toBe("0");
+    expect(values.transition).toBe("none");
+  });
+  it("위 덮개는 곱하기로 빨강만 남기고 아래 덮개는 흑백으로 바꾼다", () => {
+    expect(decls("body.mia-night-global::after")).toMatchObject({ background: "#ff0000", "mix-blend-mode": "multiply" });
+    expect(decls("body.mia-night-global::before")).toMatchObject({ "backdrop-filter": "grayscale(1)" });
+  });
+  it("MIA 화면만 적용할 때 덮개도 터치를 막지 않는다", () => {
+    const leaf = 'body:not(.mia-night-global) .workspace-leaf-content:has(.mia-view[data-night="true"])';
+    expect(decls(`${leaf}::after`)).toMatchObject({ position: "absolute", "pointer-events": "none", "mix-blend-mode": "multiply" });
+    expect(decls(`${leaf}::before`)).toMatchObject({ position: "absolute", "pointer-events": "none" });
+  });
+});

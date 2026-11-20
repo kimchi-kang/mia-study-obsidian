@@ -1,10 +1,12 @@
 import { AUTO_QUESTION_SECONDS, AUTO_ANSWER_SECONDS, parseAutoAdvance } from "../core/study-automation";
 import { Modal, Notice, Setting } from "obsidian";
-import { StudyAppearance, StudyUiStore } from "../services/study-ui-store";
+import { NightPreference, NightScope, StudyAppearance, StudyUiStore } from "../services/study-ui-store";
 import { errorMessage } from "./error-message";
 
 export class StudyAppearanceModal extends Modal {
   private draft!: StudyAppearance;
+  private nightScope: NightScope = "app";
+  private initialNightScope: NightScope = "app";
   private initial = "";
   private saveButton: HTMLButtonElement | null = null;
   private status: HTMLElement | null = null;
@@ -16,11 +18,12 @@ export class StudyAppearanceModal extends Modal {
     this.modalEl.focus({ preventScroll: true });
   }
 
-  constructor(app: Modal["app"], private readonly store: StudyUiStore, private readonly onChange: () => void, private readonly onClosed?: () => void) { super(app); }
+  constructor(app: Modal["app"], private readonly store: StudyUiStore, private readonly onChange: () => void, private readonly onClosed?: () => void, private readonly saveNight?: (patch: Partial<NightPreference>) => void) { super(app); }
   onOpen(): void {
     this.contentEl.empty();
     this.draft = this.store.appearance;
     this.initial = JSON.stringify(this.draft);
+    this.nightScope = this.initialNightScope = this.store.night.nightScope;
     this.setTitle("보기 설정");
     this.modalEl.addClass("mia-appearance-modal", "mia-setting-controls");
     this.contentEl.createEl("p", { text: "현재 저장된 값을 보여줍니다. 변경 후 저장하면 이 기기에만 적용됩니다.", cls: "mia-muted" });
@@ -63,6 +66,17 @@ export class StudyAppearanceModal extends Modal {
       dropdown.addOption("skip", "건너뛰기").addOption("again", "못 암기로 평가").setValue(this.draft.autoAnswerAction ?? "skip");
       dropdown.onChange(value => this.change({ autoAnswerAction: value === "again" ? "again" : "skip" }));
     });
+    const night = new Setting(this.group("야간 모드")).setName("야간 모드를 Obsidian 전체에 적용")
+      .setDesc("켜면 야간 버튼이 상단·하단 막대, 노트, 다른 창까지 적색으로 바꿉니다. 끄면 MIA 화면만 바꿉니다. 휴대폰 상태 표시줄과 키보드는 바꿀 수 없습니다. 기본값은 켜짐입니다.");
+    const nightState = night.controlEl.createSpan({ cls: "mia-toggle-state", text: this.nightScope === "app" ? "켜짐" : "꺼짐" });
+    nightState.setAttribute("aria-hidden", "true");
+    night.addToggle(toggle => {
+      toggle.setValue(this.nightScope === "app").onChange(value => {
+        this.nightScope = value ? "app" : "plugin";
+        nightState.setText(value ? "켜짐" : "꺼짐");
+        this.change({});
+      });
+    });
     this.status = this.contentEl.createEl("p", { text: "변경한 내용이 없습니다.", cls: "mia-muted mia-appearance-status" });
     this.status.setAttribute("role", "status");
     const actions = this.contentEl.createDiv({ cls: "mia-appearance-actions" });
@@ -70,7 +84,13 @@ export class StudyAppearanceModal extends Modal {
     this.saveButton = actions.createEl("button", { text: "보기 설정 저장", cls: "mod-cta" });
     this.saveButton.disabled = true;
     this.saveButton.addEventListener("click", () => {
-      try { this.store.updateAppearance(this.draft); }
+      try {
+        this.store.updateAppearance(this.draft);
+        if (this.nightScope !== this.initialNightScope) {
+          if (this.saveNight) this.saveNight({ nightScope: this.nightScope });
+          else this.store.updateNight({ nightScope: this.nightScope });
+        }
+      }
       catch (error) { new Notice(`보기 설정 저장 실패: ${errorMessage(error)}`); return; }
       this.close();
       this.onChange();
@@ -98,7 +118,7 @@ export class StudyAppearanceModal extends Modal {
 
   private change(patch: Partial<StudyAppearance>): void {
     this.draft = { ...this.draft, ...patch };
-    const dirty = this.initial !== JSON.stringify(this.draft);
+    const dirty = this.initial !== JSON.stringify(this.draft) || this.nightScope !== this.initialNightScope;
     if (this.saveButton) this.saveButton.disabled = !dirty;
     this.status?.setText(dirty ? "아직 저장하지 않은 변경사항이 있습니다." : "변경한 내용이 없습니다.");
   }

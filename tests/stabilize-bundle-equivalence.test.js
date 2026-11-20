@@ -80,7 +80,10 @@ it("preserves production CJS study, resume, merge and load/save bytes against 1.
   const roundtrip = disk;
   expect(roundtrip).toBe(merged);
   await view.onClose(); plugin.onunload();
-  const actual = JSON.parse(JSON.stringify({ commands, viewTypes: [...views.keys()], loaded, recallBefore, rated, ratedReview, result, undone, browse, resumeBytes, resumed, merged, roundtrip, notices }));
+  // 1.4.26 이후 의도적으로 추가한 명령. 기록된 1.4.26 픽스처는 그대로 두고, 추가분은 따로 확인한다.
+  const ADDED_COMMANDS = ["toggle-night-mode"];
+  expect(ADDED_COMMANDS.every(id => commands.includes(id))).toBe(true);
+  const actual = JSON.parse(JSON.stringify({ commands: commands.filter(id => !ADDED_COMMANDS.includes(id)), viewTypes: [...views.keys()], loaded, recallBefore, rated, ratedReview, result, undone, browse, resumeBytes, resumed, merged, roundtrip, notices }));
   expect(actual).toEqual(JSON.parse(readFileSync(fixture, "utf8")));
   expect(imports.every(name => name === "obsidian")).toBe(true);
 });

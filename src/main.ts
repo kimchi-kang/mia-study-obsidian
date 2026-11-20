@@ -28,6 +28,8 @@ import { QuestionIndex } from "./services/question-index";
 import { QuestionMetadataModal } from "./ui/metadata-modal";
 import { MiaSettingTab } from "./ui/settings-tab";
 import { MIA_VIEW_TYPE, MiaStudyView } from "./ui/study-view";
+import { NightModeController } from "./ui/night-mode";
+import type { NightPreference } from "./services/study-ui-store";
 import { KeywordMeaningModal } from "./ui/keyword-modal";
 import { FollowUpModal } from "./ui/follow-up-modal";
 import { QuestionDetailModal } from "./ui/question-detail-modal";
@@ -71,6 +73,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
   private readonly subjects = new SubjectOperations(this, this.subjectNotes, this.followUps);
   private readonly questions = new QuestionOperations(this, this.subjectNotes, this.keywords, this.followUps);
   readonly modalOpenGuard = new ModalOpenGuard();
+  private nightMode: NightModeController | null = null;
 
   async onload(): Promise<void> {
     this.unloadRequested = false;
@@ -118,6 +121,9 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     this.studyUi = portable
       ? new StudyUiStore(this.app, PORTABLE_RESUME_PATH, { localStatePath: this.legacyResumePath, adapter: portable.resumeAdapter })
       : new StudyUiStore(this.app, this.legacyResumePath);
+    // 저장된 야간 모드는 학습 화면을 열지 않아도 시작할 때 바로 적용한다.
+    this.nightMode = new NightModeController(typeof document === "undefined" ? null : document.body, () => this.studyUi.night);
+    this.nightMode.apply();
     try { await this.studyUi.load(); }
     catch (error) { new Notice(`이어하기 정보 불러오기 실패: ${errorMessage(error)}`); }
     if (this.unloadRequested) return;
@@ -132,6 +138,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     this.addCommand({ id: "show-startup-status", name: "시작 상태 확인", callback: () => {
       new Notice(this.startupDiagnostics?.summary() ?? "시작 기록이 없습니다.", 12000);
     } });
+    this.addCommand({ id: "toggle-night-mode", name: "적색 야간 모드 전환", callback: () => { this.updateNightMode({ nightMode: !this.studyUi.night.nightMode }); } });
     this.addCommand({ id: "export-subject-word", name: "과목 질문 답변 Word로 출력", callback: () => this.openSubjectExport() });
     this.addCommand({ id: "add-managed-subject", name: "GUI로 과목 추가", callback: () => this.openSubjectEditor() });
     this.addCommand({ id: "add-managed-question", name: "GUI로 질문 추가", callback: () => openEditorWithNotice("질문 추가", () => this.openManagedQuestionEditor()) });
@@ -192,8 +199,20 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     catch (error) { new Notice(`기기 간 복습 기록 확인 실패: ${errorMessage(error)}`); }
   }
 
+  /** 야간 모드 저장 → body 클래스 → 열린 MIA 화면 순서로 같은 상태를 맞춘다. */
+  updateNightMode(patch: Partial<NightPreference>): NightPreference {
+    const next = this.studyUi.updateNight(patch);
+    this.nightMode?.apply();
+    for (const leaf of this.app.workspace.getLeavesOfType(MIA_VIEW_TYPE)) {
+      if (leaf.view instanceof MiaStudyView) leaf.view.refreshNight();
+    }
+    return next;
+  }
+
   onunload(): void {
     this.unloadRequested = true;
+    this.nightMode?.destroy();
+    this.nightMode = null;
     this.startupDiagnostics?.record("unloaded");
     this.index?.stop();
   }
