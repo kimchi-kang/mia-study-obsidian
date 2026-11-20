@@ -636,7 +636,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 
 .mia-view .mia-row-state { border-radius: 50%; background: var(--mia-tone, var(--mia-muted)); }
 .mia-view .mia-row-selected { position: relative; }
-.mia-view .mia-row-selected::before { content: ""; position: absolute; inset: 8px auto 8px 3px; width: 3px; border-radius: var(--mia-radius-pill); background: var(--mia-accent-text); pointer-events: none; }
+.mia-view .mia-row-selected::before { content: ""; position: absolute; inset: 14px auto 14px 4px; width: 3px; border-radius: var(--mia-radius-pill); background: var(--mia-accent-text); pointer-events: none; }
 
 .mia-view .mia-detail-panel { border-radius: var(--mia-radius); box-shadow: var(--mia-shadow); }
 
@@ -666,12 +666,13 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 
 .mia-keyword-radar { margin-bottom: 20px; padding: 14px; border-radius: var(--mia-radius); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); overflow-wrap: anywhere; }
 .mia-keyword-radar > h3 { margin: 0; }
-.mia-keyword-radar > ol { display: grid; gap: 8px; margin-block: 8px 0; padding-inline-start: 24px; }
+.mia-keyword-radar > ol { display: grid; gap: 8px; margin-block: 8px 0; padding-inline-start: 0; list-style: none; counter-reset: mia-radar; }
 /* 한 줄에 개념 이름과 학습 버튼, 아래 줄에 수치: 휴대폰에서도 Top 5가 화면을 다 차지하지 않게 한다. */
-.mia-keyword-radar li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
-.mia-keyword-radar li > button:first-child { grid-column: 1; grid-row: 1; justify-self: start; }
-.mia-keyword-radar li > .mia-radar-start { grid-column: 2; grid-row: 1; }
-.mia-keyword-radar li > span { grid-column: 1 / -1; grid-row: 2; margin-block: 2px 0; font-size: var(--font-ui-small); }
+.mia-keyword-radar li { display: grid; grid-template-columns: 1.5em minmax(0, 1fr) auto; align-items: center; column-gap: 8px; counter-increment: mia-radar; }
+.mia-keyword-radar li::before { content: counter(mia-radar); grid-column: 1; grid-row: 1; color: var(--mia-accent-text); font-weight: 800; font-variant-numeric: tabular-nums; text-align: center; }
+.mia-keyword-radar li > button:first-child { grid-column: 2; grid-row: 1; justify-self: start; }
+.mia-keyword-radar li > .mia-radar-start { grid-column: 3; grid-row: 1; }
+.mia-keyword-radar li > span { grid-column: 2 / -1; grid-row: 2; margin-block: 2px 0; font-size: var(--font-ui-small); }
 .mia-view .mia-keyword-radar li > button { min-height: 44px; min-width: 44px; max-width: 100%; white-space: normal; }
 .mia-view .mia-keyword-radar button.mia-radar-start { color: var(--mia-accent-text); }
 .mia-view .mia-keyword-toolbar select { min-height: 44px; max-width: 100%; }

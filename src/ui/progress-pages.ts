@@ -307,7 +307,7 @@ function renderWeaknessStrip(ctx: StudyPageContext, root: HTMLElement, count: nu
   const start = actions.createEl("button", { text: "취약 문제 시험", cls: "mia-secondary-action" });
   start.disabled = count === 0;
   start.addEventListener("click", () => ctx.startReview(weakQuestions(ctx, ctx.plugin.index.registered).map(question => question.id)));
-  actions.createEl("button", { text: "목록 보기", cls: "mia-secondary-action" }).addEventListener("click", () => ctx.showQuestions("weak"));
+  actions.createEl("button", { text: "목록 보기" }).addEventListener("click", () => ctx.showQuestions("weak"));
 }
 
 export function renderProgress(ctx: StudyPageContext, root: HTMLElement, overview: ProgressOverview): void {
