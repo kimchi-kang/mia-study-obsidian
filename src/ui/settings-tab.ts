@@ -6,6 +6,7 @@ import type MiaStudyPlugin from "../main";
 import { configuredPath, parseSettings } from "../services/data-store";
 import { errorMessage } from "./error-message";
 import { bindKeyboardViewport, KeyboardViewportBinding } from "./mobile-keyboard";
+import { requestPluginUpdate } from "./plugin-update";
 
 export class MiaSettingTab extends PluginSettingTab {
   private settingsWrites: Promise<void> = Promise.resolve();
@@ -63,6 +64,9 @@ export class MiaSettingTab extends PluginSettingTab {
     containerEl.addClass("mia-keyboard-settings", "mia-setting-controls");
     containerEl.createEl("h2", { text: "Major Study" });
     containerEl.createEl("p", { text: "노트 내용과 FSRS 복습 기록은 분리됩니다. 등록 명령을 실행하기 전에는 원문을 수정하지 않습니다.", cls: "setting-item-description" });
+    new Setting(containerEl).setName("업데이트 확인").setDesc(`현재 버전 ${this.miaPlugin.manifest.version}. BRAT으로 새 버전을 확인하고 설치합니다. BRAT이 없으면 설치 안내의 수동 업데이트를 따르세요.`).addButton((button) => {
+      button.setButtonText("업데이트 확인").onClick(() => { requestPluginUpdate(this.app); });
+    });
 
     new Setting(containerEl).setName("문제 폴더").setDesc("한 줄에 하나. 비워 두면 보관함 전체에서 [!question]을 찾습니다.").addTextArea((text) => {
       text.setPlaceholder("지리학\n통계이론").setValue(settings.sourceRoots.join("\n"));
