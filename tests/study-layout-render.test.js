@@ -64,6 +64,20 @@ describe("study layout rendered DOM", () => {
     expect(rows).toHaveLength(total);
     expect(rows.every(row => row.textContent.includes(subject))).toBe(true);
   });
+  it("lets the keyboard open a keyword meaning from its name", async () => {
+    const { view, root } = await renderLayoutCase({ route: "keywords" });
+    const meaning = vi.fn();
+    view.plugin.showKeywordMeaning = meaning;
+    const title = root.querySelector(".mia-keyword > strong[role=\"button\"]");
+    expect(title.getAttribute("tabindex")).toBe("0");
+    expect(title.getAttribute("aria-label")).toBe(`키워드 ${title.textContent} 의미 보기`);
+    const card = title.closest(".mia-keyword");
+    title.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    title.dispatchEvent(new window.KeyboardEvent("keydown", { key: "a", bubbles: true }));
+    expect(meaning).toHaveBeenCalledTimes(1);
+    expect(meaning.mock.calls[0][1]).toBe(title.textContent);
+    expect(card.querySelector("summary").textContent).toBe("연결 문제 보기");
+  });
   it("ships a reproducible standalone harness with real rendered study HTML", async () => {
     // The checked-in snapshot includes local dates and the study-day boundary.
     vi.stubEnv("TZ", "Asia/Seoul");

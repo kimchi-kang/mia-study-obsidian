@@ -82,7 +82,7 @@ function renderTargetCard(ctx: StudyPageContext, root: HTMLElement, item: Target
 export function renderTargetDates(ctx: StudyPageContext, root: HTMLElement, items: TargetDateSummary[], retention: number): void {
   const section = root.createEl("section", { cls: "mia-target-dates" });
   const heading = section.createDiv({ cls: "mia-target-heading" });
-  heading.createEl("h3", { text: "목표일" });
+  heading.createEl("h3", { text: "목표일", cls: "mia-section-title" });
   const add = heading.createEl("button", { text: "목표일 추가" });
   add.disabled = items.length >= MAX_TARGET_DATES;
   add.addEventListener("click", () => openTargetEditor(ctx));

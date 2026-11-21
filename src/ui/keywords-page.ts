@@ -63,7 +63,16 @@ export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
       const coreCount = links.filter(link => link.core).length;
       const subCount = links.filter(link => link.sub).length;
       const card = grid.createDiv({ cls: "mia-keyword" });
-      card.createEl("strong", { text: item.keyword.label });
+      // 카드 전체 클릭과 같은 의미 보기를 키보드(Tab → Enter/Space)로도 열 수 있게 이름을 버튼 역할로 둔다.
+      const title = card.createEl("strong", {
+        text: item.keyword.label,
+        attr: { tabindex: "0", role: "button", "aria-label": `키워드 ${item.keyword.label} 의미 보기` },
+      });
+      title.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        showMeaning(item);
+      });
       card.createEl("span", { text: `${questions.length}문제 · 핵심 ${coreCount} · 보조 ${subCount}` });
       card.addEventListener("click", () => showMeaning(item));
       const editEntry = item.entry ?? {
@@ -92,7 +101,7 @@ export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
       if (questions.length) {
         const details = card.createEl("details", { cls: "mia-keyword-questions" });
         details.addEventListener("click", (event) => event.stopPropagation());
-        details.createEl("summary", { text: "연결 질문 보기" });
+        details.createEl("summary", { text: "연결 문제 보기" });
         for (const question of questions.slice(0, 300)) {
           const questionButton = details.createEl("button");
           renderQuestionHeading(ctx, questionButton, question);

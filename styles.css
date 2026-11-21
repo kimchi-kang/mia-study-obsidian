@@ -611,7 +611,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-forecast-bar-positive { min-height: 3px; }
 .mia-forecast-marker + .mia-forecast-bar { background: var(--mia-accent-text); }
 .mia-forecast-marker { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: min(7px, 100%); aspect-ratio: 1; border-radius: var(--mia-radius-pill); background: var(--mia-accent-text); }
-.mia-forecast-axis { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 4px 8px; }
+.mia-forecast-axis { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 4px 8px; font-size: max(13px, var(--font-ui-smaller)); }
 .mia-forecast-summary { text-align: center; font-size: max(13px, var(--font-ui-smaller)); font-weight: 700; word-break: keep-all; }
 .mia-forecast-key { color: var(--mia-accent-text); }
 
@@ -663,6 +663,8 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-keyword-questions summary { margin: 0; padding: 4px 0; font-size: .9em; color: var(--mia-muted); }
 .mia-view.mia-view .mia-keyword { display: grid; grid-template-columns: 1fr 1fr; column-gap: 8px; row-gap: 8px; align-content: start; }
 .mia-view .mia-keyword > strong { font-weight: 700; }
+.mia-view .mia-keyword > strong[role="button"] { justify-self: start; border-radius: var(--mia-radius-s); cursor: pointer; }
+.mia-view .mia-keyword > strong[role="button"]:hover { color: var(--mia-accent-text); }
 .mia-view.mia-view .mia-keyword > button.mod-warning { font-weight: 700; font-size: .86em; min-height: 40px; padding: 6px 8px; white-space: nowrap; }
 .mia-view .mia-keyword-grid { grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
 
