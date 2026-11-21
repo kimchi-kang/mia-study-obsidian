@@ -52,6 +52,18 @@ describe("study layout rendered DOM", () => {
     if (route === "keywords") expect(root.querySelectorAll(".mia-keyword")).toHaveLength(12);
     if (route === "questions") expect(root.querySelector(".mia-status-chips").textContent).toContain("오늘 복습 24학습 전 16▲ 취약 16");
   });
+  it("opens the subject question list when the subject heading is clicked", async () => {
+    const { root } = await renderLayoutCase({ route: "dashboard" });
+    const open = root.querySelector(".mia-subject-card > button.mia-subject-open");
+    const subject = open.querySelector("strong").textContent;
+    const total = Number(open.querySelector(".mia-subject-total").textContent.replace("문제", ""));
+    open.click();
+    await vi.runOnlyPendingTimersAsync();
+    expect(root.classList.contains("mia-route-questions")).toBe(true);
+    const rows = [...root.querySelectorAll(".mia-row")];
+    expect(rows).toHaveLength(total);
+    expect(rows.every(row => row.textContent.includes(subject))).toBe(true);
+  });
   it("ships a reproducible standalone harness with real rendered study HTML", async () => {
     // The checked-in snapshot includes local dates and the study-day boundary.
     vi.stubEnv("TZ", "Asia/Seoul");

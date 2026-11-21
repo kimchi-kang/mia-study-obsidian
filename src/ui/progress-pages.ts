@@ -258,9 +258,14 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement, overvi
     const subjectGrid = root.createDiv({ cls: "mia-subject-grid" });
     for (const { subject, due: subjectDue, fresh: subjectNew, weak: subjectWeak, studied, total, canStart } of overview.cards) {
       const card = subjectGrid.createDiv({ cls: "mia-subject-card" });
-      const heading = card.createDiv({ cls: "mia-subject-heading" });
+      // 과목 이름 줄을 누르면 그 과목 문제 목록을 바로 연다.
+      const heading = card.createEl("button", {
+        cls: "mia-subject-heading mia-subject-open",
+        attr: { type: "button", "aria-label": `${subject} 문제 ${total}개 목록 보기` },
+      });
       heading.createEl("strong", { text: subject });
       heading.createEl("span", { text: `${total}문제`, cls: "mia-subject-total" });
+      heading.addEventListener("click", () => ctx.showQuestions("all", subject));
       renderMeter(card, studied, total, "학습");
       const chips = card.createDiv({ cls: "mia-subject-chips" });
       const dueChip = chips.createEl("span", { text: `복습 ${subjectDue}`, cls: "mia-count-chip" });

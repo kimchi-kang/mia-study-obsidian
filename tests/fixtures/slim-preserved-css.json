@@ -1755,6 +1755,28 @@
   },
   {
     "context": [],
+    "selector": ".mia-view .mia-subject-card > button.mia-subject-open:hover > strong",
+    "declarations": [
+      [
+        "color",
+        "var(--mia-accent-text)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-view .mia-subject-card > button.mia-subject-open:active",
+    "declarations": [
+      [
+        "box-shadow",
+        "var(--mia-shadow-inset)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
     "selector": ".mia-candidates",
     "declarations": [
       [
