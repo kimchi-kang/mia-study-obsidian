@@ -1,6 +1,8 @@
 # MIA Study 현재 작업·검증·배포 상태
 
-2026-11-21 KST. **현재 정식 배포는 1.7.3**입니다. 사용자 요청: 오늘 화면 과목 카드 제목 줄(`.mia-subject-heading`)을 `button.mia-subject-open`으로 바꿔 누르면 `showQuestions("all", 과목)`으로 그 과목 문제 목록을 연다(44px, `›` 표시, 이름 수정·삭제 등 기존 버튼 유지). 클릭 후 문제 화면 전환·행 수·과목 일치 테스트 추가, 슬림 CSS 픽스처(새 hover·active 규칙 2건)·레이아웃 하네스 재생성. 저장 형식·FSRS 변경 없음. 전체 자동 검사 2,066개(통과 2,064, 생략 2), UTC·C 로케일 동일. 실제 Obsidian·실기기 미확인.
+2026-11-21 KST. **현재 정식 배포는 1.7.4**입니다. 사용자 요청: 맥 트랙패드 두 손가락 뒤로가기. `src/core/trackpad-swipe.ts`(wheel 누적, 오른쪽 손가락 쓸기 = deltaX 음수, 가로가 세로의 2배 초과·민감도 80/120/170px, 220ms 끊김 전 관성 무시, ctrl 핀치 무시)와 `bindTrackpadBack`(passive wheel, 왼쪽으로 스크롤 가능한 영역 위 무시). 학습 중은 `returnToSessionOrigin`, 그 밖은 탭 기록 `leaf.history.back()`(비공개 API, 없거나 비면 무동작). 휴대폰 제외, `쓸어서 뒤로가기`·민감도 설정 공유. 테스트 11개 추가. 저장 형식·FSRS·명령 변경 없음. 전체 자동 검사 2,077개(통과 2,075, 생략 2), UTC·C 로케일 동일. 실제 Obsidian 트랙패드 미확인.
+
+2026-11-21 KST. **당시 정식 배포 1.7.3**입니다. 사용자 요청: 오늘 화면 과목 카드 제목 줄(`.mia-subject-heading`)을 `button.mia-subject-open`으로 바꿔 누르면 `showQuestions("all", 과목)`으로 그 과목 문제 목록을 연다(44px, `›` 표시, 이름 수정·삭제 등 기존 버튼 유지). 클릭 후 문제 화면 전환·행 수·과목 일치 테스트 추가, 슬림 CSS 픽스처(새 hover·active 규칙 2건)·레이아웃 하네스 재생성. 저장 형식·FSRS 변경 없음. 전체 자동 검사 2,066개(통과 2,064, 생략 2), UTC·C 로케일 동일. 실제 Obsidian·실기기 미확인.
 
 2026-11-20 KST. **당시 정식 배포 1.7.2**입니다. 외부 리뷰 3건 수정: (1) `.mia-keyword-radar li`가 grid라 `<ol>` 번호가 사라지고 왼쪽 24px만 비던 것을 CSS counter 순번 칸으로 교체, (2) `.mia-row-selected::before` 막대를 `inset: 14px auto 14px 4px`로 들여 22px 모서리 안에 둠, (3) 취약 문제 띠 `목록 보기`를 일반 버튼으로. 저장 형식·FSRS·동작 변경 없음. 레이아웃 하네스 재생성. 전체 자동 검사 2,065개(통과 2,063, 생략 2), UTC·C 로케일 동일. 실제 Obsidian·실기기 미확인.
 

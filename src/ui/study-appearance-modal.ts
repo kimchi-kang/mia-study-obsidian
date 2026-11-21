@@ -47,7 +47,7 @@ export class StudyAppearanceModal extends Modal {
       dropdown.onChange((value) => { if (value === "sequential" || value === "random") this.change({ memorizationOrder: value }); });
     });
     const touch = this.group("터치 조작");
-    this.toggle(touch, "swipeEnabled", "쓸어서 뒤로가기", "터치 화면에서 왼쪽 가장자리를 쓸면 돌아갑니다. 기본값은 켜짐입니다.");
+    this.toggle(touch, "swipeEnabled", "쓸어서 뒤로가기", "터치 화면에서 왼쪽 가장자리를 쓸거나, 맥 트랙패드에서 두 손가락을 오른쪽으로 쓸면 돌아갑니다. 기본값은 켜짐입니다.");
     new Setting(touch).setName("쓸어넘기기 민감도").addDropdown((dropdown) => {
       dropdown.addOption("light", "가볍게").addOption("normal", "기본").addOption("firm", "확실하게").setValue(this.draft.swipeSensitivity);
       dropdown.onChange((value) => { if (value === "light" || value === "normal" || value === "firm") this.change({ swipeSensitivity: value }); });

@@ -1,4 +1,5 @@
 import { StudySwipe, StudySwipeDirection, SwipePoint, SwipeSensitivity } from "../core/study-swipe";
+import { TrackpadSwipe } from "../core/trackpad-swipe";
 
 export interface StudyGestureBinding {
   reset: () => void;
@@ -64,5 +65,39 @@ export function bindStudyGestures(
       surface.removeEventListener("pointerup", up);
       surface.removeEventListener("pointercancel", reset);
     },
+  };
+}
+
+/** 대상에서 화면 바깥(surface)까지 올라가며, 왼쪽으로 더 스크롤할 수 있는 가로 스크롤 영역이 있는지 본다. */
+function canScrollLeft(target: EventTarget | null, surface: HTMLElement): boolean {
+  let node = (target as Node | null)?.nodeType === 1 ? target as HTMLElement : null;
+  while (node && node !== surface) {
+    if (node.scrollLeft > 0 && node.scrollWidth > node.clientWidth) return true;
+    node = node.parentElement;
+  }
+  return false;
+}
+
+/**
+ * 데스크톱 트랙패드 두 손가락 쓸기(오른쪽으로)를 뒤로가기로 연결한다.
+ * 핀치·세로 스크롤·왼쪽으로 스크롤할 수 있는 수식·코드 영역 위의 쓸기는 건드리지 않는다.
+ */
+export function bindTrackpadBack(
+  surface: HTMLElement,
+  enabled: () => boolean,
+  back: () => void,
+  sensitivity: () => SwipeSensitivity = () => "normal",
+): StudyGestureBinding {
+  const swipe = new TrackpadSwipe();
+  const wheel = (event: WheelEvent) => {
+    if (!enabled() || canScrollLeft(event.target, surface)) return;
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? surface.clientWidth : 1;
+    const result = swipe.feed({ dx: event.deltaX * unit, dy: event.deltaY * unit, time: event.timeStamp, ctrl: event.ctrlKey }, sensitivity());
+    if (result === "back") back();
+  };
+  surface.addEventListener("wheel", wheel, { passive: true });
+  return {
+    reset: () => swipe.reset(),
+    destroy: () => surface.removeEventListener("wheel", wheel),
   };
 }

@@ -17,7 +17,7 @@ import { errorMessage, reportUiFailure } from "./error-message";
 import { bindKeyboardViewport, KeyboardViewportBinding } from "./mobile-keyboard";
 import { StudyResult, StudyResultModal } from "./study-result-modal";
 import { GRADE_LABELS, GRADE_HINTS } from "./study-grades";
-import { bindStudyGestures, StudyGestureBinding } from "./study-gestures";
+import { bindStudyGestures, bindTrackpadBack, StudyGestureBinding } from "./study-gestures";
 import { bindAdaptiveLayout } from "./adaptive-layout";
 import { bindRatingTapGuard } from "./rating-tap-guard";
 import { StudyControlsModal } from "./study-controls-modal";
@@ -87,6 +87,7 @@ export class MiaStudyView extends ItemView {
   private studyShortcuts = new Map<string, HTMLButtonElement>();
   private renderedPosition = "";
   private gestures: StudyGestureBinding | null = null;
+  private trackpadBack: StudyGestureBinding | null = null;
   private readingPosition = { key: "", scrollTop: 0, pageScrollTop: 0, conceptsOpen: false };
   private readingRenders: Promise<void>[] = [];
   private readingRestorePending = false;
@@ -121,6 +122,13 @@ export class MiaStudyView extends ItemView {
       this.contentEl,
       () => this.route === "study" && !this.isMutatingReview && !this.closed && this.plugin.studyUi.appearance.swipeEnabled,
       () => this.returnToSessionOrigin(),
+      () => this.plugin.studyUi.appearance.swipeSensitivity,
+    );
+    // 맥 트랙패드: 두 손가락을 오른쪽으로 쓸면 뒤로가기. 휴대폰 "쓸어서 뒤로가기" 설정을 함께 따른다.
+    this.trackpadBack = bindTrackpadBack(
+      this.contentEl,
+      () => !Platform.isMobile && !this.isMutatingReview && !this.closed && this.plugin.studyUi.appearance.swipeEnabled,
+      () => this.goBack(),
       () => this.plugin.studyUi.appearance.swipeSensitivity,
     );
     this.ratingTapGuard = bindRatingTapGuard(this.contentEl);
@@ -178,6 +186,8 @@ export class MiaStudyView extends ItemView {
     this.adaptiveLayout = null;
     this.gestures?.destroy();
     this.gestures = null;
+    this.trackpadBack?.destroy();
+    this.trackpadBack = null;
     this.ratingTapGuard?.destroy();
     this.ratingTapGuard = null;
     this.clearResultPopup();
@@ -1365,6 +1375,17 @@ export class MiaStudyView extends ItemView {
     const seed = [...this.sessionSeed];
     const mode = this.sessionMode;
     this.startReview(seed, mode, this.focusedReview);
+  }
+
+  /** 학습 중에는 휴대폰 쓸기와 같이 학습을 시작한 화면으로, 그 밖에는 이 탭의 이전 화면으로 돌아간다. */
+  private goBack(): void {
+    if (this.route === "study") { this.returnToSessionOrigin(); return; }
+    const history = (this.leaf as unknown as { history?: { back?: () => unknown; backHistory?: unknown[] } }).history;
+    // Obsidian 탭 기록(비공개 API)이 없거나 비어 있으면 아무것도 하지 않는다.
+    if (typeof history?.back !== "function" || (Array.isArray(history.backHistory) && history.backHistory.length === 0)) return;
+    if (this.reviewSavePending()) return;
+    this.flushReadingPosition();
+    reportUiFailure(Promise.resolve(history.back()));
   }
 
   private returnToSessionOrigin(): void {
