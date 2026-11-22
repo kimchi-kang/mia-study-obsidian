@@ -90,7 +90,8 @@ export function bindTrackpadBack(
 ): StudyGestureBinding {
   const swipe = new TrackpadSwipe();
   const wheel = (event: WheelEvent) => {
-    if (!enabled() || canScrollLeft(event.target, surface)) return;
+    if (!enabled()) return;
+    if (canScrollLeft(event.target, surface)) { swipe.suppress(event.timeStamp); return; }
     const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? surface.clientWidth : 1;
     const result = swipe.feed({ dx: event.deltaX * unit, dy: event.deltaY * unit, time: event.timeStamp, ctrl: event.ctrlKey }, sensitivity());
     if (result === "back") back();

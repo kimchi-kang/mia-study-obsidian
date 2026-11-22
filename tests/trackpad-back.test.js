@@ -35,6 +35,24 @@ describe("trackpad two-finger back", () => {
     expect(results.filter(Boolean)).toEqual([]);
   });
 
+  it("counts vertical wobble by size so up-and-down shaking cannot pass as a sideways swipe", () => {
+    const swipe = new TrackpadSwipe();
+    const results = [];
+    for (let t = 0, i = 0; t < 400; t += 16, i += 1) results.push(swipe.feed(wheel(t, -20, i % 2 ? 30 : -30)));
+    expect(results.filter(Boolean)).toEqual([]);
+  });
+
+  it("stays quiet for the rest of a stream that a scrollable block started using", () => {
+    const swipe = new TrackpadSwipe();
+    swipe.suppress(0);
+    const results = [];
+    for (let t = 16; t < 600; t += 16) results.push(swipe.feed(wheel(t, -20)));
+    expect(results.filter(Boolean)).toEqual([]);
+    let again = null;
+    for (let t = 900; t < 1060; t += 16) again ??= swipe.feed(wheel(t, -20));
+    expect(again).toBe("back");
+  });
+
   it("respects sensitivity thresholds", () => {
     const light = new TrackpadSwipe(); const firm = new TrackpadSwipe();
     let lightHit = null; let firmHit = null;
@@ -69,6 +87,16 @@ describe("trackpad two-finger back", () => {
     const ui = setup();
     const code = { nodeType: 1, scrollLeft: 30, scrollWidth: 900, clientWidth: 300, parentElement: ui.surface };
     for (let t = 0; t < 200; t += 16) ui.emit({ timeStamp: t, target: code });
+    expect(ui.back).not.toHaveBeenCalled();
+  });
+
+  it("does not go back when momentum continues after a scrolled block reaches its left edge", () => {
+    const ui = setup();
+    const code = { nodeType: 1, scrollLeft: 60, scrollWidth: 900, clientWidth: 300, parentElement: ui.surface };
+    let t = 0;
+    for (; t < 96; t += 16) { ui.emit({ timeStamp: t, target: code }); code.scrollLeft = Math.max(0, code.scrollLeft - 20); }
+    expect(code.scrollLeft).toBe(0);
+    for (; t < 600; t += 16) ui.emit({ timeStamp: t, target: code });
     expect(ui.back).not.toHaveBeenCalled();
   });
 });

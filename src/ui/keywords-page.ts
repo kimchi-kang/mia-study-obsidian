@@ -68,8 +68,14 @@ export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
         text: item.keyword.label,
         attr: { tabindex: "0", role: "button", "aria-label": `키워드 ${item.keyword.label} 의미 보기` },
       });
+      // 일반 버튼처럼 Enter는 누를 때, Space는 손을 뗄 때 연다(Space 누름은 화면 스크롤만 막는다).
       title.addEventListener("keydown", (event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        if (event.key === "Enter") showMeaning(item);
+      });
+      title.addEventListener("keyup", (event) => {
+        if (event.key !== " ") return;
         event.preventDefault();
         showMeaning(item);
       });

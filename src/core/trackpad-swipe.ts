@@ -24,6 +24,16 @@ export class TrackpadSwipe {
   private last = Number.NEGATIVE_INFINITY;
   private locked = false;
 
+  /**
+   * 스크롤 가능한 영역이 이 wheel 신호를 쓰고 있음을 알린다. 같은 쓸기(관성 포함)가 끝날 때까지 반응하지 않아,
+   * 가로 스크롤이 왼쪽 끝에 닿은 뒤 남은 관성이 뒤로가기로 번지지 않는다.
+   */
+  suppress(time: number): void {
+    if (time - this.last > GAP_MS) { this.sumX = 0; this.sumY = 0; }
+    this.last = time;
+    this.locked = true;
+  }
+
   reset(): void {
     this.sumX = 0;
     this.sumY = 0;
@@ -40,7 +50,8 @@ export class TrackpadSwipe {
     this.last = wheel.time;
     if (wheel.ctrl || this.locked) return null;
     this.sumX += wheel.dx;
-    this.sumY += wheel.dy;
+    // 위아래로 흔들며 쓸어도 세로 이동이 서로 지워지지 않게 크기만 더한다.
+    this.sumY += Math.abs(wheel.dy);
     if (this.sumX <= -THRESHOLDS[sensitivity] && Math.abs(this.sumX) > 2 * Math.abs(this.sumY)) {
       this.locked = true;
       return "back";

@@ -78,6 +78,18 @@ describe("study layout rendered DOM", () => {
     expect(meaning.mock.calls[0][1]).toBe(title.textContent);
     expect(card.querySelector("summary").textContent).toBe("연결 문제 보기");
   });
+  it("opens a keyword meaning with Space on release, like a native button", async () => {
+    const { view, root } = await renderLayoutCase({ route: "keywords" });
+    const meaning = vi.fn();
+    view.plugin.showKeywordMeaning = meaning;
+    const title = root.querySelector(".mia-keyword > strong[role=\"button\"]");
+    const down = new window.KeyboardEvent("keydown", { key: " ", bubbles: true, cancelable: true });
+    title.dispatchEvent(down);
+    expect(down.defaultPrevented).toBe(true);
+    expect(meaning).not.toHaveBeenCalled();
+    title.dispatchEvent(new window.KeyboardEvent("keyup", { key: " ", bubbles: true, cancelable: true }));
+    expect(meaning).toHaveBeenCalledTimes(1);
+  });
   it("ships a reproducible standalone harness with real rendered study HTML", async () => {
     // The checked-in snapshot includes local dates and the study-day boundary.
     vi.stubEnv("TZ", "Asia/Seoul");

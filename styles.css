@@ -498,7 +498,8 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-subject-grid { display: grid; gap: 10px; }
 .mia-subject-card { min-width: 0; display: flex; flex-direction: column; }
 .mia-subject-card > strong, .mia-subject-card > span { max-width: 100%; overflow-wrap: anywhere; }
-.mia-view .mia-subject-card > button.mia-subject-open { box-sizing: border-box; width: 100%; min-height: 44px; margin: 0; padding: 0; border: 0; border-radius: var(--mia-radius-s); background: transparent; box-shadow: none; color: var(--mia-ink); font: inherit; text-align: start; white-space: normal; cursor: pointer; }
+/* 눌림 그림자가 과목명에 붙지 않게 안쪽 여백을 두고, 같은 만큼 바깥으로 넓혀 글자 위치는 그대로 둔다. */
+.mia-view .mia-subject-card > button.mia-subject-open { box-sizing: border-box; width: calc(100% + 20px); min-height: 44px; margin: -4px -10px; padding: 4px 10px; border: 0; border-radius: var(--mia-radius-s); background: transparent; box-shadow: none; color: var(--mia-ink); font: inherit; text-align: start; white-space: normal; cursor: pointer; }
 .mia-view .mia-subject-card > button.mia-subject-open > .mia-subject-total::after { content: " ›"; color: var(--mia-accent-text); font-weight: 800; }
 .mia-view .mia-subject-card > button.mia-subject-open:hover > strong { color: var(--mia-accent-text); }
 .mia-view .mia-subject-card > button.mia-subject-open:active { box-shadow: var(--mia-shadow-inset); }
