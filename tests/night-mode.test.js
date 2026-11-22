@@ -193,6 +193,19 @@ describe("CSS 계약", () => {
     expect(decls(`${modal}::after`)).toMatchObject({ position: "fixed", "pointer-events": "none", "mix-blend-mode": "multiply", background: "#ff0000" });
     expect(decls(`${modal}::before`)).toMatchObject({ position: "fixed", "pointer-events": "none", "backdrop-filter": "grayscale(1)" });
   });
+  it("MIA 화면만 적용할 때 MIA 창 뒤 가림막은 밝은 빨강 대신 검정이다", () => {
+    const modal = 'body.mia-night-local .modal-container:has(.modal[class*="mia-"], .mia-keyboard-settings)';
+    expect(decls(`${modal} > .modal-bg`)).toMatchObject({ "background-color": "#000000" });
+  });
+  it.each(["--mia-again", "--mia-hard", "--mia-good", "--mia-easy"])("야간 평가 면 %s 위 흰 글자는 적색 덮개를 지나도 4.5:1 이상이다", token => {
+    const hex = decls('.mia-view[data-night="true"]')[token];
+    expect(hex).toMatch(/^#[0-9A-F]{6}$/i);
+    const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+    // 흑백 필터 뒤 회색값이 곱하기 덮개를 지나 빨강 채널로만 남는다.
+    const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    const linear = gray <= 0.04045 ? gray / 12.92 : ((gray + 0.055) / 1.055) ** 2.4;
+    expect((0.2126 + 0.05) / (0.2126 * linear + 0.05)).toBeGreaterThanOrEqual(4.5);
+  });
   it("야간 버튼은 켜짐일 때 파란 면으로 구분된다", () => {
     expect(decls('.mia-view .mia-settings-buttons > .mia-night-button[aria-pressed="true"]')).toMatchObject({ "background-color": "var(--mia-blue)", color: "var(--mia-on-color)" });
   });

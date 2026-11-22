@@ -268,6 +268,8 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement, overvi
       heading.addEventListener("click", () => ctx.showQuestions("all", subject));
       renderMeter(card, studied, total, "학습");
       const chips = card.createDiv({ cls: "mia-subject-chips" });
+      // 학습 막대가 무엇을 세는지 화면에서도 읽히게 같은 값을 칩으로 보여 준다.
+      chips.createEl("span", { text: `학습 ${studied}/${total}`, cls: "mia-count-chip" }).dataset.tone = "idle";
       const dueChip = chips.createEl("span", { text: `복습 ${subjectDue}`, cls: "mia-count-chip" });
       dueChip.dataset.tone = subjectDue > 0 ? "review" : "idle";
       const newChip = chips.createEl("span", { text: `새 문제 ${subjectNew}`, cls: "mia-count-chip" });

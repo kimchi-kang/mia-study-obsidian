@@ -70,12 +70,14 @@ export class MiaSettingTab extends PluginSettingTab {
 
     new Setting(containerEl).setName("문제 폴더").setDesc("한 줄에 하나. 비워 두면 보관함 전체에서 [!question]을 찾습니다.").addTextArea((text) => {
       text.setPlaceholder("지리학\n통계이론").setValue(settings.sourceRoots.join("\n"));
+      text.inputEl.setAttr("aria-label", "문제 폴더");
       bindFolder(text.inputEl, "sourceRoots", "문제 폴더");
     });
     this.stopOptimization = renderStudyManagementSettings(containerEl.createDiv({ cls: "mia-study-management-settings" }), this.miaPlugin, action => this.save(action, false));
     renderDeviceSyncSettings(containerEl, this.miaPlugin);
     new Setting(containerEl).setName("키워드 노트 폴더").setDesc("키워드 링크를 만들 때 기준으로 표시할 폴더입니다.").addText((text) => {
       text.setValue(settings.keywordFolder);
+      text.inputEl.setAttr("aria-label", "키워드 노트 폴더");
       bindFolder(text.inputEl, "keywordFolder", "키워드 노트 폴더");
     });
     new Setting(containerEl).setName("암기 모드 순서").setDesc("암기 모드는 평가 없이 질문과 정답을 넘겨 보며 복습일은 바뀌지 않습니다. 순서는 이 기기에 저장하며 새 암기 학습부터 적용합니다. 순서대로는 문제 목록 순서를 따릅니다.").addDropdown((dropdown) => {

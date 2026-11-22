@@ -2,6 +2,7 @@ import { AUTO_QUESTION_SECONDS, AUTO_ANSWER_SECONDS, parseAutoAdvance } from "..
 import { Modal, Notice, Setting } from "obsidian";
 import { NightPreference, NightScope, StudyAppearance, StudyUiStore } from "../services/study-ui-store";
 import { errorMessage } from "./error-message";
+import { labelToggle } from "./toggle-label";
 
 export class StudyAppearanceModal extends Modal {
   private draft!: StudyAppearance;
@@ -71,6 +72,7 @@ export class StudyAppearanceModal extends Modal {
     const nightState = night.controlEl.createSpan({ cls: "mia-toggle-state", text: this.nightScope === "app" ? "켜짐" : "꺼짐" });
     nightState.setAttribute("aria-hidden", "true");
     night.addToggle(toggle => {
+      labelToggle(toggle, "야간 모드를 Obsidian 전체에 적용");
       toggle.setValue(this.nightScope === "app").onChange(value => {
         this.nightScope = value ? "app" : "plugin";
         nightState.setText(value ? "켜짐" : "꺼짐");
@@ -109,6 +111,7 @@ export class StudyAppearanceModal extends Modal {
     const state = row.controlEl.createSpan({ cls: "mia-toggle-state", text: this.draft[key] ? "켜짐" : "꺼짐" });
     state.setAttribute("aria-hidden", "true");
     row.addToggle(toggle => {
+      labelToggle(toggle, name);
       toggle.setValue(this.draft[key]).onChange(value => {
         this.change({ [key]: value });
         state.setText(value ? "켜짐" : "꺼짐");

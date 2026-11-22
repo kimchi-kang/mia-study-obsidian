@@ -548,12 +548,27 @@
       ],
       [
         "--mia-good",
-        "#223A34",
+        "#1A2D28",
         false
       ],
       [
         "--mia-surface-hover",
         "var(--mia-surface)",
+        false
+      ],
+      [
+        "--mia-again",
+        "#3F2029",
+        false
+      ],
+      [
+        "--mia-hard",
+        "#322616",
+        false
+      ],
+      [
+        "--mia-easy",
+        "#1B264B",
         false
       ]
     ]
@@ -627,6 +642,17 @@
       [
         "mix-blend-mode",
         "multiply",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": "body.mia-night-local .modal-container:has(.modal[class*=\"mia-\"], .mia-keyboard-settings) > .modal-bg",
+    "declarations": [
+      [
+        "background-color",
+        "#000000",
         false
       ]
     ]
@@ -1409,7 +1435,7 @@
   },
   {
     "context": [],
-    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(button, input, select, textarea, summary, a, .modal-close-button, .checkbox-container, [tabindex]):focus-visible",
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(button, summary, a, .modal-close-button, .checkbox-container, [tabindex]:not(input, select, textarea)):focus-visible",
     "declarations": [
       [
         "outline",
@@ -1419,6 +1445,22 @@
       [
         "outline-offset",
         "2px",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ":is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(input, select, textarea):focus-visible",
+    "declarations": [
+      [
+        "outline",
+        "2px solid var(--mia-focus)",
+        false
+      ],
+      [
+        "outline-offset",
+        "-2px",
         false
       ]
     ]
@@ -1749,6 +1791,72 @@
       [
         "color",
         "var(--mia-on-color)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-settings",
+    "declarations": [
+      [
+        "color-scheme",
+        "dark",
+        false
+      ],
+      [
+        "--background-primary",
+        "var(--mia-bg)",
+        false
+      ],
+      [
+        "--background-primary-alt",
+        "var(--mia-panel)",
+        false
+      ],
+      [
+        "--background-secondary",
+        "var(--mia-panel)",
+        false
+      ],
+      [
+        "--background-secondary-alt",
+        "var(--mia-panel)",
+        false
+      ],
+      [
+        "--background-modifier-border",
+        "var(--mia-line)",
+        false
+      ],
+      [
+        "--background-modifier-form-field",
+        "var(--mia-surface)",
+        false
+      ],
+      [
+        "--text-normal",
+        "var(--mia-ink)",
+        false
+      ],
+      [
+        "--text-muted",
+        "var(--mia-muted)",
+        false
+      ],
+      [
+        "--text-faint",
+        "var(--mia-muted)",
+        false
+      ],
+      [
+        "--setting-items-background",
+        "var(--mia-panel)",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-ink)",
         false
       ]
     ]

@@ -38,7 +38,7 @@ export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
       const keyword = keywords.get(item.key)!;
       row.createEl("button", { text: item.label, attr: { "aria-label": `${item.label} 의미 보기` } })
         .addEventListener("click", () => showMeaning(keyword));
-      row.createEl("span", { cls: "mia-muted", text: `기억률 ${Math.round(item.averageRecall * 100)}% · 문제 ${item.studied}/${item.total} 학습 · 잊음 ${item.lapses}회 · 최근 못 암기 ${item.again} · 애매 ${item.hard}` });
+      row.createEl("span", { cls: "mia-muted", text: `기억률\u00a0${Math.round(item.averageRecall * 100)}% · 문제\u00a0${item.studied}/${item.total} 학습 · 잊음\u00a0${item.lapses}회 · 최근 못\u00a0암기\u00a0${item.again} · 애매\u00a0${item.hard}` });
       row.createEl("button", { text: "이 개념 학습", cls: "mia-radar-start" })
         .addEventListener("click", () => ctx.startFocusedReview(item.questionIds));
     }

@@ -70,7 +70,7 @@ function renderTargetCard(ctx: StudyPageContext, root: HTMLElement, item: Target
   const card = root.createEl("article", { cls: "mia-target-card" });
   card.createEl("h4", { text: target.label });
   card.createEl("p", { text: `${target.date} · ${daysLabel(item.daysUntil)} · ${target.subjects?.join(", ") || "전체 과목"} · ${item.total}문제` });
-  card.createEl("p", { text: `예상 평균 기억률 ${targetRecallLabel(item.averageRecall)} · 위험 문제 ${item.risks.length}개 · 학습 전 ${item.unstudied}개` });
+  card.createEl("p", { text: `예상 평균 기억률\u00a0${targetRecallLabel(item.averageRecall)} · 위험 문제\u00a0${item.risks.length}개 · 학습\u00a0전\u00a0${item.unstudied}개` });
   const actions = card.createDiv({ cls: "mia-inline-actions" });
   riskButton(ctx, actions, item);
   actions.createEl("button", { text: "편집", attr: { "aria-label": `${target.label} 목표일 편집` } })

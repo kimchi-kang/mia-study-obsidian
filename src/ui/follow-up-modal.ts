@@ -4,6 +4,7 @@ import { MAX_FOLLOW_UPS, normalizeFollowUpIds } from "../core/follow-up";
 import { QuestionRecord } from "../core/models";
 import { errorMessage } from "./error-message";
 import { KeyboardAwareModal } from "./mobile-keyboard";
+import { labelToggle } from "./toggle-label";
 
 type RegisteredQuestion = QuestionRecord & { id: string };
 
@@ -40,7 +41,7 @@ export class FollowUpModal extends KeyboardAwareModal {
     new Setting(this.contentEl)
       .setName("양방향 연결")
       .setDesc("선택한 질문에도 현재 질문을 자동 연결하고, 해제한 양방향 연결은 함께 제거합니다.")
-      .addToggle((toggle) => toggle.onChange((value) => { this.bidirectional = value; }));
+      .addToggle((toggle) => labelToggle(toggle, "양방향 연결").onChange((value) => { this.bidirectional = value; }));
     const list = this.contentEl.createDiv({ cls: "mia-followup-list" });
     let composing = false;
 

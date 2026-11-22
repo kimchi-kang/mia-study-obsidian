@@ -170,8 +170,12 @@ button.mia-progress-stat { cursor: pointer; }
   --mia-blue: #243262;
   --mia-red: #522A37;
   --mia-yellow: #41321D;
-  --mia-good: #223A34;
+  --mia-good: #1A2D28;
   --mia-surface-hover: var(--mia-surface);
+  /* 적색 덮개를 지나면 평가 4색이 같은 빨강이 되므로, 흰 글자 대비 4.5:1 이상이 남게 평가 면만 더 어둡게 둔다. */
+  --mia-again: #3F2029;
+  --mia-hard: #322616;
+  --mia-easy: #1B264B;
 }
 /* 밝은 테마에서도 흰 바탕이 강한 빨강으로 남지 않게, 야간 동안만 Obsidian 기본 어두운 테마 색을 쓴다. */
 body.mia-night-global.theme-light { color-scheme: dark; --color-base-00: #1e1e1e; --color-base-05: #212121; --color-base-10: #242424; --color-base-20: #262626; --color-base-25: #2a2a2a; --color-base-30: #363636; --color-base-35: #3f3f3f; --color-base-40: #555555; --color-base-50: #666666; --color-base-60: #999999; --color-base-70: #b3b3b3; --color-base-100: #dadada; --background-primary: #1e1e1e; --background-primary-alt: #242424; --background-secondary: #262626; --background-secondary-alt: #2a2a2a; --background-modifier-border: #363636; --background-modifier-hover: rgba(255, 255, 255, .075); --interactive-normal: #2a2a2a; --interactive-hover: #303030; --text-faint: #666666; --text-on-accent: #ffffff; }
@@ -188,6 +192,8 @@ body:not(.mia-night-global) .workspace-leaf-content:has(.mia-view[data-night="tr
 body.mia-night-local .modal-container:has(.modal[class*="mia-"], .mia-keyboard-settings)::before, body.mia-night-local .modal-container:has(.modal[class*="mia-"], .mia-keyboard-settings)::after { content: ""; position: fixed; inset: 0; pointer-events: none; transition: none; }
 body.mia-night-local .modal-container:has(.modal[class*="mia-"], .mia-keyboard-settings)::before { z-index: 1000; -webkit-backdrop-filter: grayscale(1); backdrop-filter: grayscale(1); }
 body.mia-night-local .modal-container:has(.modal[class*="mia-"], .mia-keyboard-settings)::after { z-index: 1001; background: #ff0000; mix-blend-mode: multiply; }
+/* MIA 화면만 야간일 때 창 뒤 작업 영역이 밝은 빨강 면으로 보이지 않게, 창 뒤 가림막을 검정으로 둔다. */
+body.mia-night-local .modal-container:has(.modal[class*="mia-"], .mia-keyboard-settings) > .modal-bg { background-color: #000000; }
 .mia-view [data-tone="again"] { --mia-tone: var(--mia-red); }
 .mia-view .mia-header h2 { font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
 .mia-view .mia-header .mia-home-button::before { display: inline-grid; place-items: center; flex: 0 0 auto; font-weight: 800; letter-spacing: 0; content: ""; order: -2; width: 18px; height: 18px; border-radius: 50%; background: var(--mia-accent-text); box-shadow: none; font-size: 0; }
@@ -359,9 +365,14 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
   box-shadow: var(--mia-shadow-inset);
 }
 
-:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(button, input, select, textarea, summary, a, .modal-close-button, .checkbox-container, [tabindex]):focus-visible {
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(button, summary, a, .modal-close-button, .checkbox-container, [tabindex]:not(input, select, textarea)):focus-visible {
   outline: 2px solid var(--mia-focus);
   outline-offset: 2px;
+}
+/* 입력칸은 창·카드 가장자리에 붙어 있어 바깥 테두리가 잘리므로 포커스 테두리를 안쪽에 그린다. */
+:is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--mia-focus);
+  outline-offset: -2px;
 }
 
 :is(.mia-view, .mia-keyboard-settings, .mia-study-management-settings, .modal:where(.mia-keyboard-modal, .mia-detail-modal, .mia-result-modal, .mia-preview-modal, .mia-appearance-modal, .mia-controls-modal, .mia-study-management-modal, .mia-confirm-modal, .mia-recovery-modal, .mia-editor-modal-long, .mia-editor-modal-medium, .mia-editor-modal-compact, .mia-setting-controls, .mia-export-modal)) :is(button, input, select, textarea):disabled { opacity: .55; }
@@ -475,6 +486,9 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view button.mod-warning:hover:not(:disabled), .modal.mia-detail-modal button.mod-warning:hover:not(:disabled) { background-color: var(--mia-red); color: var(--mia-on-color); }
 /* 입력칸 안내 문구는 흐린 글자 색으로 통일한다. */
 .mia-view :is(input, textarea)::placeholder, .modal[class*="mia-"] :is(input, textarea)::placeholder { color: var(--mia-muted); opacity: .75; }
+
+/* MIA 설정 탭은 Obsidian 설정 창 안에 그려지므로, 밝은 테마에서도 설정 카드·글자가 MIA 어두운 색을 쓰게 Obsidian 색 변수를 맞춘다. */
+.mia-keyboard-settings { color-scheme: dark; --background-primary: var(--mia-bg); --background-primary-alt: var(--mia-panel); --background-secondary: var(--mia-panel); --background-secondary-alt: var(--mia-panel); --background-modifier-border: var(--mia-line); --background-modifier-form-field: var(--mia-surface); --text-normal: var(--mia-ink); --text-muted: var(--mia-muted); --text-faint: var(--mia-muted); --setting-items-background: var(--mia-panel); color: var(--mia-ink); }
 
 /* 2. Today / dashboard */
 .mia-stability-stat { position: relative; overflow: hidden; }
@@ -666,11 +680,11 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-keyword > strong[role="button"] { justify-self: start; border-radius: var(--mia-radius-s); cursor: pointer; }
 .mia-view .mia-keyword > strong[role="button"]:hover { color: var(--mia-accent-text); }
 .mia-view.mia-view .mia-keyword > button.mod-warning { font-weight: 700; font-size: .86em; min-height: 40px; padding: 6px 8px; white-space: nowrap; }
-.mia-view .mia-keyword-grid { grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
+.mia-view .mia-keyword-grid { grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); align-items: start; }
 
 .mia-view .mia-keyword-grid { gap: var(--mia-card-gap); }
 
-.mia-keyword-radar { margin-bottom: 20px; padding: 14px; border-radius: var(--mia-radius); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); overflow-wrap: anywhere; }
+.mia-keyword-radar { margin-bottom: 20px; padding: 14px; border-radius: var(--mia-radius); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); word-break: keep-all; overflow-wrap: anywhere; }
 .mia-keyword-radar > h3 { margin: 0; }
 .mia-keyword-radar > ol { display: grid; gap: 8px; margin-block: 8px 0; padding-inline-start: 0; list-style: none; counter-reset: mia-radar; }
 /* 한 줄에 개념 이름과 학습 버튼, 아래 줄에 수치: 휴대폰에서도 Top 5가 화면을 다 차지하지 않게 한다. */
@@ -857,6 +871,8 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-study-card .mia-markdown img { border-radius: var(--mia-radius-s); }
 
 /* 7. Settings and dialogs */
+/* 결과 창: 직전 평가 취소 버튼의 포커스 테두리가 아래 통계 카드에 가리지 않게 띄운다. */
+.modal.mia-result-modal .mia-result-undo { margin-bottom: 12px; }
 .mia-warning { color: var(--text-warning); }
 /* Override host modal dimensions for the visible keyboard viewport. */
 .mia-keyboard-modal {

@@ -6,6 +6,7 @@ import { DEFAULT_SETTINGS, DEFAULT_STUDY_MANAGEMENT, type StudyManagementSetting
 import { parseSteps, validParameters } from "../core/study-management";
 
 import { WORKLOAD_PRESETS, RETENTION_PRESETS, workloadPreset, hasCustomAdvancedSettings, studySettingsPatch, captureStudyProfile } from "../core/simple-study-settings";
+import { labelToggle } from "./toggle-label";
 
 type Save = (action: () => Promise<void>) => Promise<void>;
 
@@ -346,7 +347,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       const row = new Setting(key === "newCardsIgnoreReviewLimit" ? daily : fsrsArea).setName(name).setDesc(desc);
       const state = row.controlEl.createSpan({ text: draft[key] ? "켜짐" : "꺼짐", cls: "mia-toggle-state" });
       state.setAttribute("aria-hidden", "true");
-      row.addToggle(control => control.setValue(draft[key]).onChange(value => { draft[key] = value; state.setText(value ? "켜짐" : "꺼짐"); changed(); }));
+      row.addToggle(control => labelToggle(control, name).setValue(draft[key]).onChange(value => { draft[key] = value; state.setText(value ? "켜짐" : "꺼짐"); changed(); }));
     };
     number(extra, "dayStartsAt", "하루를 새로 시작하는 시각", "기기 시간 기준 · 기본 오전 4시", 23);
     number(extra, "learnAheadMinutes", "미리 학습 한계(분)", "Anki: 학습 한계 미리 당기기. 남은 문제가 없을 때 이 시간 안에 돌아올 반복 문제를 바로 출제합니다. 0이면 예정 시각까지 기다립니다.", 1440);

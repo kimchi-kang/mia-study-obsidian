@@ -2331,6 +2331,17 @@ describe("question detail side panel", () => {
     expect(ui.view.questionList.selectedId).toBeNull();
     expect(ui.content()).toContain("문제를 누르면 여기에 상세가 열립니다.");
   });
+  it("clears the side detail when a search leaves the selected question out of the results", async () => {
+    const ui = panelSetup(1280);
+    await ui.row().find("상세", true).click(); await vi.runAllTimersAsync();
+    expect(ui.content()).toContain("현재 상태 변경");
+    const search = ui.view.contentEl.querySelectorAll("input").find(node => node.attrs["aria-label"] === "질문 검색");
+    search.value = "결과에 없는 검색어"; search.handlers.get("input")();
+    await vi.runAllTimersAsync();
+    expect(ui.view.questionList.selectedId).toBeNull();
+    expect(ui.content()).not.toContain("현재 상태 변경");
+    expect(ui.content()).toContain("문제를 누르면 여기에 상세가 열립니다.");
+  });
   it("marks the active status chip with aria-pressed", async () => {
     const ui = panelSetup(1280);
     const chip = label => ui.view.contentEl.find(label);

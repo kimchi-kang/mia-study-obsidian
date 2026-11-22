@@ -321,6 +321,13 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
       sort: state.sort,
     });
     resultCount.setText(`${questions.length}개`);
+    // 검색·필터로 선택한 문제가 결과에서 빠지면, 다른 문제를 평가·삭제하지 않게 오른쪽 상세도 비운다.
+    if (state.selectedId && !questions.some((question) => question.id === state.selectedId)) {
+      state.selectedId = null;
+      state.panelScroll = null;
+      state.panelFocus = null;
+      showPanelPlaceholder();
+    }
     renderStatusChips();
     weakNote.setText(state.review === "weak" && state.sort === "weak" ? WEAK_SORT_NOTE : "");
     testResults.disabled = questions.length === 0;
