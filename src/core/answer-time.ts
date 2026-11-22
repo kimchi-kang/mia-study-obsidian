@@ -11,6 +11,15 @@ export function formatAnswerDuration(ms: number): string {
   return seconds < 60 ? `${seconds}초` : `${Math.floor(seconds / 60)}분 ${seconds % 60}초`;
 }
 
+export function formatTotalAnswerDuration(ms: number): string {
+  const seconds = Math.round(ms / 1000);
+  if (seconds < 60) return formatAnswerDuration(ms);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  if (!hours) return `${minutes}분`;
+  return minutes % 60 ? `${hours}시간 ${minutes % 60}분` : `${hours}시간`;
+}
+
 export class AnswerClock {
   private elapsed = 0;
   private started: number | null = null;

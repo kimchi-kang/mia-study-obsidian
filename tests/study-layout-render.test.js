@@ -52,6 +52,35 @@ describe("study layout rendered DOM", () => {
     if (route === "keywords") expect(root.querySelectorAll(".mia-keyword")).toHaveLength(12);
     if (route === "questions") expect(root.querySelector(".mia-status-chips").textContent).toContain("오늘 복습 24학습 전 16▲ 취약 16");
   });
+  it("shows study history between target dates and the forecast with accessible daily details", async () => {
+    vi.stubEnv("TZ", "Asia/Seoul");
+    const { root } = await renderLayoutCase({ route: "progress", targets: true, history: "varied" });
+    const section = root.querySelector(".mia-target-dates + section.mia-study-history");
+    expect(section.nextElementSibling.matches(".mia-review-forecast")).toBe(true);
+    expect(section.querySelector("h3.mia-section-title").textContent).toBe("학습 기록");
+    expect([...section.querySelectorAll(".mia-history-tile")].map(tile => tile.textContent)).toEqual([
+      "연속 학습일1일", "오늘8문제떠올린 시간 4분", "최근 7일56문제떠올린 시간 12분",
+    ]);
+    const grid = section.querySelector('[role="img"]');
+    expect(grid.getAttribute("aria-label")).toBe("최근 12주 학습 기록: 4일 동안 80문제");
+    expect(grid.querySelectorAll(".mia-history-cell")).toHaveLength(84);
+    expect(grid.querySelectorAll(".mia-history-future")).toHaveLength(6);
+    expect(grid.querySelectorAll("[tabindex]")).toHaveLength(0);
+    expect(grid.querySelector('[title="11월 16일 · 8문제"]')).not.toBeNull();
+    expect(grid.querySelector('[title="11월 15일 · 기록 없음"]')).not.toBeNull();
+    expect(section.querySelector(".mia-history-footer").textContent).toContain("12주 합계 80문제 · 4일 학습");
+    expect(section.querySelector("details > summary").textContent).toBe("날짜별 학습량 보기");
+    expect([...section.querySelectorAll("details li")].map(row => row.textContent)).toEqual([
+      "11월 16일 · 8문제 · 떠올린 시간 4분", "11월 14일 · 32문제",
+      "11월 10일 · 16문제 · 떠올린 시간 8분", "11월 8일 · 24문제 · 떠올린 시간 12분",
+    ]);
+  });
+  it("shows guidance for an empty study history and hides zero recall durations", async () => {
+    const { root } = await renderLayoutCase({ route: "progress", history: "empty" });
+    const section = root.querySelector(".mia-study-history");
+    expect(section.querySelector("p.mia-muted").textContent).toBe("아직 학습 기록이 없습니다. 복습을 평가하면 여기에 날마다 쌓입니다.");
+    expect(section.querySelectorAll(".mia-history-tile small, [role='img'], details")).toHaveLength(0);
+  });
   it("opens the subject question list when the subject heading is clicked", async () => {
     const { root } = await renderLayoutCase({ route: "dashboard" });
     const open = root.querySelector(".mia-subject-card > button.mia-subject-open");
@@ -100,7 +129,7 @@ describe("study layout rendered DOM", () => {
       root.remove();
     }
     for (const route of ["dashboard", "progress", "questions", "keywords"]) {
-      const { root } = await renderLayoutCase({ route, targets: true });
+      const { root } = await renderLayoutCase({ route, targets: true, history: route === "progress" ? "varied" : "default" });
       cases[route] = root.outerHTML;
       root.remove();
     }
@@ -221,7 +250,8 @@ it.each(["dashboard", "progress"])("keeps %s DOM when synchronized values agree,
     focused.focus();
     root.scrollTop = 63;
     view.plugin.synchronizeStudyData.mockImplementationOnce(async () => {
-      store.reviews = { ...store.reviews, unindexed: fsrs.rate(undefined, 4, new Date(2026, 10, 12, 14)) };
+      // Keep the unindexed review outside the visible history and streak.
+      store.reviews = { ...store.reviews, unindexed: fsrs.rate(undefined, 4, new Date(2026, 7, 1, 14)) };
       session.notifyStore();
     });
     await vi.advanceTimersByTimeAsync(30_000);
@@ -401,4 +431,71 @@ it.each(["dashboard", "progress"])("only redraws for visible target or forecast 
     if (route === "dashboard") expect(root.querySelector(selector).textContent).toContain("모의 면접");
     else expect(forecastCount(root.querySelector(selector))).toBe(count + 1);
   } finally { await session.close(); }
+});
+
+it("redraws progress when only a history duration changes", async () => {
+  const { view, root } = await renderLayoutCase({ route: "progress" });
+  const session = await openWithTimers(view);
+  try {
+    const state = view.plugin.store.reviews["q-1"];
+    state.history = state.history.map(log => ({ ...log, answer_ms: 15_000 }));
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(root.querySelector(".mia-study-history details li").textContent).toContain("떠올린 시간 15초");
+  } finally { await session.close(); }
+});
+
+it("labels months above the history grid and rings today's cell", async () => {
+  vi.stubEnv("TZ", "Asia/Seoul");
+  const { root } = await renderLayoutCase({ route: "progress", history: "varied" });
+  const section = root.querySelector(".mia-study-history");
+  const months = [...section.querySelectorAll(".mia-history-months > span")];
+  expect(months.map(month => month.textContent)).toEqual(["9월", "10월", "11월"]);
+  expect(section.querySelector(".mia-history-months").getAttribute("aria-hidden")).toBe("true");
+  const today = section.querySelectorAll(".mia-history-today");
+  expect(today).toHaveLength(1);
+  expect(today[0].getAttribute("title")).toBe("11월 16일 · 8문제");
+  expect(today[0].classList.contains("mia-history-future")).toBe(false);
+});
+
+it("encourages restarting a broken streak only when there is earlier history", async () => {
+  const { view, root } = await renderLayoutCase({ route: "progress", history: "varied" });
+  const { renderStudyHistory } = await import("../src/ui/study-history-panel");
+  const { summarizeStudyHistory } = await import("../src/core/study-history");
+  const host = root.ownerDocument.createElement("div");
+  const reviews = view.plugin.store.reviews;
+  renderStudyHistory(host, summarizeStudyHistory(reviews, 4, new Date(2026, 10, 30, 12)));
+  expect(host.querySelector(".mia-history-tile small").textContent).toBe("오늘 학습하면 1일째");
+});
+
+it("shows a tapped history cell's record below the grid", async () => {
+  vi.stubEnv("TZ", "Asia/Seoul");
+  const { root } = await renderLayoutCase({ route: "progress", history: "varied" });
+  const section = root.querySelector(".mia-study-history");
+  const readout = section.querySelector(".mia-history-readout");
+  expect(readout.getAttribute("aria-live")).toBe("polite");
+  expect(readout.textContent).toBe("칸을 누르면 그날 기록이 보입니다.");
+  const cell = section.querySelector('.mia-history-grid [title="11월 8일 · 24문제"]');
+  cell.dispatchEvent(new root.ownerDocument.defaultView.MouseEvent("click", { bubbles: true }));
+  expect(readout.textContent).toBe("11월 8일 · 24문제 · 떠올린 시간 12분");
+  expect(cell.classList.contains("mia-history-selected")).toBe(true);
+  const empty = section.querySelector('.mia-history-grid [title="11월 15일 · 기록 없음"]');
+  empty.dispatchEvent(new root.ownerDocument.defaultView.MouseEvent("click", { bubbles: true }));
+  expect(readout.textContent).toBe("11월 15일 · 기록 없음");
+  expect(section.querySelectorAll(".mia-history-selected")).toHaveLength(1);
+  section.querySelector(".mia-history-future").dispatchEvent(new root.ownerDocument.defaultView.MouseEvent("click", { bubbles: true }));
+  expect(readout.textContent).toBe("11월 15일 · 기록 없음");
+});
+
+it("shows the current streak next to the date on the dashboard", async () => {
+  vi.stubEnv("TZ", "Asia/Seoul");
+  const { root } = await renderLayoutCase({ route: "dashboard", history: "varied" });
+  const streak = root.querySelector(".mia-hero-chips > .mia-hero-streak");
+  expect(streak.textContent).toBe("연속 1일");
+  expect(streak.getAttribute("aria-label")).toBe("연속 학습일 1일");
+  expect(root.querySelector(".mia-hero-chips > .mia-hero-date:first-child").textContent).not.toContain("연속");
+});
+
+it("hides the dashboard streak when there is no study record", async () => {
+  const { root } = await renderLayoutCase({ route: "dashboard", history: "empty" });
+  expect(root.querySelector(".mia-hero-streak")).toBeNull();
 });

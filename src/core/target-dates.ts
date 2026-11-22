@@ -1,6 +1,6 @@
 import type { FsrsService } from "./fsrs-service";
 import type { QuestionRecord, QuestionReviewState, TargetDate } from "./models";
-import { nextStudyDayStart, studyDayStart } from "./study-management";
+import { calendarDate, nextStudyDayStart, studyDayStart } from "./study-management";
 
 export const MAX_TARGET_DATES = 20;
 export const MAX_TARGET_LABEL_LENGTH = 40;
@@ -42,11 +42,6 @@ export interface TargetDateSummary {
   unstudied: number;
   averageRecall: number | null;
   risks: Array<{ id: string; recall: number }>;
-}
-
-function calendarDate(date: Date): string {
-  return [String(date.getFullYear()).padStart(4, "0"), String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0")].join("-");
 }
 
 function targetStart(date: string, hour: number): Date {

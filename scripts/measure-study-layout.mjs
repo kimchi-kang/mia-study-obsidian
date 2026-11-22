@@ -53,6 +53,7 @@ try {
   const extras = extendedEnabled ? JSON.parse(await readFile(".claude/slim/layout-extra-cases.json", "utf8")) : [];
   if (process.env.MIA_LAYOUT_SCREENSHOTS) await mkdir(process.env.MIA_LAYOUT_SCREENSHOTS, { recursive: true });
   const sizes = [[1366, 1024, "tablet"], [1194, 834, "tablet"], [834, 1194, "tablet"], [678, 1024, "tablet"], [360, 800, "phone"], [390, 844, "phone"], [844, 390, "phone"], [1440, 900, "desktop"], [1920, 1080, "desktop"], [1920, 1080, "tablet"]];
+  sizes.push([768, 1024, "tablet"], [1024, 768, "tablet"]);
   for (const [width, height, device] of sizes.filter(size => !process.env.MIA_LAYOUT_SIZE || process.env.MIA_LAYOUT_SIZE.split(",").map(Number).includes(size[0]))) {
     await call("Emulation.setTouchEmulationEnabled", { enabled: device !== "desktop", maxTouchPoints: 1 });
     for (const theme of process.env.MIA_LAYOUT_STYLES ? ["theme-light", "theme-dark"] : [null]) {
@@ -73,6 +74,11 @@ try {
                 if (view) view.dataset.night = "true";
               }
               const report = window.miaLayoutReport();
+              if (!${JSON.stringify(extended)}) {
+                const view = document.querySelector(".mia-view");
+                const css = getComputedStyle(view);
+                report.containerWidth = view.clientWidth - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight);
+              }
               const controls = [...document.querySelectorAll(
                 ".mia-target-strip button, .mia-target-dates :is(button, summary), .mia-review-forecast summary, "
                 + ".mia-keyword-radar button, .mia-keyword-toolbar select, .mia-target-date-form :is(button, input:not([type=checkbox]), .mia-target-subject), "
@@ -81,6 +87,16 @@ try {
               report.targetAndRadarTouch = controls.map(el => ({ label: el.textContent?.trim(), width: el.offsetWidth, height: el.offsetHeight }));
               const bars = document.querySelector(".mia-forecast-bars");
               report.targetAndRadarOverflow = bars ? bars.scrollWidth > bars.clientWidth + 1 : false;
+              const historyGrid = document.querySelector(".mia-history-grid");
+              if (historyGrid) {
+                const details = document.querySelector(".mia-study-history summary");
+                const cell = historyGrid.querySelector(".mia-history-cell").getBoundingClientRect();
+                report.studyHistory = {
+                  overflow: historyGrid.scrollWidth > historyGrid.clientWidth,
+                  summaryHeight: details.offsetHeight, summaryWidth: details.offsetWidth,
+                  cellWidth: cell.width, cellHeight: cell.height,
+                };
+              }
               if (theme) {
                 report.theme = theme;
                 const elements = ${extended ? '[...document.querySelectorAll(".view-content *")]' : '[document.querySelector(".mia-view"), ...document.querySelectorAll(".mia-view *")]'};
@@ -121,9 +137,13 @@ try {
     return overflow || undersized.length ? [{ route: r.route, width: r.width, theme: r.theme, overflow, undersized }] : [];
   });
   if (featureIssues.length) throw new Error(`Target date or radar layout: ${JSON.stringify(featureIssues)}`);
+  if (results.some(({ studyHistory: history }) => history && (history.overflow || history.summaryHeight < 44 || history.summaryWidth < 44
+    || history.cellWidth > 18.1 || Math.abs(history.cellWidth - history.cellHeight) > 0.1))) {
+    throw new Error("Study history grid or details layout");
+  }
   if (results.some(r => !r.extended && r.device !== "desktop" && r.width < 1600 && r.contentSafePaneRatio < .94)) throw new Error("Touch content narrower than 94% of safe pane");
   if (results.some(r => !r.extended && r.device !== "desktop" && r.route !== "study" && r.contentWidth > 1600)) throw new Error("Library cap exceeded");
-  if (results.some(r => !r.extended && r.route === "questions" && r.panelVisible !== (r.device !== "phone" && r.width >= 1000))) throw new Error("Detail panel visibility regressed");
+  if (results.some(r => !r.extended && r.route === "questions" && r.panelVisible !== (r.device !== "phone" && r.containerWidth >= 1000))) throw new Error("Detail panel visibility regressed");
   if (results.some(r => !r.extended && (r.horizontalOverflow || r.paneHorizontalOverflow || r.overflowingElements.length))) throw new Error("Horizontal overflow detected");
 } finally {
   socket?.close();

@@ -4,6 +4,7 @@ import type { QuestionRecord } from "../core/models";
 import { queryQuestions, type ReviewFilter } from "../core/question-query";
 import { buildReviewQueue } from "../core/recommendation-engine";
 import { studyDayStart } from "../core/study-management";
+import { summarizeStudyHistory, type StudyHistory } from "../core/study-history";
 import { errorMessage } from "./error-message";
 import { openEditorWithNotice } from "./editor-notice";
 import { renderQuestionHeading } from "./question-row";
@@ -14,6 +15,7 @@ import { progressGuidance } from "./study-policy";
 import { dialogKey } from "./modal-open-guard";
 import { forecastReviews, type TargetDateSummary } from "../core/target-dates";
 import { readTargetDates, renderReviewForecast, renderTargetDates, renderUpcomingTarget, targetRecallLabel } from "./target-date-panels";
+import { renderStudyHistory } from "./study-history-panel";
 
 // The dashboard and progress pages: counts, start buttons and per-subject cards.
 
@@ -53,6 +55,7 @@ export function readOverview(ctx: StudyPageContext, route: OverviewRoute): Overv
   const common = { dayStartsAt, day, reviewConflictCount: Object.keys(store.conflicts ?? {}).length };
   if (route === "progress") return {
     ...common, counts, cards, targets: readTargetDates(ctx, now, false, questions),
+    history: summarizeStudyHistory(store.reviews, dayStartsAt, now),
     forecast: forecastReviews(questions, store.reviews, fsrs, dayStartsAt, now), retention: store.settings.targetRetention,
   };
   const available = reviewQueue(ctx, questions, now);
@@ -60,7 +63,7 @@ export function readOverview(ctx: StudyPageContext, route: OverviewRoute): Overv
   const saved = studyUi.resume;
   const current = saved ? index.questionById(saved.queue[saved.queueIndex] ?? saved.seed[0] ?? "") : undefined;
   return {
-    ...common, target: readTargetDates(ctx, now, true, questions)[0] ?? null, total: counts.total, due: counts.due, fresh: counts.new, easy: counts.easy, today: counts.today,
+    ...common, target: readTargetDates(ctx, now, true, questions)[0] ?? null, streak: summarizeStudyHistory(store.reviews, dayStartsAt, now).streak, total: counts.total, due: counts.due, fresh: counts.new, easy: counts.easy, today: counts.today,
     stableRatio: counts.total ? Math.round(counts.stable / counts.total * 100) : 0,
     weak: counts.again + counts.hard, availableNew, availableDue: available.length - availableNew,
     cards: cards.map(({ again, hard, good, easy, ...card }) => ({ ...card, weak: again + hard })),
@@ -80,6 +83,7 @@ type OverviewCommon = { dayStartsAt: number; day: number; reviewConflictCount: n
 type SubjectCard = { subject: string; total: number; studied: number; fresh: number; due: number; canStart: boolean };
 type ProgressOverview = OverviewCommon & {
   targets: TargetDateSummary[];
+  history: StudyHistory;
   forecast: ReturnType<typeof forecastReviews>;
   retention: number;
   counts: ProgressCounts;
@@ -87,6 +91,7 @@ type ProgressOverview = OverviewCommon & {
 };
 type DashboardOverview = OverviewCommon & {
   target: TargetDateSummary | null;
+  streak: number;
   total: number; due: number; fresh: number; easy: number; today: number; stableRatio: number; weak: number;
   availableNew: number; availableDue: number;
   cards: Array<SubjectCard & { weak: number }>;
@@ -184,7 +189,10 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement, overvi
   const action = hero.createDiv({ cls: "mia-hero-main" });
   // The study day starts at the configured hour, so 02:00 still belongs to yesterday.
   const studyDay = new Date(overview.day);
-  action.createEl("span", { text: studyDay.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "long" }), cls: "mia-hero-date" });
+  const chips = action.createDiv({ cls: "mia-hero-chips" });
+  chips.createEl("span", { text: studyDay.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "long" }), cls: "mia-hero-date" });
+  // 연속 학습일은 학습현황의 학습 기록과 같은 기준(학습 하루 경계, 평가 1~4)으로 센다.
+  if (overview.streak > 0) chips.createEl("span", { text: `연속 ${overview.streak}일`, cls: "mia-hero-date mia-hero-streak", attr: { "aria-label": `연속 학습일 ${overview.streak}일` } });
   action.createEl("h3", { text: empty ? "첫 질문을 추가해 보세요" : hasAvailable ? "오늘 학습을 시작할까요?" : limited ? "오늘 출제할 문제가 없습니다" : "지금 복습할 문제가 없습니다" });
   action.createEl("p", { text: empty
     ? "과목 이름, 질문, 정답, 핵심 키워드를 입력하면 바로 학습할 수 있습니다. 과목과 키워드는 함께 만들어집니다."
@@ -320,6 +328,7 @@ function renderWeaknessStrip(ctx: StudyPageContext, root: HTMLElement, count: nu
 export function renderProgress(ctx: StudyPageContext, root: HTMLElement, overview: ProgressOverview): void {
   const progress = overview.counts;
   renderTargetDates(ctx, root, overview.targets, overview.retention);
+  renderStudyHistory(root, overview.history);
   renderReviewForecast(root, overview.forecast, overview.targets);
   root.createEl("h3", { text: "전체 학습현황", cls: "mia-page-title" });
   renderReviewConflictWarning(ctx, root, overview.reviewConflictCount);

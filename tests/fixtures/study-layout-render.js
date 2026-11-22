@@ -28,7 +28,7 @@ export function createLayoutDom() {
   return dom;
 }
 
-export async function renderLayoutCase({ long = false, related = true, revealed = true, route = "study", targets = false } = {}) {
+export async function renderLayoutCase({ long = false, related = true, revealed = true, route = "study", targets = false, history = "default" } = {}) {
   const question = {
     id: "q", heading: "재료 보존이란?", questionMarkdown: "재료 보존이란?",
     answerMarkdown: Array.from({ length: long ? 40 : 3 }, (_, i) => `${i + 1}. 전체 재료량은 일정하다.`).join("\n"),
@@ -63,6 +63,18 @@ export async function renderLayoutCase({ long = false, related = true, revealed 
       if (i % 3 === 0) continue;
       plugin.store.reviews[item.id] = plugin.fsrs.rate(undefined, i % 4 + 1, new Date("2026-11-14T00:00:00Z"), item.id);
     }
+    const reviews = Object.values(plugin.store.reviews);
+    if (history === "varied") {
+      for (const [day, count] of [[8, 24], [10, 16], [16, 8]]) {
+        const review = new Date(2026, 10, day, 5).toISOString();
+        for (const state of reviews.slice(0, count)) {
+          const log = { ...state.history[0], review, answer_ms: 30_000 };
+          if (day === 16) state.history.push(log);
+          else state.history.unshift(log);
+        }
+      }
+    }
+    if (history === "empty") for (const state of reviews) state.history = [];
     await plugin.studyUi.saveResume({ queue: ["q", "q-1", "q-2"], seed: ["q", "q-1", "q-2"], skipped: [], queueIndex: 1, answerVisible: false, sessionMode: "recall", updatedAt: "2026-11-16T00:00:00Z" });
   }
   // Standard density, focus off, medium reading size: include the full reported chrome.

@@ -56,6 +56,11 @@ export function parseStudyManagement(value: unknown): StudyManagementSettings {
   };
 }
 
+export function calendarDate(date: Date): string {
+  return [String(date.getFullYear()).padStart(4, "0"), String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0")].join("-");
+}
+
 /** Local calendar arithmetic preserves a 04:00 boundary across DST transitions. */
 export function studyDayStart(now: Date, hour: number): Date {
   const start = new Date(now);

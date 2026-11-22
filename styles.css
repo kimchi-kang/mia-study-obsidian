@@ -550,6 +550,8 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-hero-main > .mia-inline-actions { margin-top: 8px; gap: 8px; align-items: stretch; }
 .mia-view .mia-hero .mia-device-sync-hint { margin: 4px 0 0; }
 .mia-view .mia-weak-strip .mia-inline-actions, .mia-view .mia-target-strip > button { margin-inline-start: auto; }
+.mia-view .mia-hero-chips { display: flex; flex-wrap: wrap; align-self: flex-start; gap: 6px; margin-bottom: 6px; }
+.mia-view .mia-hero-chips > .mia-hero-date { margin-bottom: 0; }
 .mia-view .mia-hero-date { align-self: flex-start; margin-bottom: 6px; display: inline-block; padding: 3px 12px; font-size: 12px; font-weight: 800; letter-spacing: .06em; }
 .mia-view .mia-count-chip { font-weight: 800; padding: 1px 10px; }
 .mia-view .mia-hero .mia-resume-card { display: grid; margin: var(--mia-card-gap) 0 0; padding: 12px 16px; }
@@ -629,6 +631,72 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-forecast-axis { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 4px 8px; font-size: max(13px, var(--font-ui-smaller)); }
 .mia-forecast-summary { text-align: center; font-size: max(13px, var(--font-ui-smaller)); font-weight: 700; word-break: keep-all; }
 .mia-forecast-key { color: var(--mia-accent-text); }
+
+.mia-study-history {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin-bottom: 24px;
+  padding: 14px;
+  overflow-wrap: anywhere;
+  border-radius: var(--mia-radius);
+  background: var(--mia-panel);
+  box-shadow: var(--mia-shadow-small);
+}
+.mia-study-history > :is(h3, p) { margin: 0; }
+.mia-history-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mia-history-tile {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: 6px 4px;
+  word-break: keep-all;
+}
+.mia-history-tile strong { font-size: 1.25em; font-variant-numeric: tabular-nums; }
+.mia-history-tile :is(span, small), .mia-history-footer, .mia-history-weekday { font-size: max(13px, var(--font-ui-smaller)); }
+.mia-history-grid {
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: calc(1.25rem + 268px);
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 1fr);
+  grid-template-columns: 1.25rem;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 3px;
+  padding: 8px;
+  border-radius: var(--mia-radius-s);
+  box-shadow: var(--mia-shadow-inset);
+}
+.mia-history-weekday { align-self: center; line-height: 1; }
+/* 달 이름 줄: 잔디 격자와 같은 열 구성(요일 머리 + 주 열)이라 이름이 그 달이 시작되는 주 위에 놓인다. */
+.mia-history-months { box-sizing: border-box; inline-size: 100%; max-inline-size: calc(1.25rem + 268px); display: grid; grid-template-columns: 1.25rem; grid-auto-columns: minmax(0, 1fr); gap: 3px; padding-inline: 8px; font-size: max(12px, var(--font-ui-smaller)); line-height: 1.2; }
+.mia-history-months > span { grid-row: 1; grid-column: var(--mia-month-column); white-space: nowrap; }
+.mia-history-calendar { display: grid; gap: 6px; min-width: 0; }
+.mia-history-cell.mia-history-today { outline: 1px solid var(--mia-accent-text); outline-offset: 1px; }
+.mia-history-grid > .mia-history-cell:not(.mia-history-future) { cursor: pointer; }
+.mia-history-cell.mia-history-selected { outline: 2px solid var(--mia-focus); outline-offset: 1px; }
+.mia-history-readout { box-sizing: border-box; inline-size: 100%; max-inline-size: calc(1.25rem + 268px); margin: 0; min-height: 1.5em; font-size: max(13px, var(--font-ui-smaller)); }
+/* 넓은 화면: 잔디를 왼쪽, 숫자 칸을 오른쪽 세로로 두어 격자 옆 빈 공간을 줄인다. */
+@container mia-view (min-width: 720px) {
+  .mia-study-history:has(> .mia-history-calendar) { grid-template-columns: max-content minmax(0, 1fr); column-gap: 32px; }
+  .mia-study-history:has(> .mia-history-calendar) > :is(h3, details) { grid-column: 1 / -1; }
+  .mia-study-history > .mia-history-calendar { grid-column: 1; grid-row: 2; inline-size: calc(1.25rem + 268px); }
+  .mia-study-history:has(> .mia-history-calendar) > .mia-history-tiles { grid-column: 2; grid-row: 2; grid-template-columns: repeat(3, minmax(0, 1fr)); align-self: center; gap: 14px; }
+  .mia-study-history:has(> .mia-history-calendar) .mia-history-tile { padding: 18px 16px; }
+  .mia-study-history:has(> .mia-history-calendar) .mia-history-tile strong { font-size: 1.7em; }
+}
+.mia-history-cell { aspect-ratio: 1; border-radius: 3px; background: color-mix(in srgb, var(--mia-muted) 10%, transparent); }
+.mia-history-cell[data-level="1"] { background: color-mix(in srgb, var(--mia-accent-text) 30%, var(--mia-panel)); }
+.mia-history-cell[data-level="2"] { background: color-mix(in srgb, var(--mia-accent-text) 50%, var(--mia-panel)); }
+.mia-history-cell[data-level="3"] { background: color-mix(in srgb, var(--mia-accent-text) 75%, var(--mia-panel)); }
+.mia-history-cell[data-level="4"] { background: var(--mia-accent-text); }
+.mia-history-future { visibility: hidden; }
+/* 범례·합계 줄은 잔디 격자 폭에 맞춰, 넓은 화면에서 격자와 떨어져 보이지 않게 한다. */
+.mia-history-footer { box-sizing: border-box; inline-size: 100%; max-inline-size: calc(1.25rem + 268px); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 8px; }
+.mia-history-legend { display: flex; align-items: center; gap: 3px; }
+.mia-history-legend .mia-history-cell { inline-size: 12px; }
+.mia-view .mia-study-history summary { min-height: 44px; min-width: 44px; }
 
 /* 4. Questions and detail panels */
 /* 검색·필터 칸이 패널 가장자리에 붙지 않고, 그림자끼리 부딪히지 않게 띄운다. */
