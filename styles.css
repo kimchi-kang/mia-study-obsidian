@@ -1589,7 +1589,8 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
   gap: 0;
   overflow: visible;
   padding: 0 var(--mia-edge-right, 0px) max(0px, var(--mia-edge-bottom, 0px)) var(--mia-edge-left, 0px);
-  border-radius: var(--mia-radius) var(--mia-radius) 0 0;
+  /* 위아래 모서리를 같은 곡률로 둥글게 해 화면 아래 막대와 어울리게 한다. */
+  border-radius: var(--mia-radius);
 }
 .mia-view[data-device="phone"]:where(:not(.mia-route-study), .mia-route-study[data-focus="false"]) .mia-nav button { width: auto; min-height: 52px; margin: 6px 4px 2px; padding-inline: 4px; font-size: 13px; }
 /* 둥근 막대 양 끝에서 선택 칸 그림자가 잘리지 않게 바깥 칸만 조금 더 띄운다. */
