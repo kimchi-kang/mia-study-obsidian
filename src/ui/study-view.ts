@@ -698,7 +698,7 @@ export class MiaStudyView extends ItemView {
     home.setAttr("aria-label", "Major Study 초기 화면으로 이동");
     home.addEventListener("click", () => this.showDashboard());
     const version = brand.createEl("span", { text: `v${this.plugin.manifest.version}`, cls: "mia-version" });
-    version.setAttr("aria-label", `실행 중인 MIA Study 버전 ${this.plugin.manifest.version}`);
+    version.setAttr("aria-label", `실행 중인 Major Study 버전 ${this.plugin.manifest.version}`);
     title.createEl("span", { text: "FSRS-6", cls: "mia-badge" });
     if (this.route === "study") this.headerButton(title, "학습 나가기", "mia-focus-exit", "arrow-left").addEventListener("click", () => this.navigate("dashboard"));
     const settingsButtons = title.createDiv({ cls: "mia-settings-buttons" });

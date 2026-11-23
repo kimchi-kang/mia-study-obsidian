@@ -1,4 +1,4 @@
-# MIA Study (Obsidian 플러그인)
+# Major Study (Obsidian 플러그인, 옛 이름 MIA Study)
 
 Markdown 문제은행 + 키워드 연결 + FSRS-6 복습을 Obsidian 안에서 하는 플러그인. 공개 GitHub 저장소 `kimchi-kang/mia-study-obsidian`, 플러그인 id `mia-study`, 데스크톱·모바일 모두 지원(`isDesktopOnly: false`).
 
@@ -44,7 +44,7 @@ npm run package:release -- --release                  # artifacts/<버전>/ 에 
 1. 버전을 `package.json`, `package-lock.json`(두 곳), `manifest.json`, `versions.json`에 함께 맞춘다 — `package-release.mjs`가 불일치를 거부한다.
 2. `docs/releases/<버전>.md` 작성(사용자 대상 한국어, 검증 결과와 **미확인 항목**을 명시). 같이 갱신: `STATUS.md` 맨 위 항목, `README.md`, `INSTALL.md`, `docs/index.html`.
 3. `npm run verify:full` 통과 → `npm run package:release -- --release`.
-4. 커밋 메시지 `release: MIA Study <버전>` + 한국어 변경 요약. 태그 `<버전>`, GitHub 릴리스에 ZIP·세 파일·SHA256SUMS 등 `artifacts/<버전>/` 내용을 올린다.
+4. 커밋 메시지 `release: Major Study <버전>` + 한국어 변경 요약. 태그 `<버전>`, GitHub 릴리스에 ZIP·세 파일·SHA256SUMS 등 `artifacts/<버전>/` 내용을 올린다.
 
 ## 문서 위치
 

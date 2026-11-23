@@ -1,6 +1,6 @@
-# MIA Study 기능·안전성 검사
+# Major Study 기능·안전성 검사
 
-이 문서는 MIA Study가 Markdown 원문과 학습 데이터를 안전하게 다루는지 반복 검사하기 위한 체크리스트다. 자동 검사용 더미 문제는 `tests/fixtures/vault/안전성/더미 문제은행.md`에 있으며 실제 학습 자료와 분리한다.
+이 문서는 Major Study가 Markdown 원문과 학습 데이터를 안전하게 다루는지 반복 검사하기 위한 체크리스트다. 자동 검사용 더미 문제는 `tests/fixtures/vault/안전성/더미 문제은행.md`에 있으며 실제 학습 자료와 분리한다.
 
 ## 자동 검사 범위
 
@@ -33,7 +33,7 @@ MIA_AUDIT_VAULT="/path/to/vault" npx vitest run tests/vault-audit.test.ts
 
 테스트용 Obsidian 보관함에서 다음 순서로 확인한다.
 
-1. MIA Study를 열어 과목을 생성한다.
+1. Major Study를 열어 과목을 생성한다.
 2. 더미 질문을 추가하고 핵심·보조 키워드 의미를 저장한다.
 3. 질문을 수정하고 다른 과목으로 이동한 뒤 문제 ID와 FSRS 기록이 유지되는지 확인한다.
 4. 시험(일반복습)모드에서 네 평가를 각각 저장하고 이전 문제 재평가가 기존 평가를 대체하는지 확인한다.

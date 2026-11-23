@@ -1,6 +1,6 @@
 <div align="center">
 
-# MIA Study for Obsidian
+# Major Study for Obsidian
 
 **전공 질문을 모으고, 키워드로 연결하고, FSRS-6로 잊기 전에 다시 복습하는 Obsidian 플러그인**
 
@@ -10,9 +10,9 @@
 ![Platforms](https://img.shields.io/badge/desktop%20%C2%B7%20mobile-supported-2f9e5b)
 [![License](https://img.shields.io/github/license/kimchi-kang/mia-study-obsidian?color=555)](LICENSE)
 
-[**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.7.10 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.7.10/mia-study-1.7.10.zip) · [변경 내역](docs/releases/1.7.10.md) · [현재 상태](STATUS.md)
+[**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.7.11 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.7.11/mia-study-1.7.11.zip) · [변경 내역](docs/releases/1.7.11.md) · [현재 상태](STATUS.md)
 
-<img src="docs/assets/screens/desktop-dashboard.jpg" alt="MIA Study 1.6.0 오늘 화면. 복습 7·새 문제 4, 시험(일반복습)모드 시작, 시차 문제 이어하기, 취약 문제 5개와 과목별 학습 카드" width="860">
+<img src="docs/assets/screens/desktop-dashboard.jpg" alt="Major Study 1.6.0 오늘 화면. 복습 7·새 문제 4, 시험(일반복습)모드 시작, 시차 문제 이어하기, 취약 문제 5개와 과목별 학습 카드" width="860">
 
 </div>
 
@@ -26,24 +26,24 @@ Obsidian 안에서 과목·질문·키워드를 폼으로 관리하면서 FSRS-6
 
 화면 사진은 1.6.2(검정 바탕 어두운 소프트 뉴모피즘)로, 실제 플러그인 화면 코드에 수학 기초·세계 지리·요리 과학의 가상 문제 14개를 표시해 찍었습니다. 실제 학습 내용은 포함하지 않았으며 Obsidian 창 테두리는 생략했습니다. 모바일 화면은 390px 폭으로 렌더링했습니다.
 
-[1.7.10 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.7.10) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.7.10 변경 내역](docs/releases/1.7.10.md) · [이전 버전 이력](docs/releases/HISTORY.md)
+[1.7.11 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.7.11) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.7.11 변경 내역](docs/releases/1.7.11.md) · [이전 버전 이력](docs/releases/HISTORY.md)
 
 Major Study 제목 바로 옆에서 현재 실행 중인 버전을 확인할 수 있습니다. 업데이트한 파일을 로드하려면 Obsidian을 다시 시작하세요. 수식은 원문에 `$...$` 또는 `$$...$$` 구분자와 TeX 문법이 있어야 표시됩니다. 예를 들어 `y(t) = A(1 - e^(-t/k))` 같은 일반 문장은 자동으로 수식으로 바뀌지 않습니다.
 
 > [!WARNING]
-> **MIA Study는 학습을 돕는 참고용 도구다.** AI 코딩 도구로 만들었고 자동 검사를 거쳤지만, 알고리즘 오류로 특정 질문이 출제되지 않는 등 학습에 지장이 생길 수 있으며 그로 인한 결과에 개발자는 법령이 허용하는 최대 범위에서 책임지지 않는다. 주된 공부 수단이 아니라 가끔 참고하는 용도로만 쓴다. 자세한 내용은 [면책 고지와 사용 주의](#면책-고지와-사용-주의)를 반드시 읽는다.
+> **Major Study는 학습을 돕는 참고용 도구다.** AI 코딩 도구로 만들었고 자동 검사를 거쳤지만, 알고리즘 오류로 특정 질문이 출제되지 않는 등 학습에 지장이 생길 수 있으며 그로 인한 결과에 개발자는 법령이 허용하는 최대 범위에서 책임지지 않는다. 주된 공부 수단이 아니라 가끔 참고하는 용도로만 쓴다. 자세한 내용은 [면책 고지와 사용 주의](#면책-고지와-사용-주의)를 반드시 읽는다.
 >
-> MIA Study는 개인이 AI 코딩 도구로 대부분을 만든 프로젝트로, 안정성과 데이터 보존을 보장하지 않는다. 과목 폴더의 `문제은행.md`, 키워드 노트, `.obsidian/plugins/mia-study/data.json`·`ui-state.json`, 기기 간 동기화를 켰다면 `MIA Study Sync/` 폴더를 **보관함 밖의 다른 장소에 주기적으로 백업**한다. iCloud·Obsidian Sync 같은 동기화는 백업이 아니다.
+> Major Study는 개인이 AI 코딩 도구로 대부분을 만든 프로젝트로, 안정성과 데이터 보존을 보장하지 않는다. 과목 폴더의 `문제은행.md`, 키워드 노트, `.obsidian/plugins/mia-study/data.json`·`ui-state.json`, 기기 간 동기화를 켰다면 `MIA Study Sync/` 폴더를 **보관함 밖의 다른 장소에 주기적으로 백업**한다. iCloud·Obsidian Sync 같은 동기화는 백업이 아니다.
 
-Anki와의 같은 점·다른 점은 [소개 페이지의 비교 표](https://kimchi-kang.github.io/mia-study-obsidian/#anki)와 [ANKI-SETTINGS.md](docs/ANKI-SETTINGS.md)에 정리했다. 버그나 제안은 [Issues](https://github.com/kimchi-kang/mia-study-obsidian/issues)에 남긴다. 신고할 때 명령 팔레트의 `MIA Study: 시작 상태 확인` 결과를 함께 적으면 원인을 찾기 쉽다(개인 문제·답안은 올리지 않는다).
+Anki와의 같은 점·다른 점은 [소개 페이지의 비교 표](https://kimchi-kang.github.io/mia-study-obsidian/#anki)와 [ANKI-SETTINGS.md](docs/ANKI-SETTINGS.md)에 정리했다. 버그나 제안은 [Issues](https://github.com/kimchi-kang/mia-study-obsidian/issues)에 남긴다. 신고할 때 명령 팔레트의 `Major Study: 시작 상태 확인` 결과를 함께 적으면 원인을 찾기 쉽다(개인 문제·답안은 올리지 않는다).
 
 ## 면책 고지와 사용 주의
 
-MIA Study를 설치하거나 사용하면 아래 내용에 동의한 것으로 본다. 동의하지 않으면 사용하지 않는다.
+Major Study를 설치하거나 사용하면 아래 내용에 동의한 것으로 본다. 동의하지 않으면 사용하지 않는다.
 
 ### 1. 학습 보조용 참고 도구다
 
-- MIA Study는 공부를 **돕는** 개인 제작 플러그인이다. 시험 합격, 성적, 학습 효과, 암기 정도를 보장하지 않는다.
+- Major Study는 공부를 **돕는** 개인 제작 플러그인이다. 시험 합격, 성적, 학습 효과, 암기 정도를 보장하지 않는다.
 - 교재·강의·기출문제 풀이 같은 **주된 공부 방법을 대신하지 않는다.** 복습 일정과 출제 목록은 가끔 참고하는 용도로만 쓰고, 이 플러그인이 보여 주는 것만으로 공부 범위나 시험 대비를 판단하지 않는다.
 - 시험이나 평가를 앞두고는 이 플러그인과 별개로 문제은행 원본 노트를 처음부터 끝까지 직접 훑어보는 시간을 따로 가진다.
 
@@ -54,7 +54,7 @@ MIA Study를 설치하거나 사용하면 아래 내용에 동의한 것으로 �
 
 ### 3. 테스트는 거쳤지만 오류가 없다는 뜻이 아니다
 
-- 버전마다 자동 검사(1.7.10 기준 약 2,000개), 타입 검사, 화면 크기 측정을 한다. 그러나 자동 검사는 미리 생각한 상황만 확인한다.
+- 버전마다 자동 검사(1.7.11 기준 약 2,000개), 타입 검사, 화면 크기 측정을 한다. 그러나 자동 검사는 미리 생각한 상황만 확인한다.
 - 실제 iPad·휴대폰, 모든 Obsidian 버전·테마·다른 플러그인과의 조합, 모든 동기화 서비스 조합은 확인하지 않았다.
 
 ### 4. 생길 수 있는 문제의 예
@@ -72,7 +72,7 @@ MIA Study를 설치하거나 사용하면 아래 내용에 동의한 것으로 �
 
 ### 5. 책임의 제한
 
-- MIA Study는 [MIT 라이선스](LICENSE)에 따라 **"있는 그대로(AS IS)"** 무상으로 제공한다. 상품성, 특정 목적 적합성, 정확성, 오류 없음, 데이터 보존에 대한 명시적·묵시적 보증이 없다.
+- Major Study는 [MIT 라이선스](LICENSE)에 따라 **"있는 그대로(AS IS)"** 무상으로 제공한다. 상품성, 특정 목적 적합성, 정확성, 오류 없음, 데이터 보존에 대한 명시적·묵시적 보증이 없다.
 - **관련 법령이 허용하는 최대 범위에서**, 개발자와 기여자는 이 플러그인의 사용 또는 사용할 수 없음으로 생긴 학습 손실, 시험·평가 결과, 데이터 손실, 시간 손실, 그 밖의 직접·간접·부수적·결과적 손해에 대해 책임지지 않는다.
 - 모든 학습 판단과 그 결과의 책임은 사용자에게 있다.
 
@@ -92,7 +92,7 @@ MIA Study를 설치하거나 사용하면 아래 내용에 동의한 것으로 �
 
 ### 9. 상표와 관계
 
-Obsidian, Anki, FSRS, Claude, Codex, GitHub, Google Fonts 등은 각 소유자의 이름 또는 상표다. MIA Study는 Obsidian(Dynalist Inc.), Anki(Ankitects), Open Spaced Repetition, Anthropic, OpenAI와 관계없는 **비공식 개인 프로젝트**이며, 이들이 후원하거나 보증하지 않는다. 이름은 호환·비교·출처를 설명하는 데만 쓴다.
+Obsidian, Anki, FSRS, Claude, Codex, GitHub, Google Fonts 등은 각 소유자의 이름 또는 상표다. Major Study는 Obsidian(Dynalist Inc.), Anki(Ankitects), Open Spaced Repetition, Anthropic, OpenAI와 관계없는 **비공식 개인 프로젝트**이며, 이들이 후원하거나 보증하지 않는다. 이름은 호환·비교·출처를 설명하는 데만 쓴다.
 
 ## 설치
 
@@ -101,7 +101,7 @@ Obsidian, Anki, FSRS, Claude, Codex, GitHub, Google Fonts 등은 각 소유자�
 1. Obsidian 커뮤니티 플러그인에서 `BRAT`을 설치하고 활성화한다.
 2. 명령 팔레트에서 `BRAT: Add a beta plugin for testing`을 실행한다.
 3. `https://github.com/kimchi-kang/mia-study-obsidian`을 입력한다.
-4. 설치 후 커뮤니티 플러그인 목록에서 `MIA Study`를 활성화한다.
+4. 설치 후 커뮤니티 플러그인 목록에서 `Major Study`를 활성화한다.
 
 데스크톱과 모바일을 모두 지원한다.
 
@@ -113,7 +113,7 @@ BRAT 설정의 시작 시 자동 업데이트를 켜 두면 Obsidian을 새로 �
 
 ## 사용
 
-1. Obsidian을 다시 로드한 뒤 리본의 뇌 아이콘을 누르거나 명령 팔레트에서 `MIA Study 열기`를 실행한다.
+1. Obsidian을 다시 로드한 뒤 리본의 뇌 아이콘을 누르거나 명령 팔레트에서 `Major Study 열기`를 실행한다.
 2. 첫 화면에서 `과목 추가`를 누른다. 과목 폴더와 문제은행 노트가 자동 생성된다.
 3. `질문 추가`에서 과목, 질문, 정답, 유형, 핵심·보조 키워드와 각 의미를 입력한다. 꼬리질문은 과목·제목·질문 내용으로 검색해 최대 50개까지 선택할 수 있다.
 4. `학습현황`에서 전체·학습 전·기억 안정·오늘 평가·오늘 복습·최근 평가와 과목별 상태를 확인한다. 숫자를 누르면 해당 문제만 모아 볼 수 있다.
@@ -150,7 +150,7 @@ BRAT 설정의 시작 시 자동 업데이트를 켜 두면 Obsidian을 새로 �
 - 간단 질문·대답 목록: `MIA/<과목>/<과목> 노트.md`
 - 키워드 의미: `MIA/키워드/<키워드>.md`
 
-과목 노트는 질문을 추가·수정·이동·삭제할 때마다 아래처럼 자동으로 다시 동기화된다. 플러그인을 시작할 때도 모든 과목을 다시 검사하며, 명령 팔레트의 `MIA Study: 과목 노트 다시 동기화`로 수동 복구할 수 있다.
+과목 노트는 질문을 추가·수정·이동·삭제할 때마다 아래처럼 자동으로 다시 동기화된다. 플러그인을 시작할 때도 모든 과목을 다시 검사하며, 명령 팔레트의 `Major Study: 과목 노트 다시 동기화`로 수동 복구할 수 있다.
 
 ```markdown
 질문: 레시피 원칙은 무엇인가?
@@ -161,14 +161,14 @@ BRAT 설정의 시작 시 자동 업데이트를 켜 두면 Obsidian을 새로 �
 
 ## 학습 설정
 
-MIA 첫 화면의 `학습 설정` 또는 Obsidian 설정 → MIA Study에서 하루 학습량, 학습·재학습 단계, 목표 기억률, 출제 순서, FSRS 가중치를 바꾼다. 변경은 `학습 설정 저장`을 눌러야 적용된다. 기본값은 새 문제 20개/일, 복습 200회/일, 하루 시작 오전 4시, 학습 `1m 10m`, 재학습 `10m`, 목표 기억률 90%, 미리 학습 20분이다. 복습 기록이 쌓이면 `내 기록으로 최적화`로 FSRS 가중치를 내 기록에 맞출 수 있다.
+MIA 첫 화면의 `학습 설정` 또는 Obsidian 설정 → Major Study에서 하루 학습량, 학습·재학습 단계, 목표 기억률, 출제 순서, FSRS 가중치를 바꾼다. 변경은 `학습 설정 저장`을 눌러야 적용된다. 기본값은 새 문제 20개/일, 복습 200회/일, 하루 시작 오전 4시, 학습 `1m 10m`, 재학습 `10m`, 목표 기억률 90%, 미리 학습 20분이다. 복습 기록이 쌓이면 `내 기록으로 최적화`로 FSRS 가중치를 내 기록에 맞출 수 있다.
 
 - Anki 설정과의 대응·차이: [docs/ANKI-SETTINGS.md](docs/ANKI-SETTINGS.md)
 - 학습 단계·일정 정책: [docs/SCHEDULER-POLICIES.md](docs/SCHEDULER-POLICIES.md)
 
 ## 과목별 질문·답변 Word 정리본 출력
 
-MIA `오늘` 화면의 **출력**을 누르면 과목 선택창이 열린다. 과목을 클릭하면 해당 과목의 등록된 모든 질문과 답변을 원본 파일·문제 순서대로 정리한 **Word(.docx)** 파일을 PC에서는 운영체제의 **다운로드 폴더**에 저장한다. 모바일에서는 보관함의 `MIA 출력/` 폴더에 저장한다. 질문 목록의 검색·복습 필터와 관계없이 선택한 과목 전체를 출력한다. 명령 팔레트의 `MIA Study: 과목 질문 답변 Word로 출력`으로도 실행할 수 있다.
+MIA `오늘` 화면의 **출력**을 누르면 과목 선택창이 열린다. 과목을 클릭하면 해당 과목의 등록된 모든 질문과 답변을 원본 파일·문제 순서대로 정리한 **Word(.docx)** 파일을 PC에서는 운영체제의 **다운로드 폴더**에 저장한다. 모바일에서는 보관함의 `MIA 출력/` 폴더에 저장한다. 질문 목록의 검색·복습 필터와 관계없이 선택한 과목 전체를 출력한다. 명령 팔레트의 `Major Study: 과목 질문 답변 Word로 출력`으로도 실행할 수 있다.
 
 - 과목 제목 아래 `질문 1 → 답변 → 질문 2 → 답변` 순서로 정리한다. 중복된 문제 제목, 문제 ID, 학습 정보, 별도 `원문:` 출처 링크는 넣지 않는다.
 - A4 여백과 흑백 글자 스타일을 적용한다. 글자 강조·목록·표·코드와 보관함 안의 PNG·JPG·GIF·BMP 이미지를 포함한다. 일반 링크는 표시 문구만 남긴다.
@@ -184,7 +184,7 @@ PC에서는 보관함 밖의 다운로드 폴더에 저장하므로 보관함 �
 
 > 첨부한 자료를 MIA-AGENT.md에 따라 수학 과목으로 정리해줘. 원문 정답을 보존하고 중복은 건너뛰어줘. 답이 없거나 판독이 불확실한 항목은 따로 알려줘. 보관함에 접근할 수 있으면 적용하고, 없으면 내려받을 문제은행 Markdown과 저장 위치를 알려줘.
 
-파일 접근이 없는 GPT는 변환한 파일을 제공하므로 직접 보관함에 넣어야 한다. 기존 문제은행을 덮어쓰지 말고 새 파일 이름으로 저장한다. 기존 내용을 수정하려면 해당 파일도 제공해야 한다. 파일을 편집할 수 있는 에이전트는 허용된 보관함에 직접 반영할 수 있다. 외부 편집 후에는 명령 팔레트의 `MIA Study: 과목 노트 다시 동기화`를 실행한다. 개인 자료는 본인의 보관함에만 저장하며 이 공개 저장소에 업로드하지 않는다.
+파일 접근이 없는 GPT는 변환한 파일을 제공하므로 직접 보관함에 넣어야 한다. 기존 문제은행을 덮어쓰지 말고 새 파일 이름으로 저장한다. 기존 내용을 수정하려면 해당 파일도 제공해야 한다. 파일을 편집할 수 있는 에이전트는 허용된 보관함에 직접 반영할 수 있다. 외부 편집 후에는 명령 팔레트의 `Major Study: 과목 노트 다시 동기화`를 실행한다. 개인 자료는 본인의 보관함에만 저장하며 이 공개 저장소에 업로드하지 않는다.
 
 ## PC·폰 동기화: Obsidian Sync 구독 없이 사용하기
 
@@ -205,7 +205,7 @@ iPhone·iPad에서는 Google Drive·OneDrive의 폴더를 데스크톱처럼 바
 ### 사설 클라우드·NAS로 연결하는 예시
 
 1. NAS·Nextcloud 등에 기기들이 접근할 수 있는 WebDAV 저장 공간을 준비한다.
-2. PC와 폰의 Obsidian에 같은 이름의 로컬 보관함을 만들고, 각 기기에 같은 최신 버전의 MIA Study와 Remotely Save를 설치·활성화한다.
+2. PC와 폰의 Obsidian에 같은 이름의 로컬 보관함을 만들고, 각 기기에 같은 최신 버전의 Major Study와 Remotely Save를 설치·활성화한다.
 3. Remotely Save에서 WebDAV를 선택하고, 같은 서버 주소·계정·원격 보관함 경로를 연결한다. 암호화를 사용한다면 기기마다 같은 암호를 설정한다.
 4. PC에서 MIA로 문제를 입력하고 동기화를 끝낸 뒤, 폰에서 동기화해 문제를 내려받고 MIA를 연다. 이미 자료가 있는 보관함은 먼저 백업하고, 첫 동기화 방향을 확인한다.
 
@@ -236,7 +236,7 @@ Syncthing은 **두 기기가 동시에 켜져 있고 연결되어 있을 때만*
 | 마지막 학습의 이어하기 위치 | `.obsidian/plugins/mia-study/ui-state.json` |
 | 범용 모드의 학습 기록·설정·이어하기 | `MIA Study Sync/` 폴더의 Markdown 파일 3개 전체 |
 
-범용 모드를 사용하면 숨김 설정 폴더 대신 `MIA Study Sync/` 폴더를 일반 노트와 함께 동기화한다. 기존 저장 방식을 계속 쓰는 경우 Remotely Save는 기본적으로 `.obsidian` 설정 폴더를 동기화하지 않는다. 기존 경로의 복습 기록과 이어하기도 공유하려면 설정 폴더 동기화 옵션을 확인하고, 위 두 파일이 실제로 전송되는지 확인한다. 해당 옵션은 Remotely Save에서 실험 기능으로 안내하므로, 문제 노트가 보인다는 이유만으로 학습 상태도 전달됐다고 가정하지 않는다. 글자 크기·답안 배치 같은 MIA 보기 설정은 기기별 로컬 설정으로 유지된다.
+범용 모드를 사용하면 숨김 설정 폴더 대신 `MIA Study Sync/` 폴더를 일반 노트와 함께 동기화한다. 이 폴더 이름은 이전 이름(MIA Study) 시절 그대로이며, 이미 동기화 중인 기기와 맞추기 위해 바꾸지 않는다. 기존 저장 방식을 계속 쓰는 경우 Remotely Save는 기본적으로 `.obsidian` 설정 폴더를 동기화하지 않는다. 기존 경로의 복습 기록과 이어하기도 공유하려면 설정 폴더 동기화 옵션을 확인하고, 위 두 파일이 실제로 전송되는지 확인한다. 해당 옵션은 Remotely Save에서 실험 기능으로 안내하므로, 문제 노트가 보인다는 이유만으로 학습 상태도 전달됐다고 가정하지 않는다. 글자 크기·답안 배치 같은 MIA 보기 설정은 기기별 로컬 설정으로 유지된다.
 
 같은 보관함에는 동기화 방식을 하나만 사용한다. 한 기기에서 학습을 마치고 동기화 완료를 확인한 다음 다른 기기에서 최신 내용을 받으면 충돌을 줄일 수 있다. Remotely Save의 자동 동기화는 Obsidian이 실행 중일 때 동작하므로, 특히 폰에서는 앱을 닫기 전에 전송이 끝났는지 확인한다. 개인 문제와 학습 기록은 자신의 비공개 저장 공간에 보관한다.
 
@@ -328,7 +328,7 @@ MIA에 등록하면 플러그인이 질문과 풀이를 바꾸지 않고 문제 
 
 0.10.2부터 Word 출력 라이브러리는 실제 출력 때만 불러온다. MIA 시작 시 모바일에서 사용할 수 없는 Node·Electron 모듈을 요청하지 않는지 배포 번들로 검사한다. 시작 중 오류가 나더라도 정리 과정이 추가 오류를 내지 않도록 처리한다.
 
-명령 팔레트의 `MIA Study: 시작 상태 확인`에서 현재 버전과 이 기기에 남은 시작 실패 기록을 확인할 수 있다. 진단 기록은 기기 로컬 저장소에만 최근 20건을 보관하며 질문·답안·파일 경로·오류 메시지를 포함하지 않는다. 과거 기록이 없던 시점의 비활성화 원인이나 설정을 바꾼 기기를 이 기록으로 소급해 알 수는 없다.
+명령 팔레트의 `Major Study: 시작 상태 확인`에서 현재 버전과 이 기기에 남은 시작 실패 기록을 확인할 수 있다. 진단 기록은 기기 로컬 저장소에만 최근 20건을 보관하며 질문·답안·파일 경로·오류 메시지를 포함하지 않는다. 과거 기록이 없던 시점의 비활성화 원인이나 설정을 바꾼 기기를 이 기록으로 소급해 알 수는 없다.
 
 개발 중 기본 `.obsidian` 설정 폴더를 사용하는 보관함의 설치 파일을 갱신할 때는 다음 절차를 따른다.
 
@@ -384,7 +384,7 @@ MIA_AUDIT_VAULT=tests/fixtures/vault npm test
 
 ## 라이선스와 복습 알고리즘 출처
 
-MIA Study 자체 코드는 [MIT](LICENSE)로 배포한다. 외부 코드의 저작권·라이선스는 [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)에 보존한다.
+Major Study 자체 코드는 [MIT](LICENSE)로 배포한다. 외부 코드의 저작권·라이선스는 [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)에 보존한다.
 
 복습 일정은 **Anki에서도 지원하는 FSRS 계열의 FSRS-6 알고리즘**을 사용한다. 실제 구현은 Open Spaced Repetition의 [ts-fsrs 5.4.1](https://github.com/open-spaced-repetition/ts-fsrs)(MIT)이다. [Anki의 FSRS 안내](https://docs.ankiweb.net/manual/deck-options#fsrs)와 [FSRS-6 알고리즘 설명](https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm#fsrs-6)을 참고할 수 있다. 이는 Anki 소스 코드를 복사했다는 의미나 Anki와 일정이 완전히 같다는 보장이 아니다. 1.4.19의 "내 기록으로 최적화"는 [fsrs-rs](https://github.com/open-spaced-repetition/fsrs-rs)(BSD-3-Clause)의 FSRS-6 학습 절차를 TypeScript로 다시 구현한 것이며, 라이선스 고지는 THIRD-PARTY-NOTICES.txt에 있다.
 

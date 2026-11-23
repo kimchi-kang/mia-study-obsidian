@@ -103,7 +103,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     else {
       this.portableSyncIncomplete = await portableSyncPartiallyArrived(this.app.vault.adapter);
       if (this.unloadRequested) return;
-      if (this.portableSyncIncomplete) new Notice(`MIA Study: ${PORTABLE_SYNC_INCOMPLETE_WARNING}`, 60000);
+      if (this.portableSyncIncomplete) new Notice(`Major Study: ${PORTABLE_SYNC_INCOMPLETE_WARNING}`, 60000);
     }
     const storage: PluginDataStorage = {
       loadData: () => this.activeStudyStorage.loadData(),
@@ -114,7 +114,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
       writePending: data => this.app.saveLocalStorage(`${recoveryKey}:pending`, data),
       read: () => this.app.loadLocalStorage(recoveryKey),
       write: (data) => this.app.saveLocalStorage(recoveryKey, data),
-      onWarning: (message) => { new Notice(`MIA Study: ${message}`, 12000); },
+      onWarning: (message) => { new Notice(`Major Study: ${message}`, 12000); },
     });
     await this.store.load();
     if (this.unloadRequested) return;
@@ -133,14 +133,14 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     try { await this.studyUi.load(); }
     catch (error) { new Notice(`이어하기 정보 불러오기 실패: ${errorMessage(error)}`); }
     if (this.unloadRequested) return;
-    for (const warning of this.store.loadWarnings) new Notice(`MIA Study: ${warning}`);
+    for (const warning of this.store.loadWarnings) new Notice(`Major Study: ${warning}`);
     this.refreshFsrs();
     this.register(this.store.subscribe(() => this.refreshFsrs()));
     this.index = new QuestionIndex(this.app, () => this.store.settings.sourceRoots, () => this.managedRoot);
 
     this.registerView(MIA_VIEW_TYPE, (leaf) => new MiaStudyView(leaf, this));
-    this.addRibbonIcon("brain-circuit", "MIA Study 열기", () => reportUiFailure(this.activateView()));
-    this.addCommand({ id: "open-mia-study", name: "MIA Study 열기", callback: () => reportUiFailure(this.activateView()) });
+    this.addRibbonIcon("brain-circuit", "Major Study 열기", () => reportUiFailure(this.activateView()));
+    this.addCommand({ id: "open-mia-study", name: "Major Study 열기", callback: () => reportUiFailure(this.activateView()) });
     this.addCommand({ id: "show-startup-status", name: "시작 상태 확인", callback: () => {
       new Notice(this.startupDiagnostics?.summary() ?? "시작 기록이 없습니다.", 12000);
     } });
@@ -184,7 +184,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
         if (this.unloadRequested) return;
         await this.syncAllSubjectNotes(false);
       })().catch((error) => {
-        new Notice(`MIA Study 초기 동기화 실패: ${error instanceof Error ? error.message : String(error)}`);
+        new Notice(`Major Study 초기 동기화 실패: ${error instanceof Error ? error.message : String(error)}`);
       });
     });
   }
