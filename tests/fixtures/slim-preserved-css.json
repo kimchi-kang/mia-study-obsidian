@@ -1863,7 +1863,7 @@
   },
   {
     "context": [],
-    "selector": ".mia-view .mia-subject-card > button.mia-subject-open:hover > strong",
+    "selector": ".mia-view .mia-subject-card .mia-card-title-row > button.mia-subject-open:hover > strong",
     "declarations": [
       [
         "color",
@@ -1874,7 +1874,7 @@
   },
   {
     "context": [],
-    "selector": ".mia-view .mia-subject-card > button.mia-subject-open:active",
+    "selector": ".mia-view .mia-subject-card .mia-card-title-row > button.mia-subject-open:active",
     "declarations": [
       [
         "box-shadow",
@@ -1996,7 +1996,7 @@
   },
   {
     "context": [],
-    "selector": ".mia-view .mia-keyword > strong[role=\"button\"]:hover",
+    "selector": ".mia-view .mia-keyword .mia-card-title-row > strong:hover",
     "declarations": [
       [
         "color",

@@ -9,7 +9,7 @@ const uiSource = (await Promise.all((await readdir(uiDir)).filter((file) => file
 
 /** Controls and readouts a phone layout must never hide, clip or shrink to nothing. */
 const PROTECTED = [
-  "mia-focus-exit", "mia-learning-button", "mia-appearance-button", "mia-thumb-navigation", "mia-thumb-previous",
+  "mia-focus-exit", "mia-learning-button", "mia-appearance-button", "mia-night-button", "mia-thumb-navigation", "mia-thumb-previous",
   "mia-thumb-next", "mia-dock-undo", "mia-controls-help", "mia-reveal", "mia-ratings", "mia-session-edit-actions",
   "mia-progress-count", "mia-card-context", "mia-detail-actions", "mia-detail-reset",
 ];
@@ -76,5 +76,15 @@ describe("phone CSS never hides protected controls", () => {
       for (const selector of rule.selectors) if (mentionsProtected(selector)) offenders.push(selector);
     }
     expect(offenders).toEqual([]);
+  });
+
+  it("hides phone tabs in an active session regardless of focus and keeps the bottom bar on empty routes", () => {
+    const phone = '.mia-view[data-device="phone"]';
+    const hides = allRules.find(rule => rule.selector === `${phone}.mia-route-study:has(.mia-study-layout) .mia-nav`);
+    expect(hides?.parent?.type).toBe("root");
+    expect(hides?.nodes).toContainEqual(expect.objectContaining({ prop: "display", value: "none" }));
+    const empty = phoneRules.find(rule => rule.selector === `${phone}:where(:not(.mia-route-study:has(.mia-study-layout))) .mia-nav`);
+    expect(empty?.nodes).toContainEqual(expect.objectContaining({ prop: "display", value: "grid" }));
+    expect(empty?.nodes).toContainEqual(expect.objectContaining({ prop: "bottom", value: "0" }));
   });
 });

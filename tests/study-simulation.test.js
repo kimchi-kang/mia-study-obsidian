@@ -62,7 +62,7 @@ vi.mock("obsidian", () => {
     }
   }
   return {
-    Setting,
+    Setting, setIcon() {},
     PluginSettingTab: class { constructor(app) { this.app=app; this.containerEl=new Element(); this.containerEl.ownerDocument={defaultView:null}; } hide() {} },
     ItemView: class { constructor(leaf) { this.leaf = leaf; this.app = leaf.app; this.contentEl = new Element(); } },
     Component: class {

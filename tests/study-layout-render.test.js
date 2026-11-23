@@ -5,6 +5,7 @@ vi.mock("obsidian", async () => {
   return obsidianLayoutBoundary();
 });
 import { createLayoutDom, renderLayoutCase } from "./fixtures/study-layout-render";
+import { Menu } from "obsidian";
 import { layoutHarness } from "./fixtures/study-layout-harness-template";
 let dom;
 beforeEach(() => {
@@ -34,6 +35,37 @@ describe("study layout rendered DOM", () => {
     expect(root.querySelectorAll(".mia-ratings > button")).toHaveLength(4);
     expect(root.querySelector(".mia-study-concepts").textContent).toContain("재료 보존");
     expect(root.querySelectorAll(".mia-answer li")).toHaveLength(3);
+  });
+  it("renders accessible study header buttons with their icons and text labels", async () => {
+    const { root } = await renderLayoutCase();
+    const buttons = [...root.querySelectorAll(".mia-header button:has(.mia-button-icon)")];
+    expect(buttons.map(button => [
+      button.querySelector(".mia-button-icon svg").dataset.icon,
+      button.querySelector(".mia-button-label").textContent,
+      button.getAttribute("aria-label"),
+      button.title,
+    ])).toEqual([
+      ["arrow-left", "학습 나가기", "학습 나가기", "학습 나가기"],
+      ["settings", "학습 설정", "학습 설정", "학습 설정"],
+      ["type", "보기 설정", "보기 설정", "보기 설정"],
+      ["moon", "야간", "적색 야간 모드", "적색 야간 모드"],
+    ]);
+  });
+  it("toggles night mode in a session and refreshes the pressed state without replacing the button", async () => {
+    const { root, view } = await renderLayoutCase();
+    const button = root.querySelector(".mia-night-button");
+    view.plugin.updateNightMode = vi.fn(patch => {
+      view.plugin.studyUi.updateNight(patch);
+      view.refreshNight();
+    });
+    expect(button.getAttribute("aria-pressed")).toBe("false");
+    button.click();
+    expect(view.plugin.updateNightMode).toHaveBeenNthCalledWith(1, { nightMode: true });
+    expect(button.getAttribute("aria-pressed")).toBe("true");
+    button.click();
+    expect(view.plugin.updateNightMode).toHaveBeenNthCalledWith(2, { nightMode: false });
+    expect(button.getAttribute("aria-pressed")).toBe("false");
+    expect(root.querySelector(".mia-night-button")).toBe(button);
   });
   it("keeps all 40 lines in the long answer", async () => {
     const { root } = await renderLayoutCase({ long: true });
@@ -83,7 +115,7 @@ describe("study layout rendered DOM", () => {
   });
   it("opens the subject question list when the subject heading is clicked", async () => {
     const { root } = await renderLayoutCase({ route: "dashboard" });
-    const open = root.querySelector(".mia-subject-card > button.mia-subject-open");
+    const open = root.querySelector(".mia-subject-card .mia-subject-open");
     const subject = open.querySelector("strong").textContent;
     const total = Number(open.querySelector(".mia-subject-total").textContent.replace("문제", ""));
     open.click();
@@ -93,11 +125,44 @@ describe("study layout rendered DOM", () => {
     expect(rows).toHaveLength(total);
     expect(rows.every(row => row.textContent.includes(subject))).toBe(true);
   });
+  it.each([
+    { route: "dashboard", cardSelector: ".mia-subject-card", items: ["이름 수정", "삭제"],
+      actions: ["시험", "암기"], edit: "openSubjectEditor", remove: "confirmDeleteSubject" },
+    { route: "keywords", cardSelector: ".mia-keyword", items: ["편집", "삭제"],
+      actions: ["연결 문제 시험", "연결 문제 암기"], edit: "openKeywordEditor", remove: "confirmDeleteKeyword" },
+  ])("opens $route card management with pointer and keyboard clicks", async ({ route, cardSelector, items, actions, edit, remove }) => {
+    const { root, view } = await renderLayoutCase({ route });
+    view.plugin[edit] = vi.fn();
+    view.plugin[remove] = vi.fn();
+    view.plugin.showKeywordMeaning = vi.fn();
+    const card = root.querySelector(cardSelector);
+    const name = card.querySelector(".mia-card-title-row strong").textContent;
+    const argument = route === "dashboard" ? name : { name, target: name };
+    const button = card.querySelector(".mia-card-menu-button");
+    const actionSelector = route === "dashboard" ? ".mia-inline-actions > button" : ":scope > button";
+    expect([...card.querySelectorAll(actionSelector)].map(action => action.textContent)).toEqual(actions);
+    expect(button.getAttribute("aria-label")).toBe(`${name} 관리`);
+    expect(button.getAttribute("aria-haspopup")).toBe("menu");
+    const mouse = new window.MouseEvent("click", { bubbles: true, detail: 1 });
+    button.dispatchEvent(mouse);
+    expect(Menu.shown.event).toBe(mouse);
+    expect(Menu.shown.items.map(item => item.title)).toEqual(items);
+    Menu.shown.items[0].click();
+    expect(view.plugin[edit]).toHaveBeenCalledExactlyOnceWith(argument);
+    vi.spyOn(button, "getBoundingClientRect").mockReturnValue({ left: 24, bottom: 90 });
+    button.click();
+    expect(Menu.shown.position).toEqual({ x: 24, y: 90 });
+    expect(Menu.shown.doc).toBe(root.ownerDocument);
+    expect(Menu.shown.items[1].warning).toBe(true);
+    Menu.shown.items[1].click();
+    expect(view.plugin[remove]).toHaveBeenCalledExactlyOnceWith(argument);
+    expect(view.plugin.showKeywordMeaning).not.toHaveBeenCalled();
+  });
   it("lets the keyboard open a keyword meaning from its name", async () => {
     const { view, root } = await renderLayoutCase({ route: "keywords" });
     const meaning = vi.fn();
     view.plugin.showKeywordMeaning = meaning;
-    const title = root.querySelector(".mia-keyword > strong[role=\"button\"]");
+    const title = root.querySelector(".mia-keyword strong[role=\"button\"]");
     expect(title.getAttribute("tabindex")).toBe("0");
     expect(title.getAttribute("aria-label")).toBe(`키워드 ${title.textContent} 의미 보기`);
     const card = title.closest(".mia-keyword");
@@ -111,13 +176,53 @@ describe("study layout rendered DOM", () => {
     const { view, root } = await renderLayoutCase({ route: "keywords" });
     const meaning = vi.fn();
     view.plugin.showKeywordMeaning = meaning;
-    const title = root.querySelector(".mia-keyword > strong[role=\"button\"]");
+    const title = root.querySelector(".mia-keyword strong[role=\"button\"]");
     const down = new window.KeyboardEvent("keydown", { key: " ", bubbles: true, cancelable: true });
     title.dispatchEvent(down);
     expect(down.defaultPrevented).toBe(true);
     expect(meaning).not.toHaveBeenCalled();
     title.dispatchEvent(new window.KeyboardEvent("keyup", { key: " ", bubbles: true, cancelable: true }));
     expect(meaning).toHaveBeenCalledTimes(1);
+  });
+  it("keeps question rows free of buttons, tags their state in words and opens the detail from the title", async () => {
+    const { root } = await renderLayoutCase({ route: "questions" });
+    const rows = [...root.querySelectorAll(".mia-row")];
+    expect(rows.every(row => row.querySelector("button") === null)).toBe(true);
+    expect(rows.every(row => row.querySelector(".mia-row-more")?.getAttribute("aria-hidden") === "true")).toBe(true);
+    const tags = rows.map(row => row.querySelector(".mia-row-tag"));
+    expect(tags.every((tag, index) => tag && tag.textContent === rows[index].querySelector(".mia-row-state").getAttribute("title"))).toBe(true);
+    const row = rows[1];
+    const title = row.querySelector(".mia-row-body > strong[role=\"button\"]");
+    expect(title.getAttribute("tabindex")).toBe("0");
+    expect(title.getAttribute("aria-label")).toMatch(/ 상세 보기$/);
+    expect(row.classList.contains("mia-row-selected")).toBe(false);
+    title.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+    await vi.runOnlyPendingTimersAsync();
+    expect(root.querySelector(".mia-row-selected")?.dataset.questionId).toBe(row.dataset.questionId);
+  });
+  it("trims the dashboard hero: no repeated counts, hints folded into the guidance, refresh beside the date", async () => {
+    const { root } = await renderLayoutCase({ route: "dashboard" });
+    const hero = root.querySelector(".mia-hero");
+    expect(hero.textContent).not.toContain("오늘 출제:");
+    expect(hero.textContent).not.toContain("암기 모드는");
+    expect(hero.querySelector(".mia-device-sync-hint")).toBeNull();
+    const refresh = [...hero.querySelectorAll("button")].find(button => button.textContent === "기록 새로고침");
+    expect(refresh.parentElement.classList.contains("mia-hero-chips")).toBe(true);
+    const guidance = root.querySelector(".mia-stat-guidance").textContent;
+    expect(guidance).toContain("암기 모드는 평가 없이");
+    expect(guidance).toContain("같은 보관함을 동기화하면");
+  });
+  it("lists dashboard subjects with the most reviews first and keeps name order among equals", async () => {
+    const { root } = await renderLayoutCase({ route: "dashboard" });
+    const cards = [...root.querySelectorAll(".mia-subject-card")].map(card => ({
+      name: card.querySelector(".mia-subject-open strong").textContent,
+      due: Number(card.textContent.match(/복습 (\d+)/)[1]),
+    }));
+    for (let index = 1; index < cards.length; index += 1) {
+      const [before, after] = [cards[index - 1], cards[index]];
+      expect(before.due > after.due || (before.due === after.due && before.name.localeCompare(after.name, "ko") < 0)).toBe(true);
+    }
+    expect(cards[0].due).toBeGreaterThan(cards.at(-1).due);
   });
   it("ships a reproducible standalone harness with real rendered study HTML", async () => {
     // The checked-in snapshot includes local dates and the study-day boundary.

@@ -44,7 +44,8 @@ export async function renderLayoutCase({ long = false, related = true, revealed 
     subKeywords: [], followUpIds: [],
   }));
   const files = new Map();
-  const studyApp = { loadLocalStorage: () => null, saveLocalStorage() {}, vault: { adapter: { exists: async path => files.has(path), read: async path => files.get(path), write: async (path, data) => { files.set(path, data); } } } };
+  const local = new Map();
+  const studyApp = { loadLocalStorage: key => local.get(key), saveLocalStorage: (key, value) => { local.set(key, value); }, vault: { adapter: { exists: async path => files.has(path), read: async path => files.get(path), write: async (path, data) => { files.set(path, data); } } } };
   const plugin = {
     manifest: { version: "1.4.23" }, studyUi: new StudyUiStore(studyApp, "layout-harness.json"),
     fsrs: new FsrsService({ targetRetention: 0.9, maximumIntervalDays: 36500 }),

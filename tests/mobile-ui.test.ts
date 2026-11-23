@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 const styles = await readFile(new URL("../styles.css", import.meta.url), "utf8");
 const view = await readFile(new URL("../src/ui/study-view.ts", import.meta.url), "utf8");
 const questionList = await readFile(new URL("../src/ui/question-list-page.ts", import.meta.url), "utf8");
+const slimHeader = "/* Active study on touch devices";
 
 describe("mobile UI contract", () => {
   it("shows every tab label in a bottom bar on phones", () => {
@@ -13,12 +14,11 @@ describe("mobile UI contract", () => {
     expect(styles).toMatch(/@media \(max-width: 640px\)[\s\S]*?\.mia-nav\s*\{[^}]*position:\s*sticky;\s*bottom:\s*0/);
   });
 
-  it("keeps the study-route nav governed by the focus setting on phones", () => {
+  it("hides the phone tabs only during an active study session or when the keyboard opens", () => {
     const phone = styles.slice(styles.indexOf("/* ── Phones: a bottom tab bar"), styles.indexOf("/* Phone detail: full screen"));
-    // Never hidden unconditionally in study: focus mode on hides it (existing rule), focus off shows the bottom bar.
     expect(phone).not.toMatch(/\.mia-route-study\s+\.mia-nav\s*\{\s*display:\s*none/);
-    expect(phone).toContain('.mia-route-study[data-focus="false"]) .mia-nav');
-    expect(styles).toContain('.mia-route-study[data-focus="true"] .mia-header .mia-nav { display: none; }');
+    expect(phone).toContain('[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-nav { display: none; }');
+    expect(phone).toContain('[data-device="phone"]:where(:not(.mia-route-study:has(.mia-study-layout))) .mia-nav');
     expect(phone).toContain(".mia-keyboard-open .mia-nav { display: none; }");
   });
 
@@ -56,7 +56,7 @@ describe("mobile UI contract", () => {
   });
 
   it("keeps the bottom tab bar exactly full width with safe-area insets", () => {
-    const phone = styles.slice(styles.indexOf("/* ── Phones: a bottom tab bar"), styles.indexOf("/* ── Study on a phone"));
+    const phone = styles.slice(styles.indexOf("/* ── Phones: a bottom tab bar"), styles.indexOf(slimHeader));
     const bar = phone.match(/\.mia-nav\s*\{([^}]*)\}/g)!.find((rule) => rule.includes("position: sticky"))!;
     // `.mia-nav` is capped at max-width: 100% elsewhere; the bleed margins only widen the bar if that cap is lifted.
     expect(bar).toContain("max-width: none");
@@ -72,28 +72,29 @@ describe("mobile UI contract", () => {
   });
 
   it("collapses the study header into one slim 44px bar on phones", () => {
-    const study = styles.slice(styles.indexOf("/* ── Study on a phone"), styles.indexOf("/* Phone detail: full screen"));
-    expect(study).toContain("display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto");
-    expect(study).toMatch(/\.mia-settings-buttons > button \{\s*grid-row: 1; min-height: 44px/);
+    const study = styles.slice(styles.indexOf(slimHeader), styles.indexOf("/* Phone detail: full screen"));
+    expect(study).toContain("display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto;");
+    expect(study).toMatch(/\.mia-settings-buttons > button\) \{\s*grid-row: 1;[^}]*min-height: 44px/);
     expect(study).toContain("repeat(4, minmax(0, 1fr))");
   });
 
   it("applies the bottom safe-area inset once in the phone study layout, never inside the dock", () => {
-    const study = styles.slice(styles.indexOf("/* ── Study on a phone"), styles.indexOf("/* Phone detail: full screen"));
+    const study = styles.slice(styles.indexOf(slimHeader), styles.indexOf("/* Phone detail: full screen"));
     const rules = [...study.replace(/^@media[^{]*\{/m, "").matchAll(/^\s*([^{}\n][^{}]*)\{([^}]*)\}/gm)].map(([, selector, body]) => ({ selector: selector!.trim(), body: body! }));
     for (const rule of rules.filter(({ selector }) => selector.includes(".mia-study-dock"))) {
       expect(rule.body, rule.selector).not.toMatch(/--mia-edge-bottom|safe-area/);
     }
     const root = rules.find(({ selector }) => /route-study:has\(\.mia-study-layout\)$/.test(selector) && selector.includes("data-device"))!;
-    expect(root.body).toContain("padding-bottom: calc(6px + var(--mia-edge-bottom, 0px))");
+    expect(root.body.match(/--mia-edge-bottom/g)).toHaveLength(1);
+    expect(root.body).toContain("padding-block: calc(6px + var(--mia-edge-top, 0px)) calc(6px + var(--mia-edge-bottom, 0px))");
   });
 
   it("keeps the phone tab bar and study bar keyed to the device so a narrow desktop window is unchanged", () => {
     const phone = styles.slice(styles.indexOf("/* ── Phones: a bottom tab bar"), styles.indexOf("/* Phone detail: full screen"));
     expect(phone).toContain("@media (max-width: 640px), (max-height: 500px) and (pointer: coarse)");
-    for (const rule of phone.match(/^\s*\.mia-view[^{}\n]*(?:\.mia-nav|\.mia-header|route-study)[^{}\n]*\{/gm) ?? []) {
-      expect(rule, rule).toContain('[data-device="phone"]');
-    }
+    const rules = phone.match(/^\s*\.mia-view[^{}\n]*(?:\.mia-nav|\.mia-header|route-study)[^{}\n]*\{/gm) ?? [];
+    expect(rules.length).toBeGreaterThan(0);
+    for (const rule of rules) expect(rule, rule).toMatch(/\[data-device="(?:phone|tablet)"\]/);
   });
 
   it("collapses the dense question filter panel on mobile", () => {

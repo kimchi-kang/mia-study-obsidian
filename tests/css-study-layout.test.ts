@@ -8,6 +8,7 @@ const rules: Rule[] = [];
 root.walkRules(rule => { rules.push(rule); });
 const declarations = (rule: Rule) => Object.fromEntries(rule.nodes.filter(node => node.type === "decl").map(node => [node.prop, node.value]));
 const touchStudy = (rule: Rule) => rule.selector.includes(".mia-route-study:is([data-device=\"phone\"], [data-device=\"tablet\"])");
+const slimStudy = '.mia-view:is([data-device="phone"], [data-device="tablet"]).mia-route-study:has(.mia-study-layout)';
 
 describe("study pane width and chrome CSS", () => {
   it("expands only the study desktop reading cap to 1360px", () => {
@@ -34,29 +35,26 @@ describe("study pane width and chrome CSS", () => {
       expect(definition).toContain(edge === "left" ? "var(--mia-pane-left, 0px)" : "var(--mia-pane-right-gap, 0px)");
     }
   });
-  it("reserves a rail only on a sufficiently wide desktop with real, nonhidden recommendations", () => {
+  it("reserves a rail at 960px of pane width only with real, nonhidden recommendations", () => {
     const rails = rules.filter(rule => declarations(rule)["grid-template-columns"]?.match(/(?:230|340)px/));
     expect(rails).toHaveLength(1);
     const rail = rails[0];
     if (!rail?.parent) throw new Error("Expected a container-scoped recommendation rail");
-    expect(rail.selector).toContain('[data-device="desktop"]');
+    expect(rail.selector).not.toContain("[data-device");
     expect(rail.selector).toContain(':not([data-density="compact"])');
     expect(rail.selector).toContain(':not([data-answer-layout="split"])');
     expect(rail.selector).toContain(':has(> .mia-related:not([hidden]):not([aria-hidden="true"]) > .mia-related-item)');
     expect(rail.parent.type).toBe("atrule");
-    expect(rail.parent).toMatchObject({ name: "container", params: "mia-view (min-width: 1100px)" });
+    expect(rail.parent).toMatchObject({ name: "container", params: "mia-view (min-width: 960px)" });
   });
-  it("keeps recommendations below touch cards and touch targets at least 44px", () => {
-    expect(rules.some(rule => touchStudy(rule) && rule.selector.endsWith(" .mia-study-layout") && declarations(rule)["grid-template-columns"] === "minmax(0, 1fr)")).toBe(true);
+  it("uses one column by default and keeps touch targets at least 44px", () => {
+    expect(declarations(rules.find(rule => rule.selector === ".mia-study-layout")!)["grid-template-columns"]).toBe("minmax(0, 1fr)");
     expect(rules.some(rule => touchStudy(rule) && rule.selector.endsWith(" :is(button, summary)") && declarations(rule)["min-height"] === "44px")).toBe(true);
     expect(rules.some(rule => rule.selector.includes('.mia-route-study[data-device="tablet"] .mia-study-dock .mia-ratings button') && declarations(rule)["min-height"] === "50px")).toBe(true);
   });
-  it("removes dashboard subject-card padding from the study progress span on tablet, desktop and landscape phones", () => {
-    for (const prefix of ['.mia-view.mia-route-study:is([data-device="tablet"], [data-device="desktop"])', '.mia-view.mia-route-study[data-device="phone"]']) {
-      const rule = rules.find(rule => rule.selector === `${prefix} .mia-study-navigation .mia-progress-subject`);
-      expect(rule).toBeDefined();
-      expect(declarations(rule!)).toMatchObject({ display: "inline", padding: "0", margin: "0", "border-width": "0" });
-    }
+  it("keeps the desktop progress subject inline without dashboard card padding", () => {
+    const rule = rules.find(rule => rule.selector === '.mia-view.mia-route-study[data-device="desktop"] .mia-study-navigation .mia-progress-subject');
+    expect(declarations(rule!)).toMatchObject({ display: "inline", padding: "0", margin: "0", "border-width": "0" });
   });
   it("places the header across both columns so the question and answer share a row in split mode", () => {
     const header = rules.find(rule => rule.selector === '.mia-view[data-answer-layout="split"] .mia-study-card > .mia-card-header')!;
@@ -65,8 +63,19 @@ describe("study pane width and chrome CSS", () => {
     const card = rules.find(rule => rule.selector === '.mia-view[data-answer-layout="split"] .mia-study-card:has(.mia-answer-section)')!;
     expect(declarations(card)["grid-template-columns"]).toBe("minmax(0, 1fr) minmax(0, 1fr)");
   });
-  it("retains the phone 44px bar and four-column rating buttons", () => {
-    expect(rules.some(rule => rule.selector.includes('[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-settings-buttons > button') && declarations(rule)["min-height"] === "44px")).toBe(true);
+  it("uses the same slim five-column bar and 44px controls in phone and tablet sessions", () => {
+    const grid = rules.find(rule => rule.selector === slimStudy)!;
+    expect(grid.parent?.type).toBe("root");
+    expect(declarations(grid)).toMatchObject({ display: "grid", "grid-template-columns": "auto minmax(0, 1fr) auto auto auto" });
+    const buttons = rules.find(rule => rule.selector === `${slimStudy} :is(.mia-focus-exit, .mia-settings-buttons > button)`)!;
+    expect(declarations(buttons)).toMatchObject({ "grid-row": "1", "min-width": "44px", "min-height": "44px", width: "44px", height: "44px" });
+    expect(declarations(rules.find(rule => rule.selector === `${slimStudy} .mia-study-navigation .mia-progress`)!)).toMatchObject({ "grid-area": "1 / 2" });
+    expect(declarations(rules.find(rule => rule.selector === `${slimStudy} .mia-progress-count`)!)).toMatchObject({ flex: "none", "white-space": "nowrap" });
+    const subject = rules.find(rule => rule.selector.startsWith(slimStudy) && rule.selector.includes(".mia-progress-subject"))!;
+    expect(declarations(subject).display).toBe("none");
+    const label = rules.find(rule => rule.selector === `${slimStudy} .mia-button-label`)!;
+    expect(declarations(label)).toMatchObject({ position: "absolute", "clip-path": "inset(50%)" });
+    expect(declarations(label).display).toBeUndefined();
     expect(rules.some(rule => rule.selector.includes('[data-device="phone"].mia-route-study .mia-study-dock .mia-ratings') && declarations(rule)["grid-template-columns"] === "repeat(4, minmax(0, 1fr))")).toBe(true);
   });
 });
@@ -88,7 +97,7 @@ describe("wide library routes", () => {
     }
     const row = rules.find(rule => rule.selector === ".mia-view.mia-route-questions .mia-row")!;
     expect(row.parent).toMatchObject({ name: "container", params: "mia-question-list (max-width: 760px) or (min-width: 966px)" });
-    expect(declarations(row)["grid-template-areas"]).toBe('"dot body body" "actions actions delete"');
+    expect(declarations(row)["grid-template-areas"]).toBe('"dot body more"');
   });
   it("preserves the detail breakpoint while allowing both columns to grow", () => {
     const rule = rules.find(rule => rule.selector === ".mia-view.mia-route-questions .mia-questions-layout")!;

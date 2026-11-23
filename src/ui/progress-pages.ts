@@ -16,6 +16,7 @@ import { dialogKey } from "./modal-open-guard";
 import { forecastReviews, type TargetDateSummary } from "../core/target-dates";
 import { readTargetDates, renderReviewForecast, renderTargetDates, renderUpcomingTarget, targetRecallLabel } from "./target-date-panels";
 import { renderStudyHistory } from "./study-history-panel";
+import { renderCardManagementMenu } from "./card-management-menu";
 
 // The dashboard and progress pages: counts, start buttons and per-subject cards.
 
@@ -66,7 +67,8 @@ export function readOverview(ctx: StudyPageContext, route: OverviewRoute): Overv
     ...common, target: readTargetDates(ctx, now, true, questions)[0] ?? null, streak: summarizeStudyHistory(store.reviews, dayStartsAt, now).streak, total: counts.total, due: counts.due, fresh: counts.new, easy: counts.easy, today: counts.today,
     stableRatio: counts.total ? Math.round(counts.stable / counts.total * 100) : 0,
     weak: counts.again + counts.hard, availableNew, availableDue: available.length - availableNew,
-    cards: cards.map(({ again, hard, good, easy, ...card }) => ({ ...card, weak: again + hard })),
+    // 오늘 할 일이 있는 과목이 위로 오게 복습 많은 순으로 두고, 같으면 기존 이름순을 지킨다(안정 정렬).
+    cards: cards.map(({ again, hard, good, easy, ...card }) => ({ ...card, weak: again + hard })).sort((a, b) => b.due - a.due),
     resume: saved ? { current: current ? { heading: current.heading, filePath: current.filePath, subject: current.subject } : undefined,
       mode: saved.sessionMode, position: Math.min(saved.queueIndex + 1, saved.queue.length), length: saved.queue.length,
       waiting: saved.queueIndex >= saved.queue.length && saved.sessionMode === "recall", updatedAt: saved.updatedAt } : null,
@@ -193,10 +195,18 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement, overvi
   chips.createEl("span", { text: studyDay.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "long" }), cls: "mia-hero-date" });
   // 연속 학습일은 학습현황의 학습 기록과 같은 기준(학습 하루 경계, 평가 1~4)으로 센다.
   if (overview.streak > 0) chips.createEl("span", { text: `연속 ${overview.streak}일`, cls: "mia-hero-date mia-hero-streak", attr: { "aria-label": `연속 학습일 ${overview.streak}일` } });
+  // 자주 누르는 버튼이 아니므로 시작 버튼 줄에서 빼 날짜 줄 오른쪽 끝에 작게 둔다.
+  const refresh = chips.createEl("button", { text: "기록 새로고침", cls: "mia-hero-refresh" });
+  refresh.setAttr("title", "다른 기기에서 이 보관함으로 도착한 복습 기록과 이어하기 위치를 확인합니다.");
+  refresh.addEventListener("click", async () => {
+    refresh.disabled = true;
+    try { await ctx.refreshRecords(); }
+    finally { refresh.disabled = false; }
+  });
   action.createEl("h3", { text: empty ? "첫 질문을 추가해 보세요" : hasAvailable ? "오늘 학습을 시작할까요?" : limited ? "오늘 출제할 문제가 없습니다" : "지금 복습할 문제가 없습니다" });
-  action.createEl("p", { text: empty
-    ? "과목 이름, 질문, 정답, 핵심 키워드를 입력하면 바로 학습할 수 있습니다. 과목과 키워드는 함께 만들어집니다."
-    : `오늘 출제: 복습 ${availableDue}개 · 새 문제 ${availableNew}개 · 전체 대기: 복습 ${due}개 · 새 문제 ${fresh}개` });
+  if (empty) action.createEl("p", { text: "과목 이름, 질문, 정답, 핵심 키워드를 입력하면 바로 학습할 수 있습니다. 과목과 키워드는 함께 만들어집니다." });
+  // 왼쪽 숫자 카드와 같은 값이면 되풀이하지 않고, 하루 상한으로 일부만 출제될 때만 차이를 보여 준다.
+  else if (availableDue !== due || availableNew !== fresh) action.createEl("p", { text: `오늘 출제: 복습 ${availableDue}개 · 새 문제 ${availableNew}개 · 전체 대기: 복습 ${due}개 · 새 문제 ${fresh}개` });
   const deferredDue = Math.max(0, due - availableDue);
   if (deferredDue > 0) action.createEl("p", { text: `하루 상한으로 복습 ${deferredDue}개를 이번 출제에서 제외했습니다. 문제와 복습일은 유지되며 이후 학습에서 다시 확인할 수 있습니다.`, cls: "mia-muted mia-deferred-reviews" });
   if (limited) action.createEl("p", { text: "대기 중인 문제는 있지만 하루 학습량 제한으로 시험(일반복습)모드에 나오지 않습니다. 학습 설정에서 하루에 새로 배울 문제 수·하루 복습량을 확인하세요.", cls: "mia-muted" });
@@ -213,7 +223,6 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement, overvi
     browse.disabled = empty;
     browse.addEventListener("click", () => ctx.startReview(ctx.plugin.index.registered.map(question => question.id), "browse"));
   }
-  action.createEl("p", { text: "암기 모드는 평가 없이 질문과 정답을 넘겨 보는 모드입니다. 복습일은 바뀌지 않습니다.", cls: "mia-muted" });
   const saved = overview.resume;
   if (saved) {
     // 이어하기 sits with the start actions, not in a card of its own.
@@ -228,14 +237,6 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement, overvi
     resume.createEl("button", { text: "이어하기", cls: "mia-secondary-action" }).addEventListener("click", () => ctx.resumeStudy());
   }
   if (limited) actions.createEl("button", { text: "학습량 확인" }).addEventListener("click", () => ctx.openStudySettings());
-  const refresh = actions.createEl("button", { text: "기록 새로고침" });
-  refresh.setAttr("title", "다른 기기에서 이 보관함으로 도착한 복습 기록과 이어하기 위치를 확인합니다.");
-  refresh.addEventListener("click", async () => {
-    refresh.disabled = true;
-    try { await ctx.refreshRecords(); }
-    finally { refresh.disabled = false; }
-  });
-  action.createEl("p", { text: "같은 보관함을 동기화하면 내 기기 사이에서 복습 기록·학습 설정·이어하기를 함께 씁니다.", cls: "mia-muted mia-device-sync-hint" });
   const grid = root.createDiv({ cls: "mia-stats" });
   progressStat(ctx, grid, "등록 문제", total, "all", "total");
   const { stableRatio } = overview;
@@ -248,7 +249,10 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement, overvi
   progressStat(ctx, grid, "오늘 평가", overview.today, "today", "good");
   progressStat(ctx, grid, "오늘 복습", due, "due", "review");
   progressStat(ctx, grid, "개선 필요", overview.weak, "weak", "again");
-  renderProgressGuidance(root, overview.dayStartsAt);
+  renderProgressGuidance(root, overview.dayStartsAt, [
+    "암기 모드는 평가 없이 질문과 정답을 넘겨 보는 모드입니다. 복습일은 바뀌지 않습니다.",
+    "같은 보관함을 동기화하면 내 기기 사이에서 복습 기록·학습 설정·이어하기를 함께 씁니다.",
+  ]);
   if (overview.target) renderUpcomingTarget(ctx, root, overview.target);
   if (!empty) renderWeaknessStrip(ctx, root, overview.weak);
   const manage = root.createDiv({ cls: "mia-manage-actions" });
@@ -267,13 +271,17 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement, overvi
     for (const { subject, due: subjectDue, fresh: subjectNew, weak: subjectWeak, studied, total, canStart } of overview.cards) {
       const card = subjectGrid.createDiv({ cls: "mia-subject-card" });
       // 과목 이름 줄을 누르면 그 과목 문제 목록을 바로 연다.
-      const heading = card.createEl("button", {
+      const titleRow = card.createDiv({ cls: "mia-card-title-row" });
+      const heading = titleRow.createEl("button", {
         cls: "mia-subject-heading mia-subject-open",
         attr: { type: "button", "aria-label": `${subject} 문제 ${total}개 목록 보기` },
       });
       heading.createEl("strong", { text: subject });
       heading.createEl("span", { text: `${total}문제`, cls: "mia-subject-total" });
       heading.addEventListener("click", () => ctx.showQuestions("all", subject));
+      renderCardManagementMenu(titleRow, subject, "이름 수정",
+        () => ctx.plugin.openSubjectEditor(subject),
+        () => ctx.plugin.confirmDeleteSubject(subject));
       renderMeter(card, studied, total, "학습");
       const chips = card.createDiv({ cls: "mia-subject-chips" });
       // 학습 막대가 무엇을 세는지 화면에서도 읽히게 같은 값을 칩으로 보여 준다.
@@ -292,12 +300,6 @@ export function renderDashboard(ctx: StudyPageContext, root: HTMLElement, overvi
       memorize.disabled = total === 0;
       memorize.addEventListener("click", () => {
         ctx.startReview(subjectQuestions(ctx, subject).map(question => question.id), "browse");
-      });
-      subjectActions.createEl("button", { text: "이름 수정" }).addEventListener("click", () => {
-        ctx.plugin.openSubjectEditor(subject);
-      });
-      subjectActions.createEl("button", { text: "삭제", cls: "mod-warning" }).addEventListener("click", () => {
-        ctx.plugin.confirmDeleteSubject(subject);
       });
     }
   }
@@ -374,10 +376,11 @@ export function renderProgress(ctx: StudyPageContext, root: HTMLElement, overvie
   if (overview.cards.length === 0) root.createEl("p", { text: "과목과 질문을 추가하면 학습현황이 표시됩니다.", cls: "mia-empty" });
 }
 
-function renderProgressGuidance(root: HTMLElement, dayStartsAt: number): void {
+function renderProgressGuidance(root: HTMLElement, dayStartsAt: number, extra: string[] = []): void {
   const help = root.createEl("details", { cls: "mia-stat-guidance" });
   help.createEl("summary", { text: "통계와 출제량 안내" });
   help.createEl("p", { text: progressGuidance(dayStartsAt), cls: "mia-muted" });
+  for (const text of extra) help.createEl("p", { text, cls: "mia-muted" });
 }
 
 function progressStat(

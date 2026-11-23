@@ -6,7 +6,6 @@ import type { QuestionRecord } from "../core/models";
 import type { RegisteredQuestion } from "./question-detail-view";
 import { weaknessUrgency } from "../core/question-query";
 import { withoutSourceAttribution } from "../core/source-attribution";
-import { openEditorWithNotice } from "./editor-notice";
 import { renderQuestionTitle } from "./question-title";
 import type { StudyPageContext } from "./study-page-context";
 
@@ -32,9 +31,8 @@ function reviewState(ctx: StudyPageContext, question: RegisteredQuestion): { lab
 }
 
 /**
- * A question row laid out as table columns: state dot, title and prompt, then
- * 학습 · 상세 · 편집 · 연결 as equal-width buttons and 삭제 as red text at the far right.
- * Pressing the row (outside its own buttons and links) opens the detail too.
+ * A question row: state dot, title and prompt, and a › mark. The row carries no buttons of its
+ * own; pressing it (or its title with Enter/Space) opens the detail, where 학습 · 편집 · 연결 · 삭제 live.
  */
 export function renderQuestionRow(ctx: StudyPageContext, parent: HTMLElement, question: RegisteredQuestion, component = ctx.component, options: QuestionRowOptions = {}): void {
   const openDetail = options.openDetail ?? ((target: RegisteredQuestion) => reportUiFailure(ctx.plugin.openQuestionDetail(target)));
@@ -42,10 +40,10 @@ export function renderQuestionRow(ctx: StudyPageContext, parent: HTMLElement, qu
   row.dataset.questionId = question.id;
   if (options.selected) { row.addClass("mia-row-selected"); row.setAttr("aria-current", "true"); }
   row.addEventListener("click", (event: MouseEvent) => {
-    const target = event.target as HTMLElement | null;
+    const target = event?.target as HTMLElement | null | undefined;
     if (target?.closest?.("button, a, input, select, textarea, summary")) return;
     // Selecting text inside the row is not a request to open it.
-    if (row.ownerDocument.getSelection()?.toString()) return;
+    if (row.ownerDocument?.getSelection?.()?.toString()) return;
     openDetail(question);
   });
   const state = reviewState(ctx, question);
@@ -55,9 +53,17 @@ export function renderQuestionRow(ctx: StudyPageContext, parent: HTMLElement, qu
   dot.setAttr("aria-label", state.label);
   dot.setAttr("title", state.label);
   const body = row.createDiv({ cls: "mia-row-body" });
-  const heading = body.createEl("strong");
   const review = ctx.plugin.store.getReview(question.id);
   const leech = review && isLeech(review);
+  const heading = body.createEl("strong", { attr: { role: "button", tabindex: "0", "aria-label": `${question.heading}${leech ? " · 자주 틀림" : ""} 상세 보기` } });
+  // 키워드 이름과 같은 방식: Enter는 누를 때, Space는 손을 뗄 때 연다(일반 버튼과 같게).
+  heading.addEventListener("keydown", (event: KeyboardEvent) => {
+    if (event.key === "Enter") { event.preventDefault(); openDetail(question); }
+    else if (event.key === " ") event.preventDefault();
+  });
+  heading.addEventListener("keyup", (event: KeyboardEvent) => {
+    if (event.key === " ") { event.preventDefault(); openDetail(question); }
+  });
   renderQuestionHeading(ctx, leech ? heading.createSpan() : heading, question, component);
   if (leech) {
     const label = `${LEECH_LAPSES}번 이상 잊은 문제 (잊은 횟수 ${review.card.lapses}회)`;
@@ -65,17 +71,13 @@ export function renderQuestionRow(ctx: StudyPageContext, parent: HTMLElement, qu
   }
   const prompt = body.createDiv({ cls: "mia-row-prompt mia-markdown" });
   ctx.renders.push(MarkdownRenderer.render(ctx.app, withoutSourceAttribution(question.questionMarkdown), prompt, question.filePath, component));
-  body.createEl("small", { text: `${question.subject} · ${question.questionType} · 핵심 ${question.coreKeywords.map((item) => item.label).join(", ") || "없음"} · 보조 ${question.subKeywords.map((item) => item.label).join(", ") || "없음"}` });
+  const meta = body.createEl("small");
+  // 상태 점의 색만으로는 적색 야간 모드·색약 환경에서 구분이 어려워 같은 상태를 글자로도 붙인다.
+  meta.createSpan({ text: state.label, cls: "mia-row-tag" }).dataset.tone = state.tone;
+  meta.createSpan({ text: `${question.subject} · ${question.questionType} · 핵심 ${question.coreKeywords.map((item) => item.label).join(", ") || "없음"} · 보조 ${question.subKeywords.map((item) => item.label).join(", ") || "없음"}` });
   if (options.showWeakness) {
     const review = ctx.plugin.store.getReview(question.id);
     body.createEl("small", { text: `긴급도 ${weaknessUrgency(review)}점 · ${review?.lastRating === Rating.Again ? "못 암기" : "애매"}`, cls: "mia-row-urgency" });
   }
-  const actions = row.createDiv({ cls: "mia-row-actions" });
-  actions.createEl("button", { text: "학습", attr: { "aria-label": `${question.heading} 학습` } }).addEventListener("click", () => ctx.startReview([question.id]));
-  actions.createEl("button", { text: "상세", attr: { "aria-label": `${question.heading} 상세` } }).addEventListener("click", () => openDetail(question));
-  actions.createEl("button", { text: "편집", attr: { "aria-label": `${question.heading} 편집` } }).addEventListener("click", () => openEditorWithNotice("문제 편집", () => ctx.plugin.openManagedQuestionEditor(question)));
-  actions.createEl("button", { text: "연결", attr: { "aria-label": `${question.heading} 연결` } }).addEventListener("click", () => openEditorWithNotice("문제 연결", () => ctx.plugin.openFollowUpEditor(question)));
-  row.createEl("button", { text: "삭제", cls: "mod-warning mia-row-delete", attr: { "aria-label": `${question.heading} 삭제` } }).addEventListener("click", () => {
-    ctx.plugin.confirmDeleteQuestion(question);
-  });
+  row.createSpan({ text: "›", cls: "mia-row-more", attr: { "aria-hidden": "true" } });
 }

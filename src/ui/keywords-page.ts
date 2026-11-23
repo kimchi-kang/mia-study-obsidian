@@ -4,6 +4,7 @@ import type { KeywordReference } from "../core/models";
 import type { KeywordNoteEntry } from "../services/keyword-operations";
 import { renderQuestionHeading } from "./question-row";
 import type { StudyPageContext } from "./study-page-context";
+import { renderCardManagementMenu } from "./card-management-menu";
 
 export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
   const pageActions = root.createDiv({ cls: "mia-page-actions" });
@@ -64,7 +65,8 @@ export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
       const subCount = links.filter(link => link.sub).length;
       const card = grid.createDiv({ cls: "mia-keyword" });
       // 카드 전체 클릭과 같은 의미 보기를 키보드(Tab → Enter/Space)로도 열 수 있게 이름을 버튼 역할로 둔다.
-      const title = card.createEl("strong", {
+      const titleRow = card.createDiv({ cls: "mia-card-title-row" });
+      const title = titleRow.createEl("strong", {
         text: item.keyword.label,
         attr: { tabindex: "0", role: "button", "aria-label": `키워드 ${item.keyword.label} 의미 보기` },
       });
@@ -79,19 +81,17 @@ export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
         event.preventDefault();
         showMeaning(item);
       });
-      card.createEl("span", { text: `${questions.length}문제 · 핵심 ${coreCount} · 보조 ${subCount}` });
-      card.addEventListener("click", () => showMeaning(item));
       const editEntry = item.entry ?? {
         name: item.keyword.label === item.keyword.target
           ? (item.keyword.target.replaceAll("\\", "/").split("/").at(-1) ?? item.keyword.label).replace(/\.md$/i, "")
           : item.keyword.label,
         target: item.keyword.target,
       };
-      const edit = card.createEl("button", { text: "편집", attr: { "aria-label": `키워드 ${item.keyword.label} 편집` } });
-      edit.addEventListener("click", (event) => {
-        event.stopPropagation();
-        ctx.plugin.openKeywordEditor(editEntry);
-      });
+      renderCardManagementMenu(titleRow, item.keyword.label, "편집",
+        () => ctx.plugin.openKeywordEditor(editEntry),
+        () => ctx.plugin.confirmDeleteKeyword(editEntry));
+      card.createEl("span", { text: `${questions.length}문제 · 핵심 ${coreCount} · 보조 ${subCount}` });
+      card.addEventListener("click", () => showMeaning(item));
       const review = card.createEl("button", { text: "연결 문제 시험" });
       review.disabled = questions.length === 0;
       review.addEventListener("click", (event) => {
@@ -114,11 +114,6 @@ export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
           questionButton.addEventListener("click", () => reportUiFailure(ctx.plugin.openQuestionDetail(question)));
         }
       }
-      const remove = card.createEl("button", { text: "삭제", cls: "mod-warning", attr: { "aria-label": `키워드 ${item.keyword.label} 삭제` } });
-      remove.addEventListener("click", (event) => {
-        event.stopPropagation();
-        ctx.plugin.confirmDeleteKeyword(editEntry);
-      });
     }
     if (!items.length) grid.createEl("p", {
       text: keywords.size ? "검색 조건에 맞는 키워드가 없습니다." : "키워드를 추가하거나 질문에 핵심/보조 키워드를 연결하면 여기에 나타납니다.",

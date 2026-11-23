@@ -4,7 +4,7 @@ import { formatInterval, summarizeStudySession } from "./study-session-calculati
 import { AnswerClock, MAX_ANSWER_SECONDS } from "../core/answer-time";
 import { withoutSourceAttribution } from "../core/source-attribution";
 import { StudyManagementModal } from "./study-management-modal";
-import { Component, ItemView, MarkdownRenderer, Notice, Platform, ViewStateResult, WorkspaceLeaf } from "obsidian";
+import { Component, ItemView, MarkdownRenderer, Notice, Platform, setIcon, ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { Rating } from "ts-fsrs";
 import type MiaStudyPlugin from "../main";
 import { StudyGrade } from "../core/fsrs-service";
@@ -700,26 +700,29 @@ export class MiaStudyView extends ItemView {
     const version = brand.createEl("span", { text: `v${this.plugin.manifest.version}`, cls: "mia-version" });
     version.setAttr("aria-label", `실행 중인 MIA Study 버전 ${this.plugin.manifest.version}`);
     title.createEl("span", { text: "FSRS-6", cls: "mia-badge" });
-    // In a session the exit button comes first so reading order matches the slim bar: exit, progress, settings.
-    if (this.route === "study") title.createEl("button", { text: "학습 나가기", cls: "mia-focus-exit" }).addEventListener("click", () => this.navigate("dashboard"));
+    if (this.route === "study") this.headerButton(title, "학습 나가기", "mia-focus-exit", "arrow-left").addEventListener("click", () => this.navigate("dashboard"));
     const settingsButtons = title.createDiv({ cls: "mia-settings-buttons" });
-    settingsButtons.createEl("button", { text: "학습 설정", cls: "mia-learning-button" }).addEventListener("click", () => this.openStudySettings());
-    const appearance = settingsButtons.createEl("button", { text: "보기 설정", cls: "mia-appearance-button" });
+    this.headerButton(settingsButtons, "학습 설정", "mia-learning-button", "settings").addEventListener("click", () => this.openStudySettings());
+    const appearance = this.headerButton(settingsButtons, "보기 설정", "mia-appearance-button", "type");
     appearance.addEventListener("click", () => this.plugin.modalOpenGuard.open(dialogKey("study-appearance-settings"), () => new StudyAppearanceModal(this.app, this.plugin.studyUi, () => this.refreshAppearance(), () => this.restoreSettingsFocus(".mia-appearance-button"), patch => this.plugin.updateNightMode(patch))));
-    // 학습 중 휴대폰 상단 줄은 칸이 정해져 있어, 야간 버튼은 학습 밖 화면에만 둔다(학습 중에는 명령으로 전환).
-    if (this.route !== "study") {
-      const night = settingsButtons.createEl("button", { text: "야간", cls: "mia-night-button" });
-      night.setAttr("type", "button");
-      night.setAttr("aria-label", "적색 야간 모드");
-      night.setAttr("aria-pressed", String(this.plugin.studyUi.night.nightMode));
-      night.addEventListener("click", () => { this.plugin.updateNightMode({ nightMode: !this.plugin.studyUi.night.nightMode }); });
-    }
+    const night = this.headerButton(settingsButtons, "야간", "mia-night-button", "moon", "적색 야간 모드");
+    night.setAttr("aria-pressed", String(this.plugin.studyUi.night.nightMode));
+    night.addEventListener("click", () => { this.plugin.updateNightMode({ nightMode: !this.plugin.studyUi.night.nightMode }); });
     const nav = header.createDiv({ cls: "mia-nav" });
     // Weak questions live on the dashboard strip and as the 취약 filter on 문제, so there is no tab of their own.
     this.navButton(nav, "오늘", "dashboard");
     this.navButton(nav, "학습현황", "progress");
     this.navButton(nav, "문제", "questions");
     this.navButton(nav, "키워드", "keywords");
+  }
+
+  private headerButton(parent: HTMLElement, text: string, cls: string, icon: string, label = text): HTMLButtonElement {
+    const button = parent.createEl("button", { cls, attr: { type: "button", "aria-label": label, title: label } });
+    if (this.route === "study") {
+      setIcon(button.createSpan({ cls: "mia-button-icon", attr: { "aria-hidden": "true" } }), icon);
+    }
+    button.createSpan({ text, cls: "mia-button-label" });
+    return button;
   }
 
   private navButton(parent: HTMLElement, label: string, route: MiaRoute): void {
