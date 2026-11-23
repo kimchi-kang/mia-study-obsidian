@@ -156,9 +156,9 @@ describe("portable subject and keyword writes", () => {
     return { plugin, vault, contents, files };
   }
   it("creates a normal subject with its bank and generated note", async () => {
-    const env = vaultEnvironment(); await env.plugin.createSubject("공학수학");
-    expect(env.contents.get("MIA/공학수학/문제은행.md")).toContain("공학수학");
-    expect(env.contents.get("MIA/공학수학/공학수학 노트.md")).toContain("mia-study-subject-note");
+    const env = vaultEnvironment(); await env.plugin.createSubject("응용통계");
+    expect(env.contents.get("MIA/응용통계/문제은행.md")).toContain("응용통계");
+    expect(env.contents.get("MIA/응용통계/응용통계 노트.md")).toContain("mia-study-subject-note");
     expect(env.vault.create).toHaveBeenCalledTimes(2);
   });
   it("updates an exactly matching keyword without creating a second note", async () => {
@@ -178,7 +178,7 @@ describe("portable subject and keyword writes", () => {
   it.each(["CON", "con.txt", "PRN", "aux", "NUL", "COM1", "COM¹", "LPT9", "LPT³", "수학."])("rejects unsafe Windows name %s", name => {
     expect(() => validateSubjectName(name)).toThrow(); expect(() => validateKeywordName(name)).toThrow();
   });
-  it.each(["공학수학", "CONCEPT", "COM10", "C언어", "논리 과제", "수학.기초"])("preserves valid name %s", name => {
+  it.each(["응용통계", "CONCEPT", "COM10", "C언어", "논리 과제", "수학.기초"])("preserves valid name %s", name => {
     expect(validateSubjectName(name)).toBe(name); expect(validateKeywordName(name)).toBe(name);
   });
   it.each(["MIA/CON/개념", "MIA/키워드/NUL.md", "MIA/수학./개념", "MIA/개념?"])("rejects invalid explicit keyword path %s", path => {

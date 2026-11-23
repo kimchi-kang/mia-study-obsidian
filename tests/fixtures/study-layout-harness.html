@@ -68,6 +68,17 @@ function geometry() {
 }
 geometry();
 addEventListener('resize', geometry);
+// 테스트용 setIcon은 빈 svg만 남기므로, 하네스를 눈으로 볼 때만 아이콘 자리에 비슷한 글자를 그린다(실제 Obsidian은 Lucide 아이콘).
+const iconGlyphs = { 'arrow-left': '\u2190', settings: '\u2699', type: 'Aa', moon: '\u263e' };
+for (const svg of document.querySelectorAll('svg[data-icon]')) {
+  const glyph = iconGlyphs[svg.getAttribute('data-icon')];
+  if (!glyph) continue;
+  const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  Object.entries({ x: '12', y: '17', 'text-anchor': 'middle', 'font-size': '15', 'font-weight': '700', fill: 'currentColor' }).forEach(([key, value]) => text.setAttribute(key, value));
+  text.textContent = glyph;
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.append(text);
+}
 window.miaLayoutReport = function() {
   const pane = view.getBoundingClientRect();
   const content = view.querySelector(({ study: '.mia-study-layout', dashboard: '.mia-hero', progress: '.mia-stats', questions: '.mia-questions-layout', keywords: '.mia-keyword-grid' })[route]);
