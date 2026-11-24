@@ -1,6 +1,8 @@
 # MIA Study 현재 작업·검증·배포 상태
 
-2026-11-23 KST. **현재 정식 배포는 1.7.12**입니다. 전체 점검 후 정리: tests/release-safety·responsive-modal-harness의 실제 전공 계열 과목명을 응용통계로(데이터만), styles.css 미사용 규칙 정리(mia-device-sync-hint 단독 규칙 2개·mia-grade-guidance 선택자; 공통 muted :is() 묶음의 sync-hint는 우선순위 유지 위해 남기고 주석), 5개 화면 계산 스타일 전후 차이 0. tests/detail-editor-failure.test.js 추가(상세 편집·연결 열기 실패 안내). 하네스는 열 때만 setIcon 자리에 글자 표시. verify:full 2,128 통과, UTC·C 2,126 통과·생략 2.
+2026-11-24 KST. **현재 정식 배포는 1.8.0**입니다. 사용자 결정(2-A): Obsidian 설정 탭과 학습 화면 설정의 중복 정리. settings-tab.ts를 `보관함 폴더`(문제·키워드 노트 폴더, 행은 containerEl 직속 유지) → `학습 설정 · 기기 동기화`(요약 + `학습 설정 열기`로 StudyManagementModal, 학습 화면과 같은 dialogKey로 중복 열림 방지, 저장 후 display()로 요약 갱신, 동기화 미완 경고는 탭에도 표시) → `플러그인 정보`(업데이트 확인) 순으로. 탭에서 renderStudyManagementSettings·renderDeviceSyncSettings·`암기 모드 순서` 제거(보기 설정에 같은 값). hide() 때 탭에서 연 학습 설정 창을 닫아 최적화 중단. 바꾼 기존 테스트(사용자 승인): study-session 학습 설정 통합 2건, slim-layout settings-advanced 캡처·cases.settings 단정(`value="20"` → `하루 새 문제 20개`), 탭 숨김 최적화 중단 1건 — 모두 탭에서 연 창 대상으로 같은 내용 확인. verify:full 2,128 통과, UTC·C 2,126 통과·생략 2. 미확인: 실제 Obsidian 설정 창 위 모달 겹침·휴대폰 키보드.
+
+2026-11-23 KST. **당시 정식 배포 1.7.12**입니다. 전체 점검 후 정리: tests/release-safety·responsive-modal-harness의 실제 전공 계열 과목명을 응용통계로(데이터만), styles.css 미사용 규칙 정리(mia-device-sync-hint 단독 규칙 2개·mia-grade-guidance 선택자; 공통 muted :is() 묶음의 sync-hint는 우선순위 유지 위해 남기고 주석), 5개 화면 계산 스타일 전후 차이 0. tests/detail-editor-failure.test.js 추가(상세 편집·연결 열기 실패 안내). 하네스는 열 때만 setIcon 자리에 글자 표시. verify:full 2,128 통과, UTC·C 2,126 통과·생략 2.
 
 2026-11-23 KST. **당시 정식 배포 1.7.11**입니다. 사용자 결정(UI-08): 이름을 Major Study로 통일. manifest name, 알림 앞머리, 리본·명령 이름(`Major Study 열기`, 명령 id 유지), 버전 aria-label, README·INSTALL·소개 페이지·MIA-AGENT·SAFETY-QA·CLAUDE.md. 유지: 플러그인 id, 저장소 이름, `MIA Study Sync` 폴더와 파일 머리말(저장 형식), 번들 머리말, 출력 파일 creator, 과거 기록. 바꾼 기존 테스트: 동기화 경고 알림 앞머리 3건(MIA Study: → Major Study:). verify:full 2,126 통과, UTC·C 2,124 통과·생략 2. 미확인: 실제 Obsidian 플러그인 목록·명령 팔레트 표시.
 

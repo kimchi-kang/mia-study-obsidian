@@ -357,26 +357,36 @@ describe("learning settings dialog", () => {
 
 describe("Obsidian learning settings integration", () => {
   const field = (root, label) => root.attrs["aria-label"] === label ? root : root.children.map(child => field(child,label)).find(Boolean);
-  it("keeps existing settings above and below learning settings, including when loading defaults", async () => {
-    const ui=setup({start:false});const tab=new MiaSettingTab({},ui.plugin);tab.display();
-    const original=field(tab.containerEl,"못 암기 고정 간격(분)");original.value="12";original.handlers.get("input")("12");
-    for(const text of ["문제 폴더","목표 기억률","최대 복습 간격(일)","키워드 노트 폴더"])expect(tab.containerEl.content).toContain(text);
-    await tab.containerEl.find("공부량·빈도만 기본값 불러오기",true).click();
-    for(const text of ["문제 폴더","목표 기억률","최대 복습 간격(일)","키워드 노트 폴더"])expect(tab.containerEl.content).toContain(text);
-    expect(field(tab.containerEl,"못 암기 고정 간격(분)")).toBe(original);expect(original.value).toBe("12");
+  const openFromTab = async ui => {
+    const tab=new MiaSettingTab({},ui.plugin);tab.display();
+    await tab.containerEl.find("학습 설정 열기",true).click();
+    const modal=modalBoundary.instances.at(-1);expect(modal).toBeInstanceOf(StudyManagementModal);expect(modal.open).toHaveBeenCalledOnce();modal.onOpen();
+    return { tab, modal };
+  };
+  it("keeps folders in the tab and opens the same learning settings dialog, including when loading defaults", async () => {
+    const ui=setup({start:false});const { tab, modal }=await openFromTab(ui);
+    for(const text of ["문제 폴더","키워드 노트 폴더"])expect(tab.containerEl.content).toContain(text);
+    expect(tab.containerEl.content).not.toContain("학습 설정 저장");
+    const original=field(modal.contentEl,"못 암기 고정 간격(분)");original.value="12";original.handlers.get("input")("12");
+    for(const text of ["목표 기억률","최대 복습 간격(일)","내 기기 간 동기화"])expect(modal.contentEl.content).toContain(text);
+    await modal.contentEl.find("공부량·빈도만 기본값 불러오기",true).click();
+    for(const text of ["목표 기억률","최대 복습 간격(일)","내 기기 간 동기화"])expect(modal.contentEl.content).toContain(text);
+    for(const text of ["문제 폴더","키워드 노트 폴더"])expect(tab.containerEl.content).toContain(text);
+    expect(field(modal.contentEl,"못 암기 고정 간격(분)")).toBe(original);expect(original.value).toBe("12");
   });
   it("keeps the learning draft and unrelated drafts after a failed save, then retries", async () => {
     const ui=setup({start:false});ui.plugin.updateSettings=vi.fn(async patch=>Object.assign(ui.plugin.store.settings,structuredClone(patch)));
-    const tab=new MiaSettingTab({},ui.plugin);tab.display();
-    const fresh=field(tab.containerEl,"하루에 새로 배울 문제 수");fresh.value="9";fresh.handlers.get("input")("9");
-    const fixed=field(tab.containerEl,"못 암기 고정 간격(분)");fixed.value="12";fixed.handlers.get("input")("12");
+    const { tab, modal }=await openFromTab(ui);
+    const fresh=field(modal.contentEl,"하루에 새로 배울 문제 수");fresh.value="9";fresh.handlers.get("input")("9");
+    const fixed=field(modal.contentEl,"못 암기 고정 간격(분)");fixed.value="12";fixed.handlers.get("input")("12");
     ui.plugin.updateSettings.mockRejectedValueOnce(Error("disk full"));
-    await tab.containerEl.find("학습 설정 저장",true).click();
-    expect(field(tab.containerEl,"하루에 새로 배울 문제 수")).toBe(fresh);expect(fresh.value).toBe("9");
-    expect(field(tab.containerEl,"못 암기 고정 간격(분)")).toBe(fixed);expect(fixed.value).toBe("12");
-    expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(20);
-    await tab.containerEl.find("학습 설정 저장",true).click();expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(9);
+    await modal.contentEl.find("학습 설정 저장",true).click();
+    expect(field(modal.contentEl,"하루에 새로 배울 문제 수")).toBe(fresh);expect(fresh.value).toBe("9");
+    expect(field(modal.contentEl,"못 암기 고정 간격(분)")).toBe(fixed);expect(fixed.value).toBe("12");
+    expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(20);expect(modal.close).not.toHaveBeenCalled();
+    await modal.contentEl.find("학습 설정 저장",true).click();expect(ui.plugin.store.settings.studyManagement.newCardsPerDay).toBe(9);
     expect(ui.plugin.store.settings.gradeIntervalsMinutes[1]).toBe(12);
+    expect(modal.close).toHaveBeenCalled();expect(tab.containerEl.content).toContain("하루 새 문제 9개");
   });
 });
 

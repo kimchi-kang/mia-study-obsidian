@@ -150,12 +150,16 @@ it("renders additional real screens and states for computed-style equivalence", 
     }
     modal.close();
   }
+  plugin.modalOpenGuard = new ModalOpenGuard();
   const settings = new MiaSettingTab(app, plugin); settings.display();
   capture("settings", settings.containerEl);
-  [...settings.containerEl.querySelectorAll("button")].find(el => el.textContent === "고급 설정").click();
-  settings.containerEl.querySelectorAll("details").forEach(el => { el.open = true; });
-  capture("settings-advanced", settings.containerEl);
+  [...settings.containerEl.querySelectorAll("button")].find(el => el.textContent === "학습 설정 열기").click();
+  const settingsModal = [...document.querySelectorAll(".mia-study-management-modal")].at(-1);
+  [...settingsModal.querySelectorAll("button")].find(el => el.textContent === "고급 설정").click();
+  settingsModal.querySelectorAll("details").forEach(el => { el.open = true; });
+  capture("settings-advanced", settingsModal.closest(".modal-container"));
   settings.hide();
+  expect(settingsModal.isConnected).toBe(false);
   expect(Object.keys(cases)).toHaveLength(43);
   const keywordPlugin = new MiaStudyPlugin();
   keywordPlugin.app = { vault: { getAbstractFileByPath: () => null } };
@@ -172,7 +176,8 @@ it("renders additional real screens and states for computed-style equivalence", 
   expect(cases["export-empty"]).toContain("부족한 문제가 없습니다.");
   expect(cases.hidden).toContain("mia-reveal"); expect(cases.browse).not.toContain("mia-ratings");
   expect(cases["follow-up"]).toContain('type="checkbox"');
-  expect(cases.settings).toContain('value="20"');
+  expect(cases.settings).toContain("하루 새 문제 20개");
+  expect(cases.settings).not.toContain("학습 설정 저장");
   expect(cases["settings-conflict"]).toContain("targetRetention");
   for (const screen of ["management-advanced", "settings-advanced"]) {
     expect(cases[screen]).toContain("아래 ‘내 기록으로 최적화’ 버튼에서 매개변수를 최적화할 수 있습니다.");
@@ -281,9 +286,12 @@ it.each(["×", "ESC", "바깥 클릭", "취소", "탭 숨김"])("aborts optimiza
   });
   const tab = dismissal === "탭 숨김" ? new MiaSettingTab(view.app, plugin) : null;
   const modal = tab ? null : new StudyManagementModal(view.app, plugin, vi.fn());
-  if (tab) tab.display();
-  else modal.open();
-  const settings = tab?.containerEl ?? modal.contentEl;
+  if (tab) {
+    plugin.modalOpenGuard = new ModalOpenGuard();
+    tab.display();
+    [...tab.containerEl.querySelectorAll("button")].find(el => el.textContent === "학습 설정 열기").click();
+  } else modal.open();
+  const settings = tab ? [...document.querySelectorAll(".mia-study-management-modal")].at(-1) : modal.contentEl;
   const button = label => [...settings.querySelectorAll("button")].find(el => el.textContent === label);
   const optimize = button("내 기록으로 최적화");
   optimize.click();
@@ -297,6 +305,7 @@ it.each(["×", "ESC", "바깥 클릭", "취소", "탭 숨김"])("aborts optimiza
   if (tab) tab.hide();
   expect(options.signal.aborted).toBe(true);
   if (modal) expect(modal.modalEl.isConnected).toBe(false);
+  else expect(settings.isConnected).toBe(false);
   options.onProgress(90);
   reject(new DOMException("취소", "AbortError"));
   await Promise.resolve();

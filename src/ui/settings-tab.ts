@@ -1,18 +1,19 @@
-import { renderDeviceSyncSettings } from "./device-sync-settings";
-import { renderStudyManagementSettings } from "./study-management-settings";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import type { MiaSettings } from "../core/models";
 import type MiaStudyPlugin from "../main";
 import { configuredPath, parseSettings } from "../services/data-store";
 import { errorMessage } from "./error-message";
 import { bindKeyboardViewport, KeyboardViewportBinding } from "./mobile-keyboard";
+import { dialogKey } from "./modal-open-guard";
 import { requestPluginUpdate } from "./plugin-update";
+import { StudyManagementModal } from "./study-management-modal";
+import { PORTABLE_SYNC_INCOMPLETE_WARNING } from "../services/portable-study-storage";
 
 export class MiaSettingTab extends PluginSettingTab {
   private settingsWrites: Promise<void> = Promise.resolve();
   private keyboardViewport: KeyboardViewportBinding | null = null;
   private folderCommits: Array<() => void> = [];
-  private stopOptimization: (() => void) | undefined;
+  private studyModal: StudyManagementModal | null = null;
 
   constructor(app: App, private readonly miaPlugin: MiaStudyPlugin) {
     super(app, miaPlugin);
@@ -57,41 +58,59 @@ export class MiaSettingTab extends PluginSettingTab {
       input.addEventListener("change", commit);
       this.folderCommits.push(commit);
     };
-    this.stopOptimization?.();
     this.keyboardViewport?.destroy();
     this.keyboardViewport = null;
     containerEl.empty();
     containerEl.addClass("mia-keyboard-settings", "mia-setting-controls");
     containerEl.createEl("h2", { text: "Major Study" });
     containerEl.createEl("p", { text: "노트 내용과 FSRS 복습 기록은 분리됩니다. 등록 명령을 실행하기 전에는 원문을 수정하지 않습니다.", cls: "setting-item-description" });
-    new Setting(containerEl).setName("업데이트 확인").setDesc(`현재 버전 ${this.miaPlugin.manifest.version}. BRAT으로 새 버전을 확인하고 설치합니다. BRAT이 없으면 설치 안내의 수동 업데이트를 따르세요.`).addButton((button) => {
-      button.setButtonText("업데이트 확인").onClick(() => { requestPluginUpdate(this.app); });
-    });
 
+    // 보관함 폴더: 입력을 마치면 바로 저장한다. 폴더 행은 설정 탭 바로 아래 줄에 둔다.
+    containerEl.createEl("h3", { text: "보관함 폴더" });
+    containerEl.createEl("p", { text: "입력을 마치면 바로 저장됩니다.", cls: "setting-item-description" });
     new Setting(containerEl).setName("문제 폴더").setDesc("한 줄에 하나. 비워 두면 보관함 전체에서 [!question]을 찾습니다.").addTextArea((text) => {
       text.setPlaceholder("지리학\n통계이론").setValue(settings.sourceRoots.join("\n"));
       text.inputEl.setAttr("aria-label", "문제 폴더");
       bindFolder(text.inputEl, "sourceRoots", "문제 폴더");
     });
-    this.stopOptimization = renderStudyManagementSettings(containerEl.createDiv({ cls: "mia-study-management-settings" }), this.miaPlugin, action => this.save(action, false));
-    renderDeviceSyncSettings(containerEl, this.miaPlugin);
     new Setting(containerEl).setName("키워드 노트 폴더").setDesc("키워드 링크를 만들 때 기준으로 표시할 폴더입니다.").addText((text) => {
       text.setValue(settings.keywordFolder);
       text.inputEl.setAttr("aria-label", "키워드 노트 폴더");
       bindFolder(text.inputEl, "keywordFolder", "키워드 노트 폴더");
     });
-    new Setting(containerEl).setName("암기 모드 순서").setDesc("암기 모드는 평가 없이 질문과 정답을 넘겨 보며 복습일은 바뀌지 않습니다. 순서는 이 기기에 저장하며 새 암기 학습부터 적용합니다. 순서대로는 문제 목록 순서를 따릅니다.").addDropdown((dropdown) => {
-      dropdown.addOption("sequential", "순서대로").addOption("random", "랜덤").setValue(this.miaPlugin.studyUi.appearance.memorizationOrder);
-      dropdown.onChange(async (value) => {
-        if (value === "sequential" || value === "random") await this.save(async () => { this.miaPlugin.studyUi.updateAppearance({ memorizationOrder: value }); });
+
+    // 학습 설정·동기화: 학습 화면의 '학습 설정'과 같은 창을 연다. 저장은 그 창 안에서만 한다.
+    containerEl.createEl("h3", { text: "학습 설정 · 기기 동기화" });
+    const management = settings.studyManagement;
+    const sync = this.miaPlugin.portableSyncActive ? "일반 보관함 폴더 사용 중" : "기존 플러그인 폴더 사용 중";
+    new Setting(containerEl).setName("학습 설정")
+      .setDesc(`하루 새 문제 ${management.newCardsPerDay}개 · 복습 ${management.reviewsPerDay}회 · 목표 기억률 ${Number((settings.targetRetention * 100).toFixed(10))}% · 최대 복습 간격 ${settings.maximumIntervalDays}일 · 동기화: ${sync}. 학습 화면의 ‘학습 설정’과 같은 창이 열리며, 내 기기 간 동기화도 그 창 맨 아래에 있습니다.`)
+      .addButton((button) => {
+        button.setButtonText("학습 설정 열기").setCta().onClick(() => this.openStudySettings());
       });
+    if (this.miaPlugin.portableSyncIncomplete) containerEl.createEl("p", { text: PORTABLE_SYNC_INCOMPLETE_WARNING, cls: "mia-warning", attr: { role: "alert" } });
+    containerEl.createEl("p", { text: "글자 크기·암기 모드 순서 같은 보기 설정은 학습 화면의 ‘보기 설정’에서 바꿉니다.", cls: "setting-item-description" });
+
+    containerEl.createEl("h3", { text: "플러그인 정보" });
+    new Setting(containerEl).setName("업데이트 확인").setDesc(`현재 버전 ${this.miaPlugin.manifest.version}. BRAT으로 새 버전을 확인하고 설치합니다. BRAT이 없으면 설치 안내의 수동 업데이트를 따르세요.`).addButton((button) => {
+      button.setButtonText("업데이트 확인").onClick(() => { requestPluginUpdate(this.app); });
     });
     this.keyboardViewport = bindKeyboardViewport(containerEl);
   }
 
+  /** 학습 화면과 같은 키를 써서 두 곳에서 동시에 열리지 않게 한다. */
+  private openStudySettings(): void {
+    this.miaPlugin.modalOpenGuard.open(dialogKey("study-management-settings"), () => {
+      const modal = new StudyManagementModal(this.app, this.miaPlugin, () => this.display(), () => { if (this.studyModal === modal) this.studyModal = null; });
+      this.studyModal = modal;
+      return modal;
+    });
+  }
+
   hide(): void {
-    this.stopOptimization?.();
-    this.stopOptimization = undefined;
+    // 설정 창을 닫으면 여기서 연 학습 설정 창도 닫아 진행 중인 최적화를 멈춘다.
+    this.studyModal?.close();
+    this.studyModal = null;
     this.folderCommits.forEach(commit => commit());
     this.folderCommits = [];
     this.keyboardViewport?.destroy();
