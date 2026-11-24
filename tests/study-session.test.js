@@ -374,6 +374,21 @@ describe("Obsidian learning settings integration", () => {
     for(const text of ["문제 폴더","키워드 노트 폴더"])expect(tab.containerEl.content).toContain(text);
     expect(field(modal.contentEl,"못 암기 고정 간격(분)")).toBe(original);expect(original.value).toBe("12");
   });
+  it("refreshes the tab summary when the dialog closes without saving after enabling sync", async () => {
+    const ui=setup({start:false});ui.plugin.portableSyncActive=false;ui.plugin.portableSyncIncomplete=true;
+    ui.plugin.enablePortableSync=vi.fn(async()=>{ui.plugin.portableSyncActive=true;ui.plugin.portableSyncIncomplete=false;});
+    const { tab, modal }=await openFromTab(ui);
+    expect(tab.containerEl.content).toContain("동기화: 기존 플러그인 폴더 사용 중");expect(tab.containerEl.content).toContain("아직 모두 도착하지 않았습니다");
+    await modal.contentEl.find("범용 동기화 폴더 사용",true).click();
+    await modal.contentEl.find("취소",true).click();
+    expect(ui.plugin.enablePortableSync).toHaveBeenCalledOnce();expect(modal.close).toHaveBeenCalled();
+    expect(tab.containerEl.content).toContain("동기화: 일반 보관함 폴더 사용 중");expect(tab.containerEl.content).not.toContain("아직 모두 도착하지 않았습니다");
+  });
+  it("does not redraw a hidden tab when hiding closes its dialog", async () => {
+    const ui=setup({start:false});const { tab, modal }=await openFromTab(ui);
+    const display=vi.spyOn(tab,"display");tab.hide();
+    expect(modal.close).toHaveBeenCalled();expect(display).not.toHaveBeenCalled();
+  });
   it("keeps the learning draft and unrelated drafts after a failed save, then retries", async () => {
     const ui=setup({start:false});ui.plugin.updateSettings=vi.fn(async patch=>Object.assign(ui.plugin.store.settings,structuredClone(patch)));
     const { tab, modal }=await openFromTab(ui);

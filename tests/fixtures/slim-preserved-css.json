@@ -2716,22 +2716,6 @@
   },
   {
     "context": [],
-    "selector": ".mia-keyboard-settings > .mia-study-management-settings > h3",
-    "declarations": [
-      [
-        "font-size",
-        "17px",
-        false
-      ],
-      [
-        "font-weight",
-        "750",
-        false
-      ]
-    ]
-  },
-  {
-    "context": [],
     "selector": ".is-phone .modal-container:not(.mia-keyboard-open) > .modal.mia-detail-modal",
     "declarations": [
       [

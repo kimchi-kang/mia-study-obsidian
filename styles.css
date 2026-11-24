@@ -1048,7 +1048,6 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .modal.mia-appearance-modal .mia-settings-list > .setting-item.setting-item:not(.setting-item-heading):first-child { border-top: 0; }
 .mia-appearance-modal .mia-appearance-actions { border-top: 1px solid var(--mia-line); }
 .mia-keyboard-settings > h2:first-child { display: flex; align-items: center; gap: 10px; font-weight: 750; letter-spacing: -.02em; }
-.mia-keyboard-settings > .mia-study-management-settings > h3 { font-size: 17px; font-weight: 750; }
 .mia-study-management-modal .mia-learning-settings-actions::before { content: ""; position: absolute; left: 0; right: 0; bottom: calc(100% + 1px); height: 24px; background: linear-gradient(to bottom, transparent, var(--modal-background, var(--background-primary))); pointer-events: none; }
 .mia-learning-settings-actions > button:first-of-type:not(.mod-cta) { margin-inline-end: auto; padding-inline: 8px; }
 .mia-study-management-settings .mia-settings-basic > .setting-item.setting-item:not(.setting-item-heading):is(:first-child, :not(:first-child)) { padding: 14px 16px; }

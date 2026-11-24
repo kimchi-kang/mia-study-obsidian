@@ -14,6 +14,7 @@ export class MiaSettingTab extends PluginSettingTab {
   private keyboardViewport: KeyboardViewportBinding | null = null;
   private folderCommits: Array<() => void> = [];
   private studyModal: StudyManagementModal | null = null;
+  private openStudyButton: HTMLElement | null = null;
 
   constructor(app: App, private readonly miaPlugin: MiaStudyPlugin) {
     super(app, miaPlugin);
@@ -87,6 +88,7 @@ export class MiaSettingTab extends PluginSettingTab {
       .setDesc(`하루 새 문제 ${management.newCardsPerDay}개 · 복습 ${management.reviewsPerDay}회 · 목표 기억률 ${Number((settings.targetRetention * 100).toFixed(10))}% · 최대 복습 간격 ${settings.maximumIntervalDays}일 · 동기화: ${sync}. 학습 화면의 ‘학습 설정’과 같은 창이 열리며, 내 기기 간 동기화도 그 창 맨 아래에 있습니다.`)
       .addButton((button) => {
         button.setButtonText("학습 설정 열기").setCta().onClick(() => this.openStudySettings());
+        this.openStudyButton = button.buttonEl ?? null;
       });
     if (this.miaPlugin.portableSyncIncomplete) containerEl.createEl("p", { text: PORTABLE_SYNC_INCOMPLETE_WARNING, cls: "mia-warning", attr: { role: "alert" } });
     containerEl.createEl("p", { text: "글자 크기·암기 모드 순서 같은 보기 설정은 학습 화면의 ‘보기 설정’에서 바꿉니다.", cls: "setting-item-description" });
@@ -98,10 +100,18 @@ export class MiaSettingTab extends PluginSettingTab {
     this.keyboardViewport = bindKeyboardViewport(containerEl);
   }
 
-  /** 학습 화면과 같은 키를 써서 두 곳에서 동시에 열리지 않게 한다. */
+  /**
+   * 학습 화면과 같은 키를 써서 두 곳에서 동시에 열리지 않게 한다.
+   * 저장하지 않고 닫아도 동기화 폴더는 이미 바뀌었을 수 있으므로, 닫힐 때마다 요약을 다시 그리고 버튼으로 초점을 돌려준다.
+   */
   private openStudySettings(): void {
     this.miaPlugin.modalOpenGuard.open(dialogKey("study-management-settings"), () => {
-      const modal = new StudyManagementModal(this.app, this.miaPlugin, () => this.display(), () => { if (this.studyModal === modal) this.studyModal = null; });
+      const modal = new StudyManagementModal(this.app, this.miaPlugin, () => undefined, () => {
+        if (this.studyModal !== modal) return;
+        this.studyModal = null;
+        this.display();
+        this.openStudyButton?.focus({ preventScroll: true });
+      });
       this.studyModal = modal;
       return modal;
     });
@@ -109,8 +119,10 @@ export class MiaSettingTab extends PluginSettingTab {
 
   hide(): void {
     // 설정 창을 닫으면 여기서 연 학습 설정 창도 닫아 진행 중인 최적화를 멈춘다.
-    this.studyModal?.close();
+    // 먼저 참조를 비워 닫힘 콜백이 숨겨지는 탭을 다시 그리지 않게 한다.
+    const modal = this.studyModal;
     this.studyModal = null;
+    modal?.close();
     this.folderCommits.forEach(commit => commit());
     this.folderCommits = [];
     this.keyboardViewport?.destroy();
@@ -123,7 +135,7 @@ export class MiaSettingTab extends PluginSettingTab {
     const write = this.settingsWrites.then(async () => {
       try { await action(); }
       catch (error) {
-        new Notice(`MIA 설정 저장 실패: ${errorMessage(error)}`);
+        new Notice(`Major Study 설정 저장 실패: ${errorMessage(error)}`);
         if (refreshOnFailure) this.display();
       }
     });

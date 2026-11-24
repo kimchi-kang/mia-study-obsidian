@@ -274,6 +274,28 @@ window.miaLayoutReport = () => {
   }
 });
 
+it.each(["×", "ESC", "취소"])("returns focus to the settings tab button after closing learning settings with %s", async dismissal => {
+  const { view } = await renderLayoutCase({});
+  const plugin = view.plugin;
+  plugin.modalOpenGuard = new ModalOpenGuard();
+  const tab = new MiaSettingTab(view.app, plugin);
+  document.body.appendChild(tab.containerEl);
+  tab.display();
+  const openButton = () => [...tab.containerEl.querySelectorAll("button")].find(el => el.textContent === "학습 설정 열기");
+  openButton().click();
+  const modal = [...document.querySelectorAll(".mia-study-management-modal")].at(-1);
+  const container = modal.closest(".modal-container");
+  if (dismissal === "×") container.querySelector(".modal-close-button").click();
+  if (dismissal === "ESC") document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape" }));
+  if (dismissal === "취소") [...modal.querySelectorAll("button")].find(el => el.textContent === "취소").click();
+  expect(container.isConnected).toBe(false);
+  expect(document.activeElement).toBe(openButton());
+  openButton().click();
+  expect(document.querySelectorAll(".mia-study-management-modal")).toHaveLength(1);
+  tab.hide();
+  tab.containerEl.remove();
+});
+
 it.each(["×", "ESC", "바깥 클릭", "취소", "탭 숨김"])("aborts optimization when closing settings with %s", async dismissal => {
   const { view, root } = await renderLayoutCase({});
   const plugin = view.plugin;
