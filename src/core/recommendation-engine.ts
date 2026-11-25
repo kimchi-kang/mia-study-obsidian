@@ -1,4 +1,4 @@
-import { orderManagedQueue, type DailyLimitReason } from "./study-management";
+import { orderManagedQueue, type dailyStudyCounts, type DailyLimitReason } from "./study-management";
 import type { StudyManagementSettings } from "./models";
 import { Rating } from "ts-fsrs";
 import { FsrsService } from "./fsrs-service";
@@ -99,6 +99,8 @@ export interface ReviewQueueOptions {
   random?: () => number;
   management?: StudyManagementSettings;
   includeFuture?: boolean;
+  /** 미리 계산한 dailyStudyCounts(reviews, management, now) 결과. 있으면 다시 계산하지 않는다. */
+  dailyCounts?: ReturnType<typeof dailyStudyCounts>;
 }
 
 type RegisteredQuestion = QuestionRecord & { id: string };
@@ -137,7 +139,7 @@ export function buildReviewQueue(
   if (options.management) {
     return orderManagedQueue(due, fresh, reviews, options.management, now, options.random ?? Math.random,
       (left, right) => fsrsService.compareDue(reviews[left], reviews[right], now),
-      onExcluded && ((id, reason) => onExcluded({ id, reason })));
+      onExcluded && ((id, reason) => onExcluded({ id, reason })), options.dailyCounts);
   }
   if (options.random) {
     // Shuffle each eligibility group once; future reviews never enter either group.

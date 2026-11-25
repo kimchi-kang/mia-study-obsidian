@@ -2,8 +2,8 @@ import { Modal, Notice } from "obsidian";
 import { calculateProgress, type ProgressCounts } from "../core/progress";
 import type { QuestionRecord } from "../core/models";
 import { queryQuestions, type ReviewFilter } from "../core/question-query";
-import { buildReviewQueue } from "../core/recommendation-engine";
-import { studyDayStart } from "../core/study-management";
+import { buildReviewQueue, type ReviewQueueOptions } from "../core/recommendation-engine";
+import { dailyStudyCounts, studyDayStart } from "../core/study-management";
 import { summarizeStudyHistory, type StudyHistory } from "../core/study-history";
 import { errorMessage } from "./error-message";
 import { openEditorWithNotice } from "./editor-notice";
@@ -25,8 +25,11 @@ const MAX_LISTED_DUPLICATE_FILES = 8;
 type RegisteredQuestion = QuestionRecord & { id: string };
 type OverviewRoute = "dashboard" | "progress";
 
-function reviewQueue(ctx: StudyPageContext, questions: RegisteredQuestion[], now = new Date()) {
-  return buildReviewQueue(questions, ctx.plugin.store.reviews, ctx.plugin.fsrs, { management: ctx.plugin.store.settings.studyManagement, now });
+function reviewQueue(ctx: StudyPageContext, questions: RegisteredQuestion[], now = new Date(), dailyCounts?: ReviewQueueOptions["dailyCounts"]) {
+  return buildReviewQueue(questions, ctx.plugin.store.reviews, ctx.plugin.fsrs, {
+    management: ctx.plugin.store.settings.studyManagement, now,
+    ...(dailyCounts ? { dailyCounts } : {}),
+  });
 }
 
 function subjectQuestions(ctx: StudyPageContext, subject: string): RegisteredQuestion[] {
@@ -38,6 +41,7 @@ export function readOverview(ctx: StudyPageContext, route: OverviewRoute): Overv
   const now = new Date();
   const questions = index.registered;
   const dayStartsAt = store.settings.studyManagement.dayStartsAt;
+  const dailyCounts = dailyStudyCounts(store.reviews, store.settings.studyManagement, now);
   const day = studyDayStart(now, dayStartsAt).getTime();
   const { bySubject, ...counts } = calculateProgress(questions, store.reviews, fsrs, now);
   const subjects = new Map(ctx.plugin.listSubjects().map(subject => [subject, [] as RegisteredQuestion[]]));
@@ -51,7 +55,7 @@ export function readOverview(ctx: StudyPageContext, route: OverviewRoute): Overv
     const stats = byName.get(subject);
     return { subject, total: stats?.total ?? 0, studied: stats?.studied ?? 0, fresh: stats?.new ?? 0,
       due: stats?.due ?? 0, again: stats?.again ?? 0, hard: stats?.hard ?? 0, good: stats?.good ?? 0, easy: stats?.easy ?? 0,
-      canStart: reviewQueue(ctx, items, now).length > 0 };
+      canStart: reviewQueue(ctx, items, now, dailyCounts).length > 0 };
   });
   const common = { dayStartsAt, day, reviewConflictCount: Object.keys(store.conflicts ?? {}).length };
   if (route === "progress") return {
@@ -59,10 +63,11 @@ export function readOverview(ctx: StudyPageContext, route: OverviewRoute): Overv
     history: summarizeStudyHistory(store.reviews, dayStartsAt, now),
     forecast: forecastReviews(questions, store.reviews, fsrs, dayStartsAt, now), retention: store.settings.targetRetention,
   };
-  const available = reviewQueue(ctx, questions, now);
+  const available = reviewQueue(ctx, questions, now, dailyCounts);
   const availableNew = available.filter(question => fsrs.isNew(store.getReview(question.id))).length;
   const saved = studyUi.resume;
   const current = saved ? index.questionById(saved.queue[saved.queueIndex] ?? saved.seed[0] ?? "") : undefined;
+  const crossFileDuplicates = index.crossFileDuplicates;
   return {
     ...common, target: readTargetDates(ctx, now, true, questions)[0] ?? null, streak: summarizeStudyHistory(store.reviews, dayStartsAt, now).streak, total: counts.total, due: counts.due, fresh: counts.new, easy: counts.easy, today: counts.today,
     stableRatio: counts.total ? Math.round(counts.stable / counts.total * 100) : 0,
@@ -73,9 +78,9 @@ export function readOverview(ctx: StudyPageContext, route: OverviewRoute): Overv
       mode: saved.sessionMode, position: Math.min(saved.queueIndex + 1, saved.queue.length), length: saved.queue.length,
       waiting: saved.queueIndex >= saved.queue.length && saved.sessionMode === "recall", updatedAt: saved.updatedAt } : null,
     pending: store.hasPendingRecovery, settingsConflicts: store.settingsConflicts?.length ?? 0,
-    duplicateFiles: index.crossFileDuplicates?.files.length ? {
-      hiddenQuestions: index.crossFileDuplicates.hiddenQuestions, count: index.crossFileDuplicates.files.length,
-      paths: index.crossFileDuplicates.files.slice(0, MAX_LISTED_DUPLICATE_FILES).map(file => file.filePath),
+    duplicateFiles: crossFileDuplicates?.files.length ? {
+      hiddenQuestions: crossFileDuplicates.hiddenQuestions, count: crossFileDuplicates.files.length,
+      paths: crossFileDuplicates.files.slice(0, MAX_LISTED_DUPLICATE_FILES).map(file => file.filePath),
     } : null,
     hasCandidates: !counts.total && index.candidates.length > 0, diagnostics: index.diagnostics.length,
   };

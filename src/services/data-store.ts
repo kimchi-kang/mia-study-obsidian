@@ -298,11 +298,13 @@ export class MiaDataStore {
   private pendingWriteFailed = false;
   private pendingClearFailed = false;
   private recoveryReadFailed = false;
+  private unchangedSync: { rawText: string | undefined; data: MiaPluginData } | null = null;
   loadWarnings: string[] = [];
 
   constructor(private readonly plugin: PluginDataStorage, private readonly recovery?: ReviewRecovery) {}
 
   async load(): Promise<void> {
+    this.unchangedSync = null;
     this.loadWarnings = [];
     this.recoveryReadFailed = false;
     let disk: MiaPluginData | undefined;
@@ -374,23 +376,38 @@ export class MiaDataStore {
       ? this.plugin.loadData().then(raw => ({ value: parsePluginData(raw) })).catch((error: unknown) => ({ error }))
       : null;
     return this.enqueue(async () => {
-      const observation = await observed;
-      if (observation && "error" in observation) throw observation.error;
-      const incoming = parsePluginData(await this.plugin.loadData());
-      const delivered = observation ? mergeReviewData(observation.value, incoming) : incoming;
-      const merged = mergeReviewData(this.data, delivered);
-      let mergedText = JSON.stringify(merged);
-      if (mergedText !== JSON.stringify(incoming)) {
-        if (this.pending || this.pendingReadFailed) throw new Error("미완료 저장을 먼저 확인·재시도하세요. 외부 파일과 사본은 유지했습니다.");
-        // Release the large snapshot across I/O and compare the post-write value.
-        mergedText = "";
-        await this.persist(merged);
-        mergedText = JSON.stringify(merged);
+      try {
+        const observation = await observed;
+        if (observation && "error" in observation) throw observation.error;
+        const raw = await this.plugin.loadData();
+        const rawText = JSON.stringify(raw);
+        if (!observed && !this.recoveryWriteFailed && this.unchangedSync?.data === this.data
+          && this.unchangedSync.rawText === rawText) return;
+
+        this.unchangedSync = null;
+        const incoming = parsePluginData(raw);
+        const delivered = observation ? mergeReviewData(observation.value, incoming) : incoming;
+        const merged = mergeReviewData(this.data, delivered);
+        let mergedText = JSON.stringify(merged);
+        const needsSave = mergedText !== JSON.stringify(incoming);
+        if (needsSave) {
+          if (this.pending || this.pendingReadFailed) throw new Error("미완료 저장을 먼저 확인·재시도하세요. 외부 파일과 사본은 유지했습니다.");
+          // 큰 스냅샷을 쓰기 전에 놓고 쓰기가 끝난 값을 비교한다.
+          mergedText = "";
+          await this.persist(merged);
+          mergedText = JSON.stringify(merged);
+        }
+        const changed = mergedText !== JSON.stringify(this.data);
+        this.data = merged;
+        this.writeRecovery(merged);
+        if (changed) this.emit();
+        if (!needsSave && !changed && !this.recoveryWriteFailed) {
+          this.unchangedSync = { rawText, data: merged };
+        }
+      } catch (error) {
+        this.unchangedSync = null;
+        throw error;
       }
-      const changed = mergedText !== JSON.stringify(this.data);
-      this.data = merged;
-      this.writeRecovery(merged);
-      if (changed) this.emit();
     });
   }
 

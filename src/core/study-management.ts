@@ -116,6 +116,7 @@ export function orderManagedQueue<T extends QuestionRecord & { id: string }>(
   due: T[], fresh: T[], reviews: Readonly<Record<string, QuestionReviewState>>, settings: StudyManagementSettings,
   now: Date, random: () => number, compareRecall: (left: string, right: string) => number,
   onLimited?: (id: string, reason: DailyLimitReason) => void,
+  dailyCounts?: ReturnType<typeof dailyStudyCounts>,
 ): T[] {
   const shuffle = (items: T[]) => {
     for (let i = items.length - 1; i > 0; i -= 1) {
@@ -143,7 +144,7 @@ export function orderManagedQueue<T extends QuestionRecord & { id: string }>(
     return Date.parse(left.due) - Date.parse(right.due);
   });
   if (settings.newCardOrder === "random") shuffle(fresh);
-  const counts = dailyStudyCounts(reviews, settings, now);
+  const counts = dailyCounts ?? dailyStudyCounts(reviews, settings, now);
   const remaining = Math.max(0, settings.reviewsPerDay - counts.review - (settings.newCardsIgnoreReviewLimit ? 0 : counts.fresh));
   let orderedScheduled = scheduled;
   // Intraday steps remain first. Interday learning shares the review budget,

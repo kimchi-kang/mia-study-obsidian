@@ -1,5 +1,5 @@
 import { isLeech } from "./study-automation";
-import { Rating } from "ts-fsrs";
+import { Rating, State } from "ts-fsrs";
 import { FsrsService } from "./fsrs-service";
 import { QuestionRecord, QuestionReviewState, QuestionType } from "./models";
 
@@ -17,6 +17,7 @@ export interface QuestionQuery {
 }
 
 type RegisteredQuestion = QuestionRecord & { id: string };
+const koreanCollator = new Intl.Collator("ko");
 
 function normalize(value: string): string {
   return value.trim().toLocaleLowerCase("ko");
@@ -83,22 +84,42 @@ function timestamp(question: RegisteredQuestion, key: "createdAt" | "updatedAt")
   return Number.isFinite(time) ? time : 0;
 }
 
-function dueTime(question: RegisteredQuestion, reviews: Readonly<Record<string, QuestionReviewState>>): number {
-  const due = reviews[question.id]?.card.due;
+function dueTime(due: string | undefined): number {
   const time = due ? new Date(due).getTime() : Number.POSITIVE_INFINITY;
   return Number.isFinite(time) ? time : Number.POSITIVE_INFINITY;
 }
 
-function reviewPriority(
-  question: RegisteredQuestion,
-  reviews: Readonly<Record<string, QuestionReviewState>>,
-  fsrsService: FsrsService,
-  now: Date,
-): number {
-  const review = reviews[question.id];
-  if (fsrsService.isDue(review, now)) return 0;
-  if (fsrsService.isNew(review)) return 1;
-  return 2;
+interface ReviewSortKeys {
+  review: QuestionReviewState | undefined;
+  priority: number;
+  learning: boolean;
+  /** 회상 확률은 기존 compareDue처럼 실제로 비교할 때만 계산해 캐시한다. */
+  recall?: number;
+  due: number;
+}
+
+function reviewSortKeys(review: QuestionReviewState | undefined, fsrsService: FsrsService, now: Date): ReviewSortKeys {
+  if (!review || !fsrsService.isDue(review, now)) {
+    return { review, priority: fsrsService.isNew(review) ? 1 : 2, learning: false, due: dueTime(review?.card.due) };
+  }
+  const learning = review.card.state === State.Learning || review.card.state === State.Relearning;
+  return { review, priority: 0, learning, due: Date.parse(review.card.due) };
+}
+
+function compareReviewKeys(left: ReviewSortKeys, right: ReviewSortKeys, fsrsService: FsrsService, now: Date): number {
+  const priority = left.priority - right.priority;
+  if (priority !== 0) return priority;
+  if (left.priority === 0) {
+    // fsrsService.compareDue와 같은 규칙: 학습 단계 우선 → 회상 확률 오름차순 → 기한.
+    if (left.learning !== right.learning) return left.learning ? -1 : 1;
+    if (!left.learning) {
+      left.recall ??= fsrsService.retrievability(left.review, now) ?? 1;
+      right.recall ??= fsrsService.retrievability(right.review, now) ?? 1;
+      const recall = left.recall - right.recall;
+      if (recall !== 0) return recall;
+    }
+  }
+  return left.due - right.due;
 }
 
 export function queryQuestions(
@@ -119,35 +140,29 @@ export function queryQuestions(
     return true;
   });
 
-  return filtered.sort((left, right) => {
-    if (query.sort === "title") return left.heading.localeCompare(right.heading, "ko");
-    if (query.sort === "subject") {
-      return left.subject.localeCompare(right.subject, "ko") || left.heading.localeCompare(right.heading, "ko");
-    }
-    if (query.sort === "type") {
-      return left.questionType.localeCompare(right.questionType, "ko") || left.heading.localeCompare(right.heading, "ko");
-    }
-    if (query.sort === "created" || query.sort === "updated") {
-      const key = query.sort === "created" ? "createdAt" : "updatedAt";
-      return timestamp(right, key) - timestamp(left, key) || left.heading.localeCompare(right.heading, "ko");
-    }
-    if (query.sort === "weak") {
-      return weaknessUrgency(reviews[right.id], now) - weaknessUrgency(reviews[left.id], now)
-        || dueTime(left, reviews) - dueTime(right, reviews)
-        || left.heading.localeCompare(right.heading, "ko");
-    }
-    if (query.sort === "ambiguous") {
-      const leftHard = reviews[left.id]?.lastRating === Rating.Hard ? 0 : 1;
-      const rightHard = reviews[right.id]?.lastRating === Rating.Hard ? 0 : 1;
-      return leftHard - rightHard || dueTime(left, reviews) - dueTime(right, reviews)
-        || left.heading.localeCompare(right.heading, "ko");
-    }
-    const priority = reviewPriority(left, reviews, fsrsService, now) - reviewPriority(right, reviews, fsrsService, now);
-    if (priority !== 0) return priority;
-    if (fsrsService.isDue(reviews[left.id], now)) {
-      return fsrsService.compareDue(reviews[left.id], reviews[right.id], now)
-        || left.heading.localeCompare(right.heading, "ko");
-    }
-    return dueTime(left, reviews) - dueTime(right, reviews) || left.heading.localeCompare(right.heading, "ko");
-  });
+  const compareHeadings = (left: RegisteredQuestion, right: RegisteredQuestion) => koreanCollator.compare(left.heading, right.heading);
+  const sort = query.sort;
+  if (sort === "title") return filtered.sort(compareHeadings);
+  if (sort === "subject" || sort === "type") {
+    const field = sort === "subject" ? "subject" : "questionType";
+    return filtered.sort((left, right) => koreanCollator.compare(left[field], right[field]) || compareHeadings(left, right));
+  }
+  if (sort === "created" || sort === "updated") {
+    const field = sort === "created" ? "createdAt" : "updatedAt";
+    return filtered.map(question => ({ question, time: timestamp(question, field) }))
+      .sort((left, right) => right.time - left.time || compareHeadings(left.question, right.question))
+      .map(({ question }) => question);
+  }
+  if (sort === "weak" || sort === "ambiguous") {
+    return filtered.map(question => {
+      const review = reviews[question.id];
+      const priority = sort === "weak" ? -weaknessUrgency(review, now) : Number(review?.lastRating !== Rating.Hard);
+      return { question, priority, due: dueTime(review?.card.due) };
+    }).sort((left, right) => left.priority - right.priority || left.due - right.due
+      || compareHeadings(left.question, right.question))
+      .map(({ question }) => question);
+  }
+  return filtered.map(question => ({ question, keys: reviewSortKeys(reviews[question.id], fsrsService, now) }))
+    .sort((left, right) => compareReviewKeys(left.keys, right.keys, fsrsService, now) || compareHeadings(left.question, right.question))
+    .map(({ question }) => question);
 }
