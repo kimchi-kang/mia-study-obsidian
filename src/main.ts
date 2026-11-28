@@ -237,14 +237,15 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     this.registerEvent(workspace.on("active-leaf-change", sync));
     this.registerEvent(workspace.on("layout-change", sync));
     workspace.onLayoutReady(sync);
-    this.register(() => document.body.removeClass(PHONE_NAVBAR_HIDDEN));
+    this.register(() => document.body.classList.remove(PHONE_NAVBAR_HIDDEN));
   }
 
   syncPhoneNavbar(): void {
-    if (!Platform.isPhone || typeof document === "undefined") return;
+    // 꺼진 뒤 늦게 도착한 onLayoutReady 등이 클래스를 다시 붙여 막대가 계속 숨는 일을 막는다.
+    if (this.unloadRequested || !Platform.isPhone || typeof document === "undefined") return;
     const workspace = this.app.workspace;
     const leaf = typeof workspace.getMostRecentLeaf === "function" ? workspace.getMostRecentLeaf(workspace.rootSplit) : null;
-    document.body.toggleClass(PHONE_NAVBAR_HIDDEN, leaf?.view?.getViewType() === MIA_VIEW_TYPE);
+    document.body.classList.toggle(PHONE_NAVBAR_HIDDEN, leaf?.view?.getViewType() === MIA_VIEW_TYPE);
   }
 
   onunload(): void {

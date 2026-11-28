@@ -788,11 +788,11 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-study-card .mia-question-section > h2 { margin: 0 0 20px; overflow-wrap: anywhere; }
 .mia-study-card .mia-markdown img { max-width: 100%; height: auto; }
 .mia-answer-section { margin-top: 24px; }
-/* 정답 보기 직후 한 번만 위에서 아래로 펼친다. 동작 줄이기 설정은 8절 끝 규칙이 끈다. */
+/* 정답 보기 직후 한 번만 위에서 아래로 펼친다. 끝난 뒤 clip-path가 남아 초점 테두리를 자르지 않도록 backwards만 쓴다. 동작 줄이기 설정은 8절 끝 규칙이 끈다. */
 @keyframes mia-answer-unfold { from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(-4px); } to { opacity: 1; clip-path: inset(0 0 0 0); transform: none; } }
 @keyframes mia-answer-fade { from { opacity: 0; } to { opacity: 1; } }
-.mia-study-card.mia-answer-enter .mia-answer-section { animation: mia-answer-unfold 240ms var(--mia-ease) both; }
-.mia-study-card.mia-answer-enter .mia-study-concepts { animation: mia-answer-fade 200ms var(--mia-ease) 80ms both; }
+.mia-study-card.mia-answer-enter .mia-answer-section { animation: mia-answer-unfold 240ms var(--mia-ease) backwards; }
+.mia-study-card.mia-answer-enter .mia-study-concepts { animation: mia-answer-fade 200ms var(--mia-ease) 80ms backwards; }
 .mia-recall-prompt { font-size: 13px; line-height: 1.6; margin: 32px 0 4px; }
 .mia-study-concepts summary { cursor: pointer; font-size: 12px; min-height: 36px; align-content: center; }
 .mia-related-item { align-items: stretch; display: flex; }
@@ -1661,18 +1661,29 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
   border-radius: var(--mia-radius);
 }
 .mia-view[data-device="phone"]:where(:not(.mia-route-study:has(.mia-study-layout))) .mia-nav button { width: auto; min-height: 52px; margin: 6px 4px 2px; padding-inline: 4px; font-size: 13px; }
-/* 둥근 막대 양 끝에서 선택 칸 그림자가 잘리지 않게 바깥 칸만 조금 더 띄운다. */
-.mia-view[data-device="phone"]:where(:not(.mia-route-study:has(.mia-study-layout))) .mia-nav button:first-child { margin-inline-start: 10px; }
-.mia-view[data-device="phone"]:where(:not(.mia-route-study:has(.mia-study-layout))) .mia-nav button:last-child { margin-inline-end: 10px; }
+/* 둥근 막대 양 끝에서 선택 칸 그림자가 잘리지 않게 바깥 칸만 조금 더 띄운다.
+   탭 이동 중 맨 앞에 끼는 .mia-nav-glide 조각에 흔들리지 않도록 -of-type으로 고른다. */
+.mia-view[data-device="phone"]:where(:not(.mia-route-study:has(.mia-study-layout))) .mia-nav button:first-of-type { margin-inline-start: 10px; }
+.mia-view[data-device="phone"]:where(:not(.mia-route-study:has(.mia-study-layout))) .mia-nav button:last-of-type { margin-inline-end: 10px; }
 
-/* 휴대폰 본문에서는 Obsidian 상단 막대를 숨긴다. 본문은 상태 표시줄 바로 아래에서 시작하고,
+/* The show rule above uses :where(), so this plain rule outranks it. */
+  .mia-view[data-device="phone"].mia-keyboard-open .mia-nav { display: none; }
+.mia-view .mia-status-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mia-view .mia-status-chips button { min-width: 0; padding-inline: 8px; }
+.mia-view .mia-related-item { flex-direction: row; align-items: center; padding: 4px 4px 4px 10px; }
+.mia-view .mia-related-item .mia-related-open { flex: 1 1 auto; }
+.mia-view .mia-related-item > button:not(.mia-related-open) { width: auto; min-height: 44px; flex: 0 0 auto; }
+}
+
+/* 휴대폰 본문에서는 Obsidian 상단 막대를 숨긴다. 버튼을 만드는 JS(Platform.isPhone)와 같은 조건이 되도록
+   화면 크기 미디어 쿼리 밖에 둔다. 본문은 상태 표시줄 바로 아래에서 시작하고,
    사이드바·더 보기 버튼은 오늘 화면 머리줄(.mia-host-button)에만 둔다. */
 .is-phone .mod-root .workspace-leaf-content[data-type="mia-study-view"] { --view-top-spacing: var(--safe-area-inset-top, 0px); background-color: #000000; }
 .is-phone .mod-root .workspace-leaf-content[data-type="mia-study-view"] > .view-header { display: none; }
 /* Major Study가 앞에 있는 동안 하단 막대도 숨긴다(main.ts가 body 클래스를 붙인다). 아래 여백은 안전 영역만 남는다. */
 body.is-phone.mia-phone-navbar-hidden { --view-bottom-spacing: 0px; }
 body.is-phone.mia-phone-navbar-hidden .mobile-navbar { display: none; }
-.mia-view[data-device="phone"] .mia-header > div:first-child > .mia-host-button { flex: 0 0 auto; display: inline-grid; place-items: center; width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 0; border-radius: var(--mia-radius-pill); color: var(--mia-muted); }
+.mia-view[data-device="phone"] .mia-header > div:first-child > .mia-host-button { flex: 0 0 auto; display: inline-grid; place-items: center; width: 44px; min-width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: var(--mia-radius-pill); color: var(--mia-muted); }
 .mia-view[data-device="phone"] .mia-header > div:first-child > .mia-host-button svg { width: 18px; height: 18px; }
 /* 버튼 두 개가 한 줄에 들어가도록 꾸밈용 FSRS-6 표시는 빼고, 더 보기는 오른쪽 끝에 붙인다. */
 .mia-view[data-device="phone"] .mia-header > div:first-child:has(> .mia-host-button) > .mia-badge { display: none; }
@@ -1683,15 +1694,6 @@ body.is-phone.mia-phone-navbar-hidden .mobile-navbar { display: none; }
 .mia-view[data-device="phone"] .mia-header > div:first-child > .mia-host-more + .mia-host-menu { margin-inline-start: -4px; }
 @container mia-view (max-width: 330px) {
 .mia-view[data-device="phone"] .mia-header > div:first-child > .mia-host-button { width: 36px; min-width: 36px; height: 36px; min-height: 36px; }
-}
-
-/* The show rule above uses :where(), so this plain rule outranks it. */
-  .mia-view[data-device="phone"].mia-keyboard-open .mia-nav { display: none; }
-.mia-view .mia-status-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.mia-view .mia-status-chips button { min-width: 0; padding-inline: 8px; }
-.mia-view .mia-related-item { flex-direction: row; align-items: center; padding: 4px 4px 4px 10px; }
-.mia-view .mia-related-item .mia-related-open { flex: 1 1 auto; }
-.mia-view .mia-related-item > button:not(.mia-related-open) { width: auto; min-height: 44px; flex: 0 0 auto; }
 }
 @container mia-view (max-width: 280px) {
 .mia-view .mia-hero-counts { grid-template-columns: 1fr; }

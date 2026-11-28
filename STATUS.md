@@ -1,6 +1,8 @@
 # MIA Study 현재 작업·검증·배포 상태
 
-2026-11-28 KST. **현재 정식 배포는 1.8.6**입니다. 사용자 실기기 확인: 1.8.5에서 상단·하단 막대 숨김, 머리줄 사이드바·⋯·≡ 버튼, 버전 표시 모두 정상. 1.8.6: MiaStudyView.onPaneMenu(source "more-options")에 `업데이트 확인`(requestPluginUpdate → BRAT checkForUpdatesAndUpdate) 추가. main.js만 변경. verify:full 2,138 통과. 미확인: 실기기 ⋯ 메뉴의 업데이트 항목.
+2026-11-28 KST. **현재 정식 배포는 1.8.7**입니다. 1.8.3~1.8.6 외부 검토 반영(코드 대조로 확인한 항목만). nav-glide: 휴대폰 탭 양 끝 여백 :first/last-child→-of-type(조각 prepend 시 10px 튐), NavGlideScheduler(한 프레임 다중 렌더 시 rAF 1개·가장 처음 위치, 진행 중 재렌더는 조각 현재 위치에서 이어 감, 뷰 창의 rAF, onClose cancel). main.ts syncPhoneNavbar에 unloadRequested 가드·classList 사용. 휴대폰 막대 숨김·.mia-host-button 규칙을 640px 미디어 쿼리 밖으로(JS Platform.isPhone과 조건 일치), 버튼 44px. 호스트 메뉴: detail 0이면 버튼 아래 showAtPosition, aria-haspopup, leftRibbon.items 원소 검사·빈 목록이면 ≡ 미표시. 정답 펼침 animation-fill both→backwards(clip-path 잔존 제거). 검토 중 틀린 지적: rAF 1프레임 깜빡임. 그대로 둔 것: 비대시보드 탭 탈출 경로(사용자 의도), 1.8.2 unchangedSync 메모리·정렬 중복. tests/phone-chrome-motion.test.js 11개 추가. verify:full 2,149 통과. 미확인: 실기기.
+
+2026-11-28 KST. **당시 정식 배포 1.8.6**입니다. 사용자 실기기 확인: 1.8.5에서 상단·하단 막대 숨김, 머리줄 사이드바·⋯·≡ 버튼, 버전 표시 모두 정상. 1.8.6: MiaStudyView.onPaneMenu(source "more-options")에 `업데이트 확인`(requestPluginUpdate → BRAT checkForUpdatesAndUpdate) 추가. main.js만 변경. verify:full 2,138 통과. 미확인: 실기기 ⋯ 메뉴의 업데이트 항목.
 
 2026-11-28 KST. **당시 정식 배포 1.8.5**입니다. 1.8.3~1.8.4 실기기에서 하단 막대가 숨겨지지 않음(상단 막대·머리줄 버튼·버전 표시는 정상). 원인 추정: 시작 시 복원된 탭은 지연(Deferred) 뷰라 getActiveViewOfType(MiaStudyView)가 null이고, 뷰가 실제로 열린 뒤 active-leaf-change가 다시 오지 않음. main.ts syncPhoneNavbar: getMostRecentLeaf(rootSplit)의 getViewType()이 mia-study-view인지로 판단, active-leaf-change·layout-change·onLayoutReady와 MiaStudyView.onOpen에서 호출. main.js만 변경. verify:full 2,138 통과. 미확인: 실기기 하단 막대 숨김, ≡ 메뉴.
 

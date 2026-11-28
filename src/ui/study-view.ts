@@ -28,11 +28,21 @@ import { renderKeywords } from "./keywords-page";
 import { overviewSignature, readOverview, renderDashboard, renderProgress, type OverviewSnapshot } from "./progress-pages";
 import { QuestionListState, renderQuestionsPage } from "./question-list-page";
 import { renderQuestionHeading } from "./question-row";
-import { glideActiveTab, snapshotActiveTab } from "./nav-glide";
+import { NavGlideScheduler } from "./nav-glide";
 import { requestPluginUpdate } from "./plugin-update";
 import type { StudyPageContext } from "./study-page-context";
 
 export const MIA_VIEW_TYPE = "mia-study-view";
+
+/** 키보드·화면 읽기 프로그램으로 누르면(detail 0) 마우스 좌표가 없으므로 버튼 아래에 연다. */
+function showMenuFor(menu: Menu, event: MouseEvent, button: HTMLElement): void {
+  if (event.detail === 0) {
+    const { left, bottom } = button.getBoundingClientRect();
+    menu.showAtPosition({ x: left, y: bottom }, button.ownerDocument);
+  } else {
+    menu.showAtMouseEvent(event);
+  }
+}
 
 interface RibbonMenuItem { title: string; icon: string; hidden?: boolean; callback: (event: MouseEvent | KeyboardEvent) => unknown; }
 
@@ -58,6 +68,7 @@ export class MiaStudyView extends ItemView {
   private answerVisible = false;
   /** 정답 보기를 막 누른 직후 한 번만 펼침 동작을 보여 준다. */
   private answerRevealPending = false;
+  private readonly navGlide = new NavGlideScheduler();
   private answerEnter = false;
   private sessionMode: MiaSessionMode = "recall";
   private focusedReview = false;
@@ -183,6 +194,7 @@ export class MiaStudyView extends ItemView {
     this.flushReadingPosition();
     if (this.undoFeedbackTimer !== null) window.clearTimeout(this.undoFeedbackTimer);
     this.closed = true;
+    this.navGlide.cancel();
     this.resetAnswerClock();
     this.sessionEditGeneration += 1;
     this.editingSessionQuestion = null;
@@ -634,7 +646,7 @@ export class MiaStudyView extends ItemView {
     root.dataset.answerLayout = this.plugin.studyUi.appearance.answerLayout;
     root.dataset.swipeEnabled = String(this.plugin.studyUi.appearance.swipeEnabled);
     root.dataset.night = String(this.plugin.studyUi.night.nightMode);
-    const navFrom = snapshotActiveTab(root);
+    this.navGlide.capture(root);
     this.answerEnter = this.answerRevealPending;
     this.answerRevealPending = false;
     root.empty();
@@ -647,7 +659,7 @@ export class MiaStudyView extends ItemView {
     root.addClass("mia-view");
     root.addClass(`mia-route-${this.route}`);
     this.renderHeader(root);
-    if (navFrom) window.requestAnimationFrame(() => glideActiveTab(root, navFrom));
+    this.navGlide.schedule(root);
     if (!this.plugin.index.isReady) {
       if (this.route === "dashboard" || this.route === "progress") this.renderedOverview = overviewSignature(this.route, null);
       root.createEl("p", { text: "문제를 불러오는 중입니다…", cls: "mia-muted" });
@@ -716,9 +728,15 @@ export class MiaStudyView extends ItemView {
     const version = brand.createEl("span", { text: `v${this.plugin.manifest.version}`, cls: "mia-version" });
     version.setAttr("aria-label", `실행 중인 Major Study 버전 ${this.plugin.manifest.version}`);
     title.createEl("span", { text: "FSRS-6", cls: "mia-badge" });
-    if (hostControls) this.hostButton(title, "더 보기", "mia-host-more", "lucide-more-horizontal").addEventListener("click", event => this.openPaneMenu(event));
-    // 하단 막대의 ≡ 메뉴와 같은 항목(왼쪽 리본 명령)을 이 버튼 아래에 직접 연다. 항목을 못 읽으면 버튼을 만들지 않는다.
-    if (hostControls && this.ribbonItems()) this.hostButton(title, "메뉴", "mia-host-menu", "lucide-menu").addEventListener("click", event => this.openRibbonMenu(event));
+    if (hostControls) {
+      const more = this.hostButton(title, "더 보기", "mia-host-more", "lucide-more-horizontal", true);
+      more.addEventListener("click", event => this.openPaneMenu(event, more));
+    }
+    // 하단 막대의 ≡ 메뉴와 같은 항목(왼쪽 리본 명령)을 이 버튼 아래에 직접 연다. 쓸 항목이 없으면 버튼을 만들지 않는다.
+    if (hostControls && this.ribbonItems()) {
+      const ribbon = this.hostButton(title, "메뉴", "mia-host-menu", "lucide-menu", true);
+      ribbon.addEventListener("click", event => this.openRibbonMenu(event, ribbon));
+    }
     if (this.route === "study") this.headerButton(title, "학습 나가기", "mia-focus-exit", "arrow-left").addEventListener("click", () => this.navigate("dashboard"));
     const settingsButtons = title.createDiv({ cls: "mia-settings-buttons" });
     this.headerButton(settingsButtons, "학습 설정", "mia-learning-button", "settings").addEventListener("click", () => this.openStudySettings());
@@ -739,13 +757,14 @@ export class MiaStudyView extends ItemView {
     return Platform.isPhone && this.route === "dashboard" && this.leaf.getRoot() === this.app.workspace.rootSplit;
   }
 
-  private hostButton(parent: HTMLElement, label: string, cls: string, icon: string): HTMLButtonElement {
+  private hostButton(parent: HTMLElement, label: string, cls: string, icon: string, popup = false): HTMLButtonElement {
     const button = parent.createEl("button", { cls: `mia-host-button ${cls}`, attr: { type: "button", "aria-label": label, title: label } });
+    if (popup) button.setAttr("aria-haspopup", "menu");
     setIcon(button, icon);
     return button;
   }
 
-  /** 더 보기(⋯) 메뉴 맨 위에 BRAT 업데이트 실행을 둔다. 휴대폰은 오늘 화면 ⋯, 데스크톱은 탭의 ⋯ 메뉴. */
+  /** 더 보기(⋯) 메뉴 끝에 BRAT 업데이트 실행을 더한다. 휴대폰은 오늘 화면 ⋯, 데스크톱은 탭의 ⋯ 메뉴. */
   onPaneMenu(menu: Menu, source: string): void {
     super.onPaneMenu(menu, source);
     if (source !== "more-options") return;
@@ -753,26 +772,31 @@ export class MiaStudyView extends ItemView {
   }
 
   /** 숨긴 Obsidian 막대의 더 보기 메뉴와 같은 항목을 연다. */
-  private openPaneMenu(event: MouseEvent): void {
+  private openPaneMenu(event: MouseEvent, button: HTMLElement): void {
     const menu = new Menu();
     this.onPaneMenu(menu, "more-options");
     this.app.workspace.trigger("leaf-menu", menu, this.leaf);
-    menu.showAtMouseEvent(event);
+    showMenuFor(menu, event, button);
   }
 
-  /** Obsidian 내부 값이라 공개 타입에 없다. 모양이 다르면 null. */
+  /** Obsidian 내부 값(leftRibbon.items)이라 공개 타입에 없다. 쓸 수 있는 항목만 골라 내고, 하나도 없으면 null. */
   private ribbonItems(): RibbonMenuItem[] | null {
     const items = (this.app.workspace as unknown as { leftRibbon?: { items?: unknown } }).leftRibbon?.items;
-    return Array.isArray(items) ? items as RibbonMenuItem[] : null;
+    if (!Array.isArray(items)) return null;
+    const usable = items.filter((item): item is RibbonMenuItem => {
+      if (!item || typeof item !== "object") return false;
+      const candidate = item as Partial<RibbonMenuItem>;
+      return !candidate.hidden && typeof candidate.title === "string" && typeof candidate.icon === "string" && typeof candidate.callback === "function";
+    });
+    return usable.length ? usable : null;
   }
 
-  private openRibbonMenu(event: MouseEvent): void {
+  private openRibbonMenu(event: MouseEvent, button: HTMLElement): void {
+    const items = this.ribbonItems();
+    if (!items) return;
     const menu = new Menu();
-    for (const item of this.ribbonItems() ?? []) {
-      if (item.hidden || typeof item.callback !== "function") continue;
-      menu.addItem(entry => entry.setTitle(item.title).setIcon(item.icon).onClick(evt => item.callback(evt)));
-    }
-    menu.showAtMouseEvent(event);
+    for (const item of items) menu.addItem(entry => entry.setTitle(item.title).setIcon(item.icon).onClick(evt => item.callback(evt)));
+    showMenuFor(menu, event, button);
   }
 
   private headerButton(parent: HTMLElement, text: string, cls: string, icon: string, label = text): HTMLButtonElement {
