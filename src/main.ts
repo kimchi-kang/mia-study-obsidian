@@ -28,6 +28,8 @@ import { QuestionIndex } from "./services/question-index";
 import { QuestionMetadataModal } from "./ui/metadata-modal";
 import { MiaSettingTab } from "./ui/settings-tab";
 import { MIA_VIEW_TYPE, MiaStudyView } from "./ui/study-view";
+
+const PHONE_NAVBAR_HIDDEN = "mia-phone-navbar-hidden";
 import { NightModeController } from "./ui/night-mode";
 import type { NightPreference } from "./services/study-ui-store";
 import { KeywordMeaningModal } from "./ui/keyword-modal";
@@ -139,6 +141,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     this.index = new QuestionIndex(this.app, () => this.store.settings.sourceRoots, () => this.managedRoot);
 
     this.registerView(MIA_VIEW_TYPE, (leaf) => new MiaStudyView(leaf, this));
+    this.watchPhoneNavbar();
     this.addRibbonIcon("brain-circuit", "Major Study 열기", () => reportUiFailure(this.activateView()));
     this.addCommand({ id: "open-mia-study", name: "Major Study 열기", callback: () => reportUiFailure(this.activateView()) });
     this.addCommand({ id: "show-startup-status", name: "시작 상태 확인", callback: () => {
@@ -219,6 +222,22 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
       if (leaf.view instanceof MiaStudyView) leaf.view.refreshNight();
     }
     return next;
+  }
+
+  /**
+   * 휴대폰 본문에서 Major Study가 앞에 있는 동안 Obsidian 하단 막대를 숨긴다(styles.css 8절).
+   * 막대의 ≡ 메뉴는 오늘 화면 머리줄 버튼으로 대신한다.
+   */
+  private watchPhoneNavbar(): void {
+    const workspace = this.app.workspace;
+    if (!Platform.isPhone || typeof document === "undefined" || typeof workspace.on !== "function") return;
+    const sync = () => {
+      const view = workspace.getActiveViewOfType(MiaStudyView);
+      document.body.toggleClass(PHONE_NAVBAR_HIDDEN, !!view && view.leaf.getRoot() === workspace.rootSplit);
+    };
+    this.registerEvent(workspace.on("active-leaf-change", sync));
+    workspace.onLayoutReady(sync);
+    this.register(() => document.body.removeClass(PHONE_NAVBAR_HIDDEN));
   }
 
   onunload(): void {
