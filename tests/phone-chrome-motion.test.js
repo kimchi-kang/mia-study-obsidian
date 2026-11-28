@@ -237,6 +237,18 @@ describe("공통 진입 곡선과 목록 모션", () => {
     expect(animations[7].options.delay).toBe(126);
   });
 
+  it("9번째부터는 화면에 보이는 것만 8번째와 같은 지연으로 함께 나타나, 위 항목보다 먼저 보이지 않는다", () => {
+    const { window, root, animations } = navDom();
+    root.innerHTML = `<section class="mia-list">${'<div class="mia-row"></div>'.repeat(12)}</section>`;
+    const rows = [...root.querySelectorAll(".mia-row")];
+    // 한 줄 80px, 화면 높이 800px: 0~9번째는 화면 안, 10·11번째는 화면 아래.
+    rows.forEach((row, index) => { row.getBoundingClientRect = () => ({ top: index * 80, bottom: index * 80 + 80 }); });
+    Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
+    staggerRouteItems(root);
+    expect(animations.map(({ element }) => element)).toEqual(rows.slice(0, 10));
+    expect(animations.map(({ options }) => options.delay)).toEqual([0, 18, 36, 54, 72, 90, 108, 126, 126, 126]);
+  });
+
   it.each([
     ["next", "translateX(22px)", 220],
     ["prev", "translateX(-22px)", 220],

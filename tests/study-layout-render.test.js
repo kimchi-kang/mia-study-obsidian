@@ -19,6 +19,34 @@ beforeEach(() => {
 afterEach(() => { dom.window.close(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
 describe("study layout rendered DOM", () => {
+  it("학습현황 정리: 과목 카드는 0건 상태를 누를 수 없게, 복습 버튼은 오늘 탭과 같은 '시험', 목표일 편집·삭제는 ⋯ 메뉴", async () => {
+    const { root, view } = await renderLayoutCase({ route: "progress", targets: true, history: "varied" });
+    const card = root.querySelector(".mia-progress-subject");
+    const values = [...card.querySelectorAll(".mia-progress-subject-values > button")];
+    expect(values).toHaveLength(6);
+    for (const value of values) expect(value.disabled, value.textContent).toBe(/ 0$/.test(value.textContent));
+    expect(values.some(value => value.disabled) && values.some(value => !value.disabled)).toBe(true);
+    expect([...card.querySelectorAll(".mia-inline-actions > button")].map(button => button.textContent)).toEqual(["시험", "전체 문제"]);
+    const target = root.querySelector(".mia-target-card");
+    expect([...target.querySelectorAll(".mia-inline-actions > button")].map(button => button.textContent)).toEqual(["위험 문제 학습"]);
+    const menu = target.querySelector(".mia-card-title-row .mia-card-menu-button");
+    expect(menu.getAttribute("aria-label")).toBe(`${target.querySelector("h4").textContent} 관리`);
+    menu.click();
+    expect(Menu.shown.items.map(item => item.title)).toEqual(["편집", "삭제"]);
+    root.remove();
+    view.onClose?.();
+  });
+
+  it("문제 탭 상태 드롭다운은 위 칩과 같은 이름(오늘 복습·학습 전)을 쓴다", async () => {
+    const { root } = await renderLayoutCase({ route: "questions" });
+    const options = [...root.querySelectorAll('select[aria-label="복습 상태 필터"] option')].map(option => option.textContent);
+    expect(options).toContain("오늘 복습");
+    expect(options).toContain("학습 전");
+    expect(options).not.toContain("복습 예정");
+    expect(options).not.toContain("새 문제");
+    root.remove();
+  });
+
   it("creates no related rail before reveal even with recommendations", async () => {
     const { root } = await renderLayoutCase({ revealed: false });
     expect(root.querySelector(".mia-related")).toBeNull();

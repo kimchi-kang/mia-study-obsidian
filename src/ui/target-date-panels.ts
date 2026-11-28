@@ -1,3 +1,4 @@
+import { renderCardManagementMenu } from "./card-management-menu";
 import type { TargetDate } from "../core/models";
 import { forecastReviews, MAX_TARGET_DATES, summarizeTargetDates, type TargetDateSummary } from "../core/target-dates";
 import { ConfirmDeleteModal } from "./manage-modals";
@@ -68,15 +69,14 @@ function confirmTargetRemoval(ctx: StudyPageContext, target: TargetDate): void {
 function renderTargetCard(ctx: StudyPageContext, root: HTMLElement, item: TargetDateSummary): void {
   const { target } = item;
   const card = root.createEl("article", { cls: "mia-target-card" });
-  card.createEl("h4", { text: target.label });
+  // 과목·키워드 카드처럼 편집·삭제는 제목 줄의 ⋯ 메뉴에 둔다.
+  const titleRow = card.createDiv({ cls: "mia-card-title-row" });
+  titleRow.createEl("h4", { text: target.label });
+  renderCardManagementMenu(titleRow, target.label, "편집", () => openTargetEditor(ctx, target), () => confirmTargetRemoval(ctx, target));
   card.createEl("p", { text: `${target.date} · ${daysLabel(item.daysUntil)} · ${target.subjects?.join(", ") || "전체 과목"} · ${item.total}문제` });
   card.createEl("p", { text: `예상 평균 기억률\u00a0${targetRecallLabel(item.averageRecall)} · 위험 문제\u00a0${item.risks.length}개 · 학습\u00a0전\u00a0${item.unstudied}개` });
   const actions = card.createDiv({ cls: "mia-inline-actions" });
   riskButton(ctx, actions, item);
-  actions.createEl("button", { text: "편집", attr: { "aria-label": `${target.label} 목표일 편집` } })
-    .addEventListener("click", () => openTargetEditor(ctx, target));
-  actions.createEl("button", { text: "삭제", cls: "mod-warning", attr: { "aria-label": `${target.label} 목표일 삭제` } })
-    .addEventListener("click", () => confirmTargetRemoval(ctx, target));
 }
 
 export function renderTargetDates(ctx: StudyPageContext, root: HTMLElement, items: TargetDateSummary[], retention: number): void {

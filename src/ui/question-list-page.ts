@@ -117,7 +117,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
   type.value = state.type;
   const review = toolbar.createEl("select", { attr: { "aria-label": "복습 상태 필터" } });
   const reviewOptions: Array<[ReviewFilter, string]> = [
-    ["all", "전체 상태"], ["due", "복습 예정"], ["new", "새 문제"],
+    ["all", "전체 상태"], ["due", "오늘 복습"], ["new", "학습 전"],
     ["again", "못 암기"], ["hard", "애매"], ["good", "암기"], ["easy", "너무 쉬움"],
     ["weak", "취약 문제"], ["leech", "자주 틀림"], ["stable", "기억 안정"], ["today", "오늘 평가"],
   ];

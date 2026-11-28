@@ -6,6 +6,12 @@ vi.mock("obsidian", async () => ({
 }));
 import { createLayoutDom, renderLayoutCase } from "./fixtures/study-layout-render";
 import { installLayoutOptions, snapshotLayout } from "./fixtures/slim-layout-obsidian";
+import { LayoutMenu } from "./fixtures/study-layout-obsidian";
+/** 목표일 카드의 편집·삭제는 제목 줄 ⋯ 메뉴에 있다. 메뉴를 열고 항목을 누른다. */
+const targetMenu = (root, title) => {
+  root.querySelector(".mia-target-card .mia-card-menu-button").click();
+  LayoutMenu.shown.items.find(item => item.title === title).click();
+};
 import { layoutHarness } from "./fixtures/study-layout-harness-template";
 import { StudyAppearanceModal } from "../src/ui/study-appearance-modal";
 import { StudyControlsModal } from "../src/ui/study-controls-modal";
@@ -296,7 +302,7 @@ it("renders additional real screens and states for computed-style equivalence", 
   targetWithKeyboard.close();
   const { view: targetView, root: targetRoot } = await renderLayoutCase({ route: "progress", targets: true });
   targetView.plugin.modalOpenGuard = new ModalOpenGuard();
-  targetRoot.querySelector(".mia-target-card .mod-warning").click();
+  targetMenu(targetRoot, "삭제");
   const targetConfirm = document.querySelector(".mia-target-delete-modal").closest(".modal-container");
   capture("target-date-confirm", targetConfirm);
   targetConfirm.querySelector(".modal-close-button").click();
@@ -538,7 +544,7 @@ it("adds, edits and removes a target through the guarded modal and persisted set
   await vi.waitFor(() => expect(modal()).toBeNull());
   expect(disk.settings.targetDates).toEqual([{ id: expect.any(String), label: "첫 면접", date: "2026-11-28", subjects: ["통계이론"] }]);
   view.render();
-  button(root, "편집").click();
+  targetMenu(root, "편집");
   const edit = modal().querySelector("form");
   expect(edit.querySelectorAll("input[type=checkbox]")[1].checked).toBe(true);
   edit.querySelectorAll("input[type=checkbox]")[1].checked = false;
@@ -547,11 +553,11 @@ it("adds, edits and removes a target through the guarded modal and persisted set
   await vi.waitFor(() => expect(modal()).toBeNull());
   expect(disk.settings.targetDates).toEqual([{ id: expect.any(String), label: "연습 시험", date: "2026-11-28" }]);
   view.render();
-  button(root, "삭제").click();
+  targetMenu(root, "삭제");
   expect(modal().textContent).toContain("‘연습 시험’ 목표일을 삭제할까요?");
   button(modal(), "취소").click();
   expect(disk.settings.targetDates).toHaveLength(1);
-  button(root, "삭제").click();
+  targetMenu(root, "삭제");
   button(modal(), "삭제").click();
   await vi.waitFor(() => expect(modal()).toBeNull());
   expect(disk.settings).not.toHaveProperty("targetDates");

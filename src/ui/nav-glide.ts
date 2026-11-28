@@ -145,11 +145,22 @@ export function fadeInElement(element: HTMLElement): void {
 export function staggerRouteItems(root: HTMLElement): void {
   if (reducedMotion(root.ownerDocument?.defaultView ?? null)) return;
   const items = root.querySelectorAll(".mia-stats > *, .mia-subject-grid > *, .mia-list > .mia-row, .mia-keyword-grid > *");
-  let index = 0;
+  const view = root.ownerDocument?.defaultView ?? null;
+  const height = view?.innerHeight ?? 0;
+  let index = 0, extra = 0;
   for (const item of items) {
-    reveal(item, "translateY(10px)", 260, index * 18);
-    index += 1;
-    if (index === 8) break;
+    if (index < 8) {
+      reveal(item, "translateY(10px)", 260, index * 18);
+      index += 1;
+      continue;
+    }
+    // 9번째부터는 지연 없이 두면 위의 5~8번째보다 먼저 보여 순서가 뒤집힌다.
+    // 지금 화면에 보이는 것만 8번째와 같은 지연(126ms)으로 함께 나타나게 하고, 화면 밖은 건드리지 않는다.
+    const rect = item.getBoundingClientRect();
+    if (rect.bottom <= 0 || rect.top >= height) continue;
+    reveal(item, "translateY(10px)", 260, 7 * 18);
+    extra += 1;
+    if (extra === 16) break;
   }
 }
 

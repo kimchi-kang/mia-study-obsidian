@@ -366,14 +366,14 @@ export function renderProgress(ctx: StudyPageContext, root: HTMLElement, overvie
     heading.createEl("span", { text: `${counts.studied}/${counts.total} 학습` });
     renderMeter(card, counts.studied, counts.total, "학습");
     const values = card.createDiv({ cls: "mia-progress-subject-values" });
-    progressLink(ctx, values, `학습 전 ${counts.fresh}`, "new", subject);
-    progressLink(ctx, values, `오늘 복습 ${counts.due}`, "due", subject);
-    progressLink(ctx, values, `못 암기 ${counts.again}`, "again", subject);
-    progressLink(ctx, values, `애매 ${counts.hard}`, "hard", subject);
-    progressLink(ctx, values, `암기 ${counts.good}`, "good", subject);
-    progressLink(ctx, values, `너무 쉬움 ${counts.easy}`, "easy", subject);
+    progressLink(ctx, values, `학습 전 ${counts.fresh}`, "new", subject, counts.fresh);
+    progressLink(ctx, values, `오늘 복습 ${counts.due}`, "due", subject, counts.due);
+    progressLink(ctx, values, `못 암기 ${counts.again}`, "again", subject, counts.again);
+    progressLink(ctx, values, `애매 ${counts.hard}`, "hard", subject, counts.hard);
+    progressLink(ctx, values, `암기 ${counts.good}`, "good", subject, counts.good);
+    progressLink(ctx, values, `너무 쉬움 ${counts.easy}`, "easy", subject, counts.easy);
     const actions = card.createDiv({ cls: "mia-inline-actions" });
-    const start = actions.createEl("button", { text: "복습 시작", cls: "mia-secondary-action" });
+    const start = actions.createEl("button", { text: "시험", cls: "mia-secondary-action" });
     start.disabled = !canStart;
     start.addEventListener("click", () => ctx.startReview(reviewQueue(ctx, subjectQuestions(ctx, subject)).map(question => question.id)));
     actions.createEl("button", { text: "전체 문제" }).addEventListener("click", () => ctx.showQuestions("all", subject));
@@ -405,8 +405,10 @@ function progressStat(
   if (review) card.addEventListener("click", () => ctx.showQuestions(review));
 }
 
-function progressLink(ctx: StudyPageContext, parent: HTMLElement, label: string, review: ReviewFilter, subject: string): void {
+function progressLink(ctx: StudyPageContext, parent: HTMLElement, label: string, review: ReviewFilter, subject: string, count: number): void {
   const button = parent.createEl("button", { text: label });
+  // 0건이면 눌러도 빈 목록이라 누를 수 없게 옅게 둔다(숫자와 자리는 그대로).
+  button.disabled = count === 0;
   button.addEventListener("click", () => ctx.showQuestions(review, subject));
 }
 

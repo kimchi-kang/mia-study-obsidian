@@ -654,6 +654,8 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-target-heading > h3, .mia-target-dates > p, .mia-review-forecast > :is(h3, p) { margin: 0; }
 .mia-target-card, .mia-review-forecast { padding: 14px; border-radius: var(--mia-radius); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); }
 .mia-target-card > :is(h4, p) { margin: 0 0 8px; }
+.mia-target-card > .mia-card-title-row { margin: -6px 0 2px; }
+.mia-target-card > .mia-card-title-row > h4 { margin: 0; }
 .mia-target-past > .mia-target-card { margin-block: 12px; }
 .mia-view :is(.mia-target-dates, .mia-review-forecast) :is(button, summary) { min-height: 44px; min-width: 44px; }
 .mia-view :is(.mia-target-past, .mia-forecast-details) > summary { box-sizing: border-box; padding-block: 10px; cursor: pointer; }
@@ -802,6 +804,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-keyword-radar li > button { min-height: 44px; min-width: 44px; max-width: 100%; white-space: normal; }
 .mia-view .mia-keyword-radar button.mia-radar-start { color: var(--mia-accent-text); }
 .mia-view .mia-keyword-toolbar select { min-height: 44px; max-width: 100%; }
+.is-phone .mia-view .mia-keyword-toolbar select { width: 100%; }
 
 /* 6. Study cards and sessions */
 .mia-reveal { display: block; }
@@ -826,12 +829,12 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 /* 정답 보기 직후 한 번만 위에서 아래로 펼친다. 끝난 뒤 clip-path가 남아 초점 테두리를 자르지 않도록 backwards만 쓴다. */
 @keyframes mia-answer-unfold { from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(-10px); } to { opacity: 1; clip-path: inset(0 0 0 0); transform: none; } }
 @keyframes mia-answer-fade { from { opacity: 0; } to { opacity: 1; } }
-.mia-study-card.mia-answer-enter .mia-study-concepts { animation: mia-answer-fade 200ms var(--mia-ease) 80ms backwards; }
 @keyframes mia-card-enter-next { from { opacity: 0; transform: translateX(32px); } to { opacity: 1; transform: none; } }
 @keyframes mia-card-enter-prev { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
 @keyframes mia-ratings-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: no-preference) {
   .mia-study-card.mia-answer-enter .mia-answer-section { animation: mia-answer-unfold 280ms cubic-bezier(.22, 1, .36, 1) backwards; }
+  .mia-study-card.mia-answer-enter .mia-study-concepts { animation: mia-answer-fade 200ms cubic-bezier(.22, 1, .36, 1) 80ms backwards; }
   .mia-study-card.mia-card-enter-next { animation: mia-card-enter-next 250ms cubic-bezier(.22, 1, .36, 1) backwards; }
   .mia-study-card.mia-card-enter-prev { animation: mia-card-enter-prev 250ms cubic-bezier(.22, 1, .36, 1) backwards; }
   .mia-ratings.mia-ratings-enter { animation: mia-ratings-enter 220ms cubic-bezier(.22, 1, .36, 1) 40ms backwards; }
