@@ -29,6 +29,7 @@ import { overviewSignature, readOverview, renderDashboard, renderProgress, type 
 import { QuestionListState, renderQuestionsPage } from "./question-list-page";
 import { renderQuestionHeading } from "./question-row";
 import { glideActiveTab, snapshotActiveTab } from "./nav-glide";
+import { requestPluginUpdate } from "./plugin-update";
 import type { StudyPageContext } from "./study-page-context";
 
 export const MIA_VIEW_TYPE = "mia-study-view";
@@ -742,6 +743,13 @@ export class MiaStudyView extends ItemView {
     const button = parent.createEl("button", { cls: `mia-host-button ${cls}`, attr: { type: "button", "aria-label": label, title: label } });
     setIcon(button, icon);
     return button;
+  }
+
+  /** 더 보기(⋯) 메뉴 맨 위에 BRAT 업데이트 실행을 둔다. 휴대폰은 오늘 화면 ⋯, 데스크톱은 탭의 ⋯ 메뉴. */
+  onPaneMenu(menu: Menu, source: string): void {
+    super.onPaneMenu(menu, source);
+    if (source !== "more-options") return;
+    menu.addItem(item => item.setTitle("업데이트 확인").setIcon("refresh-cw").onClick(() => { requestPluginUpdate(this.app); }));
   }
 
   /** 숨긴 Obsidian 막대의 더 보기 메뉴와 같은 항목을 연다. */

@@ -1,6 +1,8 @@
 # MIA Study 현재 작업·검증·배포 상태
 
-2026-11-28 KST. **현재 정식 배포는 1.8.5**입니다. 1.8.3~1.8.4 실기기에서 하단 막대가 숨겨지지 않음(상단 막대·머리줄 버튼·버전 표시는 정상). 원인 추정: 시작 시 복원된 탭은 지연(Deferred) 뷰라 getActiveViewOfType(MiaStudyView)가 null이고, 뷰가 실제로 열린 뒤 active-leaf-change가 다시 오지 않음. main.ts syncPhoneNavbar: getMostRecentLeaf(rootSplit)의 getViewType()이 mia-study-view인지로 판단, active-leaf-change·layout-change·onLayoutReady와 MiaStudyView.onOpen에서 호출. main.js만 변경. verify:full 2,138 통과. 미확인: 실기기 하단 막대 숨김, ≡ 메뉴.
+2026-11-28 KST. **현재 정식 배포는 1.8.6**입니다. 사용자 실기기 확인: 1.8.5에서 상단·하단 막대 숨김, 머리줄 사이드바·⋯·≡ 버튼, 버전 표시 모두 정상. 1.8.6: MiaStudyView.onPaneMenu(source "more-options")에 `업데이트 확인`(requestPluginUpdate → BRAT checkForUpdatesAndUpdate) 추가. main.js만 변경. verify:full 2,138 통과. 미확인: 실기기 ⋯ 메뉴의 업데이트 항목.
+
+2026-11-28 KST. **당시 정식 배포 1.8.5**입니다. 1.8.3~1.8.4 실기기에서 하단 막대가 숨겨지지 않음(상단 막대·머리줄 버튼·버전 표시는 정상). 원인 추정: 시작 시 복원된 탭은 지연(Deferred) 뷰라 getActiveViewOfType(MiaStudyView)가 null이고, 뷰가 실제로 열린 뒤 active-leaf-change가 다시 오지 않음. main.ts syncPhoneNavbar: getMostRecentLeaf(rootSplit)의 getViewType()이 mia-study-view인지로 판단, active-leaf-change·layout-change·onLayoutReady와 MiaStudyView.onOpen에서 호출. main.js만 변경. verify:full 2,138 통과. 미확인: 실기기 하단 막대 숨김, ≡ 메뉴.
 
 2026-11-28 KST. **당시 정식 배포 1.8.4**입니다. 1.8.3에서 휴대폰 오늘 화면 머리줄(사이드바·⋯·≡ 버튼)이 한 줄에 들어가도록 숨겼던 .mia-version을 .mia-brand 세로 배치로 이름 아래 작은 줄에 되돌림(styles.css 8절만, main.js 동일, 하네스 고정 파일 변화 없음). 하네스 375px에서 버튼 한 줄 유지 확인. verify:full 2,138 통과. 미확인: 실기기 표시, 1.8.3의 ≡ 메뉴 수정본.
 
