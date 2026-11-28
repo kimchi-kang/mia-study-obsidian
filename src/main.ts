@@ -231,13 +231,20 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
   private watchPhoneNavbar(): void {
     const workspace = this.app.workspace;
     if (!Platform.isPhone || typeof document === "undefined" || typeof workspace.on !== "function") return;
-    const sync = () => {
-      const view = workspace.getActiveViewOfType(MiaStudyView);
-      document.body.toggleClass(PHONE_NAVBAR_HIDDEN, !!view && view.leaf.getRoot() === workspace.rootSplit);
-    };
+    // 시작할 때 복원된 탭은 아직 불러오지 않은(지연) 뷰라 getActiveViewOfType으로는 못 찾는다.
+    // 본문에서 마지막으로 쓴 탭의 뷰 종류로 판단하고, 뷰가 열리고 닫힐 때도 다시 맞춘다(syncPhoneNavbar).
+    const sync = () => this.syncPhoneNavbar();
     this.registerEvent(workspace.on("active-leaf-change", sync));
+    this.registerEvent(workspace.on("layout-change", sync));
     workspace.onLayoutReady(sync);
     this.register(() => document.body.removeClass(PHONE_NAVBAR_HIDDEN));
+  }
+
+  syncPhoneNavbar(): void {
+    if (!Platform.isPhone || typeof document === "undefined") return;
+    const workspace = this.app.workspace;
+    const leaf = typeof workspace.getMostRecentLeaf === "function" ? workspace.getMostRecentLeaf(workspace.rootSplit) : null;
+    document.body.toggleClass(PHONE_NAVBAR_HIDDEN, leaf?.view?.getViewType() === MIA_VIEW_TYPE);
   }
 
   onunload(): void {

@@ -1,6 +1,8 @@
 # MIA Study 현재 작업·검증·배포 상태
 
-2026-11-28 KST. **현재 정식 배포는 1.8.4**입니다. 1.8.3에서 휴대폰 오늘 화면 머리줄(사이드바·⋯·≡ 버튼)이 한 줄에 들어가도록 숨겼던 .mia-version을 .mia-brand 세로 배치로 이름 아래 작은 줄에 되돌림(styles.css 8절만, main.js 동일, 하네스 고정 파일 변화 없음). 하네스 375px에서 버튼 한 줄 유지 확인. verify:full 2,138 통과. 미확인: 실기기 표시, 1.8.3의 ≡ 메뉴 수정본.
+2026-11-28 KST. **현재 정식 배포는 1.8.5**입니다. 1.8.3~1.8.4 실기기에서 하단 막대가 숨겨지지 않음(상단 막대·머리줄 버튼·버전 표시는 정상). 원인 추정: 시작 시 복원된 탭은 지연(Deferred) 뷰라 getActiveViewOfType(MiaStudyView)가 null이고, 뷰가 실제로 열린 뒤 active-leaf-change가 다시 오지 않음. main.ts syncPhoneNavbar: getMostRecentLeaf(rootSplit)의 getViewType()이 mia-study-view인지로 판단, active-leaf-change·layout-change·onLayoutReady와 MiaStudyView.onOpen에서 호출. main.js만 변경. verify:full 2,138 통과. 미확인: 실기기 하단 막대 숨김, ≡ 메뉴.
+
+2026-11-28 KST. **당시 정식 배포 1.8.4**입니다. 1.8.3에서 휴대폰 오늘 화면 머리줄(사이드바·⋯·≡ 버튼)이 한 줄에 들어가도록 숨겼던 .mia-version을 .mia-brand 세로 배치로 이름 아래 작은 줄에 되돌림(styles.css 8절만, main.js 동일, 하네스 고정 파일 변화 없음). 하네스 375px에서 버튼 한 줄 유지 확인. verify:full 2,138 통과. 미확인: 실기기 표시, 1.8.3의 ≡ 메뉴 수정본.
 
 2026-11-28 KST. **당시 정식 배포 1.8.3**입니다. 화면 모션 2개와 휴대폰 Obsidian 막대 정리. src/ui/nav-glide.ts: render 전 선택 탭 위치를 기억했다가 다시 그린 뒤 requestAnimationFrame에서 .mia-nav-glide 조각을 WAAPI로 이전 자리→새 자리 220ms 이동(prefers-reduced-motion이면 생략). 정답 보기 직후 한 번만 .mia-answer-enter로 모범 답안 clip-path 펼침 240ms·핵심 개념 페이드(answerRevealPending→answerEnter, 1분 재렌더에는 재생 안 함). 휴대폰: mod-root의 mia-study-view 리프에서 .view-header 숨김·--view-top-spacing을 안전 영역으로, main.ts watchPhoneNavbar가 active-leaf-change로 body.mia-phone-navbar-hidden을 붙여 .mobile-navbar 숨김·--view-bottom-spacing 0. 오늘 화면 머리줄에 사이드바(workspace.leftSplit.toggle)·더 보기(onPaneMenu+leaf-menu)·메뉴(내부 leftRibbon.items로 직접 Menu 구성; 숨긴 원래 ≡을 대신 누르면 메뉴가 바로 닫혀 폐기) 버튼, FSRS-6 배지·버전 표시는 이 줄에서 숨김. 레이아웃 하네스 재생성. verify:full 2,138 통과. 확인: 하네스에서 두 모션 중간 프레임·휴대폰 머리줄 배치, iPhone 실기기에서 막대 숨김·머리줄 버튼 표시·더 보기 메뉴. 미확인: 실기기 탭 모션·정답 펼침·사이드바 버튼, 실기기 ≡ 메뉴(마지막 수정본), 다른 기종 상태 표시줄·홈 표시줄 여백, Android.
 

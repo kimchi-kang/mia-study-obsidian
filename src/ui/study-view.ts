@@ -123,6 +123,8 @@ export class MiaStudyView extends ItemView {
     this.contentEl.tabIndex = -1;
     // Obsidian's mobile drawer recognizer skips ancestors marked with this attribute.
     if (Platform.isMobile) this.contentEl.dataset.ignoreSwipe = "true";
+    // 지연 로딩된 탭이 이제 열렸으므로 휴대폰 하단 막대 숨김을 다시 맞춘다(닫힐 때는 layout-change가 맞춘다).
+    this.plugin.syncPhoneNavbar?.();
     this.registerDomEvent(this.contentEl, "keydown", (event) => this.handleStudyShortcut(event));
     this.gestures = bindStudyGestures(
       this.contentEl,
