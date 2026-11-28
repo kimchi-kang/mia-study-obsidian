@@ -250,7 +250,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
   const restoreAfterDialog = (component: Component) => {
     const document = panel.ownerDocument;
     const view = document?.defaultView;
-    if (!view?.MutationObserver || !document.querySelector(".modal-container")) return;
+    if (!view?.MutationObserver || !panel.isConnected || !document.querySelector(".modal-container")) return;
     const observer = new view.MutationObserver(() => {
       if (document.querySelector(".modal-container")) return;
       observer.disconnect();
@@ -281,7 +281,8 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
     try {
       const source = await ctx.plugin.questionDetailSource(question);
       if (loadingTimer !== undefined) view?.clearTimeout(loadingTimer);
-      if (revision !== panelRevision) return;
+      // 읽는 동안 다른 탭으로 옮겨 이 패널이 화면에서 빠졌으면 그리지 않는다.
+      if (revision !== panelRevision || !panel.isConnected) return;
       panel.inert = false;
       panel.empty();
       const title = panel.createEl("h2", { cls: "mia-detail-title" });
@@ -292,8 +293,8 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
         // from `selectedId`; refetching here would run against the DOM that render is about to replace.
         afterMutation: () => {},
       }, ctx.plugin.modalOpenGuard);
-      await detail.render(panel, title, component, () => revision === panelRevision);
-      if (revision !== panelRevision) return;
+      await detail.render(panel, title, component, () => revision === panelRevision && panel.isConnected);
+      if (revision !== panelRevision || !panel.isConnected) return;
       const body = panel.querySelector<HTMLElement>(".mia-detail-scroll");
       if (body && state.panelScroll?.id === question.id) body.scrollTop = state.panelScroll.top;
       restorePanelFocus(title);

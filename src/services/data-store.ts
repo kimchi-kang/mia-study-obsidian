@@ -624,6 +624,11 @@ export class MiaDataStore {
     }
   }
 
+  /** 앞선 저장이 끝난 뒤 work를 실행하고, 그동안 들어온 저장은 work가 끝날 때까지 기다리게 한다. */
+  exclusive(work: () => Promise<void>): Promise<void> {
+    return this.enqueue(work);
+  }
+
   private enqueue(work: () => Promise<void>): Promise<void> {
     const write = this.saveChain.then(work);
     this.saveChain = write.catch(() => undefined);

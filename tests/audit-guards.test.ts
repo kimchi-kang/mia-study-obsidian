@@ -74,3 +74,43 @@ describe("문제 이동 시 제목 수준", () => {
     expect(normalizeQuestionHeadingLevel("#### 질문\n##### 안")).toBe("### 질문\n#### 안");
   });
 });
+
+import { readFileSync } from "node:fs";
+import { MiaDataStore } from "../src/services/data-store";
+
+describe("모바일 창 규칙", () => {
+  const styles = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
+  it("휴대폰 상세 창의 전체 화면 높이를 내용 높이 규칙이 덮지 않는다", () => {
+    const shared = styles.match(/\.is-phone \.mia-detail-modal,\s*\.is-phone \.mia-result-modal,\s*\.is-phone \.mia-keyboard-modal \{([^}]*)\}/);
+    expect(shared?.[1]).toBeDefined();
+    expect(shared![1]).not.toMatch(/height:\s*auto/);
+    expect(styles).toMatch(/\.is-phone \.mia-result-modal,\s*\.is-phone \.mia-keyboard-modal \{ height: auto !important; \}/);
+  });
+  it("Word 출력 창도 모바일 안전 영역·높이 상한·내부 스크롤 규칙을 받는다", () => {
+    expect(styles).toContain(".is-mobile .modal-container:not(.mia-keyboard-open):has(> :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-keyboard-modal, .mia-export-modal))");
+    expect(styles).toContain(".is-mobile .modal-container:not(.mia-keyboard-open) > :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-keyboard-modal, .mia-export-modal)");
+    expect(styles).toContain(".is-mobile :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-export-modal) .modal-content");
+  });
+});
+
+describe("저장 대기열 독점 실행", () => {
+  it("진행 중 저장이 끝난 뒤 실행하고, 그동안 들어온 저장은 끝날 때까지 기다린다", async () => {
+    let disk: unknown = null;
+    const order: string[] = [];
+    let releaseFirst!: () => void;
+    const firstSave = new Promise<void>(resolve => { releaseFirst = resolve; });
+    let saves = 0;
+    const store = new MiaDataStore({
+      loadData: async () => structuredClone(disk),
+      saveData: async data => { saves += 1; if (saves === 1) await firstSave; order.push(`save${saves}`); disk = structuredClone(data); },
+    });
+    await store.load();
+    const first = store.updateSettings({ targetRetention: 0.85 });
+    const exclusive = store.exclusive(async () => { order.push("exclusive"); });
+    const second = store.updateSettings({ maximumIntervalDays: 300 });
+    await Promise.resolve();
+    releaseFirst();
+    await Promise.all([first, exclusive, second]);
+    expect(order).toEqual(["save1", "exclusive", "save2"]);
+  });
+});

@@ -11,8 +11,10 @@ export class StudyAppearanceModal extends Modal {
   private initial = "";
   private saveButton: HTMLButtonElement | null = null;
   private status: HTMLElement | null = null;
+  private closeHandled = false;
 
   open(): void {
+    this.closeHandled = false;
     super.open();
     // Opening a dialog must not make the first option look newly selected.
     this.modalEl.tabIndex = -1;
@@ -127,6 +129,9 @@ export class StudyAppearanceModal extends Modal {
   }
   onClose(): void { this.saveButton = null; this.status = null; this.contentEl.empty(); }
   close(): void {
+    // 저장을 기다리는 동안 먼저 닫혔으면, 저장이 끝난 뒤의 닫기는 건너뛴다(닫힘 처리를 두 번 하지 않게).
+    if (this.closeHandled) return;
+    this.closeHandled = true;
     super.close();
     this.onClosed?.();
   }

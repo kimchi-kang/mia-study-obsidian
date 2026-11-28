@@ -23,7 +23,7 @@ import { SubjectNotes } from "./services/subject-notes";
 import { SubjectOperations } from "./services/subject-operations";
 import { exportSubjectWord, readExportImage } from "./services/subject-word-export";
 import { VerifiedPluginStorage, type PluginDataStorage } from "./services/verified-plugin-storage";
-import { PORTABLE_RESUME_PATH, PORTABLE_SYNC_INCOMPLETE_WARNING, portableSyncPartiallyArrived, preparePortableStudyStorage, selectPortableStudyStorage } from "./services/portable-study-storage";
+import { PORTABLE_RESUME_PATH, PORTABLE_SYNC_INCOMPLETE_WARNING, type PortableStudyStorage, portableSyncPartiallyArrived, preparePortableStudyStorage, selectPortableStudyStorage } from "./services/portable-study-storage";
 import { QuestionIndex } from "./services/question-index";
 import { QuestionMetadataModal } from "./ui/metadata-modal";
 import { MiaSettingTab } from "./ui/settings-tab";
@@ -61,6 +61,7 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
   portableSyncActive = false;
   /** Legacy storage is in use although a portable sync folder has started to arrive. */
   portableSyncIncomplete = false;
+  private portableSyncSwitch: Promise<void> | null = null;
   private legacyStudyStorage!: VerifiedPluginStorage;
   private activeStudyStorage!: PluginDataStorage;
   private legacyResumePath = "";
@@ -256,20 +257,35 @@ export default class MiaStudyPlugin extends Plugin implements MiaHost {
     this.index?.stop();
   }
 
-  async enablePortableSync(): Promise<void> {
-    if (this.portableSyncActive) return;
+  enablePortableSync(): Promise<void> {
+    if (this.portableSyncActive) return Promise.resolve();
+    // 두 번 눌러도 전환은 한 번만 한다.
+    this.portableSyncSwitch ??= this.switchToPortableSync().finally(() => { this.portableSyncSwitch = null; });
+    return this.portableSyncSwitch;
+  }
+
+  private async switchToPortableSync(): Promise<void> {
     await this.store.synchronize();
     await this.studyUi.load();
-    await preparePortableStudyStorage(this.app.vault.adapter, this.legacyStudyStorage, this.studyUi.sharedSnapshot);
-    const portable = await selectPortableStudyStorage(this.app.vault.adapter, true);
-    if (!portable) throw new Error("공유 폴더를 확인하지 못했습니다.");
-    this.activeStudyStorage = portable;
+    const resume = this.studyUi.sharedSnapshot;
+    let portable: PortableStudyStorage | null = null;
+    // 저장 대기열 안에서 준비하고 저장소를 바꾼다. 기존 폴더에서 읽은 저장이 전환 뒤 공유 폴더에
+    // 쓰여 다른 기기 기록을 덮는 일이 없게 한다. 공유 폴더 표시 파일이 생기면 다음 시작부터 이 폴더를
+    // 쓰므로, 바꾼 즉시 상태도 함께 맞춘다.
+    await this.store.exclusive(async () => {
+      await preparePortableStudyStorage(this.app.vault.adapter, this.legacyStudyStorage, resume);
+      portable = await selectPortableStudyStorage(this.app.vault.adapter, true);
+      if (!portable) throw new Error("공유 폴더를 확인하지 못했습니다.");
+      this.activeStudyStorage = portable;
+      this.app.saveLocalStorage(this.portableSyncKey, true);
+      this.portableSyncActive = true;
+      this.portableSyncIncomplete = false;
+    });
     await this.store.synchronize();
-    this.studyUi = new StudyUiStore(this.app, PORTABLE_RESUME_PATH, { localStatePath: this.legacyResumePath, adapter: portable.resumeAdapter });
+    const selected = portable as PortableStudyStorage | null;
+    if (!selected) return;
+    this.studyUi = new StudyUiStore(this.app, PORTABLE_RESUME_PATH, { localStatePath: this.legacyResumePath, adapter: selected.resumeAdapter });
     await this.studyUi.load();
-    this.app.saveLocalStorage(this.portableSyncKey, true);
-    this.portableSyncActive = true;
-    this.portableSyncIncomplete = false;
   }
 
   /** Rebuilds the scheduler only when a setting it actually uses has changed. */

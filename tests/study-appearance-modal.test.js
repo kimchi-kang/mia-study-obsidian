@@ -89,3 +89,9 @@ it("defaults auto advance off and persists its three choices only on Save",()=>{
   ui.modal.contentEl.find("보기 설정 저장").click();expect(ui.store.appearance).toMatchObject({autoQuestionSeconds:10,autoAnswerSeconds:3,autoAnswerAction:"again"});
   ui.modal.open();expect(boundary.rows.get("질문 시간").value).toBe("10");expect(boundary.rows.get("정답 시간").value).toBe("3");expect(boundary.rows.get("정답 후 동작").value).toBe("again");
 });
+it("runs the close callback once even if the dialog is closed twice",()=>{
+  const local=new Map();const app={vault:{adapter:{exists:async()=>false}},loadLocalStorage:key=>local.get(key),saveLocalStorage:vi.fn()};
+  const closed=vi.fn();const modal=new StudyAppearanceModal(app,new StudyUiStore(app,"ui.json"),vi.fn(),closed);
+  modal.open();modal.close();modal.close();expect(closed).toHaveBeenCalledOnce();
+  modal.open();modal.close();expect(closed).toHaveBeenCalledTimes(2);
+});

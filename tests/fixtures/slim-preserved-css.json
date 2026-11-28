@@ -2465,7 +2465,7 @@
   },
   {
     "context": [],
-    "selector": ".is-mobile .modal-container:not(.mia-keyboard-open):has(> :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-keyboard-modal))",
+    "selector": ".is-mobile .modal-container:not(.mia-keyboard-open):has(> :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-keyboard-modal, .mia-export-modal))",
     "declarations": [
       [
         "--mia-modal-top",
@@ -2855,7 +2855,7 @@
   },
   {
     "context": [],
-    "selector": ".is-mobile .modal-container:not(.mia-keyboard-open) > :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-keyboard-modal)",
+    "selector": ".is-mobile .modal-container:not(.mia-keyboard-open) > :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-keyboard-modal, .mia-export-modal)",
     "declarations": [
       [
         "box-sizing",
@@ -3529,11 +3529,6 @@
         true
       ],
       [
-        "height",
-        "auto",
-        true
-      ],
-      [
         "margin",
         "0",
         false
@@ -4027,6 +4022,38 @@
         "color",
         "var(--mia-accent-text)",
         false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-mobile :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-export-modal) .modal-content",
+    "declarations": [
+      [
+        "min-height",
+        "0",
+        false
+      ],
+      [
+        "overflow-y",
+        "auto",
+        false
+      ],
+      [
+        "overscroll-behavior",
+        "contain",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [],
+    "selector": ".is-phone .mia-result-modal,\n.is-phone .mia-keyboard-modal",
+    "declarations": [
+      [
+        "height",
+        "auto",
+        true
       ]
     ]
   }

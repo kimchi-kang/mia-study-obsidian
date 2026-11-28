@@ -1030,7 +1030,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-preview-modal[data-reading-size="medium"] { --mia-preview-body: 16px; --mia-preview-title: 25px; }
 .mia-preview-modal[data-reading-size="large"] { --mia-preview-body: 20px; --mia-preview-title: 30px; }
 .mia-preview-modal .mia-markdown { font-size: var(--mia-preview-body); }
-.is-mobile .modal-container:not(.mia-keyboard-open):has(> :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-keyboard-modal)) {
+.is-mobile .modal-container:not(.mia-keyboard-open):has(> :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-keyboard-modal, .mia-export-modal)) {
   --mia-modal-top: max(var(--safe-area-inset-top, 0px), env(safe-area-inset-top, 0px));
   --mia-modal-bottom: max(var(--safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px));
   --mia-modal-left: max(var(--safe-area-inset-left, 0px), env(safe-area-inset-left, 0px));
@@ -1114,7 +1114,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-settings-number-control input { flex: 1 1 5rem; min-width: 0; width: 5rem; }
 .mia-keyboard-settings :is(h1, h2, h3) { font-family: var(--mia-head); font-weight: 800; }
 /* Override host modal dimensions for the visible keyboard viewport. */
-.is-mobile .modal-container:not(.mia-keyboard-open) > :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-keyboard-modal) {
+.is-mobile .modal-container:not(.mia-keyboard-open) > :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-keyboard-modal, .mia-export-modal) {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -1138,7 +1138,7 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-keyboard-settings .mia-device-sync-settings > .mia-muted { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px; border: 0; border-radius: var(--mia-radius-pill); background: var(--mia-surface); box-shadow: var(--mia-shadow-inset); font-size: 12px; }
 .is-phone .modal.mia-detail-modal .modal-content { padding-inline: 16px; }
 .mia-controls-modal .modal-content { overflow-y: auto; line-height: 1.75; }
-.is-mobile :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal) .modal-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.is-mobile :is(.mia-appearance-modal, .mia-controls-modal, .mia-preview-modal, .mia-detail-modal, .mia-result-modal, .mia-export-modal) .modal-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .mia-step-editor .mia-step-mode .setting-item-control { margin: 6px 0 8px; width: 100%; }
 .mia-study-management-settings .mia-step-row button { min-height: 44px; }
 .mia-study-management-settings .mia-settings-modes button { min-height: max(38px, var(--mia-control-height, 38px)); font-weight: 600; }
@@ -1298,10 +1298,12 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
   max-width: none;
   max-height: calc(100dvh - 24px);
   min-height: 0 !important;
-  height: auto !important;
   margin: 0;
   overflow: hidden;
 }
+/* 상세 창은 위 전체 화면 높이 규칙을 따르고, 결과·편집 창만 내용 높이로 줄인다. */
+.is-phone .mia-result-modal,
+.is-phone .mia-keyboard-modal { height: auto !important; }
 
 @media (max-width: 640px) {
 .mia-view { box-sizing: border-box; width: 100%; min-width: 0; overflow-x: hidden; }

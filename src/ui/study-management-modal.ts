@@ -7,12 +7,14 @@ import { renderStudyManagementSettings } from "./study-management-settings";
 
 export class StudyManagementModal extends KeyboardAwareModal {
   private stopOptimization: (() => void) | undefined;
+  private closeHandled = false;
 
   constructor(app: App, private readonly plugin: MiaStudyPlugin, private readonly onSaved: () => void, private readonly onClosed?: () => void) {
     super(app, "long");
   }
 
   open(): void {
+    this.closeHandled = false;
     super.open();
     this.modalEl.tabIndex = -1;
     this.modalEl.focus({ preventScroll: true });
@@ -42,6 +44,9 @@ export class StudyManagementModal extends KeyboardAwareModal {
   }
 
   close(): void {
+    // 저장을 기다리는 동안 먼저 닫혔으면, 저장이 끝난 뒤의 닫기는 건너뛴다(닫힘 처리를 두 번 하지 않게).
+    if (this.closeHandled) return;
+    this.closeHandled = true;
     super.close();
     this.onClosed?.();
   }
