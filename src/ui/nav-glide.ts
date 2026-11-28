@@ -5,8 +5,14 @@
  */
 export interface NavTabRect { left: number; top: number; width: number; height: number; }
 
-const GLIDE_MS = 220;
-const GLIDE_EASING = "cubic-bezier(.2, .7, .2, 1)";
+// 천천히 출발해 가속했다가 부드럽게 멈춘다. 예전 곡선(.2,.7,.2,1)은 60ms에 거리의 3/4을 가고
+// 나머지를 기어가서, 순간이동 뒤 질질 끌리는 것처럼 보였다.
+const GLIDE_MS = 280;
+const GLIDE_EASING = "cubic-bezier(.45, 0, .15, 1)";
+const CONTENT_FADE_MS = 200;
+const CONTENT_EASING = "cubic-bezier(.2, .7, .2, 1)";
+
+const reducedMotion = (view: Window | null): boolean => !view || Boolean(view.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
 
 function activeTab(root: HTMLElement): { nav: HTMLElement; tab: HTMLElement } | null {
   const nav = root.querySelector<HTMLElement>(".mia-nav");
@@ -32,11 +38,19 @@ export function snapshotActiveTab(root: HTMLElement): NavTabRect | null {
   return rectInNav(found.nav, moving ?? found.tab);
 }
 
+/** 다시 그리기 전 선택 탭의 순서. 새로 그린 뒤 이전 탭 글자색을 함께 바꾸는 데 쓴다. */
+export function activeTabIndex(root: HTMLElement): number | undefined {
+  const found = activeTab(root);
+  if (!found) return undefined;
+  const index = Array.from(found.nav.querySelectorAll(":scope > button")).indexOf(found.tab);
+  return index >= 0 ? index : undefined;
+}
+
 /** 다시 그린 뒤 호출한다. 위치가 같거나 동작 줄이기 설정이면 아무것도 하지 않는다. */
-export function glideActiveTab(root: HTMLElement, from: NavTabRect | null): void {
+export function glideActiveTab(root: HTMLElement, from: NavTabRect | null, fromIndex?: number): void {
   if (!from) return;
   const view = root.ownerDocument.defaultView;
-  if (!view || view.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+  if (!view || reducedMotion(view)) return;
   const found = activeTab(root);
   if (!found || !found.nav.isConnected || typeof found.tab.animate !== "function") return;
   const { nav, tab } = found;
@@ -62,6 +76,35 @@ export function glideActiveTab(root: HTMLElement, from: NavTabRect | null): void
   };
   animation.onfinish = finish;
   animation.oncancel = finish;
+  crossfadeLabels(view, nav, tab, fromIndex);
+}
+
+/**
+ * 새로 그린 탭 글자는 처음부터 선택·비선택 색이라, 표시 조각이 도착하기 전에 새 탭 글자가 먼저 켜진다.
+ * 조각과 같은 시간 동안 이전 탭은 선택 색에서, 새 탭은 비선택 색에서 출발해 서로 바뀌게 한다.
+ */
+function crossfadeLabels(view: Window, nav: HTMLElement, tab: HTMLElement, fromIndex: number | undefined): void {
+  if (fromIndex === undefined) return;
+  const previous = Array.from(nav.querySelectorAll<HTMLElement>(":scope > button"))[fromIndex];
+  if (!previous || previous === tab || typeof previous.animate !== "function") return;
+  const on = view.getComputedStyle(tab).color, off = view.getComputedStyle(previous).color;
+  if (!on || !off || on === off) return;
+  const timing = { duration: GLIDE_MS, easing: GLIDE_EASING };
+  tab.animate([{ color: off }, { color: on }], timing);
+  previous.animate([{ color: on }, { color: off }], timing);
+}
+
+/**
+ * 다른 탭으로 옮겨 화면을 새로 그린 뒤 호출한다. 머리줄·탭 막대를 뺀 본문만 살짝 떠오르며 나타나,
+ * 표시 조각이 미끄러지는 동안 내용이 한 번에 툭 바뀌지 않게 한다. 동작 줄이기 설정이면 하지 않는다.
+ */
+export function fadeInRouteContent(root: HTMLElement): void {
+  if (reducedMotion(root.ownerDocument?.defaultView ?? null)) return;
+  for (const child of Array.from(root.children) as HTMLElement[]) {
+    if (typeof child.animate !== "function" || child.matches(".mia-header, .mia-sr-only") || child.querySelector(".mia-nav")) continue;
+    child.animate([{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
+      { duration: CONTENT_FADE_MS, easing: CONTENT_EASING, fill: "backwards" });
+  }
 }
 
 /**
@@ -73,9 +116,12 @@ export class NavGlideScheduler {
   private frame: number | null = null;
   private frameWindow: Window | null = null;
   private from: NavTabRect | null = null;
+  private fromIndex: number | undefined;
 
   capture(root: HTMLElement): void {
-    if (this.frame === null) this.from = snapshotActiveTab(root);
+    if (this.frame !== null) return;
+    this.from = snapshotActiveTab(root);
+    this.fromIndex = activeTabIndex(root);
   }
 
   schedule(root: HTMLElement): void {
@@ -85,9 +131,10 @@ export class NavGlideScheduler {
     this.frameWindow = win;
     this.frame = win.requestAnimationFrame(() => {
       this.frame = null;
-      const from = this.from;
+      const from = this.from, fromIndex = this.fromIndex;
       this.from = null;
-      glideActiveTab(root, from);
+      this.fromIndex = undefined;
+      glideActiveTab(root, from, fromIndex);
     });
   }
 
@@ -96,5 +143,6 @@ export class NavGlideScheduler {
     this.frame = null;
     this.frameWindow = null;
     this.from = null;
+    this.fromIndex = undefined;
   }
 }

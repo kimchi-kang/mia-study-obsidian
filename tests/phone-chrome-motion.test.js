@@ -9,7 +9,7 @@ vi.mock("obsidian", () => ({
   Component: class {}, Setting: class {}, Notice: class {}, Menu: class {}, Platform: platform, normalizePath: p => p, setIcon() {},
 }));
 import MiaStudyPlugin from "../src/main";
-import { glideActiveTab, NavGlideScheduler, snapshotActiveTab } from "../src/ui/nav-glide";
+import { activeTabIndex, fadeInRouteContent, glideActiveTab, NavGlideScheduler, snapshotActiveTab } from "../src/ui/nav-glide";
 
 const css = postcss.parse(readFileSync(new URL("../styles.css", import.meta.url), "utf8"));
 let dom;
@@ -45,6 +45,31 @@ describe("탭 선택 표시 미끄러짐", () => {
     animations[0].onfinish();
     expect(nav.querySelector(".mia-nav-glide")).toBeNull();
     expect(nav.classList.contains("mia-nav-gliding")).toBe(false);
+  });
+
+  it("표시 조각과 같은 시간 동안 이전 탭 글자는 선택 색에서, 새 탭 글자는 비선택 색에서 출발해 바뀐다", () => {
+    const { window, root, buttons, select, animations } = navDom();
+    window.getComputedStyle = element => ({ color: element.classList.contains("mod-cta") ? "rgb(0, 0, 255)" : "rgb(128, 128, 128)" });
+    select(0);
+    const from = snapshotActiveTab(root), index = activeTabIndex(root);
+    expect(index).toBe(0);
+    select(2);
+    glideActiveTab(root, from, index);
+    const glide = animations[0];
+    const label = element => animations.find(animation => animation.element === element)?.keyframes.map(frame => frame.color);
+    expect(label(buttons[2])).toEqual(["rgb(128, 128, 128)", "rgb(0, 0, 255)"]);
+    expect(label(buttons[0])).toEqual(["rgb(0, 0, 255)", "rgb(128, 128, 128)"]);
+    expect(glide.element.classList.contains("mia-nav-glide")).toBe(true);
+  });
+
+  it("탭을 옮긴 뒤 본문만 살짝 떠오르며 나타나고, 머리줄·탭 막대는 그대로 둔다", () => {
+    const { window, root, animations } = navDom();
+    const header = window.document.createElement("div"); header.className = "mia-header"; header.append(root.querySelector(".mia-nav"));
+    const body = window.document.createElement("section");
+    root.append(header, body);
+    fadeInRouteContent(root);
+    expect(animations.map(animation => animation.element)).toEqual([body]);
+    expect(animations[0].keyframes[0].opacity).toBe(0);
   });
 
   it("동작 줄이기 설정이나 같은 자리면 아무것도 만들지 않는다", () => {

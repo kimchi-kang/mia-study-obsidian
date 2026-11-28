@@ -28,7 +28,7 @@ import { renderKeywords } from "./keywords-page";
 import { overviewSignature, readOverview, renderDashboard, renderProgress, type OverviewSnapshot } from "./progress-pages";
 import { QuestionListState, renderQuestionsPage } from "./question-list-page";
 import { renderQuestionHeading } from "./question-row";
-import { NavGlideScheduler } from "./nav-glide";
+import { fadeInRouteContent, NavGlideScheduler } from "./nav-glide";
 import { requestPluginUpdate } from "./plugin-update";
 import type { StudyPageContext } from "./study-page-context";
 
@@ -640,6 +640,7 @@ export class MiaStudyView extends ItemView {
     this.renderComponent.load();
     const root = this.contentEl;
     const sameRoute = this.renderedPosition.startsWith(`${this.route}:`);
+    const routeChanged = !sameRoute && this.renderedPosition !== "";
     const filtersOpen = sameRoute ? root.querySelector<HTMLDetailsElement>(".mia-filter-panel")?.open : undefined;
     const active = root.ownerDocument?.activeElement;
     const settingsFocus = active && sameRoute ? [".mia-learning-button", ".mia-appearance-button"].find(selector => active === root.querySelector(selector)) : undefined;
@@ -705,6 +706,7 @@ export class MiaStudyView extends ItemView {
         .finally(() => { if (this.renderComponent === component) this.readingRestorePending = false; });
     } else root.onscroll = null;
     if (openDetails) restoreDetailsState(root, openDetails);
+    if (routeChanged) fadeInRouteContent(root);
     const filterPanel = root.querySelector<HTMLDetailsElement>(".mia-filter-panel");
     if (filterPanel && filtersOpen !== undefined) filterPanel.open = filtersOpen;
     if (editingLabel) {
