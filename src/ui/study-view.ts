@@ -28,7 +28,7 @@ import { renderKeywords } from "./keywords-page";
 import { overviewSignature, readOverview, renderDashboard, renderProgress, type OverviewSnapshot } from "./progress-pages";
 import { QuestionListState, renderQuestionsPage } from "./question-list-page";
 import { renderQuestionHeading } from "./question-row";
-import { fadeInRouteContent, NavGlideScheduler } from "./nav-glide";
+import { activeTabIndex, animateProgressFill, bindDetailsReveal, fadeInRouteContent, NavGlideScheduler, routeDirection, studyCardDirection } from "./nav-glide";
 import { requestPluginUpdate } from "./plugin-update";
 import type { StudyPageContext } from "./study-page-context";
 
@@ -65,6 +65,7 @@ export class MiaStudyView extends ItemView {
   private readonly changedGradedAnswers = new Set<string>();
   private queue: string[] = [];
   private queueIndex = 0;
+  private lastStudyCard: { index: number; id: string; ratio: number } | null = null;
   private answerVisible = false;
   /** 정답 보기를 막 누른 직후 한 번만 펼침 동작을 보여 준다. */
   private answerRevealPending = false;
@@ -641,6 +642,7 @@ export class MiaStudyView extends ItemView {
     const root = this.contentEl;
     const sameRoute = this.renderedPosition.startsWith(`${this.route}:`);
     const routeChanged = !sameRoute && this.renderedPosition !== "";
+    if (this.route !== "study") this.lastStudyCard = null;
     const filtersOpen = sameRoute ? root.querySelector<HTMLDetailsElement>(".mia-filter-panel")?.open : undefined;
     const active = root.ownerDocument?.activeElement;
     const settingsFocus = active && sameRoute ? [".mia-learning-button", ".mia-appearance-button"].find(selector => active === root.querySelector(selector)) : undefined;
@@ -663,6 +665,7 @@ export class MiaStudyView extends ItemView {
     this.navGlide.capture(root);
     this.answerEnter = this.answerRevealPending;
     this.answerRevealPending = false;
+    const fromTab = activeTabIndex(root);
     root.empty();
     root.setAttr("aria-busy", String(this.isMutatingReview));
     if (this.isMutatingReview) this.renderReviewSaveStatus();
@@ -673,6 +676,7 @@ export class MiaStudyView extends ItemView {
     root.addClass("mia-view");
     root.addClass(`mia-route-${this.route}`);
     this.renderHeader(root);
+    const toTab = activeTabIndex(root);
     this.navGlide.schedule(root);
     if (!this.plugin.index.isReady) {
       if (this.route === "dashboard" || this.route === "progress") this.renderedOverview = overviewSignature(this.route, null);
@@ -706,9 +710,10 @@ export class MiaStudyView extends ItemView {
         .finally(() => { if (this.renderComponent === component) this.readingRestorePending = false; });
     } else root.onscroll = null;
     if (openDetails) restoreDetailsState(root, openDetails);
-    if (routeChanged) fadeInRouteContent(root);
+    if (routeChanged) fadeInRouteContent(root, routeDirection(fromTab, toTab));
     const filterPanel = root.querySelector<HTMLDetailsElement>(".mia-filter-panel");
     if (filterPanel && filtersOpen !== undefined) filterPanel.open = filtersOpen;
+    bindDetailsReveal(root);
     if (editingLabel) {
       const replacement = [...root.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("input, textarea")].find(input => input.getAttribute("aria-label") === editingLabel);
       replacement?.focus({ preventScroll: true });
@@ -915,6 +920,8 @@ export class MiaStudyView extends ItemView {
   }
 
   private renderStudy(root: HTMLElement): void {
+    const lastStudyCard = this.lastStudyCard;
+    this.lastStudyCard = null;
     if (this.editedSessionQuestion === this.queue[this.queueIndex] && !this.plugin.index.questionById(this.editedSessionQuestion)) {
       const missing = root.createDiv({ cls: "mia-primary-card" });
       missing.createEl("p", { text: "편집하던 원본 문제가 삭제되었거나 찾을 수 없습니다. 현재 위치는 유지됩니다.", cls: "mia-warning" });
@@ -953,7 +960,7 @@ export class MiaStudyView extends ItemView {
       actions.createEl("button", { text: "학습 전 화면으로" }).addEventListener("click", () => this.returnToSessionOrigin());
       return;
     }
-    if (!question || !question.id) {
+    if (!id || !question || !question.id) {
       const result = this.studyResult();
       const done = root.createDiv({ cls: "mia-primary-card" });
       done.createEl("h3", { text: this.queue.length ? "학습 완료" : "학습할 문제가 없습니다" });
@@ -1013,11 +1020,18 @@ export class MiaStudyView extends ItemView {
     meter.setAttr("aria-valuemin", "0");
     meter.setAttr("aria-valuemax", String(this.queue.length));
     meter.setAttr("aria-valuenow", String(this.queueIndex));
-    meter.createDiv({ cls: "mia-session-meter-fill" }).style.setProperty("width", `${this.queueIndex / this.queue.length * 100}%`);
+    const ratio = this.queueIndex / this.queue.length;
+    const fill = meter.createDiv({ cls: "mia-session-meter-fill" });
+    fill.style.setProperty("width", `${ratio * 100}%`);
+    const direction = studyCardDirection(lastStudyCard, this.queueIndex, id);
+    // 카드가 바뀔 때만 채움을 움직인다. 동기화로 대기열 길이만 바뀐 재렌더에서는 재생하지 않는다.
+    if (lastStudyCard && direction) animateProgressFill(fill, lastStudyCard.ratio, ratio);
     const layout = root.createDiv({ cls: "mia-study-layout" });
     layout.tabIndex = 0;
     layout.setAttr("aria-label", "질문과 정답 영역");
     const card = layout.createDiv({ cls: "mia-study-card" });
+    if (direction) card.addClass(`mia-card-enter-${direction}`);
+    const currentCard = { index: this.queueIndex, id, ratio };
     const cardHeader = card.createDiv({ cls: "mia-card-header" });
     const context = cardHeader.createDiv({ text: `${question.subject} / ${question.questionType}`, cls: "mia-card-context" });
     this.renderAnswerTimer(context, question.id);
@@ -1046,6 +1060,7 @@ export class MiaStudyView extends ItemView {
       reveal.addEventListener("click", () => this.revealAnswer());
       this.studyShortcuts.set(" ", reveal);
       this.renderStudyUtilities(dock, previous, next);
+      this.lastStudyCard = currentCard;
       return;
     }
     if (this.answerEnter) card.addClass("mia-answer-enter");
@@ -1109,6 +1124,7 @@ export class MiaStudyView extends ItemView {
     const dock = root.createDiv({ cls: "mia-study-dock" });
     if (!this.readOnlyBrowse) this.renderRatings(dock, question);
     this.renderStudyUtilities(dock, previous, next);
+    this.lastStudyCard = currentCard;
   }
 
   private renderBlockedSelection(parent: HTMLElement, { ids, exclusions }: BlockedSelection): void {
@@ -1250,6 +1266,7 @@ export class MiaStudyView extends ItemView {
 
   private renderRatings(parent: HTMLElement, question: QuestionRecord & { id: string }): void {
     const ratings = parent.createDiv({ cls: "mia-ratings" });
+    if (this.answerEnter) ratings.addClass("mia-ratings-enter");
     const buttons: HTMLButtonElement[] = [];
     const renderedIndex = this.queueIndex;
     const expected = this.sessionSavedStates.has(question.id)

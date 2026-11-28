@@ -9,7 +9,7 @@ vi.mock("obsidian", () => ({
   Component: class {}, Setting: class {}, Notice: class {}, Menu: class {}, Platform: platform, normalizePath: p => p, setIcon() {},
 }));
 import MiaStudyPlugin from "../src/main";
-import { activeTabIndex, fadeInRouteContent, glideActiveTab, NavGlideScheduler, snapshotActiveTab } from "../src/ui/nav-glide";
+import { activeTabIndex, bindDetailsReveal, fadeInRouteContent, glideActiveTab, NavGlideScheduler, routeDirection, snapshotActiveTab, studyCardDirection } from "../src/ui/nav-glide";
 
 const css = postcss.parse(readFileSync(new URL("../styles.css", import.meta.url), "utf8"));
 let dom;
@@ -21,7 +21,7 @@ function navDom({ reduced = false } = {}) {
   const { window } = dom;
   window.matchMedia = query => ({ matches: reduced && query.includes("reduce") });
   const animations = [];
-  window.HTMLElement.prototype.animate = function (keyframes) { const animation = { keyframes, element: this }; animations.push(animation); return animation; };
+  window.HTMLElement.prototype.animate = function (keyframes, options) { const animation = { keyframes, options, element: this }; animations.push(animation); return animation; };
   const root = window.document.querySelector(".mia-view");
   const nav = root.querySelector(".mia-nav");
   const buttons = [...nav.querySelectorAll("button")];
@@ -120,6 +120,76 @@ describe("탭 선택 표시 미끄러짐", () => {
     select(0); scheduler.capture(root); select(2); scheduler.schedule(root);
     scheduler.cancel();
     expect(cancel).toHaveBeenCalledWith(7);
+  });
+});
+
+describe("화면과 카드의 진입 모션", () => {
+  it.each([
+    [0, 2, "next", "translateX(12px)"],
+    [2, 0, "prev", "translateX(-12px)"],
+    [undefined, 0, "vertical", "translateY(6px)"],
+  ])("탭 %s → %s의 본문은 %s 방향으로 나타난다", (from, to, direction, transform) => {
+    const { root, animations } = navDom();
+    root.innerHTML = '<header class="mia-header"></header><div><nav class="mia-nav"></nav></div><span class="mia-sr-only"></span><section></section>';
+    expect(routeDirection(from, to)).toBe(direction);
+    fadeInRouteContent(root, direction);
+    expect(animations).toHaveLength(1);
+    expect(animations[0]).toMatchObject({
+      element: root.querySelector("section"),
+      keyframes: [{ opacity: 0, transform }, { opacity: 1, transform: "none" }],
+      options: { duration: 200, fill: "backwards" },
+    });
+  });
+
+  it("동작 줄이기 설정이면 본문 진입 모션을 실행하지 않는다", () => {
+    const { root, animations } = navDom({ reduced: true });
+    root.innerHTML = "<section></section>";
+    fadeInRouteContent(root, "next");
+    expect(animations).toHaveLength(0);
+  });
+
+  it("첫 카드와 같은 카드에서는 방향이 없고 인덱스나 ID 변경으로 방향을 고른다", () => {
+    const last = { index: 1, id: "a" };
+    expect(studyCardDirection(null, 1, "a")).toBeNull();
+    expect(studyCardDirection(last, 1, "a")).toBeNull();
+    expect(studyCardDirection(last, 0, "a")).toBe("prev");
+    expect(studyCardDirection(last, 2, "b")).toBe("next");
+    expect(studyCardDirection(last, 1, "b")).toBe("next");
+  });
+
+  it("details는 코드로 연 경우를 무시하고 summary로 열 때만 본문을 한 번 움직인다", async () => {
+    const { root, animations } = navDom();
+    root.innerHTML = "<details><summary>열기</summary><p>본문</p><div>부록</div></details>";
+    const details = root.querySelector("details");
+    const summary = details.querySelector("summary");
+    const toggle = action => new Promise(resolve => {
+      details.addEventListener("toggle", resolve, { once: true });
+      action();
+    });
+
+    details.open = true;
+    bindDetailsReveal(root);
+    bindDetailsReveal(root);
+    await toggle(() => {});
+    expect(animations).toHaveLength(0);
+    await toggle(() => summary.click());
+    expect(animations).toHaveLength(0);
+    summary.addEventListener("click", event => event.preventDefault(), { once: true });
+    summary.click();
+    await toggle(() => { details.open = true; });
+    expect(animations).toHaveLength(0);
+    await toggle(() => { details.open = false; });
+    await toggle(() => summary.click());
+    expect(animations.map(animation => animation.element)).toEqual([...details.children].slice(1));
+    for (const animation of animations) {
+      expect(animation).toMatchObject({
+        keyframes: [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }],
+        options: { duration: 150, fill: "backwards" },
+      });
+    }
+    await toggle(() => summary.click());
+    await toggle(() => { details.open = true; });
+    expect(animations).toHaveLength(2);
   });
 });
 

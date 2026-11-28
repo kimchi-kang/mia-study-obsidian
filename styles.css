@@ -150,6 +150,12 @@ button.mia-progress-stat { cursor: pointer; }
 .mia-study-management-modal:focus { outline: none; }
 .mia-stat-guidance p { overflow-wrap: anywhere; line-height: 1.6; }
 .mia-view button { transition: background-color 140ms var(--mia-ease), border-color 140ms var(--mia-ease), color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease); }
+@media (prefers-reduced-motion: no-preference) {
+  .mia-view :is(button.mod-cta, .mia-ratings button):where(:not(.mia-nav button)) {
+    transition: background-color 140ms var(--mia-ease), border-color 140ms var(--mia-ease), color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease), transform 90ms;
+  }
+  .mia-view :is(button.mod-cta, .mia-ratings button):where(:not(.mia-nav button)):active:not(:disabled) { transform: scale(.975); }
+}
 .mia-view .mia-stat strong { font-variant-numeric: tabular-nums; }
 .mia-view .mia-row-body > strong { font-weight: 650; letter-spacing: -.01em; }
 .mia-detail-meta span { color: var(--text-muted); padding: 3px 8px; }
@@ -805,6 +811,14 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 @keyframes mia-answer-fade { from { opacity: 0; } to { opacity: 1; } }
 .mia-study-card.mia-answer-enter .mia-answer-section { animation: mia-answer-unfold 240ms var(--mia-ease) backwards; }
 .mia-study-card.mia-answer-enter .mia-study-concepts { animation: mia-answer-fade 200ms var(--mia-ease) 80ms backwards; }
+@keyframes mia-card-enter-next { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+@keyframes mia-card-enter-prev { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+@keyframes mia-ratings-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .mia-study-card.mia-card-enter-next { animation: mia-card-enter-next 190ms var(--mia-ease) backwards; }
+  .mia-study-card.mia-card-enter-prev { animation: mia-card-enter-prev 190ms var(--mia-ease) backwards; }
+  .mia-ratings.mia-ratings-enter { animation: mia-ratings-enter 170ms var(--mia-ease) 40ms backwards; }
+}
 .mia-recall-prompt { font-size: 13px; line-height: 1.6; margin: 32px 0 4px; }
 .mia-study-concepts summary { cursor: pointer; font-size: 12px; min-height: 36px; align-content: center; }
 .mia-related-item { align-items: stretch; display: flex; }
@@ -965,6 +979,14 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-study-card .mia-markdown img { border-radius: var(--mia-radius-s); }
 
 /* 7. Settings and dialogs */
+@keyframes mia-modal-backdrop-enter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mia-modal-enter { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes mia-modal-phone-enter { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .modal-container:has(> .modal[class*="mia-"]) > .modal-bg { animation: mia-modal-backdrop-enter 160ms ease-out backwards; }
+  .modal-container > .modal[class*="mia-"] { animation: mia-modal-enter 190ms cubic-bezier(.2, .8, .2, 1) backwards; }
+  .is-phone .modal-container > .modal[class*="mia-"] { animation: mia-modal-phone-enter 220ms cubic-bezier(.22, 1, .36, 1) backwards; }
+}
 /* 결과 창: 직전 평가 취소 버튼의 포커스 테두리가 아래 통계 카드에 가리지 않게 띄운다. */
 .modal.mia-result-modal .mia-result-undo { margin-bottom: 12px; }
 .mia-warning { color: var(--text-warning); }

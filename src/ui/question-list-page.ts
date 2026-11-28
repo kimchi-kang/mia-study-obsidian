@@ -4,6 +4,7 @@ import { QUESTION_TYPES, type QuestionType } from "../core/models";
 import { type QuestionSort, type ReviewFilter, queryQuestions } from "../core/question-query";
 import { openEditorWithNotice } from "./editor-notice";
 import { errorMessage } from "./error-message";
+import { fadeInElement } from "./nav-glide";
 import { QuestionDetailView, type RegisteredQuestion } from "./question-detail-view";
 import { renderQuestionHeading, renderQuestionRow } from "./question-row";
 import type { StudyPageContext } from "./study-page-context";
@@ -32,6 +33,7 @@ export class QuestionListState {
   candidateLimit = 100;
   /** The question open in the side panel (wide panes only). */
   selectedId: string | null = null;
+  lastRenderedPanelId: string | undefined = undefined;
   /** The panel control last used, by its `data-action` (or "title"); kept across re-renders and dialogs. */
   panelFocus: string | null = null;
   /** The panel body's scroll position for the selected question; reset when the selection changes. */
@@ -285,6 +287,12 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
       if (revision !== panelRevision || !panel.isConnected) return;
       panel.inert = false;
       panel.empty();
+      // 다른 문제를 열 때만, 이전 본문을 비운 바로 그 순간부터 살짝 떠오르게 한다.
+      // (본문 Markdown을 다 그린 뒤 시작하면 이미 보인 내용이 사라졌다가 다시 나타난다.)
+      if (question.id !== state.lastRenderedPanelId) {
+        fadeInElement(panel);
+        state.lastRenderedPanelId = question.id;
+      }
       const title = panel.createEl("h2", { cls: "mia-detail-title" });
       title.tabIndex = -1;
       const detail = new QuestionDetailView(ctx.app, source, {

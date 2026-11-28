@@ -130,6 +130,32 @@ beforeEach(() => {
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
+it("학습 카드의 진입과 평가 독 모션은 해당 동작에서만 한 번 붙는다", async () => {
+  const ui = setup({ start: false, linked: true });
+  vi.spyOn(Object.getPrototypeOf(ui.view.contentEl), "addClass").mockImplementation(function (...names) {
+    this.cls = [...new Set([...this.cls.split(" ").filter(Boolean), ...names])].join(" ");
+  });
+  const card = () => ui.view.contentEl.querySelector(".mia-study-layout").children[0];
+  const classes = () => card().cls.split(" ");
+  const ratings = () => ui.view.contentEl.children.find(element => element.cls === "mia-study-dock")
+    .children.find(element => element.cls.split(" ").includes("mia-ratings"));
+  ui.view.startReview(["q", "related"]);
+  expect(classes()).toEqual(["mia-study-card"]);
+
+  await ui.exactButton("다음 문제 →").click();
+  expect(classes()).toEqual(["mia-study-card", "mia-card-enter-next"]);
+
+  await ui.exactButton("정답 보기").click();
+  expect(classes()).toEqual(["mia-study-card", "mia-answer-enter"]);
+  expect(ratings().cls.split(" ")).toContain("mia-ratings-enter");
+  ui.view.render();
+  expect(classes()).toEqual(["mia-study-card"]);
+  expect(ratings().cls.split(" ")).not.toContain("mia-ratings-enter");
+
+  await ui.exactButton("← 이전 문제").click();
+  expect(classes()).toEqual(["mia-study-card", "mia-card-enter-prev"]);
+});
+
 describe("read-only memorization", () => {
   function browseLibrary() {
     const ui = setup({ start: false, linked: true });

@@ -258,7 +258,10 @@ describe("study layout rendered DOM", () => {
     const cases = {};
     for (const [name, options] of Object.entries({ short: {}, long: { long: true }, "no-related": { related: false } })) {
       const { root } = await renderLayoutCase(options);
-      cases[name] = root.outerHTML;
+      const layout = root.cloneNode(true);
+      // 정적 레이아웃 하네스에서는 평가 독의 버튼 클릭 직후 모션을 다시 재생하지 않는다.
+      layout.querySelector(".mia-ratings-enter")?.classList.remove("mia-ratings-enter");
+      cases[name] = layout.outerHTML;
       root.remove();
     }
     for (const route of ["dashboard", "progress", "questions", "keywords"]) {

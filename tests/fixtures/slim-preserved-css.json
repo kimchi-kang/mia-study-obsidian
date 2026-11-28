@@ -4056,5 +4056,21 @@
         true
       ]
     ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(prefers-reduced-motion: no-preference)"
+      ]
+    ],
+    "selector": ".mia-view :is(button.mod-cta, .mia-ratings button):where(:not(.mia-nav button)):active:not(:disabled)",
+    "declarations": [
+      [
+        "transform",
+        "scale(.975)",
+        false
+      ]
+    ]
   }
 ]
