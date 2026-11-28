@@ -277,6 +277,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
       panel.createEl("p", { text: "상세를 불러오는 중입니다…", cls: "mia-muted" });
     };
     const loadingTimer = view ? view.setTimeout(showLoading, 150) : (showLoading(), undefined);
+    if (loadingTimer !== undefined) component.register?.(() => view?.clearTimeout(loadingTimer));
     try {
       const source = await ctx.plugin.questionDetailSource(question);
       if (loadingTimer !== undefined) view?.clearTimeout(loadingTimer);

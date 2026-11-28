@@ -167,8 +167,8 @@ describe("휴대폰 막대·모션 CSS 계약", () => {
     expect(transition).toMatch(/color/);
   });
 
-  it("학습 화면의 평가 저장 중 문구는 줄을 차지하지 않고, 저장됨 배너는 자리를 남긴 채 숨는다", () => {
-    const status = rules.find(rule => rule.selector.endsWith("> .mia-save-status") && rule.selector.includes("mia-study-layout"));
+  it("학습 화면(휴대폰·태블릿·데스크톱)의 평가 저장 중 문구는 줄을 차지하지 않고, 저장됨 배너는 자리를 남긴 채 숨는다", () => {
+    const status = rules.find(rule => rule.selector === ".mia-view.mia-route-study:has(.mia-study-layout) > .mia-save-status");
     expect(status.toString()).toMatch(/position: absolute/);
     expect(status.toString()).toMatch(/pointer-events: none/);
     const expired = rules.find(rule => rule.selector.includes("mia-undo-feedback-expired"));
@@ -180,9 +180,14 @@ describe("휴대폰 막대·모션 CSS 계약", () => {
     expect(rules.some(rule => rule.selector.includes(".mia-appearance-modal .mia-appearance-actions") && rule.selector.endsWith("::before"))).toBe(true);
   });
 
-  it("하단 버튼 줄이 없는 화면에서 떠 있는 키보드 닫기만큼 스크롤 여백을 둔다", () => {
-    const rule = rules.find(rule => rule.selector.includes(":has(> .mia-keyboard-dismiss)"));
-    expect(rule.toString()).toMatch(/scroll-padding-bottom: \d+px/);
+  it("휴대폰 검색·필터·정렬 제목 줄은 카드 안의 솟은 버튼이 아니라 카드 머리줄이고, 접으면 아래 빈 여백이 없다", () => {
+    const summary = rules.find(rule => rule.selector === ".mia-view .mia-filter-panel > summary");
+    expect(summary.toString()).toMatch(/background: transparent/);
+    expect(summary.toString()).toMatch(/box-shadow: none/);
+    expect(summary.toString()).toMatch(/padding-inline: 16px/);
+    const closed = rules.find(rule => rule.selector === ".is-mobile .mia-view .mia-filter-panel");
+    expect(closed.toString()).toMatch(/padding: 0 16px;/);
+    expect(rules.some(rule => rule.selector.includes(":not([open]) > summary::after"))).toBe(true);
   });
 
   it("정답 펼침은 끝난 뒤 clip-path를 남기지 않는다", () => {

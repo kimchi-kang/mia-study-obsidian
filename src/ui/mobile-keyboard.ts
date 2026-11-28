@@ -45,7 +45,10 @@ export function bindKeyboardViewport(surface: HTMLElement, focusRoot = surface):
       if ((!layoutChanged && !keyboardOpen) || !editableTarget(active) || !focusRoot.contains(active)) return;
       const actions = keyboardActions();
       if (actions) focusRoot.style.setProperty("--mia-keyboard-actions-height", `${actionScrollInset()}px`);
-      active.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+      // Without a footer the dismiss button floats over the content at the bottom edge,
+      // so bring the field to the middle of the visible area instead of just inside it.
+      const floatingDismiss = !actions && dismissButton?.isConnected === true;
+      active.scrollIntoView({ block: floatingDismiss ? "center" : "nearest", inline: "nearest", behavior: "smooth" });
     }, 80);
   };
 

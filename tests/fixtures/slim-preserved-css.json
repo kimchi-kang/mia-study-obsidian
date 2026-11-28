@@ -4011,11 +4011,21 @@
   },
   {
     "context": [],
-    "selector": ".mia-keyboard-surface.mia-keyboard-open:has(> .mia-keyboard-dismiss)",
+    "selector": ".mia-view .mia-filter-panel > summary:active:not(:disabled)",
     "declarations": [
       [
-        "scroll-padding-bottom",
-        "72px",
+        "background",
+        "transparent",
+        false
+      ],
+      [
+        "box-shadow",
+        "none",
+        false
+      ],
+      [
+        "color",
+        "var(--mia-accent-text)",
         false
       ]
     ]

@@ -654,7 +654,9 @@ export class MiaStudyView extends ItemView {
     root.dataset.answerLayout = this.plugin.studyUi.appearance.answerLayout;
     root.dataset.swipeEnabled = String(this.plugin.studyUi.appearance.swipeEnabled);
     root.dataset.night = String(this.plugin.studyUi.night.nightMode);
-    const openDetails = sameRoute ? readDetailsState(root) : null;
+    // On the study route only a redraw of the same card keeps panels; another card starts with its own defaults.
+    const keepDetails = this.route === "study" ? this.renderedPosition === this.readingKey() : sameRoute;
+    const openDetails = keepDetails ? readDetailsState(root) : null;
     this.navGlide.capture(root);
     this.answerEnter = this.answerRevealPending;
     this.answerRevealPending = false;

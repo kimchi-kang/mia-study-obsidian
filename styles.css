@@ -101,6 +101,7 @@ button.mia-progress-stat { cursor: pointer; }
 .mia-filter-panel > summary { display: none; min-height: 44px; align-items: center; justify-content: space-between; padding: 0 12px; cursor: pointer; font-weight: 600; list-style: none; }
 .mia-filter-panel > summary::-webkit-details-marker { display: none; }
 .mia-filter-panel > summary::after { color: var(--text-muted); font-size: var(--font-ui-smaller); font-weight: 400; }
+.mia-filter-panel:not([open]) > summary::after { content: "펼치기"; }
 .mia-filter-panel[open] > summary::after { content: "접기"; }
 .is-mobile .mia-filter-panel > summary { display: flex; }
 .mia-result-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; color: var(--text-muted); }
@@ -276,8 +277,6 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button:first-child { padding-inline: 22px; font-weight: 900; }
 :is(.modal.mia-detail-modal, .mia-detail-panel) .mia-detail-actions > button.mod-warning { margin-inline-start: auto; padding-inline: 8px; font-size: .86em; font-weight: 700; }
 .mia-keyboard-dismiss { position: sticky; bottom: 0; z-index: 6; display: block; min-height: 44px; height: auto; width: max-content; max-width: 100%; margin: 8px auto 0; padding: 8px 16px; }
-/* 하단 버튼 줄이 없는 화면(설정 탭 등)에서는 떠 있는 [키보드 닫기] 높이만큼 스크롤 여백을 두어, 입력칸이 버튼 아래로 숨지 않게 한다. */
-.mia-keyboard-surface.mia-keyboard-open:has(> .mia-keyboard-dismiss) { scroll-padding-bottom: 72px; }
 .mia-export-options { display: flex; flex-wrap: wrap; gap: 10px; }
 .mia-export-options label { flex: 1 1 9rem; min-width: 0; display: grid; gap: 4px; font-weight: 700; }
 .mia-export-options select { width: 100%; min-width: 0; min-height: 44px; }
@@ -719,8 +718,12 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 /* 4. Questions and detail panels */
 /* 검색·필터 칸이 패널 가장자리에 붙지 않고, 그림자끼리 부딪히지 않게 띄운다. */
 .mia-view .mia-filter-panel { padding: 16px; }
-.is-mobile .mia-view .mia-filter-panel { padding-top: 0; }
-.mia-view .mia-filter-panel > summary { padding-inline: 0; }
+/* 휴대폰에서 접히는 검색·필터·정렬: 제목 줄은 카드 안의 또 다른 버튼이 아니라 카드의 머리줄이다.
+   접으면 카드는 그 한 줄만 남고, 펼치면 아래에 필터가 이어진다. 줄 전체가 누를 곳이다. */
+.is-mobile .mia-view .mia-filter-panel { padding: 0 16px; }
+.is-mobile .mia-view .mia-filter-panel[open] { padding-bottom: 16px; }
+.mia-view .mia-filter-panel > summary { min-height: 52px; margin-inline: -16px; padding-inline: 16px; border-radius: var(--mia-radius); background: transparent; box-shadow: none; }
+.mia-view .mia-filter-panel > summary:active:not(:disabled) { background: transparent; box-shadow: none; color: var(--mia-accent-text); }
 .mia-view .mia-filter-toolbar { gap: 12px; padding: 0; }
 .mia-filter-chips button { min-width: 0; max-width: 100%; height: auto; font-size: var(--font-ui-smaller); text-align: start; white-space: normal; overflow-wrap: anywhere; }
 .mia-row-prompt > :first-child { margin-top: 0; }
@@ -867,6 +870,9 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-route-study .mia-header, .mia-route-study .mia-study-navigation, .mia-route-study .mia-session-meter { width: 100%; box-sizing: border-box; flex-shrink: 0; }
 .mia-route-study .mia-study-layout { width: 100%; flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; align-content: start; padding: 10px; box-sizing: border-box; scroll-padding-block: 16px; }
 .mia-route-study .mia-study-dock { position: relative; width: 100%; flex: 0 0 auto; margin-top: 16px; }
+/* 학습 화면(모든 기기)의 평가 저장 중 문구는 줄을 차지하지 않고 위쪽에 잠깐 떠 있어, 평가 독이 들썩이지 않는다. */
+.mia-view.mia-route-study:has(.mia-study-layout) { position: relative; }
+.mia-view.mia-route-study:has(.mia-study-layout) > .mia-save-status { position: absolute; z-index: 5; top: calc(56px + var(--mia-edge-top, 0px)); left: 50%; transform: translateX(-50%); margin: 0; padding: 6px 12px; border-radius: var(--mia-radius-pill); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); white-space: nowrap; pointer-events: none; }
 .mia-route-study[data-focus="true"] .mia-header { margin-bottom: 8px; padding-bottom: 8px; }
 /* Override host modal dimensions for the visible keyboard viewport. */
 .is-mobile .mia-view.mia-keyboard-open {
@@ -1734,9 +1740,6 @@ body.is-phone.mia-phone-navbar-hidden .mobile-navbar { display: none; }
 .mia-view:is([data-device="phone"], [data-device="tablet"]).mia-route-study:has(.mia-study-layout) .mia-session-meter { grid-area: 2 / 1 / 3 / -1; max-width: none; height: 4px; margin: 2px 0 6px; border: 0; background: var(--mia-surface); }
 .mia-view:is([data-device="phone"], [data-device="tablet"]).mia-route-study:has(.mia-study-layout) .mia-study-layout { grid-area: 3 / 1 / 4 / -1; }
 .mia-view:is([data-device="phone"], [data-device="tablet"]).mia-route-study:has(.mia-study-layout) .mia-study-dock { grid-area: 4 / 1 / 5 / -1; }
-/* 평가 저장 중 문구는 줄을 차지하지 않고 위쪽에 잠깐 떠 있어, 평가 독이 들썩이지 않는다. */
-.mia-view:is([data-device="phone"], [data-device="tablet"]).mia-route-study:has(.mia-study-layout) { position: relative; }
-.mia-view:is([data-device="phone"], [data-device="tablet"]).mia-route-study:has(.mia-study-layout) > .mia-save-status { position: absolute; z-index: 5; top: calc(56px + var(--mia-edge-top, 0px)); left: 50%; transform: translateX(-50%); margin: 0; padding: 6px 12px; border-radius: var(--mia-radius-pill); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); white-space: nowrap; pointer-events: none; }
 .mia-view[data-device="tablet"].mia-route-study:has(.mia-study-layout) .mia-nav { grid-area: 6 / 1 / 7 / -1; justify-self: end; }
 .mia-view[data-device="phone"].mia-route-study:has(.mia-study-layout) .mia-nav { display: none; }
 
