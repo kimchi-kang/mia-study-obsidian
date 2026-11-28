@@ -83,8 +83,10 @@ it("syncs target edits and divergent archives through Markdown, and honors legac
   expect(branches.map(settings => settings.targetDates)).toEqual(expect.arrayContaining([
     edited.settings.targetDates, divergent.settings.targetDates,
   ]));
-  await localStore.restoreSettingsConflict(archive!.id);
-  expect(localStore.settings.targetDates).toEqual(archive!.settings.targetDates);
+  // The identified edit stays active; the legacy divergent copy (no edit identity) is the archived branch.
+  expect(merged.settings.targetDates).toEqual(edited.settings.targetDates);
+  expect(archive!.id).toBe(divergentId);
+  expect(localStore.settings.targetDates).toEqual([alternate]);
   const unwanted = localStore.settingsConflicts.find(item => item.settings.targetDates?.[0]?.date === "2026-11-23")!;
   await localStore.dismissSettingsConflict(unwanted);
   const clean = parsePluginData(await portable.loadData());

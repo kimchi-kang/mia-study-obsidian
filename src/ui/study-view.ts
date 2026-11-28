@@ -646,6 +646,8 @@ export class MiaStudyView extends ItemView {
     const restoreEditFocus = this.renderedPosition === this.readingKey() && active && active === root.querySelector(".mia-session-edit-actions button");
     const editing = active && root.contains(active) && (active.tagName === "INPUT" || active.tagName === "TEXTAREA") ? active as HTMLInputElement | HTMLTextAreaElement : null;
     const editingLabel = sameRoute ? editing?.getAttribute("aria-label") : null;
+    // A control inside the view had focus; root.empty() drops it to <body>, which silences the view's shortcuts.
+    const hadFocusInside = Boolean(active && active !== root && root.contains(active));
     const selection = editing ? [editing.selectionStart, editing.selectionEnd] : null;
     root.dataset.device = Platform.isPhone ? "phone" : Platform.isTablet ? "tablet" : "desktop";
     root.dataset.readingSize = this.plugin.studyUi.appearance.size;
@@ -715,6 +717,8 @@ export class MiaStudyView extends ItemView {
     } else if (settingsFocus) {
       this.restoreSettingsFocus(settingsFocus);
     }
+    const focused = root.ownerDocument?.activeElement;
+    if (hadFocusInside && focused !== undefined && (!focused || !root.contains(focused))) root.focus({ preventScroll: true });
   }
 
   /** 명령 팔레트나 다른 화면에서 야간 모드를 바꾸면 다시 그리지 않고 표시만 맞춘다. */

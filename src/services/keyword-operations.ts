@@ -180,6 +180,13 @@ export class KeywordOperations {
     assertPortablePath(app, nextPath);
     const destination = app.vault.getAbstractFileByPath(nextPath);
     if (destination instanceof TFolder) throw new Error("변경할 키워드 경로가 폴더와 겹칩니다.");
+    // An alias entry can resolve to the very note it would be merged into; never treat that as a merge (it would trash the note).
+    if (source instanceof TFile && destination === source) {
+      validateKeywordMeaning(meaning);
+      await app.vault.process(source, content => updateExistingKeywordMeaning(source.path, content, name, meaning));
+      new Notice(`${name} 키워드를 저장했습니다.`);
+      return;
+    }
     const nextTarget = nextPath.replace(/\.md$/i, "");
     // Only a merge removes the source note. A rename keeps it, and Obsidian has
     // already pointed short links at its new path in the vault's link format.

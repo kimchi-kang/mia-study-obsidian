@@ -1678,6 +1678,8 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
   border-radius: var(--mia-radius);
 }
 .mia-view[data-device="phone"]:where(:not(.mia-route-study:has(.mia-study-layout))) .mia-nav button { width: auto; min-height: 52px; margin: 6px 4px 2px; padding-inline: 4px; font-size: 13px; }
+/* 문제 목록의 페이지 넘김은 하단 탭 막대(버튼 52px + 위아래 8px) 위에 떠 있게 해, 막대 뒤로 숨지 않게 한다. */
+.mia-view[data-device="phone"]:where(:not(.mia-route-study:has(.mia-study-layout))) .mia-pagination { bottom: calc(68px + var(--mia-edge-bottom, 0px)); }
 /* 둥근 막대 양 끝에서 선택 칸 그림자가 잘리지 않게 바깥 칸만 조금 더 띄운다.
    탭 이동 중 맨 앞에 끼는 .mia-nav-glide 조각에 흔들리지 않도록 -of-type으로 고른다. */
 .mia-view[data-device="phone"]:where(:not(.mia-route-study:has(.mia-study-layout))) .mia-nav button:first-of-type { margin-inline-start: 10px; }

@@ -190,6 +190,12 @@ describe("휴대폰 막대·모션 CSS 계약", () => {
     expect(rules.some(rule => rule.selector.includes(":not([open]) > summary::after"))).toBe(true);
   });
 
+  it("휴대폰 문제 목록의 페이지 넘김은 하단 탭 막대 위에 떠서 가려지지 않는다", () => {
+    const rule = rules.find(rule => rule.selector.includes('[data-device="phone"]') && rule.selector.endsWith(".mia-pagination"));
+    const bottom = rule.nodes.find(node => node.prop === "bottom")?.value ?? "";
+    expect(Number(bottom.match(/(\d+)px/)?.[1])).toBeGreaterThanOrEqual(60);
+  });
+
   it("정답 펼침은 끝난 뒤 clip-path를 남기지 않는다", () => {
     const answer = rules.filter(rule => rule.selector.includes("mia-answer-enter"));
     expect(answer.length).toBe(2);

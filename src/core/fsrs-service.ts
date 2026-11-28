@@ -120,6 +120,10 @@ export class FsrsService {
 
   preview(state: QuestionReviewState | undefined, now = new Date(), questionId = ""): RatingPreview[] {
     const current = state ?? this.createState(now);
+    // A review synced from a device whose clock runs ahead can sit in the future. Preview from that
+    // review instead of throwing; rating still refuses until the clock passes it.
+    const lastReview = current.card.last_review ? Date.parse(current.card.last_review) : NaN;
+    if (Number.isFinite(lastReview) && lastReview > now.getTime()) now = new Date(lastReview);
     const card = { ...this.shiftCard(deserializeCard(current.card), toStudyTimeline), questionSeed: `${questionId}:` };
     const preview = this.scheduler.repeat(card, toStudyTimeline(now, this.dayStartsAt));
     const grades: StudyGrade[] = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy];
@@ -151,7 +155,11 @@ export class FsrsService {
 
   retrievability(state: QuestionReviewState | undefined, now = new Date()): number | null {
     if (!state || state.card.state === State.New) return null;
-    return this.scheduler.get_retrievability(this.shiftCard(deserializeCard(state.card), toStudyTimeline), toStudyTimeline(now, this.dayStartsAt), false);
+    // A damaged card (no last review, zero stability) has no meaningful recall; report "unknown" rather than throw or NaN.
+    try {
+      const value = this.scheduler.get_retrievability(this.shiftCard(deserializeCard(state.card), toStudyTimeline), toStudyTimeline(now, this.dayStartsAt), false);
+      return Number.isFinite(value) ? value : null;
+    } catch { return null; }
   }
 
   /**

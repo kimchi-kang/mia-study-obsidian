@@ -6,6 +6,7 @@ import {
   createSubjectBank,
   deleteCurrentManagedQuestion,
   OVERLAPPING_QUESTION_ERROR,
+  normalizeQuestionHeadingLevel,
   replaceCurrentManagedQuestion,
   validateManagedQuestionEdit,
   validateManagedQuestionInput,
@@ -231,7 +232,8 @@ export class QuestionOperations {
     if (!nextFile) nextFile = await app.vault.create(nextPath, createSubjectBank(draft.subject));
     if (!(nextFile instanceof TFile)) throw new Error("이동할 문제은행 경로가 파일이 아닙니다.");
 
-    const block = rebaseMarkdownLinks(questionBlock, question.filePath, nextPath);
+    // The bank's own questions are ###; a ## question kept as ## would swallow the next ### question added later.
+    const block = normalizeQuestionHeadingLevel(rebaseMarkdownLinks(questionBlock, question.filePath, nextPath));
     let nextContent = "";
     let inserted: QuestionRecord | undefined;
     try {

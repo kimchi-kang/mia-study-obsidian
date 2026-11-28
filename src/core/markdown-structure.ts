@@ -13,6 +13,8 @@ export function fencedCodeLines(lines: readonly string[]): boolean[] {
     const match = line.match(FENCE);
     if (!open) {
       if (!match?.[1]) return;
+      // CommonMark: a backtick fence's info string cannot contain a backtick, so ```code``` on one line is inline code.
+      if (match[1][0] === "`" && match[2]?.includes("`")) return;
       open = { marker: match[1][0] as "`" | "~", length: match[1].length };
       masked[index] = true;
       return;

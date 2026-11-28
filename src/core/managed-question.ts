@@ -107,6 +107,31 @@ export function renameSubjectBank(content: string, current: string, next: string
   return lines.join(newline);
 }
 
+/** Level used by questions the plugin writes into a subject bank (문제은행.md). */
+const MANAGED_QUESTION_LEVEL = 3;
+
+/**
+ * Moves a question block (heading line first) to the subject bank's question level (###),
+ * shifting its inner headings by the same amount so their nesting stays the same.
+ * Leaves the block as it is when a shift would go past ######.
+ */
+export function normalizeQuestionHeadingLevel(block: string): string {
+  const lines = block.split("\n");
+  const level = lines[0]?.match(/^(#{1,6})\s/)?.[1]?.length;
+  if (!level || level === MANAGED_QUESTION_LEVEL) return block;
+  const delta = MANAGED_QUESTION_LEVEL - level;
+  const fenced = fencedCodeLines(lines);
+  const shifted: string[] = [];
+  for (const [index, line] of lines.entries()) {
+    const marks = fenced[index] ? undefined : line.match(/^(#{1,6})(\s)/)?.[1];
+    if (!marks) { shifted.push(line); continue; }
+    const next = marks.length + delta;
+    if (next > 6) return block;
+    shifted.push(`${"#".repeat(Math.max(1, next))}${line.slice(marks.length)}`);
+  }
+  return shifted.join("\n");
+}
+
 export function appendManagedQuestion(content: string, input: ManagedQuestionInput, id: string): string {
   const newline = newlineFor(content);
   const base = content.replaceAll("\r\n", "\n").trimEnd();

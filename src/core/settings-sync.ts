@@ -13,6 +13,7 @@ export function settingsSnapshot(data: MiaPluginData): SettingsSnapshot {
   return { id: data.settingsSync?.id ?? `legacy:${settingsKey(data.settings)}`,
     ancestors: [...(data.settingsSync?.ancestors ?? [])], settings: structuredClone(data.settings) };
 }
+const isLegacy = (snapshot: SettingsSnapshot): boolean => snapshot.id.startsWith("legacy:");
 export function mergeSettings(local: MiaPluginData, incoming: MiaPluginData, next: MiaPluginData, dismissals?: Record<string, string>): void {
   if (!local.settingsSync && !incoming.settingsSync && settingsKey(local.settings) === settingsKey(incoming.settings)) return;
   const left = settingsSnapshot(local), right = settingsSnapshot(incoming);
@@ -25,6 +26,9 @@ export function mergeSettings(local: MiaPluginData, incoming: MiaPluginData, nex
   // branch should not become active just because its old ID now sorts higher.
   const winner = leftAfter ? left : rightAfter ? right
     : leftDismissed !== rightDismissed ? (leftDismissed ? right : left)
+    // A legacy snapshot ("legacy:…") has no edit identity and its "l" prefix sorts above every UUID.
+    // Prefer the identified edit as active; the legacy value is kept in the conflict list.
+    : isLegacy(left) !== isLegacy(right) ? (isLegacy(left) ? right : left)
     : left.id > right.id ? left : right;
   const alternatives = [...(local.settingsSync?.conflicts ?? []), ...(incoming.settingsSync?.conflicts ?? [])];
   if (left.id !== right.id && !leftAfter && !rightAfter) alternatives.push(winner === left ? right : left);

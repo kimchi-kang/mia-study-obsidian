@@ -431,6 +431,8 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       const parsed = () => input.value.trim() && input.validity.valid ? parseSteps(`${input.value}${unit}`) : null;
       const update = () => {
         const steps = parsed();
+        // A malformed number (e.g. "1e") reads as "" with badInput; keep the saved value until it is fixed.
+        if (input.validity.badInput) { changed(); return; }
         if (!input.value.trim()) delete gradeIntervals[grade];
         else if (steps) gradeIntervals[grade] = Number(steps[0]!.slice(0, -1)) * (steps[0]!.endsWith("d") ? 1440 : steps[0]!.endsWith("h") ? 60 : 1);
         changed();
@@ -438,7 +440,7 @@ export function renderStudyManagementSettings(container: HTMLElement, plugin: Mi
       const row = new Setting(fixed).setName(`${label} · 고정 간격`);
       row.addText(control => { input = control.inputEl; control.setValue(minutes === undefined ? "" : String(minutes / (unit === "d" ? 1440 : unit === "h" ? 60 : 1))).onChange(update); input.type = "number"; input.min = "0"; input.step = "any"; input.placeholder = "자동"; input.setAttribute("aria-label", `${label} 고정 간격(${unit === "m" ? "분" : unit === "h" ? "시간" : "일"})`); });
       row.addDropdown(control => { control.addOption("m", "분").addOption("h", "시간").addOption("d", "일").setValue(unit).onChange(value => { unit = value; input.setAttribute("aria-label", `${label} 고정 간격(${value === "m" ? "분" : value === "h" ? "시간" : "일"})`); update(); }); control.selectEl.setAttribute("aria-label", `${label} 고정 간격 단위`); });
-      const validFixed = () => !input.value.trim() || parsed() !== null;
+      const validFixed = () => !input.validity.badInput && (!input.value.trim() || parsed() !== null);
       validators.push(() => validFixed() || fail(`${label}: 1분–36500일 범위의 정확한 분 단위 간격 또는 빈칸을 입력하세요.`, input, true, validFixed));
     }
     help(extra, "Anki와 다른 적용 범위 · 미지원 항목", "Anki: 내 기록으로 FSRS-6 매개변수를 최적화하고, 세션의 남은 문제가 없으면 미리 학습 한계 안의 당일 반복을 당깁니다. 일일 한도는 전체 과목 공통이며 시험(일반복습)모드의 새 시작에 적용됩니다. 덱 계층·오늘만 한도·노트 형제 묻기·자동 실패 카드 중단은 없습니다. 오디오 제어·쉬운 요일·SM-2도 지원하지 않습니다. 1m 10m의 첫 Hard(애매)는 설치 Anki에서 5분30초, MIA에서 6분입니다. MIA 입력은 분 단위이며 Anki의 초 단계를 지원하지 않습니다. 하루 경계를 넘는 단계는 Anki의 날짜 단위 변환과 달리 절대 예약 시각을 유지하며 24시간 이상 단계는 ts-fsrs의 정규 복습 상태로 전환됩니다. 고정 평가 간격이 있으면 단계/FSRS보다 우선합니다.");
