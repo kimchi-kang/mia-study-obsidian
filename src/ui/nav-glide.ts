@@ -5,15 +5,18 @@
  */
 export interface NavTabRect { left: number; top: number; width: number; height: number; }
 export type RouteDirection = "next" | "prev" | "vertical";
+export type ListMotion = "next" | "prev" | "filter";
+export const ENTER_EASING = "cubic-bezier(.22, 1, .36, 1)";
 
 // 천천히 출발해 가속했다가 부드럽게 멈춘다. 예전 곡선(.2,.7,.2,1)은 60ms에 거리의 3/4을 가고
 // 나머지를 기어가서, 순간이동 뒤 질질 끌리는 것처럼 보였다.
 const GLIDE_MS = 280;
 const GLIDE_EASING = "cubic-bezier(.45, 0, .15, 1)";
-const CONTENT_FADE_MS = 200;
-const CONTENT_EASING = "cubic-bezier(.2, .7, .2, 1)";
 const routeOffsets: Record<RouteDirection, string> = {
-  next: "translateX(12px)", prev: "translateX(-12px)", vertical: "translateY(6px)",
+  next: "translateX(28px)", prev: "translateX(-28px)", vertical: "translateY(16px)",
+};
+const listOffsets: Record<ListMotion, string> = {
+  next: "translateX(22px)", prev: "translateX(-22px)", filter: "translateY(8px)",
 };
 const boundDetails = new WeakSet<HTMLDetailsElement>();
 
@@ -106,9 +109,8 @@ function crossfadeLabels(view: Window, nav: HTMLElement, tab: HTMLElement, fromI
 export function fadeInRouteContent(root: HTMLElement, direction: RouteDirection = "vertical"): void {
   if (reducedMotion(root.ownerDocument?.defaultView ?? null)) return;
   for (const child of Array.from(root.children) as HTMLElement[]) {
-    if (typeof child.animate !== "function" || child.matches(".mia-header, .mia-sr-only") || child.querySelector(".mia-nav")) continue;
-    child.animate([{ opacity: 0, transform: routeOffsets[direction] }, { opacity: 1, transform: "none" }],
-      { duration: CONTENT_FADE_MS, easing: CONTENT_EASING, fill: "backwards" });
+    if (child.matches(".mia-header, .mia-sr-only") || child.querySelector(".mia-nav")) continue;
+    reveal(child, routeOffsets[direction], 260);
   }
 }
 
@@ -126,18 +128,34 @@ export function animateProgressFill(fill: HTMLElement, fromRatio: number, toRati
   if (fromRatio === toRatio || !Number.isFinite(fromRatio) || !Number.isFinite(toRatio)) return;
   if (typeof fill.animate !== "function" || reducedMotion(fill.ownerDocument.defaultView)) return;
   fill.animate([{ width: `${fromRatio * 100}%` }, { width: `${toRatio * 100}%` }],
-    { duration: 240, easing: "cubic-bezier(.22, 1, .36, 1)" });
+    { duration: 300, easing: ENTER_EASING });
 }
 
-function reveal(element: Element, transform: string, duration: number): void {
+function reveal(element: Element, transform: string, duration: number, delay?: number): void {
   if (typeof element.animate !== "function") return;
   element.animate([{ opacity: 0, transform }, { opacity: 1, transform: "none" }],
-    { duration, fill: "backwards" });
+    { duration, ...(delay === undefined ? {} : { delay }), easing: ENTER_EASING, fill: "backwards" });
 }
 
 export function fadeInElement(element: HTMLElement): void {
   if (reducedMotion(element.ownerDocument?.defaultView ?? null)) return;
-  reveal(element, "translateY(5px)", 160);
+  reveal(element, "translateY(10px)", 200);
+}
+
+export function staggerRouteItems(root: HTMLElement): void {
+  if (reducedMotion(root.ownerDocument?.defaultView ?? null)) return;
+  const items = root.querySelectorAll(".mia-stats > *, .mia-subject-grid > *, .mia-list > .mia-row, .mia-keyword-grid > *");
+  let index = 0;
+  for (const item of items) {
+    reveal(item, "translateY(10px)", 260, index * 18);
+    index += 1;
+    if (index === 8) break;
+  }
+}
+
+export function slideInList(list: HTMLElement, motion: ListMotion): void {
+  if (reducedMotion(list.ownerDocument?.defaultView ?? null)) return;
+  reveal(list, listOffsets[motion], motion === "filter" ? 190 : 220);
 }
 
 export function bindDetailsReveal(root: HTMLElement): void {
@@ -163,7 +181,7 @@ export function bindDetailsReveal(root: HTMLElement): void {
       openingClick = null;
       if (!click || click.defaultPrevented || !details.open || reducedMotion(details.ownerDocument.defaultView)) return;
       for (const child of details.children) {
-        if (!child.matches("summary")) reveal(child, "translateY(-4px)", 150);
+        if (!child.matches("summary")) reveal(child, "translateY(-10px)", 210);
       }
     });
   }

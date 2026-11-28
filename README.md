@@ -10,7 +10,7 @@
 ![Platforms](https://img.shields.io/badge/desktop%20%C2%B7%20mobile-supported-2f9e5b)
 [![License](https://img.shields.io/github/license/kimchi-kang/mia-study-obsidian?color=555)](LICENSE)
 
-[**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.8.15 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.8.15/mia-study-1.8.15.zip) · [변경 내역](docs/releases/1.8.15.md) · [현재 상태](STATUS.md)
+[**소개 페이지**](https://kimchi-kang.github.io/mia-study-obsidian/) · [**1.8.16 다운로드**](https://github.com/kimchi-kang/mia-study-obsidian/releases/download/1.8.16/mia-study-1.8.16.zip) · [변경 내역](docs/releases/1.8.16.md) · [현재 상태](STATUS.md)
 
 <img src="docs/assets/screens/desktop-dashboard.jpg" alt="Major Study 1.6.0 오늘 화면. 복습 7·새 문제 4, 시험(일반복습)모드 시작, 시차 문제 이어하기, 취약 문제 5개와 과목별 학습 카드" width="860">
 
@@ -26,7 +26,7 @@ Obsidian 안에서 과목·질문·키워드를 폼으로 관리하면서 FSRS-6
 
 화면 사진은 1.6.2(검정 바탕 어두운 소프트 뉴모피즘)로, 실제 플러그인 화면 코드에 수학 기초·세계 지리·요리 과학의 가상 문제 14개를 표시해 찍었습니다. 실제 학습 내용은 포함하지 않았으며 Obsidian 창 테두리는 생략했습니다. 모바일 화면은 390px 폭으로 렌더링했습니다.
 
-[1.8.15 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.8.15) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.8.15 변경 내역](docs/releases/1.8.15.md) · [이전 버전 이력](docs/releases/HISTORY.md)
+[1.8.16 정식 릴리스](https://github.com/kimchi-kang/mia-study-obsidian/releases/tag/1.8.16) · [다운로드·설치 안내](https://kimchi-kang.github.io/mia-study-obsidian/) · [현재 상태](STATUS.md) · [1.8.16 변경 내역](docs/releases/1.8.16.md) · [이전 버전 이력](docs/releases/HISTORY.md)
 
 Major Study 제목 바로 옆에서 현재 실행 중인 버전을 확인할 수 있습니다. 업데이트한 파일을 로드하려면 Obsidian을 다시 시작하세요. 수식은 원문에 `$...$` 또는 `$$...$$` 구분자와 TeX 문법이 있어야 표시됩니다. 예를 들어 `y(t) = A(1 - e^(-t/k))` 같은 일반 문장은 자동으로 수식으로 바뀌지 않습니다.
 
@@ -54,7 +54,7 @@ Major Study를 설치하거나 사용하면 아래 내용에 동의한 것으로
 
 ### 3. 테스트는 거쳤지만 오류가 없다는 뜻이 아니다
 
-- 버전마다 자동 검사(1.8.15 기준 약 2,000개), 타입 검사, 화면 크기 측정을 한다. 그러나 자동 검사는 미리 생각한 상황만 확인한다.
+- 버전마다 자동 검사(1.8.16 기준 약 2,000개), 타입 검사, 화면 크기 측정을 한다. 그러나 자동 검사는 미리 생각한 상황만 확인한다.
 - 실제 iPad·휴대폰, 모든 Obsidian 버전·테마·다른 플러그인과의 조합, 모든 동기화 서비스 조합은 확인하지 않았다.
 
 ### 4. 생길 수 있는 문제의 예

@@ -42,6 +42,78 @@ beforeEach(() => {
 });
 afterEach(() => { dom.window.close(); vi.unstubAllGlobals(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
+it("문제 페이지와 필터만 목록 모션을 실행하고 검색·조합 입력과 외부 재렌더에서는 실행하지 않는다", async () => {
+  const { view, root } = await renderLayoutCase({ route: "questions" });
+  const registered = view.plugin.index.registered;
+  registered.push(...registered.slice(0, 3).map(question => ({ ...question, id: `${question.id}-extra` })));
+  const listAnimations = [];
+  window.HTMLElement.prototype.scrollTo = () => {};
+  window.HTMLElement.prototype.animate = function (frames) {
+    if (this.matches(".mia-list")) listAnimations.push(frames[0].transform);
+    return {};
+  };
+  view.render();
+  const click = (selector, index = 0) => root.querySelectorAll(selector)[index].click();
+  const input = (label, value, ...events) => {
+    const control = root.querySelector(`[aria-label="${label}"]`);
+    control.value = value;
+    for (const event of events) control.dispatchEvent(new window.Event(event));
+  };
+  try {
+    expect(listAnimations).toEqual([]);
+    click(".mia-pagination button", 1);
+    click(".mia-pagination button");
+    input("과목 필터", "생명과학", "change");
+    input("문제 유형 필터", "정의형", "change");
+    input("복습 상태 필터", "new", "change");
+    input("정렬", "title", "change");
+    click(".mia-status-chips button");
+    input("질문 검색", "개념", "input");
+    click(".mia-filter-chips button");
+    click(".mia-filter-chips .mod-warning");
+    expect(listAnimations.splice(0)).toEqual([
+      "translateX(22px)", "translateX(-22px)", ...Array(7).fill("translateY(8px)"),
+    ]);
+    input("질문 검색", "통계이론", "input");
+    input("질문 검색", "지리학", "compositionstart", "input", "compositionend");
+    input("키워드 필터", "개념", "input");
+    input("키워드 필터", "개념 1", "compositionstart", "input", "compositionend");
+    expect(view.questionList.text).toBe("지리학");
+    expect(view.questionList.keyword).toBe("개념 1");
+    view.render();
+    expect(listAnimations).toEqual([]);
+  } finally {
+    await view.onClose();
+  }
+});
+
+it("저장 알약과 취소 배너의 진입 클래스는 첫 렌더에만 붙고 배너는 제자리에서 만료된다", async () => {
+  const { view, root } = await renderLayoutCase();
+  const saving = () => root.querySelector(".mia-save-status");
+  const feedback = () => root.querySelector(".mia-undo-feedback");
+  try {
+    view.beginReviewSave("평가 저장 중…");
+    expect(saving().classList.contains("mia-save-status-enter")).toBe(true);
+    view.render();
+    expect(saving().classList.contains("mia-save-status-enter")).toBe(false);
+    view.endReviewSave();
+    expect(saving()).toBeNull();
+
+    view.lastRated = { id: "q", queueIndex: 0, queueBefore: ["q"] };
+    view.showUndoFeedback("암기");
+    view.render();
+    expect(feedback().classList.contains("mia-undo-feedback-enter")).toBe(true);
+    view.render();
+    const banner = feedback();
+    expect(banner.classList.contains("mia-undo-feedback-enter")).toBe(false);
+    await vi.advanceTimersByTimeAsync(8000);
+    expect(feedback()).toBe(banner);
+    expect(banner.classList.contains("mia-undo-feedback-expired")).toBe(true);
+  } finally {
+    await view.onClose();
+  }
+});
+
 it("renders additional real screens and states for computed-style equivalence", async () => {
   const cases = {};
   const confirmationCases = {};

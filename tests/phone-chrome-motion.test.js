@@ -9,7 +9,7 @@ vi.mock("obsidian", () => ({
   Component: class {}, Setting: class {}, Notice: class {}, Menu: class {}, Platform: platform, normalizePath: p => p, setIcon() {},
 }));
 import MiaStudyPlugin from "../src/main";
-import { activeTabIndex, bindDetailsReveal, fadeInRouteContent, glideActiveTab, NavGlideScheduler, routeDirection, snapshotActiveTab, studyCardDirection } from "../src/ui/nav-glide";
+import { activeTabIndex, animateProgressFill, bindDetailsReveal, ENTER_EASING, fadeInElement, fadeInRouteContent, glideActiveTab, NavGlideScheduler, routeDirection, slideInList, snapshotActiveTab, staggerRouteItems, studyCardDirection } from "../src/ui/nav-glide";
 
 const css = postcss.parse(readFileSync(new URL("../styles.css", import.meta.url), "utf8"));
 let dom;
@@ -125,9 +125,9 @@ describe("탭 선택 표시 미끄러짐", () => {
 
 describe("화면과 카드의 진입 모션", () => {
   it.each([
-    [0, 2, "next", "translateX(12px)"],
-    [2, 0, "prev", "translateX(-12px)"],
-    [undefined, 0, "vertical", "translateY(6px)"],
+    [0, 2, "next", "translateX(28px)"],
+    [2, 0, "prev", "translateX(-28px)"],
+    [undefined, 0, "vertical", "translateY(16px)"],
   ])("탭 %s → %s의 본문은 %s 방향으로 나타난다", (from, to, direction, transform) => {
     const { root, animations } = navDom();
     root.innerHTML = '<header class="mia-header"></header><div><nav class="mia-nav"></nav></div><span class="mia-sr-only"></span><section></section>';
@@ -137,7 +137,7 @@ describe("화면과 카드의 진입 모션", () => {
     expect(animations[0]).toMatchObject({
       element: root.querySelector("section"),
       keyframes: [{ opacity: 0, transform }, { opacity: 1, transform: "none" }],
-      options: { duration: 200, fill: "backwards" },
+      options: { duration: 260, fill: "backwards" },
     });
   });
 
@@ -183,13 +183,90 @@ describe("화면과 카드의 진입 모션", () => {
     expect(animations.map(animation => animation.element)).toEqual([...details.children].slice(1));
     for (const animation of animations) {
       expect(animation).toMatchObject({
-        keyframes: [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }],
-        options: { duration: 150, fill: "backwards" },
+        keyframes: [{ opacity: 0, transform: "translateY(-10px)" }, { opacity: 1, transform: "none" }],
+        options: { duration: 210, fill: "backwards" },
       });
     }
     await toggle(() => summary.click());
     await toggle(() => { details.open = true; });
     expect(animations).toHaveLength(2);
+  });
+});
+
+describe("공통 진입 곡선과 목록 모션", () => {
+  it("본문, 진행 막대, 상세 요소와 접이식 본문에 공통 진입 곡선을 쓴다", () => {
+    const { window, root, animations } = navDom();
+    root.innerHTML = "<section><div></div><details><summary>열기</summary><p>본문</p></details></section>";
+    const fill = root.querySelector("section > div");
+    fadeInRouteContent(root);
+    animateProgressFill(fill, .25, .5);
+    fadeInElement(fill);
+    bindDetailsReveal(root);
+    root.querySelector("summary").click();
+    root.querySelector("details").dispatchEvent(new window.Event("toggle"));
+    const easing = "cubic-bezier(.22, 1, .36, 1)";
+    expect(ENTER_EASING).toBe(easing);
+    expect(animations.map(({ options }) => options.easing)).toEqual(Array(4).fill(easing));
+    expect(animations[1]).toMatchObject({
+      keyframes: [{ width: "25%" }, { width: "50%" }],
+      options: { duration: 300 },
+    });
+    expect(animations[2]).toMatchObject({
+      keyframes: [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }],
+      options: { duration: 200, fill: "backwards" },
+    });
+  });
+
+  it("여러 구역에 걸쳐 문서 순서대로 처음 8개만 18ms 간격으로 나타난다", () => {
+    const { root, animations } = navDom();
+    root.innerHTML = `
+      <section class="mia-keyword-grid"><button></button></section>
+      <section class="mia-stats"><button></button><button></button></section>
+      <section class="mia-list"><p></p>${'<div class="mia-row"></div>'.repeat(6)}</section>
+      <section class="mia-subject-grid"><article></article></section>
+    `;
+    staggerRouteItems(root);
+    const rows = [...root.querySelectorAll(".mia-row")];
+    expect(animations.map(({ element }) => element)).toEqual([...root.querySelectorAll("button"), ...rows.slice(0, 5)]);
+    for (const [index, animation] of animations.entries()) {
+      expect(animation).toMatchObject({
+        keyframes: [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }],
+        options: { duration: 260, delay: index * 18, easing: ENTER_EASING, fill: "backwards" },
+      });
+    }
+    expect(animations[7].options.delay).toBe(126);
+  });
+
+  it.each([
+    ["next", "translateX(22px)", 220],
+    ["prev", "translateX(-22px)", 220],
+    ["filter", "translateY(8px)", 190],
+  ])("목록의 %s 전환은 목록 전체를 한 번 움직인다", (motion, transform, duration) => {
+    const { root, animations } = navDom();
+    root.innerHTML = '<div class="mia-list"><div class="mia-row"></div></div>';
+    const list = root.firstElementChild;
+    slideInList(list, motion);
+    expect(animations).toEqual([{
+      element: list,
+      keyframes: [{ opacity: 0, transform }, { opacity: 1, transform: "none" }],
+      options: { duration, easing: ENTER_EASING, fill: "backwards" },
+    }]);
+  });
+
+  it.each([true, false])("동작 줄이기 설정(%s) 또는 animate 미지원이면 진입 모션을 건너뛴다", reduced => {
+    const { window, root, animations } = navDom({ reduced });
+    if (!reduced) delete window.HTMLElement.prototype.animate;
+    root.innerHTML = '<div class="mia-list"><div class="mia-row"></div></div><details><summary>열기</summary><div></div></details>';
+    const list = root.firstElementChild;
+    fadeInRouteContent(root);
+    staggerRouteItems(root);
+    for (const motion of ["next", "prev", "filter"]) slideInList(list, motion);
+    animateProgressFill(list, .25, .5);
+    fadeInElement(list);
+    bindDetailsReveal(root);
+    root.querySelector("summary").click();
+    root.querySelector("details").dispatchEvent(new window.Event("toggle"));
+    expect(animations).toEqual([]);
   });
 });
 
@@ -295,5 +372,16 @@ describe("휴대폰 막대·모션 CSS 계약", () => {
     const answer = rules.filter(rule => rule.selector.includes("mia-answer-enter"));
     expect(answer.length).toBe(2);
     for (const rule of answer) expect(rule.toString()).not.toMatch(/\b(both|forwards)\b/);
+  });
+
+  it("배너 만료는 자리를 유지하며 페이드하고 동작 줄이기에서는 즉시 숨는다", () => {
+    const expired = rules.find(rule => rule.selector === ".mia-undo-feedback.mia-undo-feedback-expired");
+    expect(Object.fromEntries(expired.nodes.map(({ prop, value }) => [prop, value]))).toEqual({
+      opacity: "0",
+      visibility: "hidden",
+      transition: "opacity 240ms ease-out, visibility 0s linear 240ms",
+    });
+    const reduce = rules.find(rule => rule.selector.startsWith(".mia-view *,") && rule.parent.params === "(prefers-reduced-motion: reduce)");
+    expect(reduce.nodes).toContainEqual(expect.objectContaining({ prop: "transition", value: "none", important: true }));
   });
 });

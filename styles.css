@@ -152,9 +152,13 @@ button.mia-progress-stat { cursor: pointer; }
 .mia-view button { transition: background-color 140ms var(--mia-ease), border-color 140ms var(--mia-ease), color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease); }
 @media (prefers-reduced-motion: no-preference) {
   .mia-view :is(button.mod-cta, .mia-ratings button):where(:not(.mia-nav button)) {
-    transition: background-color 140ms var(--mia-ease), border-color 140ms var(--mia-ease), color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease), transform 90ms;
+    transition: background-color 140ms var(--mia-ease), border-color 140ms var(--mia-ease), color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease), transform 110ms;
   }
-  .mia-view :is(button.mod-cta, .mia-ratings button):where(:not(.mia-nav button)):active:not(:disabled) { transform: scale(.975); }
+  .mia-view :is(button.mod-cta, .mia-ratings button):where(:not(.mia-nav button)):active:not(:disabled) { transform: scale(.96); }
+  .mia-view .mia-subject-open:where(:not(.mia-nav *)) {
+    transition: background-color 140ms var(--mia-ease), border-color 140ms var(--mia-ease), color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease), transform 110ms;
+  }
+  .mia-view :is(.mia-row, .mia-subject-open, .mia-keyword, button.mia-stat):where(:not(.mia-nav *)):active:not(:disabled) { transform: scale(.985); }
 }
 .mia-view .mia-stat strong { font-variant-numeric: tabular-nums; }
 .mia-view .mia-row-body > strong { font-weight: 650; letter-spacing: -.01em; }
@@ -350,6 +354,14 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-view .mia-row-tag:is([data-tone="review"], [data-tone="total"]) { color: var(--mia-accent-text); }
 .is-mobile .mia-view.mia-view :is(.mia-subject-card > .mia-inline-actions, .mia-progress-subject > .mia-inline-actions, .mia-keyword) > button, .is-mobile .mia-view.mia-view .mia-progress-subject-values > button { min-height: 44px; }
 .mia-view .mia-row { transition: border-color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease); display: grid; grid-template-columns: 14px minmax(0, 1fr) 16px; grid-template-areas: "dot body more"; align-items: center; gap: 8px 12px; padding: 8px 10px; cursor: pointer; }
+@media (prefers-reduced-motion: no-preference) {
+  .mia-view .mia-row:where(:not(.mia-nav *)) {
+    transition: border-color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease), transform 110ms;
+  }
+  .mia-view button.mia-stat:where(:not(.mia-nav *)):active:not(:disabled) {
+    transition: border-color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease), transform 110ms, background-color 140ms var(--mia-ease);
+  }
+}
 .mia-view .mia-row-state { grid-area: dot; width: 12px; height: 12px; }
 .mia-view .mia-detail-title { flex: none; margin: 0; padding: 18px 20px; font-size: 20px; line-height: 1.35; overflow-wrap: anywhere; }
 
@@ -761,6 +773,11 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-keyword-questions summary { cursor: pointer; }
 .mia-keyword-questions button { width: 100%; text-align: left; margin-top: 4px; overflow-wrap: anywhere; }
 .mia-view .mia-keyword { transition: border-color 140ms var(--mia-ease), transform 140ms var(--mia-ease); }
+@media (prefers-reduced-motion: no-preference) {
+  .mia-view .mia-keyword:where(:not(.mia-nav *)):active:not(:disabled) {
+    transition: border-color 140ms var(--mia-ease), transform 110ms;
+  }
+}
 .mia-view .mia-keyword > .mia-card-title-row { grid-column: 1 / -1; }
 .mia-view .mia-keyword > span { grid-column: 1 / -1; font-size: .86em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: -4px; }
 .mia-view .mia-keyword > details { grid-column: 1 / -1; }
@@ -806,18 +823,18 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-study-card .mia-question-section > h2 { margin: 0 0 20px; overflow-wrap: anywhere; }
 .mia-study-card .mia-markdown img { max-width: 100%; height: auto; }
 .mia-answer-section { margin-top: 24px; }
-/* 정답 보기 직후 한 번만 위에서 아래로 펼친다. 끝난 뒤 clip-path가 남아 초점 테두리를 자르지 않도록 backwards만 쓴다. 동작 줄이기 설정은 8절 끝 규칙이 끈다. */
-@keyframes mia-answer-unfold { from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(-4px); } to { opacity: 1; clip-path: inset(0 0 0 0); transform: none; } }
+/* 정답 보기 직후 한 번만 위에서 아래로 펼친다. 끝난 뒤 clip-path가 남아 초점 테두리를 자르지 않도록 backwards만 쓴다. */
+@keyframes mia-answer-unfold { from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(-10px); } to { opacity: 1; clip-path: inset(0 0 0 0); transform: none; } }
 @keyframes mia-answer-fade { from { opacity: 0; } to { opacity: 1; } }
-.mia-study-card.mia-answer-enter .mia-answer-section { animation: mia-answer-unfold 240ms var(--mia-ease) backwards; }
 .mia-study-card.mia-answer-enter .mia-study-concepts { animation: mia-answer-fade 200ms var(--mia-ease) 80ms backwards; }
-@keyframes mia-card-enter-next { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
-@keyframes mia-card-enter-prev { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
-@keyframes mia-ratings-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@keyframes mia-card-enter-next { from { opacity: 0; transform: translateX(32px); } to { opacity: 1; transform: none; } }
+@keyframes mia-card-enter-prev { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
+@keyframes mia-ratings-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: no-preference) {
-  .mia-study-card.mia-card-enter-next { animation: mia-card-enter-next 190ms var(--mia-ease) backwards; }
-  .mia-study-card.mia-card-enter-prev { animation: mia-card-enter-prev 190ms var(--mia-ease) backwards; }
-  .mia-ratings.mia-ratings-enter { animation: mia-ratings-enter 170ms var(--mia-ease) 40ms backwards; }
+  .mia-study-card.mia-answer-enter .mia-answer-section { animation: mia-answer-unfold 280ms cubic-bezier(.22, 1, .36, 1) backwards; }
+  .mia-study-card.mia-card-enter-next { animation: mia-card-enter-next 250ms cubic-bezier(.22, 1, .36, 1) backwards; }
+  .mia-study-card.mia-card-enter-prev { animation: mia-card-enter-prev 250ms cubic-bezier(.22, 1, .36, 1) backwards; }
+  .mia-ratings.mia-ratings-enter { animation: mia-ratings-enter 220ms cubic-bezier(.22, 1, .36, 1) 40ms backwards; }
 }
 .mia-recall-prompt { font-size: 13px; line-height: 1.6; margin: 32px 0 4px; }
 .mia-study-concepts summary { cursor: pointer; font-size: 12px; min-height: 36px; align-content: center; }
@@ -848,7 +865,11 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 .mia-undo-feedback { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 8px; padding: 6px 10px; }
 .mia-undo-feedback > span { font-size: 12px; }
 /* 8초 뒤에는 자리를 남긴 채 숨겨, 다음 평가 직전에 버튼이 아래로 내려앉지 않게 한다. 다음 화면에서 사라진다. */
-.mia-undo-feedback.mia-undo-feedback-expired { visibility: hidden; }
+.mia-undo-feedback.mia-undo-feedback-expired { opacity: 0; visibility: hidden; transition: opacity 240ms ease-out, visibility 0s linear 240ms; }
+@keyframes mia-undo-feedback-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .mia-undo-feedback.mia-undo-feedback-enter { animation: mia-undo-feedback-enter 200ms cubic-bezier(.22, 1, .36, 1) backwards; }
+}
 .is-mobile .mia-view .mia-keyword-chips button { min-height: 44px; }
 .mia-view .mia-study-dock .mia-ratings small { font-variant-numeric: tabular-nums; }
 .mia-study-management-modal .mia-keyboard-actions-inline .mia-learning-settings-actions::before { display: none; }
@@ -887,6 +908,12 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 /* 학습 화면(모든 기기)의 평가 저장 중 문구는 줄을 차지하지 않고 위쪽에 잠깐 떠 있어, 평가 독이 들썩이지 않는다. */
 .mia-view.mia-route-study:has(.mia-study-layout) { position: relative; }
 .mia-view.mia-route-study:has(.mia-study-layout) > .mia-save-status { position: absolute; z-index: 5; top: calc(56px + var(--mia-edge-top, 0px)); left: 50%; transform: translateX(-50%); margin: 0; padding: 6px 12px; border-radius: var(--mia-radius-pill); background: var(--mia-panel); box-shadow: var(--mia-shadow-small); white-space: nowrap; pointer-events: none; }
+@keyframes mia-save-status-enter { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes mia-save-status-floating-enter { from { opacity: 0; transform: translate(-50%, -8px) scale(.95); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+@media (prefers-reduced-motion: no-preference) {
+  .mia-save-status.mia-save-status-enter { animation: mia-save-status-enter 180ms cubic-bezier(.22, 1, .36, 1) backwards; }
+  .mia-view.mia-route-study:has(.mia-study-layout) > .mia-save-status.mia-save-status-enter { animation: mia-save-status-floating-enter 180ms cubic-bezier(.22, 1, .36, 1) backwards; }
+}
 .mia-route-study[data-focus="true"] .mia-header { margin-bottom: 8px; padding-bottom: 8px; }
 /* Override host modal dimensions for the visible keyboard viewport. */
 .is-mobile .mia-view.mia-keyboard-open {
@@ -980,12 +1007,12 @@ body .workspace-split.mod-root .view-content.mia-view, body .mia-view.mia-view {
 
 /* 7. Settings and dialogs */
 @keyframes mia-modal-backdrop-enter { from { opacity: 0; } to { opacity: 1; } }
-@keyframes mia-modal-enter { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: none; } }
-@keyframes mia-modal-phone-enter { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes mia-modal-enter { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes mia-modal-phone-enter { from { opacity: 0; transform: translateY(52px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: no-preference) {
-  .modal-container:has(> .modal[class*="mia-"]) > .modal-bg { animation: mia-modal-backdrop-enter 160ms ease-out backwards; }
-  .modal-container > .modal[class*="mia-"] { animation: mia-modal-enter 190ms cubic-bezier(.2, .8, .2, 1) backwards; }
-  .is-phone .modal-container > .modal[class*="mia-"] { animation: mia-modal-phone-enter 220ms cubic-bezier(.22, 1, .36, 1) backwards; }
+  .modal-container:has(> .modal[class*="mia-"]) > .modal-bg { animation: mia-modal-backdrop-enter 220ms ease-out backwards; }
+  .modal-container > .modal[class*="mia-"] { animation: mia-modal-enter 240ms cubic-bezier(.22, 1, .36, 1) backwards; }
+  .is-phone .modal-container > .modal[class*="mia-"] { animation: mia-modal-phone-enter 280ms cubic-bezier(.22, 1, .36, 1) backwards; }
 }
 /* 결과 창: 직전 평가 취소 버튼의 포커스 테두리가 아래 통계 카드에 가리지 않게 띄운다. */
 .modal.mia-result-modal .mia-result-undo { margin-bottom: 12px; }

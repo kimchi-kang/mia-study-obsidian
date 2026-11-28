@@ -4068,7 +4068,55 @@
     "declarations": [
       [
         "transform",
-        "scale(.975)",
+        "scale(.96)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(prefers-reduced-motion: no-preference)"
+      ]
+    ],
+    "selector": ".mia-view :is(.mia-row, .mia-subject-open, .mia-keyword, button.mia-stat):where(:not(.mia-nav *)):active:not(:disabled)",
+    "declarations": [
+      [
+        "transform",
+        "scale(.985)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(prefers-reduced-motion: no-preference)"
+      ]
+    ],
+    "selector": ".mia-view button.mia-stat:where(:not(.mia-nav *)):active:not(:disabled)",
+    "declarations": [
+      [
+        "transition",
+        "border-color 140ms var(--mia-ease), box-shadow 140ms var(--mia-ease), transform 110ms, background-color 140ms var(--mia-ease)",
+        false
+      ]
+    ]
+  },
+  {
+    "context": [
+      [
+        "media",
+        "(prefers-reduced-motion: no-preference)"
+      ]
+    ],
+    "selector": ".mia-view .mia-keyword:where(:not(.mia-nav *)):active:not(:disabled)",
+    "declarations": [
+      [
+        "transition",
+        "border-color 140ms var(--mia-ease), transform 110ms",
         false
       ]
     ]

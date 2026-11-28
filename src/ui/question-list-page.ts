@@ -4,7 +4,7 @@ import { QUESTION_TYPES, type QuestionType } from "../core/models";
 import { type QuestionSort, type ReviewFilter, queryQuestions } from "../core/question-query";
 import { openEditorWithNotice } from "./editor-notice";
 import { errorMessage } from "./error-message";
-import { fadeInElement } from "./nav-glide";
+import { fadeInElement, slideInList, type ListMotion } from "./nav-glide";
 import { QuestionDetailView, type RegisteredQuestion } from "./question-detail-view";
 import { renderQuestionHeading, renderQuestionRow } from "./question-row";
 import type { StudyPageContext } from "./study-page-context";
@@ -64,6 +64,11 @@ export interface SessionEditTarget {
  * The question library page. The editing target, when present, is the
  * question the learner opened for editing from an active session.
  */
+/** 동작 줄이기 설정이면 페이지 넘김 스크롤도 바로 이동한다. */
+function prefersReducedMotion(element: HTMLElement): boolean {
+  return Boolean(element.ownerDocument?.defaultView?.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+}
+
 export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement, state: QuestionListState, editTarget: SessionEditTarget | null): void {
   // The list column and the detail side panel sit side by side on wide panes.
   const layout = scroller.createDiv({ cls: "mia-questions-layout" });
@@ -142,7 +147,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
   const setReviewFilter = (filter: ReviewFilter) => {
     applyReview(filter);
     state.page = 0;
-    renderList();
+    renderList("filter");
   };
   // Created once so a chip keeps keyboard focus (and its element) when the list re-renders.
   const statusChipButtons = STATUS_CHIPS.map(({ review: filter, label }) => {
@@ -171,7 +176,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
     if (state.keyword) active.push([`키워드: ${state.keyword}`, () => { state.keyword = ""; keyword.value = ""; }]);
     for (const [label, clear] of active) {
       const chip = chips.createEl("button", { text: `${label} ×` });
-      chip.addEventListener("click", () => { clear(); state.page = 0; renderList(); (chips.querySelector<HTMLElement>("button") ?? search).focus({ preventScroll: true }); });
+      chip.addEventListener("click", () => { clear(); state.page = 0; renderList("filter"); (chips.querySelector<HTMLElement>("button") ?? search).focus({ preventScroll: true }); });
     }
     if (active.length > 1) {
       const reset = chips.createEl("button", { text: "필터 전체 해제", cls: "mod-warning" });
@@ -180,7 +185,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
         state.keyword = ""; state.page = 0;
         applyReview("all");
         search.value = ""; subject.value = "all"; type.value = "all"; keyword.value = "";
-        renderList();
+        renderList("filter");
         search.focus({ preventScroll: true });
       });
     }
@@ -287,12 +292,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
       if (revision !== panelRevision || !panel.isConnected) return;
       panel.inert = false;
       panel.empty();
-      // 다른 문제를 열 때만, 이전 본문을 비운 바로 그 순간부터 살짝 떠오르게 한다.
-      // (본문 Markdown을 다 그린 뒤 시작하면 이미 보인 내용이 사라졌다가 다시 나타난다.)
-      if (question.id !== state.lastRenderedPanelId) {
-        fadeInElement(panel);
-        state.lastRenderedPanelId = question.id;
-      }
+      const questionChanged = question.id !== state.lastRenderedPanelId;
       const title = panel.createEl("h2", { cls: "mia-detail-title" });
       title.tabIndex = -1;
       const detail = new QuestionDetailView(ctx.app, source, {
@@ -301,9 +301,21 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
         // from `selectedId`; refetching here would run against the DOM that render is about to replace.
         afterMutation: () => {},
       }, ctx.plugin.modalOpenGuard);
-      await detail.render(panel, title, component, () => revision === panelRevision && panel.isConnected);
-      if (revision !== panelRevision || !panel.isConnected) return;
+      const rendering = detail.render(panel, title, component, () => revision === panelRevision && panel.isConnected);
       const body = panel.querySelector<HTMLElement>(".mia-detail-scroll");
+      // 마크다운을 기다리기 전에 제목과 본문 진입을 시작해 깜빡임을 막는다.
+      if (questionChanged) {
+        fadeInElement(title);
+        if (body) fadeInElement(body);
+      }
+      // 렌더를 기다리는 사이 동기화로 패널이 다시 그려져도 같은 문제를 새 진입으로 보지 않게 바로 기록한다.
+      state.lastRenderedPanelId = question.id;
+      await rendering;
+      if (revision !== panelRevision || !panel.isConnected) return;
+      if (questionChanged) {
+        const actions = panel.querySelector<HTMLElement>(".mia-detail-actions");
+        if (actions) fadeInElement(actions);
+      }
       if (body && state.panelScroll?.id === question.id) body.scrollTop = state.panelScroll.top;
       restorePanelFocus(title);
       restoreAfterDialog(component);
@@ -331,7 +343,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
     markSelected();
     void showPanel(question);
   };
-  const renderList = () => {
+  const renderList = (motion?: ListMotion) => {
     // Results own their Markdown resources; replacing a page must release the old ones.
     if (listComponent) listOwner.removeChild(listComponent);
     listComponent = listOwner.addChild(new Component());
@@ -369,17 +381,20 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
     if (pageCount > 1) {
       const previous = pagination.createEl("button", { text: `이전 ${QUESTION_PAGE_SIZE}개` });
       previous.disabled = state.page === 0;
-      previous.addEventListener("click", () => { state.page -= 1; renderList(); scroller.scrollTo({ top: 0, behavior: "smooth" }); pagination.querySelector<HTMLElement>("button:not(:disabled)")?.focus({ preventScroll: true }); });
+      previous.addEventListener("click", () => { state.page -= 1; renderList("prev"); scroller.scrollTo({ top: 0, behavior: prefersReducedMotion(scroller) ? "auto" : "smooth" }); pagination.querySelector<HTMLElement>("button:not(:disabled)")?.focus({ preventScroll: true }); });
       pagination.createSpan({ text: `${state.page + 1} / ${pageCount}` });
       const next = pagination.createEl("button", { text: `다음 ${QUESTION_PAGE_SIZE}개` });
       next.disabled = state.page >= pageCount - 1;
-      next.addEventListener("click", () => { state.page += 1; renderList(); scroller.scrollTo({ top: 0, behavior: "smooth" }); pagination.querySelector<HTMLElement>("button:not(:disabled)")?.focus({ preventScroll: true }); });
+      next.addEventListener("click", () => { state.page += 1; renderList("next"); scroller.scrollTo({ top: 0, behavior: prefersReducedMotion(scroller) ? "auto" : "smooth" }); pagination.querySelector<HTMLElement>("button:not(:disabled)")?.focus({ preventScroll: true }); });
     }
     if (!questions.length) list.createEl("p", {
       text: ctx.plugin.index.registered.length ? "검색·필터 조건에 맞는 문제가 없습니다." : "등록된 문제가 없습니다.",
       cls: "mia-empty",
     });
     renderChips();
+    // 검색 입력 등 모션 없는 다시 그리기는 이전 페이지·필터 모션을 이어받지 않게 멈춘다.
+    if (!motion) for (const animation of list.getAnimations?.() ?? []) animation.cancel();
+    if (motion) slideInList(list, motion);
   };
   let searchComposing = false;
   let keywordComposing = false;
@@ -389,10 +404,10 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
   keyword.addEventListener("compositionstart", () => { keywordComposing = true; });
   keyword.addEventListener("compositionend", () => { keywordComposing = false; state.keyword = keyword.value; state.page = 0; renderList(); });
   keyword.addEventListener("input", () => { if (!keywordComposing) { state.keyword = keyword.value; state.page = 0; renderList(); } });
-  subject.addEventListener("change", () => { state.subject = subject.value; state.page = 0; renderList(); });
-  type.addEventListener("change", () => { state.type = type.value as QuestionListState["type"]; state.page = 0; renderList(); });
+  subject.addEventListener("change", () => { state.subject = subject.value; state.page = 0; renderList("filter"); });
+  type.addEventListener("change", () => { state.type = type.value as QuestionListState["type"]; state.page = 0; renderList("filter"); });
   review.addEventListener("change", () => setReviewFilter(review.value as ReviewFilter));
-  sort.addEventListener("change", () => { state.sort = sort.value as QuestionSort; state.page = 0; renderList(); });
+  sort.addEventListener("change", () => { state.sort = sort.value as QuestionSort; state.page = 0; renderList("filter"); });
   renderList();
   const selected = state.selectedId ? ctx.plugin.index.questionById(state.selectedId) : undefined;
   if (selected) void showPanel(selected);

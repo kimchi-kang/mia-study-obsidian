@@ -28,7 +28,7 @@ import { renderKeywords } from "./keywords-page";
 import { overviewSignature, readOverview, renderDashboard, renderProgress, type OverviewSnapshot } from "./progress-pages";
 import { QuestionListState, renderQuestionsPage } from "./question-list-page";
 import { renderQuestionHeading } from "./question-row";
-import { activeTabIndex, animateProgressFill, bindDetailsReveal, fadeInRouteContent, NavGlideScheduler, routeDirection, studyCardDirection } from "./nav-glide";
+import { activeTabIndex, animateProgressFill, bindDetailsReveal, fadeInRouteContent, NavGlideScheduler, routeDirection, staggerRouteItems, studyCardDirection } from "./nav-glide";
 import { requestPluginUpdate } from "./plugin-update";
 import type { StudyPageContext } from "./study-page-context";
 
@@ -114,6 +114,7 @@ export class MiaStudyView extends ItemView {
   private readingTimer: number | null = null;
   private undoFeedbackTimer: number | null = null;
   private undoFeedback = "";
+  private undoFeedbackEnterPending = false;
   private reviewSaveMessage = "";
   private refreshingAfterReturn = false;
   private pollingOverview = false;
@@ -239,6 +240,7 @@ export class MiaStudyView extends ItemView {
     this.changedGradedAnswers.clear();
     this.readingPosition = { key: "", scrollTop: 0, pageScrollTop: 0, conceptsOpen: false };
     this.undoFeedback = "";
+    this.undoFeedbackEnterPending = false;
     this.stateRestored = true;
     const questions = this.plugin.index.registered;
     const { reviews } = this.plugin.store;
@@ -477,10 +479,11 @@ export class MiaStudyView extends ItemView {
     if (this.closed) return;
     if (this.undoFeedbackTimer !== null) window.clearTimeout(this.undoFeedbackTimer);
     this.undoFeedback = `${label} 평가 저장됨`;
+    this.undoFeedbackEnterPending = true;
     this.undoFeedbackTimer = window.setTimeout(() => {
       this.undoFeedback = ""; this.undoFeedbackTimer = null;
-      // Update only the banner so reading and keyboard focus do not jump. Hiding it in place keeps
-      // the rating buttons where they are; the space goes with the next full render.
+      this.undoFeedbackEnterPending = false;
+      // 배너의 자리를 유지해 스크롤과 키보드 포커스가 움직이지 않게 한다.
       this.contentEl.querySelector(".mia-undo-feedback")?.addClass("mia-undo-feedback-expired");
     }, 8000);
   }
@@ -711,6 +714,7 @@ export class MiaStudyView extends ItemView {
     } else root.onscroll = null;
     if (openDetails) restoreDetailsState(root, openDetails);
     if (routeChanged) fadeInRouteContent(root, routeDirection(fromTab, toTab));
+    if (routeChanged) staggerRouteItems(root);
     const filterPanel = root.querySelector<HTMLDetailsElement>(".mia-filter-panel");
     if (filterPanel && filtersOpen !== undefined) filterPanel.open = filtersOpen;
     bindDetailsReveal(root);
@@ -1148,6 +1152,10 @@ export class MiaStudyView extends ItemView {
   private renderStudyUtilities(dock: HTMLElement, previous: HTMLButtonElement, next: HTMLButtonElement): void {
     if (!this.readOnlyBrowse && this.undoFeedback && this.lastRated) {
       const feedback = dock.createDiv({ cls: "mia-undo-feedback" });
+      if (this.undoFeedbackEnterPending) {
+        feedback.addClass("mia-undo-feedback-enter");
+        this.undoFeedbackEnterPending = false;
+      }
       const status = feedback.createEl("span", { text: this.undoFeedback });
       status.setAttr("role", "status"); status.setAttr("aria-live", "polite");
       // The undo button (and its U shortcut) lives once, in the utility row below.
@@ -1238,8 +1246,9 @@ export class MiaStudyView extends ItemView {
     this.contentEl.focus({ preventScroll: true });
   }
 
-  private renderReviewSaveStatus(): void {
+  private renderReviewSaveStatus(enter = false): void {
     const status = this.contentEl.createEl("p", { text: this.reviewSaveMessage, cls: "mia-muted mia-save-status" });
+    if (enter) status.addClass("mia-save-status-enter");
     status.setAttr("role", "status");
     status.setAttr("aria-live", "polite");
   }
@@ -1250,7 +1259,7 @@ export class MiaStudyView extends ItemView {
     this.autoAdvance?.pause();
     this.reviewSaveMessage = message;
     this.contentEl.setAttr("aria-busy", "true");
-    this.renderReviewSaveStatus();
+    this.renderReviewSaveStatus(true);
   }
 
   private endReviewSave(): void {
@@ -1372,6 +1381,7 @@ export class MiaStudyView extends ItemView {
       this.answerVisible = true;
       this.lastRated = null;
       this.undoFeedback = "";
+      this.undoFeedbackEnterPending = false;
       this.resultShown = false;
       this.endReviewSave();
       if (!this.closed) this.app.workspace.requestSaveLayout();
