@@ -75,13 +75,24 @@ describe("MIA design consistency", () => {
     expect(css).not.toMatch(/@import|@font-face|Black Han Sans|Do Hyeon/i);
   });
 
-  it("uses one upper-left light source for all raised and inset shadows", () => {
-    expect(tokens["--mia-shadow"]).toBe("8px 8px 16px var(--mia-shadow-dark), -8px -8px 16px var(--mia-shadow-light)");
-    expect(tokens["--mia-shadow-small"]).toBe("5px 5px 10px var(--mia-shadow-dark), -5px -5px 10px var(--mia-shadow-light)");
-    expect(tokens["--mia-shadow-inset"]).toBe("inset 6px 6px 12px var(--mia-shadow-dark), inset -6px -6px 12px var(--mia-shadow-light)");
+  // 1.8.8: 순검정 바탕에서는 우하단 검정 그림자가 보이지 않아 좌상단 빛만 뿌옇게 번졌다(사용자 요청으로 변경).
+  // 솟은 것은 윗변 안쪽 빛·얇은 윤곽·아래 그림자, 파인 것은 안쪽 어두운 그림자로 나누고, 빛은 바깥으로 번지지 않는다.
+  it("raises with an inner top edge and keeps light from blooming outside on pure black", () => {
+    for (const raised of [tokens["--mia-shadow"], tokens["--mia-shadow-small"]]) {
+      expect(raised).toMatch(/^inset 0 1px 0 var\(--mia-shadow-light\), /);
+      expect(raised).toMatch(/0 0 0 1px /);
+      expect(raised).toMatch(/0 \d+px \d+px rgba\(0, 0, 0, /);
+    }
+    expect(tokens["--mia-shadow-inset"]).toMatch(/^inset 0 2px 4px rgba\(0, 0, 0, /);
+    for (const value of [tokens["--mia-shadow"], tokens["--mia-shadow-small"], tokens["--mia-shadow-inset"]]) {
+      // 음수 좌표로 바깥에 퍼지는 빛(옛 -5px -5px 10px)이 다시 생기지 않게 한다.
+      expect(value).not.toMatch(/-\d/);
+    }
     for (const palette of [tokens, night]) {
-      expect(luminance(color(palette, "shadow-light"))).toBeGreaterThan(luminance(color(palette, "panel")));
-      expect(luminance(color(palette, "shadow-dark"))).toBeLessThan(luminance(color(palette, "panel")));
+      expect(palette["--mia-shadow-light"]).toMatch(/^rgba\(255, 255, 255, \.0\d\)$/);
+      // 버튼 면은 카드보다 반 단계 밝아 그림자 없이도 카드와 구분된다.
+      expect(luminance(color(palette, "control"))).toBeGreaterThan(luminance(color(palette, "panel")));
+      for (const text of ["ink", "muted", "accent-text"]) expect(contrast(palette, text, "control"), `${text} on control`).toBeGreaterThanOrEqual(4.5);
     }
     root.walkDecls("box-shadow", d => expect(d.value).toMatch(/^(none|var\(--mia-shadow(?:-inset|-small)?\))$/));
   });
@@ -110,7 +121,7 @@ describe("MIA design consistency", () => {
     });
     expect(declarations(`${scope} .checkbox-container.is-enabled`)).toEqual({ "background-color": "var(--mia-blue)" });
     expect(declarations(".mia-view .mia-nav")).toMatchObject({ "box-shadow": "var(--mia-shadow-inset)", "border-radius": "var(--mia-radius-pill)" });
-    expect(declarations(".mia-view .mia-nav button.mod-cta")).toMatchObject({ "box-shadow": "var(--mia-shadow-small)", color: "var(--mia-accent-text)" });
+    expect(declarations(".mia-view .mia-nav button.mod-cta")).toMatchObject({ "box-shadow": "var(--mia-shadow-small)", color: "var(--mia-accent-text)", background: "var(--mia-control)" });
     expect(declarations('.mia-setting-controls .setting-item-control > :is(input:not([type="checkbox"], [type="radio"], [type="range"]), select, textarea)')).toMatchObject({ "min-height": "44px" });
     expect(declarations(".mia-setting-controls .setting-item-control > button:not(.mod-cta, .mod-warning, .checkbox-container)")).toMatchObject({ "min-height": "44px" });
     expect(declarations(".mia-study-management-settings .mia-anki-settings-section > .setting-item-description")).toMatchObject({ color: "var(--mia-muted)", "overflow-wrap": "anywhere" });

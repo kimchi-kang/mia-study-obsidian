@@ -19,8 +19,13 @@
         false
       ],
       [
+        "--mia-control",
+        "#191B21",
+        false
+      ],
+      [
         "--mia-shadow-light",
-        "#22252C",
+        "rgba(255, 255, 255, .08)",
         false
       ],
       [
@@ -30,17 +35,17 @@
       ],
       [
         "--mia-shadow",
-        "8px 8px 16px var(--mia-shadow-dark), -8px -8px 16px var(--mia-shadow-light)",
+        "inset 0 1px 0 var(--mia-shadow-light), 0 0 0 1px rgba(255, 255, 255, .05), 0 6px 16px rgba(0, 0, 0, .55)",
         false
       ],
       [
         "--mia-shadow-small",
-        "5px 5px 10px var(--mia-shadow-dark), -5px -5px 10px var(--mia-shadow-light)",
+        "inset 0 1px 0 var(--mia-shadow-light), 0 0 0 1px var(--mia-shadow-light), 0 2px 6px rgba(0, 0, 0, .45)",
         false
       ],
       [
         "--mia-shadow-inset",
-        "inset 6px 6px 12px var(--mia-shadow-dark), inset -6px -6px 12px var(--mia-shadow-light)",
+        "inset 0 2px 4px rgba(0, 0, 0, .6), inset 0 0 0 1px rgba(255, 255, 255, .04)",
         false
       ],
       [
@@ -141,6 +146,11 @@
       [
         "--mia-surface-hover",
         "color-mix(in srgb, var(--mia-ink) 6%, var(--mia-panel))",
+        false
+      ],
+      [
+        "--mia-control-hover",
+        "color-mix(in srgb, var(--mia-ink) 6%, var(--mia-control))",
         false
       ],
       [
@@ -497,8 +507,13 @@
         false
       ],
       [
+        "--mia-control",
+        "#14161B",
+        false
+      ],
+      [
         "--mia-shadow-light",
-        "#1A1D24",
+        "rgba(255, 255, 255, .06)",
         false
       ],
       [
@@ -554,6 +569,11 @@
       [
         "--mia-surface-hover",
         "var(--mia-surface)",
+        false
+      ],
+      [
+        "--mia-control-hover",
+        "var(--mia-control)",
         false
       ],
       [
@@ -1375,7 +1395,7 @@
       ],
       [
         "background",
-        "var(--mia-panel)",
+        "var(--mia-control)",
         false
       ],
       [
@@ -1593,7 +1613,7 @@
     "declarations": [
       [
         "background-color",
-        "var(--mia-surface-hover)",
+        "var(--mia-control-hover)",
         false
       ]
     ]
@@ -3411,7 +3431,7 @@
     "declarations": [
       [
         "background",
-        "var(--mia-panel)",
+        "var(--mia-control)",
         false
       ],
       [
