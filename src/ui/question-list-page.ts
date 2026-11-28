@@ -37,7 +37,7 @@ export class QuestionListState {
   /** The panel body's scroll position for the selected question; reset when the selection changes. */
   panelScroll: { id: string; top: number } | null = null;
 
-  /** Opens the list on one review state; clears the other filters but keeps the page. */
+  /** Opens the list on one review state; clears the other filters and starts from the first page. */
   show(review: ReviewFilter, subject = "all"): void {
     this.text = "";
     this.keyword = "";
@@ -47,6 +47,7 @@ export class QuestionListState {
     this.review = review;
     this.subject = subject;
     this.selectedId = null;
+    this.page = 0;
   }
 }
 
@@ -92,6 +93,9 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
   const toolbar = filterPanel.createDiv({ cls: "mia-toolbar mia-filter-toolbar" });
   const search = toolbar.createEl("input", { type: "search", placeholder: "질문, 정답, 과목, 키워드 검색", attr: { "aria-label": "질문 검색" } });
   search.value = state.text;
+  // 휴대폰 2열 격자에서 글 입력칸 두 개(전체 폭)가 붙고 선택 칸 넷이 2×2로 맞도록 키워드 필터를 검색 바로 뒤에 둔다.
+  const keyword = toolbar.createEl("input", { type: "search", placeholder: "키워드만 필터", attr: { "aria-label": "키워드 필터" } });
+  keyword.value = state.keyword;
   const subject = toolbar.createEl("select", { attr: { "aria-label": "과목 필터" } });
   subject.createEl("option", { text: "전체 과목", value: "all" });
   const subjects = [...new Set([
@@ -112,8 +116,6 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
   ];
   reviewOptions.forEach(([value, label]) => review.createEl("option", { text: label, value }));
   review.value = state.review;
-  const keyword = toolbar.createEl("input", { type: "search", placeholder: "키워드만 필터", attr: { "aria-label": "키워드 필터" } });
-  keyword.value = state.keyword;
   const sort = toolbar.createEl("select", { attr: { "aria-label": "정렬" } });
   const sortOptions: Array<[QuestionSort, string]> = [
     ["review", "복습 우선"], ["title", "문제명"], ["subject", "과목별"], ["type", "유형별"],

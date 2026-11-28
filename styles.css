@@ -117,7 +117,7 @@ button.mia-progress-stat { cursor: pointer; }
 :is(.mia-markdown, .mia-question-heading) :is(.math-inline, .katex, mjx-container:not([display="true"])) { display: inline-block; max-inline-size: 100%; overflow-x: auto; vertical-align: middle; }
 .mia-answer { padding-top: 8px; }
 .mia-ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 24px; }
-.mia-ratings button { display: flex; flex-direction: column; gap: 3px; align-items: center; padding: 10px 5px; }
+.mia-ratings button { display: flex; flex-direction: column; gap: 3px; align-items: center; justify-content: center; padding: 10px 5px; }
 .mia-related { max-width: 860px; margin: 20px auto 0; display: grid; gap: 6px; }
 .mia-followup-list { min-height: min(128px, 42dvh); grid-auto-rows: max-content; align-content: start; max-height: min(52vh, 520px); overflow-y: auto; display: grid; gap: 8px; padding: 8px; }
 .mia-followup-option { display: flex; align-items: flex-start; gap: 10px; padding: 9px; cursor: pointer; }
@@ -1694,12 +1694,16 @@ body.is-phone.mia-phone-navbar-hidden .mobile-navbar { display: none; }
 /* 버튼 두 개가 한 줄에 들어가도록 꾸밈용 FSRS-6 표시는 빼고, 더 보기는 오른쪽 끝에 붙인다. */
 .mia-view[data-device="phone"] .mia-header > div:first-child:has(> .mia-host-button) > .mia-badge { display: none; }
 .mia-view[data-device="phone"] .mia-header > div:first-child > .mia-host-more { margin-inline-start: auto; }
-/* 버튼 세 개와 이름이 한 줄에 들어가도록 버전 표시는 이름 아래 작은 줄로 내린다. */
-.mia-view[data-device="phone"] .mia-header > div:first-child:has(> .mia-host-button) .mia-brand { flex-direction: column; align-items: flex-start; gap: 0; }
-.mia-view[data-device="phone"] .mia-header > div:first-child:has(> .mia-host-button) .mia-version { margin-top: -6px; }
-.mia-view[data-device="phone"] .mia-header > div:first-child > .mia-host-more + .mia-host-menu { margin-inline-start: -4px; }
-@container mia-view (max-width: 330px) {
+/* 버튼 세 개와 이름이 320px 폭에서도 한 줄에 들어가도록, 홈 버튼 좌우 여백을 빼고 버전은 이름 글자 아래 작은 줄로 내린다.
+   52px = 로고 점(18px) + 간격(10px) + 둘째 점(16px - 겹침 2px) + 간격(10px). */
+.mia-view[data-device="phone"] .mia-header > div:first-child:has(> .mia-host-button) .mia-brand { flex: 0 1 auto; min-width: 0; flex-direction: column; align-items: flex-start; gap: 0; }
+.mia-view[data-device="phone"] .mia-header > div:first-child:has(> .mia-host-button) .mia-home-button { padding-inline: 0; }
+.mia-view[data-device="phone"] .mia-header > div:first-child:has(> .mia-host-button) .mia-version { margin: -8px 0 0 52px; line-height: 1.2; pointer-events: none; }
+/* 640px보다 넓은 휴대폰(폴더블 펼침)에서는 설정 버튼이 같은 줄에 남으므로, 빈 공간은 ⋯ 앞에만 두어 버튼을 오른쪽에 모은다. */
+.mia-view[data-device="phone"] .mia-header > div:first-child:has(> .mia-host-button) > .mia-settings-buttons { margin-inline-start: 0; }
+@container mia-view (max-width: 340px) {
 .mia-view[data-device="phone"] .mia-header > div:first-child > .mia-host-button { width: 36px; min-width: 36px; height: 36px; min-height: 36px; }
+.mia-view[data-device="phone"] .mia-header > div:first-child:has(> .mia-host-button) .mia-brand { font-size: 19px; }
 }
 @container mia-view (max-width: 280px) {
 .mia-view .mia-hero-counts { grid-template-columns: 1fr; }

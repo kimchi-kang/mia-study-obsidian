@@ -147,6 +147,19 @@ describe("휴대폰 막대·모션 CSS 계약", () => {
     expect(base.toString()).toMatch(/min-height: 44px/);
   });
 
+  it("머리줄 버튼은 음수 여백으로 줄 밖에 삐져나오지 않고, 좁은 화면에서는 이름 글자를 줄여 한 줄을 지킨다", () => {
+    const host = rules.filter(rule => /\.mia-host-(button|more|menu)$/.test(rule.selector));
+    expect(host.length).toBeGreaterThan(2);
+    for (const rule of host) rule.walkDecls(/^margin/, decl => expect(decl.value, rule.selector).not.toMatch(/(^|\s)-\d/));
+    const narrowBrand = rules.find(rule => rule.parent.type === "atrule" && rule.parent.name === "container" && rule.selector.includes(".mia-brand") && rule.selector.includes("mia-host-button"));
+    expect(narrowBrand?.toString()).toMatch(/font-size/);
+  });
+
+  it("평가 버튼 글자는 한 줄이어도 세로 가운데에 놓인다", () => {
+    const base = rules.find(rule => rule.selector === ".mia-ratings button" && rule.toString().includes("flex-direction: column"));
+    expect(base.toString()).toMatch(/justify-content: center/);
+  });
+
   it("정답 펼침은 끝난 뒤 clip-path를 남기지 않는다", () => {
     const answer = rules.filter(rule => rule.selector.includes("mia-answer-enter"));
     expect(answer.length).toBe(2);

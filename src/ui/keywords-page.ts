@@ -6,6 +6,9 @@ import { renderQuestionHeading } from "./question-row";
 import type { StudyPageContext } from "./study-page-context";
 import { renderCardManagementMenu } from "./card-management-menu";
 
+/** 노트 변경·동기화로 화면을 다시 그려도 검색어와 정렬을 지키도록 화면(뷰)마다 기억한다. */
+const keywordViewState = new WeakMap<StudyPageContext, { query: string; sort: string }>();
+
 export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
   const pageActions = root.createDiv({ cls: "mia-page-actions" });
   pageActions.createEl("button", { text: "키워드 추가", cls: "mod-cta" }).addEventListener("click", () => {
@@ -49,8 +52,14 @@ export function renderKeywords(ctx: StudyPageContext, root: HTMLElement): void {
   const sort = toolbar.createEl("select", { attr: { "aria-label": "키워드 정렬" } });
   sort.createEl("option", { text: "연결 문제 많은 순", attr: { value: "linked" } });
   sort.createEl("option", { text: "취약 순", attr: { value: "weak" } });
+  const remembered = keywordViewState.get(ctx) ?? { query: "", sort: "linked" };
+  keywordViewState.set(ctx, remembered);
+  search.value = remembered.query;
+  sort.value = remembered.sort === "weak" ? "weak" : "linked";
   const grid = root.createDiv({ cls: "mia-keyword-grid" });
   const renderGrid = () => {
+    remembered.query = search.value;
+    remembered.sort = sort.value;
     grid.empty();
     const query = search.value.trim().toLocaleLowerCase("ko");
     const items = [...keywords]

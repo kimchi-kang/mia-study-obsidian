@@ -172,6 +172,34 @@ describe("study layout rendered DOM", () => {
     expect(meaning.mock.calls[0][1]).toBe(title.textContent);
     expect(card.querySelector("summary").textContent).toBe("연결 문제 보기");
   });
+  it("keeps the keyword search and sort when the page re-renders after a note change or sync", async () => {
+    const { view, root } = await renderLayoutCase({ route: "keywords" });
+    const total = root.querySelectorAll(".mia-keyword").length;
+    const search = root.querySelector('input[aria-label="키워드 검색"]');
+    const first = root.querySelector(".mia-keyword strong").textContent;
+    search.value = first;
+    search.dispatchEvent(new window.Event("input", { bubbles: true }));
+    const sort = root.querySelector('select[aria-label="키워드 정렬"]');
+    sort.value = "weak";
+    sort.dispatchEvent(new window.Event("change", { bubbles: true }));
+    const filtered = root.querySelectorAll(".mia-keyword").length;
+    expect(filtered).toBeLessThan(total);
+    view.render();
+    expect(root.querySelector('input[aria-label="키워드 검색"]').value).toBe(first);
+    expect(root.querySelector('select[aria-label="키워드 정렬"]').value).toBe("weak");
+    expect(root.querySelectorAll(".mia-keyword")).toHaveLength(filtered);
+  });
+  it("puts both text filters before the four selects so the phone grid has no gaps", async () => {
+    const { root } = await renderLayoutCase({ route: "questions" });
+    const labels = [...root.querySelectorAll(".mia-filter-toolbar > *")].map(element => `${element.tagName.toLowerCase()}:${element.getAttribute("aria-label")}`);
+    expect(labels).toEqual(["input:질문 검색", "input:키워드 필터", "select:과목 필터", "select:문제 유형 필터", "select:복습 상태 필터", "select:정렬"]);
+  });
+  it("starts a list opened from another card or state on its first page", async () => {
+    const { view } = await renderLayoutCase({ route: "questions" });
+    view.questionList.page = 3;
+    view.questionList.show("due", "통계이론");
+    expect(view.questionList.page).toBe(0);
+  });
   it("opens a keyword meaning with Space on release, like a native button", async () => {
     const { view, root } = await renderLayoutCase({ route: "keywords" });
     const meaning = vi.fn();
