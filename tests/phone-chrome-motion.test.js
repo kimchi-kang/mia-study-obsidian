@@ -160,6 +160,31 @@ describe("휴대폰 막대·모션 CSS 계약", () => {
     expect(base.toString()).toMatch(/justify-content: center/);
   });
 
+  it("탭 버튼은 배경·그림자를 전환하지 않아, 미끄러짐 시작·끝에 선택 탭이 꺼졌다 켜지지 않는다", () => {
+    const tab = rules.find(rule => rule.selector === ".mia-view .mia-nav > button");
+    const transition = tab.nodes.find(node => node.prop === "transition")?.value ?? "";
+    expect(transition).not.toMatch(/background|box-shadow|\ball\b/);
+    expect(transition).toMatch(/color/);
+  });
+
+  it("학습 화면의 평가 저장 중 문구는 줄을 차지하지 않고, 저장됨 배너는 자리를 남긴 채 숨는다", () => {
+    const status = rules.find(rule => rule.selector.endsWith("> .mia-save-status") && rule.selector.includes("mia-study-layout"));
+    expect(status.toString()).toMatch(/position: absolute/);
+    expect(status.toString()).toMatch(/pointer-events: none/);
+    const expired = rules.find(rule => rule.selector.includes("mia-undo-feedback-expired"));
+    expect(expired.toString()).toMatch(/visibility: hidden/);
+    expect(expired.toString()).not.toMatch(/display: none/);
+  });
+
+  it("보기 설정 모달도 학습 설정 모달처럼 하단 버튼 위에 흐림 경계를 둔다", () => {
+    expect(rules.some(rule => rule.selector.includes(".mia-appearance-modal .mia-appearance-actions") && rule.selector.endsWith("::before"))).toBe(true);
+  });
+
+  it("하단 버튼 줄이 없는 화면에서 떠 있는 키보드 닫기만큼 스크롤 여백을 둔다", () => {
+    const rule = rules.find(rule => rule.selector.includes(":has(> .mia-keyboard-dismiss)"));
+    expect(rule.toString()).toMatch(/scroll-padding-bottom: \d+px/);
+  });
+
   it("정답 펼침은 끝난 뒤 clip-path를 남기지 않는다", () => {
     const answer = rules.filter(rule => rule.selector.includes("mia-answer-enter"));
     expect(answer.length).toBe(2);

@@ -387,7 +387,9 @@ export class MiaStudyView extends ItemView {
         if (this.route === "dashboard" && !this.closed) {
           // Import the pre-update workspace only when no synced session file exists.
           if (!this.plugin.studyUi.hasResumeFile && !this.plugin.studyUi.resume && this.queue.length) this.saveStudyPosition();
-          this.render();
+          // Skip the second draw when the loaded resume state changes nothing on screen.
+          const overview = this.plugin.index.isReady ? readOverview(this.pages, "dashboard") : null;
+          if (overviewSignature("dashboard", overview) !== this.renderedOverview) this.render(overview);
         }
       }).catch((error: unknown) => new Notice(`이어하기 정보 불러오기 실패: ${errorMessage(error)}`));
     }
@@ -438,8 +440,13 @@ export class MiaStudyView extends ItemView {
       const pruned = this.route === "study" && !this.isMutatingReview && this.pruneExternallyRated(false);
       if (pruned) this.saveStudyPosition();
       const resumeChanged = previousResume !== JSON.stringify(this.plugin.studyUi.resume);
-      if (!this.closed && ((pruned || refreshTime && (this.route === "study" || this.route === "dashboard" || this.route === "progress"))
-        || (resumeChanged && this.route === "dashboard"))) this.render();
+      // Overview pages redraw only when a visible value changed, so a quick app switch does not
+      // flash the page or fold its open panels. The study card still refreshes its time-based labels.
+      const overviewRoute = this.route === "dashboard" || this.route === "progress" ? this.route : null;
+      const overview = refreshTime && overviewRoute && !resumeChanged && this.plugin.index.isReady ? readOverview(this.pages, overviewRoute) : undefined;
+      const overviewChanged = !overviewRoute || overview === undefined || overviewSignature(overviewRoute, overview) !== this.renderedOverview;
+      if (!this.closed && ((pruned || refreshTime && (this.route === "study" || (overviewRoute && overviewChanged)))
+        || (resumeChanged && this.route === "dashboard"))) this.render(overview);
       if (!this.closed && notify) new Notice("보관함에 도착한 학습 기록과 이어하기 위치를 확인했습니다.");
     } catch (error) { new Notice(`학습 기록 확인 실패: ${errorMessage(error)}`); }
     finally {
@@ -471,8 +478,9 @@ export class MiaStudyView extends ItemView {
     this.undoFeedback = `${label} 평가 저장됨`;
     this.undoFeedbackTimer = window.setTimeout(() => {
       this.undoFeedback = ""; this.undoFeedbackTimer = null;
-      // Update only the banner so reading and keyboard focus do not jump.
-      this.contentEl.querySelector(".mia-undo-feedback")?.remove();
+      // Update only the banner so reading and keyboard focus do not jump. Hiding it in place keeps
+      // the rating buttons where they are; the space goes with the next full render.
+      this.contentEl.querySelector(".mia-undo-feedback")?.addClass("mia-undo-feedback-expired");
     }, 8000);
   }
 
@@ -646,6 +654,7 @@ export class MiaStudyView extends ItemView {
     root.dataset.answerLayout = this.plugin.studyUi.appearance.answerLayout;
     root.dataset.swipeEnabled = String(this.plugin.studyUi.appearance.swipeEnabled);
     root.dataset.night = String(this.plugin.studyUi.night.nightMode);
+    const openDetails = sameRoute ? readDetailsState(root) : null;
     this.navGlide.capture(root);
     this.answerEnter = this.answerRevealPending;
     this.answerRevealPending = false;
@@ -683,11 +692,15 @@ export class MiaStudyView extends ItemView {
       layout?.addEventListener("scroll", () => this.scheduleReadingSave(), { passive: true });
       root.onscroll = () => this.scheduleReadingSave();
       root.querySelector(".mia-study-concepts")?.addEventListener("toggle", () => this.scheduleReadingSave());
+      // Restore before paint as well, so revealing the answer (a same-card re-render) does not show
+      // the card scrolled to the top for a frame before the asynchronous restore below.
+      this.restoreReadingPosition(key, component);
       this.readingRestorePending = true;
       void Promise.all(this.readingRenders).then(() => this.restoreReadingPosition(key, component))
         .catch((error: unknown) => new Notice(`학습 화면 표시 실패: ${errorMessage(error)}`))
         .finally(() => { if (this.renderComponent === component) this.readingRestorePending = false; });
     } else root.onscroll = null;
+    if (openDetails) restoreDetailsState(root, openDetails);
     const filterPanel = root.querySelector<HTMLDetailsElement>(".mia-filter-panel");
     if (filterPanel && filtersOpen !== undefined) filterPanel.open = filtersOpen;
     if (editingLabel) {
@@ -1478,5 +1491,28 @@ export class MiaStudyView extends ItemView {
 
   private returnToSessionOrigin(): void {
     this.navigate(this.sessionOrigin === "study" ? "dashboard" : this.sessionOrigin);
+  }
+}
+
+/** Open state of every <details> keyed by its class, summary text and order, so a redraw keeps panels open. */
+function detailsKeys(root: HTMLElement): Array<[string, HTMLDetailsElement]> {
+  const seen = new Map<string, number>();
+  return Array.from(root.querySelectorAll<HTMLDetailsElement>("details")).map(details => {
+    const base = `${details.className || ""}|${details.querySelector?.(":scope > summary")?.textContent ?? ""}`;
+    const count = seen.get(base) ?? 0;
+    seen.set(base, count + 1);
+    return [`${base}|${count}`, details];
+  });
+}
+
+function readDetailsState(root: HTMLElement): Map<string, boolean> | null {
+  if (typeof root.querySelectorAll !== "function") return null;
+  return new Map(detailsKeys(root).map(([key, details]) => [key, Boolean(details.open)]));
+}
+
+function restoreDetailsState(root: HTMLElement, state: Map<string, boolean>): void {
+  for (const [key, details] of detailsKeys(root)) {
+    const open = state.get(key);
+    if (open !== undefined && details.open !== open) details.open = open;
   }
 }

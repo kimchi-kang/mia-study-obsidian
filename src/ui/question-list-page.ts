@@ -199,6 +199,7 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
     panelRevision += 1;
     if (panelComponent) listOwner.removeChild(panelComponent);
     panelComponent = null;
+    panel.inert = false;
     panel.empty();
   };
   const panelButtons = (): HTMLElement[] => Array.from(panel.querySelectorAll<HTMLElement>("button"));
@@ -265,11 +266,22 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
     if (panelComponent) listOwner.removeChild(panelComponent);
     const component = listOwner.addChild(new Component());
     panelComponent = component;
-    panel.empty();
-    panel.createEl("p", { text: "상세를 불러오는 중입니다…", cls: "mia-muted" });
+    // Local reads usually finish within a frame: keep the previous body (inert) and show the
+    // loading line only if the read is slow, so switching questions does not flash the panel.
+    panel.inert = true;
+    const defaultView = panel.ownerDocument?.defaultView;
+    const view = typeof defaultView?.setTimeout === "function" ? defaultView : null;
+    const showLoading = () => {
+      if (revision !== panelRevision) return;
+      panel.empty();
+      panel.createEl("p", { text: "상세를 불러오는 중입니다…", cls: "mia-muted" });
+    };
+    const loadingTimer = view ? view.setTimeout(showLoading, 150) : (showLoading(), undefined);
     try {
       const source = await ctx.plugin.questionDetailSource(question);
+      if (loadingTimer !== undefined) view?.clearTimeout(loadingTimer);
       if (revision !== panelRevision) return;
+      panel.inert = false;
       panel.empty();
       const title = panel.createEl("h2", { cls: "mia-detail-title" });
       title.tabIndex = -1;
@@ -286,7 +298,9 @@ export function renderQuestionsPage(ctx: StudyPageContext, scroller: HTMLElement
       restorePanelFocus(title);
       restoreAfterDialog(component);
     } catch (error) {
+      if (loadingTimer !== undefined) view?.clearTimeout(loadingTimer);
       if (revision !== panelRevision) return;
+      panel.inert = false;
       panel.empty();
       panel.createEl("p", { text: `상세를 열 수 없습니다: ${errorMessage(error)}`, cls: "mia-warning" });
     }

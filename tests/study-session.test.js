@@ -1143,6 +1143,15 @@ describe("return and quick recovery", () => {
     if (route === "study") expect(ui.view.getState().answerVisible).toBe(true);
   });
 
+  it("does not redraw an unchanged dashboard when the app becomes visible again", async () => {
+    const ui = setup({ start: false });
+    await ui.view.setState({ route: "dashboard", queue: [], queueIndex: 0, answerVisible: false, sessionMode: "recall" }, {});
+    ui.plugin.store.synchronize = vi.fn().mockResolvedValue(undefined);
+    const button = ui.exactButton("시험(일반복습)모드 시작");
+    await ui.view.refreshAfterReturn(true);
+    expect(ui.exactButton("시험(일반복습)모드 시작")).toBe(button);
+  });
+
   it("does not replace the search form on an unchanged app return", async () => {
     const ui = setup({ start: false }); ui.plugin.store.synchronize = vi.fn().mockResolvedValue(undefined);
     await ui.view.setState({route:"questions",queue:[],queueIndex:0,answerVisible:false,sessionMode:"recall"},{});

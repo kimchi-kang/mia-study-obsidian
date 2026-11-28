@@ -4008,5 +4008,16 @@
         false
       ]
     ]
+  },
+  {
+    "context": [],
+    "selector": ".mia-keyboard-surface.mia-keyboard-open:has(> .mia-keyboard-dismiss)",
+    "declarations": [
+      [
+        "scroll-padding-bottom",
+        "72px",
+        false
+      ]
+    ]
   }
 ]
